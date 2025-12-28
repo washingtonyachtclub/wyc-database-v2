@@ -1,0 +1,23 @@
+{
+  "projectName": "wyc-database-v2",
+  "mode": "file-router",
+  "typescript": true,
+  "tailwind": true,
+  "packageManager": "npm",
+  "addOnOptions": {
+    "prisma": {
+      "database": "mysql"
+    }
+  },
+  "git": true,
+  "version": 1,
+  "framework": "react-cra",
+  "chosenAddOns": [
+    "eslint",
+    "nitro",
+    "start",
+    "prisma",
+    "tanstack-query",
+    "table"
+  ]
+}
