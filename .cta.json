@@ -4,20 +4,8 @@
   "typescript": true,
   "tailwind": true,
   "packageManager": "npm",
-  "addOnOptions": {
-    "prisma": {
-      "database": "mysql"
-    }
-  },
   "git": true,
   "version": 1,
   "framework": "react-cra",
-  "chosenAddOns": [
-    "eslint",
-    "nitro",
-    "start",
-    "prisma",
-    "tanstack-query",
-    "table"
-  ]
+  "chosenAddOns": ["eslint", "nitro", "start", "tanstack-query", "table"]
 }

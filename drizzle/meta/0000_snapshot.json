@@ -1,0 +1,1899 @@
+{
+  "id": "00000000-0000-0000-0000-000000000000",
+  "prevId": "",
+  "version": "5",
+  "dialect": "mysql",
+  "tables": {
+    "WYCDatabase": {
+      "name": "WYCDatabase",
+      "columns": {
+        "Last": {
+          "autoincrement": false,
+          "name": "Last",
+          "type": "char(50)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "First": {
+          "autoincrement": false,
+          "name": "First",
+          "type": "char(50)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "StreetAddress": {
+          "autoincrement": false,
+          "name": "StreetAddress",
+          "type": "char(100)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "City": {
+          "autoincrement": false,
+          "name": "City",
+          "type": "char(50)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "State": {
+          "autoincrement": false,
+          "name": "State",
+          "type": "char(20)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "ZipCode": {
+          "autoincrement": false,
+          "name": "ZipCode",
+          "type": "char(10)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "Phone1": {
+          "autoincrement": false,
+          "name": "Phone1",
+          "type": "char(50)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "Phone2": {
+          "autoincrement": false,
+          "name": "Phone2",
+          "type": "char(50)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "Email": {
+          "autoincrement": false,
+          "name": "Email",
+          "type": "char(50)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "Category": {
+          "autoincrement": false,
+          "name": "Category",
+          "type": "int",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "WYCNumber": {
+          "default": 0,
+          "autoincrement": false,
+          "name": "WYCNumber",
+          "type": "int",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "ExpireQtr": {
+          "default": 0,
+          "autoincrement": false,
+          "name": "ExpireQtr",
+          "type": "int",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "StudentID": {
+          "autoincrement": false,
+          "name": "StudentID",
+          "type": "int",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "password": {
+          "default": "'*5FB1D6D12867BDF49EB3302D5096F1B9030E6264'",
+          "autoincrement": false,
+          "name": "password",
+          "type": "char(50)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "out_to_sea": {
+          "default": 0,
+          "autoincrement": false,
+          "name": "out_to_sea",
+          "type": "tinyint(1)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "JoinDate": {
+          "default": "(CURRENT_TIMESTAMP)",
+          "autoincrement": false,
+          "name": "JoinDate",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "image_name": {
+          "autoincrement": false,
+          "name": "image_name",
+          "type": "char(50)",
+          "primaryKey": false,
+          "notNull": false
+        }
+      },
+      "compositePrimaryKeys": {
+        "WYCDatabase_WYCNumber": {
+          "name": "WYCDatabase_WYCNumber",
+          "columns": [
+            "WYCNumber"
+          ]
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {},
+      "uniqueConstraints": {
+        "IDX_WYCNumber": {
+          "name": "IDX_WYCNumber",
+          "columns": [
+            "WYCNumber"
+          ]
+        }
+      },
+      "checkConstraint": {}
+    },
+    "boat_types": {
+      "name": "boat_types",
+      "columns": {
+        "_index": {
+          "autoincrement": true,
+          "name": "_index",
+          "type": "int",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "type": {
+          "autoincrement": false,
+          "name": "type",
+          "type": "varchar(80)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "description": {
+          "autoincrement": false,
+          "name": "description",
+          "type": "varchar(500)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "usefulLink": {
+          "autoincrement": false,
+          "name": "usefulLink",
+          "type": "varchar(100)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "fleet": {
+          "autoincrement": false,
+          "name": "fleet",
+          "type": "varchar(80)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "numberInFleet": {
+          "autoincrement": false,
+          "name": "numberInFleet",
+          "type": "int",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "compositePrimaryKeys": {
+        "boat_types__index": {
+          "name": "boat_types__index",
+          "columns": [
+            "_index"
+          ]
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {},
+      "uniqueConstraints": {},
+      "checkConstraint": {}
+    },
+    "calendaradmin": {
+      "name": "calendaradmin",
+      "columns": {
+        "wycnum": {
+          "autoincrement": false,
+          "name": "wycnum",
+          "type": "int",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "description": {
+          "autoincrement": false,
+          "name": "description",
+          "type": "varchar(50)",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "compositePrimaryKeys": {},
+      "indexes": {},
+      "foreignKeys": {},
+      "uniqueConstraints": {},
+      "checkConstraint": {}
+    },
+    "calendarboats": {
+      "name": "calendarboats",
+      "columns": {
+        "cBoatId": {
+          "autoincrement": true,
+          "name": "cBoatId",
+          "type": "int",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "name": {
+          "autoincrement": false,
+          "name": "name",
+          "type": "varchar(50)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "Description": {
+          "autoincrement": false,
+          "name": "Description",
+          "type": "varchar(500)",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "compositePrimaryKeys": {
+        "calendarboats_cBoatId": {
+          "name": "calendarboats_cBoatId",
+          "columns": [
+            "cBoatId"
+          ]
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {},
+      "uniqueConstraints": {},
+      "checkConstraint": {}
+    },
+    "calendarcomment": {
+      "name": "calendarcomment",
+      "columns": {
+        "id": {
+          "autoincrement": false,
+          "name": "id",
+          "type": "int",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "userwyc": {
+          "autoincrement": false,
+          "name": "userwyc",
+          "type": "int",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "date": {
+          "autoincrement": false,
+          "name": "date",
+          "type": "datetime",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "comment": {
+          "autoincrement": false,
+          "name": "comment",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "compositePrimaryKeys": {},
+      "indexes": {},
+      "foreignKeys": {},
+      "uniqueConstraints": {},
+      "checkConstraint": {}
+    },
+    "calendarconfig": {
+      "name": "calendarconfig",
+      "columns": {
+        "wacip": {
+          "autoincrement": false,
+          "name": "wacip",
+          "type": "varchar(15)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "ipdescription": {
+          "autoincrement": false,
+          "name": "ipdescription",
+          "type": "varchar(255)",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "compositePrimaryKeys": {
+        "calendarconfig_wacip": {
+          "name": "calendarconfig_wacip",
+          "columns": [
+            "wacip"
+          ]
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {},
+      "uniqueConstraints": {},
+      "checkConstraint": {}
+    },
+    "calendartable": {
+      "name": "calendartable",
+      "columns": {
+        "id": {
+          "autoincrement": true,
+          "name": "id",
+          "type": "int",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "cBoatId": {
+          "autoincrement": false,
+          "name": "cBoatId",
+          "type": "int",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "memberWYCNumber": {
+          "autoincrement": false,
+          "name": "memberWYCNumber",
+          "type": "int",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "reserveFrom": {
+          "autoincrement": false,
+          "name": "reserveFrom",
+          "type": "datetime",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "reserveTo": {
+          "autoincrement": false,
+          "name": "reserveTo",
+          "type": "datetime",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "destination": {
+          "autoincrement": false,
+          "name": "destination",
+          "type": "varchar(255)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "numberOfCrew": {
+          "autoincrement": false,
+          "name": "numberOfCrew",
+          "type": "int",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "comments": {
+          "autoincrement": false,
+          "name": "comments",
+          "type": "varchar(255)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "phone": {
+          "autoincrement": false,
+          "name": "phone",
+          "type": "varchar(45)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "numFullWD": {
+          "autoincrement": false,
+          "name": "numFullWD",
+          "type": "int",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "numHalfWD": {
+          "autoincrement": false,
+          "name": "numHalfWD",
+          "type": "int",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "numFullWE": {
+          "autoincrement": false,
+          "name": "numFullWE",
+          "type": "int",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "numHalfWE": {
+          "autoincrement": false,
+          "name": "numHalfWE",
+          "type": "int",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "compositePrimaryKeys": {
+        "calendartable_id": {
+          "name": "calendartable_id",
+          "columns": [
+            "id"
+          ]
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {},
+      "uniqueConstraints": {},
+      "checkConstraint": {}
+    },
+    "checkouts": {
+      "name": "checkouts",
+      "columns": {
+        "_index": {
+          "autoincrement": true,
+          "name": "_index",
+          "type": "int",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "WYCNumber": {
+          "autoincrement": false,
+          "name": "WYCNumber",
+          "type": "int",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "TimeDeparture": {
+          "autoincrement": false,
+          "name": "TimeDeparture",
+          "type": "datetime",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "Crew": {
+          "autoincrement": false,
+          "name": "Crew",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "Boat": {
+          "autoincrement": false,
+          "name": "Boat",
+          "type": "varchar(50)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "Destination": {
+          "autoincrement": false,
+          "name": "Destination",
+          "type": "varchar(100)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "TimeReturn": {
+          "autoincrement": false,
+          "name": "TimeReturn",
+          "type": "datetime",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "ExpectedReturn": {
+          "autoincrement": false,
+          "name": "ExpectedReturn",
+          "type": "datetime",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "RelevantRating": {
+          "autoincrement": false,
+          "name": "RelevantRating",
+          "type": "int",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "ChiefID": {
+          "autoincrement": false,
+          "name": "ChiefID",
+          "type": "int",
+          "primaryKey": false,
+          "notNull": false
+        }
+      },
+      "compositePrimaryKeys": {
+        "checkouts__index": {
+          "name": "checkouts__index",
+          "columns": [
+            "_index"
+          ]
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {},
+      "uniqueConstraints": {},
+      "checkConstraint": {}
+    },
+    "class_type": {
+      "name": "class_type",
+      "columns": {
+        "_index": {
+          "autoincrement": true,
+          "name": "_index",
+          "type": "int",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "text": {
+          "autoincrement": false,
+          "name": "text",
+          "type": "varchar(80)",
+          "primaryKey": false,
+          "notNull": false
+        }
+      },
+      "compositePrimaryKeys": {
+        "class_type__index": {
+          "name": "class_type__index",
+          "columns": [
+            "_index"
+          ]
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {},
+      "uniqueConstraints": {},
+      "checkConstraint": {}
+    },
+    "crew": {
+      "name": "crew",
+      "columns": {
+        "_index": {
+          "autoincrement": true,
+          "name": "_index",
+          "type": "int",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "checkout_ID": {
+          "autoincrement": false,
+          "name": "checkout_ID",
+          "type": "int",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "crew_ID": {
+          "autoincrement": false,
+          "name": "crew_ID",
+          "type": "int",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "compositePrimaryKeys": {
+        "crew__index": {
+          "name": "crew__index",
+          "columns": [
+            "_index"
+          ]
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {},
+      "uniqueConstraints": {},
+      "checkConstraint": {}
+    },
+    "guests": {
+      "name": "guests",
+      "columns": {
+        "_index": {
+          "autoincrement": true,
+          "name": "_index",
+          "type": "int",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "checkout_ID": {
+          "autoincrement": false,
+          "name": "checkout_ID",
+          "type": "int",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "name": {
+          "autoincrement": false,
+          "name": "name",
+          "type": "varchar(20)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "status": {
+          "autoincrement": false,
+          "name": "status",
+          "type": "int",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "email": {
+          "autoincrement": false,
+          "name": "email",
+          "type": "varchar(20)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "phone": {
+          "autoincrement": false,
+          "name": "phone",
+          "type": "varchar(15)",
+          "primaryKey": false,
+          "notNull": false
+        }
+      },
+      "compositePrimaryKeys": {
+        "guests__index": {
+          "name": "guests__index",
+          "columns": [
+            "_index"
+          ]
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {},
+      "uniqueConstraints": {},
+      "checkConstraint": {}
+    },
+    "keelboat_pricing": {
+      "name": "keelboat_pricing",
+      "columns": {
+        "price": {
+          "autoincrement": false,
+          "name": "price",
+          "type": "float",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "weekday": {
+          "autoincrement": false,
+          "name": "weekday",
+          "type": "int",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "fullday": {
+          "autoincrement": false,
+          "name": "fullday",
+          "type": "int",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "student": {
+          "autoincrement": false,
+          "name": "student",
+          "type": "int",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "compositePrimaryKeys": {},
+      "indexes": {},
+      "foreignKeys": {},
+      "uniqueConstraints": {},
+      "checkConstraint": {}
+    },
+    "lesson_quarter": {
+      "name": "lesson_quarter",
+      "columns": {
+        "_index": {
+          "autoincrement": true,
+          "name": "_index",
+          "type": "int unsigned",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "quarter": {
+          "default": 0,
+          "autoincrement": false,
+          "name": "quarter",
+          "type": "int unsigned",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "compositePrimaryKeys": {
+        "lesson_quarter__index": {
+          "name": "lesson_quarter__index",
+          "columns": [
+            "_index"
+          ]
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {},
+      "uniqueConstraints": {},
+      "checkConstraint": {}
+    },
+    "lessons": {
+      "name": "lessons",
+      "columns": {
+        "_index": {
+          "autoincrement": true,
+          "name": "_index",
+          "type": "int",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "type": {
+          "autoincrement": false,
+          "name": "type",
+          "type": "int",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "subtype": {
+          "autoincrement": false,
+          "name": "subtype",
+          "type": "varchar(80)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "day": {
+          "autoincrement": false,
+          "name": "day",
+          "type": "varchar(80)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "time": {
+          "autoincrement": false,
+          "name": "time",
+          "type": "varchar(80)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "dates": {
+          "autoincrement": false,
+          "name": "dates",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "CalendarDate": {
+          "autoincrement": false,
+          "name": "CalendarDate",
+          "type": "date",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "instructor1": {
+          "autoincrement": false,
+          "name": "instructor1",
+          "type": "int",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "instructor2": {
+          "autoincrement": false,
+          "name": "instructor2",
+          "type": "int",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "comments": {
+          "autoincrement": false,
+          "name": "comments",
+          "type": "blob",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "Description": {
+          "autoincrement": false,
+          "name": "Description",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "size": {
+          "autoincrement": false,
+          "name": "size",
+          "type": "int",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "expire": {
+          "autoincrement": false,
+          "name": "expire",
+          "type": "int",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "display": {
+          "default": 0,
+          "autoincrement": false,
+          "name": "display",
+          "type": "tinyint(1)",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "compositePrimaryKeys": {
+        "lessons__index": {
+          "name": "lessons__index",
+          "columns": [
+            "_index"
+          ]
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {},
+      "uniqueConstraints": {},
+      "checkConstraint": {}
+    },
+    "memcat": {
+      "name": "memcat",
+      "columns": {
+        "_index": {
+          "autoincrement": true,
+          "name": "_index",
+          "type": "int",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "text": {
+          "autoincrement": false,
+          "name": "text",
+          "type": "varchar(50)",
+          "primaryKey": false,
+          "notNull": false
+        }
+      },
+      "compositePrimaryKeys": {
+        "memcat__index": {
+          "name": "memcat__index",
+          "columns": [
+            "_index"
+          ]
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {},
+      "uniqueConstraints": {},
+      "checkConstraint": {}
+    },
+    "noyes": {
+      "name": "noyes",
+      "columns": {
+        "_index": {
+          "default": 0,
+          "autoincrement": false,
+          "name": "_index",
+          "type": "tinyint(1)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "text": {
+          "autoincrement": false,
+          "name": "text",
+          "type": "char(10)",
+          "primaryKey": false,
+          "notNull": false
+        }
+      },
+      "compositePrimaryKeys": {
+        "noyes__index": {
+          "name": "noyes__index",
+          "columns": [
+            "_index"
+          ]
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {},
+      "uniqueConstraints": {},
+      "checkConstraint": {}
+    },
+    "officers": {
+      "name": "officers",
+      "columns": {
+        "_index": {
+          "autoincrement": true,
+          "name": "_index",
+          "type": "int",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "member": {
+          "autoincrement": false,
+          "name": "member",
+          "type": "int",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "position": {
+          "autoincrement": false,
+          "name": "position",
+          "type": "int",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "active": {
+          "default": 1,
+          "autoincrement": false,
+          "name": "active",
+          "type": "tinyint(1)",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "compositePrimaryKeys": {
+        "officers__index": {
+          "name": "officers__index",
+          "columns": [
+            "_index"
+          ]
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {},
+      "uniqueConstraints": {
+        "_index": {
+          "name": "_index",
+          "columns": [
+            "_index"
+          ]
+        }
+      },
+      "checkConstraint": {}
+    },
+    "options": {
+      "name": "options",
+      "columns": {
+        "_index": {
+          "autoincrement": true,
+          "name": "_index",
+          "type": "int",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "name": {
+          "autoincrement": false,
+          "name": "name",
+          "type": "varchar(80)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "value": {
+          "autoincrement": false,
+          "name": "value",
+          "type": "varchar(250)",
+          "primaryKey": false,
+          "notNull": false
+        }
+      },
+      "compositePrimaryKeys": {
+        "options__index": {
+          "name": "options__index",
+          "columns": [
+            "_index"
+          ]
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {},
+      "uniqueConstraints": {},
+      "checkConstraint": {}
+    },
+    "pos_priv_map": {
+      "name": "pos_priv_map",
+      "columns": {
+        "_index": {
+          "autoincrement": true,
+          "name": "_index",
+          "type": "int",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "position": {
+          "autoincrement": false,
+          "name": "position",
+          "type": "int",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "priv": {
+          "autoincrement": false,
+          "name": "priv",
+          "type": "int",
+          "primaryKey": false,
+          "notNull": false
+        }
+      },
+      "compositePrimaryKeys": {
+        "pos_priv_map__index": {
+          "name": "pos_priv_map__index",
+          "columns": [
+            "_index"
+          ]
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {},
+      "uniqueConstraints": {},
+      "checkConstraint": {}
+    },
+    "pos_type": {
+      "name": "pos_type",
+      "columns": {
+        "_index": {
+          "autoincrement": true,
+          "name": "_index",
+          "type": "int",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "text": {
+          "autoincrement": false,
+          "name": "text",
+          "type": "char(50)",
+          "primaryKey": false,
+          "notNull": false
+        }
+      },
+      "compositePrimaryKeys": {
+        "pos_type__index": {
+          "name": "pos_type__index",
+          "columns": [
+            "_index"
+          ]
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {},
+      "uniqueConstraints": {},
+      "checkConstraint": {}
+    },
+    "positions": {
+      "name": "positions",
+      "columns": {
+        "_index": {
+          "autoincrement": true,
+          "name": "_index",
+          "type": "int",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "name": {
+          "default": "''",
+          "autoincrement": false,
+          "name": "name",
+          "type": "varchar(50)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "sortorder": {
+          "autoincrement": false,
+          "name": "sortorder",
+          "type": "int",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "is_dues_exempt": {
+          "default": 0,
+          "autoincrement": false,
+          "name": "is_dues_exempt",
+          "type": "tinyint(1)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "type": {
+          "autoincrement": false,
+          "name": "type",
+          "type": "int",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "bookmark": {
+          "autoincrement": false,
+          "name": "bookmark",
+          "type": "varchar(50)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "job_desc": {
+          "autoincrement": false,
+          "name": "job_desc",
+          "type": "varchar(50)",
+          "primaryKey": false,
+          "notNull": false
+        }
+      },
+      "compositePrimaryKeys": {
+        "positions__index": {
+          "name": "positions__index",
+          "columns": [
+            "_index"
+          ]
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {},
+      "uniqueConstraints": {},
+      "checkConstraint": {}
+    },
+    "priority_types": {
+      "name": "priority_types",
+      "columns": {
+        "_index": {
+          "autoincrement": true,
+          "name": "_index",
+          "type": "int",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "priority": {
+          "default": "''",
+          "autoincrement": false,
+          "name": "priority",
+          "type": "varchar(25)",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "compositePrimaryKeys": {
+        "priority_types__index": {
+          "name": "priority_types__index",
+          "columns": [
+            "_index"
+          ]
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {},
+      "uniqueConstraints": {},
+      "checkConstraint": {}
+    },
+    "privs": {
+      "name": "privs",
+      "columns": {
+        "_index": {
+          "autoincrement": true,
+          "name": "_index",
+          "type": "int",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "name": {
+          "autoincrement": false,
+          "name": "name",
+          "type": "char(10)",
+          "primaryKey": false,
+          "notNull": false
+        }
+      },
+      "compositePrimaryKeys": {
+        "privs__index": {
+          "name": "privs__index",
+          "columns": [
+            "_index"
+          ]
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {},
+      "uniqueConstraints": {},
+      "checkConstraint": {}
+    },
+    "quarters": {
+      "name": "quarters",
+      "columns": {
+        "_index": {
+          "autoincrement": true,
+          "name": "_index",
+          "type": "int",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "text": {
+          "autoincrement": false,
+          "name": "text",
+          "type": "char(50)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "school": {
+          "autoincrement": false,
+          "name": "school",
+          "type": "char(50)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "endDate": {
+          "autoincrement": false,
+          "name": "endDate",
+          "type": "date",
+          "primaryKey": false,
+          "notNull": false
+        }
+      },
+      "compositePrimaryKeys": {
+        "quarters__index": {
+          "name": "quarters__index",
+          "columns": [
+            "_index"
+          ]
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {},
+      "uniqueConstraints": {},
+      "checkConstraint": {}
+    },
+    "ratings": {
+      "name": "ratings",
+      "columns": {
+        "_index": {
+          "autoincrement": true,
+          "name": "_index",
+          "type": "int",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "text": {
+          "autoincrement": false,
+          "name": "text",
+          "type": "char(50)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "type": {
+          "autoincrement": false,
+          "name": "type",
+          "type": "varchar(10)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "degree": {
+          "autoincrement": false,
+          "name": "degree",
+          "type": "int",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "compositePrimaryKeys": {
+        "ratings__index": {
+          "name": "ratings__index",
+          "columns": [
+            "_index"
+          ]
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {},
+      "uniqueConstraints": {},
+      "checkConstraint": {}
+    },
+    "recip": {
+      "name": "recip",
+      "columns": {
+        "club_name": {
+          "autoincrement": false,
+          "name": "club_name",
+          "type": "varchar(50)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "website": {
+          "autoincrement": false,
+          "name": "website",
+          "type": "varchar(50)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "recip_url": {
+          "autoincrement": false,
+          "name": "recip_url",
+          "type": "varchar(75)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "location": {
+          "autoincrement": false,
+          "name": "location",
+          "type": "varchar(2000)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "lat_long": {
+          "autoincrement": false,
+          "name": "lat_long",
+          "type": "varchar(100)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "length_stay": {
+          "autoincrement": false,
+          "name": "length_stay",
+          "type": "varchar(2000)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "procedures": {
+          "autoincrement": false,
+          "name": "procedures",
+          "type": "varchar(2000)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "amenities": {
+          "autoincrement": false,
+          "name": "amenities",
+          "type": "varchar(2000)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "image": {
+          "autoincrement": false,
+          "name": "image",
+          "type": "varchar(100)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "image_next": {
+          "autoincrement": false,
+          "name": "image_next",
+          "type": "varchar(100)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "club_id": {
+          "autoincrement": false,
+          "name": "club_id",
+          "type": "varchar(2)",
+          "primaryKey": false,
+          "notNull": false
+        }
+      },
+      "compositePrimaryKeys": {},
+      "indexes": {},
+      "foreignKeys": {},
+      "uniqueConstraints": {},
+      "checkConstraint": {}
+    },
+    "sessions": {
+      "name": "sessions",
+      "columns": {
+        "_index": {
+          "autoincrement": true,
+          "name": "_index",
+          "type": "int",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "session": {
+          "autoincrement": false,
+          "name": "session",
+          "type": "varchar(80)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "userid": {
+          "autoincrement": false,
+          "name": "userid",
+          "type": "int",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "time": {
+          "autoincrement": false,
+          "name": "time",
+          "type": "varchar(80)",
+          "primaryKey": false,
+          "notNull": false
+        }
+      },
+      "compositePrimaryKeys": {
+        "sessions__index": {
+          "name": "sessions__index",
+          "columns": [
+            "_index"
+          ]
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {},
+      "uniqueConstraints": {},
+      "checkConstraint": {}
+    },
+    "signups": {
+      "name": "signups",
+      "columns": {
+        "_index": {
+          "autoincrement": true,
+          "name": "_index",
+          "type": "int",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "class": {
+          "default": 0,
+          "autoincrement": false,
+          "name": "class",
+          "type": "int",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "student": {
+          "default": 0,
+          "autoincrement": false,
+          "name": "student",
+          "type": "int",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "compositePrimaryKeys": {
+        "signups__index": {
+          "name": "signups__index",
+          "columns": [
+            "_index"
+          ]
+        }
+      },
+      "indexes": {
+        "class": {
+          "name": "class",
+          "columns": [
+            "class"
+          ],
+          "isUnique": false
+        }
+      },
+      "foreignKeys": {},
+      "uniqueConstraints": {},
+      "checkConstraint": {}
+    },
+    "snc": {
+      "name": "snc",
+      "columns": {
+        "_index": {
+          "autoincrement": true,
+          "name": "_index",
+          "type": "int",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "quarter": {
+          "autoincrement": false,
+          "name": "quarter",
+          "type": "int",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "member": {
+          "autoincrement": false,
+          "name": "member",
+          "type": "int",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "member_dinner": {
+          "autoincrement": false,
+          "name": "member_dinner",
+          "type": "int",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "member_lunch1": {
+          "autoincrement": false,
+          "name": "member_lunch1",
+          "type": "int",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "member_lunch2": {
+          "autoincrement": false,
+          "name": "member_lunch2",
+          "type": "int",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "guest1_name": {
+          "autoincrement": false,
+          "name": "guest1_name",
+          "type": "char(100)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "guest1_dinner": {
+          "autoincrement": false,
+          "name": "guest1_dinner",
+          "type": "int",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "guest1_lunch1": {
+          "autoincrement": false,
+          "name": "guest1_lunch1",
+          "type": "int",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "guest1_lunch2": {
+          "autoincrement": false,
+          "name": "guest1_lunch2",
+          "type": "int",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "guest2_name": {
+          "autoincrement": false,
+          "name": "guest2_name",
+          "type": "char(100)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "guest2_dinner": {
+          "autoincrement": false,
+          "name": "guest2_dinner",
+          "type": "int",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "guest2_lunch1": {
+          "autoincrement": false,
+          "name": "guest2_lunch1",
+          "type": "int",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "guest2_lunch2": {
+          "autoincrement": false,
+          "name": "guest2_lunch2",
+          "type": "int",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "boat1pref": {
+          "autoincrement": false,
+          "name": "boat1pref",
+          "type": "char(100)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "boat2pref": {
+          "autoincrement": false,
+          "name": "boat2pref",
+          "type": "char(100)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "rating_sh": {
+          "autoincrement": false,
+          "name": "rating_sh",
+          "type": "int",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "rating_dh": {
+          "autoincrement": false,
+          "name": "rating_dh",
+          "type": "int",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "rating_kb": {
+          "autoincrement": false,
+          "name": "rating_kb",
+          "type": "int",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "is_lock_veteran": {
+          "autoincrement": false,
+          "name": "is_lock_veteran",
+          "type": "tinyint(1)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "friends": {
+          "autoincrement": false,
+          "name": "friends",
+          "type": "char(100)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "duties": {
+          "autoincrement": false,
+          "name": "duties",
+          "type": "int",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "guest1_child": {
+          "autoincrement": false,
+          "name": "guest1_child",
+          "type": "tinyint(1)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "guest2_child": {
+          "autoincrement": false,
+          "name": "guest2_child",
+          "type": "tinyint(1)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "transpt": {
+          "default": 0,
+          "autoincrement": false,
+          "name": "transpt",
+          "type": "tinyint(1)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "payment_confirm": {
+          "autoincrement": false,
+          "name": "payment_confirm",
+          "type": "int",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "compositePrimaryKeys": {
+        "snc__index": {
+          "name": "snc__index",
+          "columns": [
+            "_index"
+          ]
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {},
+      "uniqueConstraints": {},
+      "checkConstraint": {}
+    },
+    "snc_food": {
+      "name": "snc_food",
+      "columns": {
+        "_index": {
+          "autoincrement": true,
+          "name": "_index",
+          "type": "int",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "text": {
+          "autoincrement": false,
+          "name": "text",
+          "type": "char(50)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "is_allowed": {
+          "autoincrement": false,
+          "name": "is_allowed",
+          "type": "tinyint(1)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "is_dinner": {
+          "autoincrement": false,
+          "name": "is_dinner",
+          "type": "tinyint(1)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "cost": {
+          "default": 0,
+          "autoincrement": false,
+          "name": "cost",
+          "type": "int",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "compositePrimaryKeys": {
+        "snc_food__index": {
+          "name": "snc_food__index",
+          "columns": [
+            "_index"
+          ]
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {},
+      "uniqueConstraints": {},
+      "checkConstraint": {}
+    },
+    "snc_work": {
+      "name": "snc_work",
+      "columns": {
+        "_index": {
+          "autoincrement": true,
+          "name": "_index",
+          "type": "int",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "text": {
+          "autoincrement": false,
+          "name": "text",
+          "type": "char(50)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "is_allowed": {
+          "autoincrement": false,
+          "name": "is_allowed",
+          "type": "tinyint(1)",
+          "primaryKey": false,
+          "notNull": false
+        }
+      },
+      "compositePrimaryKeys": {
+        "snc_work__index": {
+          "name": "snc_work__index",
+          "columns": [
+            "_index"
+          ]
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {},
+      "uniqueConstraints": {},
+      "checkConstraint": {}
+    },
+    "wyc_ratings": {
+      "name": "wyc_ratings",
+      "columns": {
+        "_index": {
+          "autoincrement": true,
+          "name": "_index",
+          "type": "int",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "member": {
+          "autoincrement": false,
+          "name": "member",
+          "type": "int",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "rating": {
+          "autoincrement": false,
+          "name": "rating",
+          "type": "int",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "date": {
+          "autoincrement": false,
+          "name": "date",
+          "type": "date",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "examiner": {
+          "autoincrement": false,
+          "name": "examiner",
+          "type": "int",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "comments": {
+          "autoincrement": false,
+          "name": "comments",
+          "type": "varchar(255)",
+          "primaryKey": false,
+          "notNull": false
+        }
+      },
+      "compositePrimaryKeys": {
+        "wyc_ratings__index": {
+          "name": "wyc_ratings__index",
+          "columns": [
+            "_index"
+          ]
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {},
+      "uniqueConstraints": {},
+      "checkConstraint": {}
+    },
+    "wyc_wind": {
+      "name": "wyc_wind",
+      "columns": {
+        "index": {
+          "autoincrement": false,
+          "name": "index",
+          "type": "int",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "DateTime": {
+          "autoincrement": false,
+          "name": "DateTime",
+          "type": "datetime",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "wind_speed": {
+          "autoincrement": false,
+          "name": "wind_speed",
+          "type": "double",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "wind_gust": {
+          "autoincrement": false,
+          "name": "wind_gust",
+          "type": "double",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "wind_direction": {
+          "autoincrement": false,
+          "name": "wind_direction",
+          "type": "varchar(2)",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "compositePrimaryKeys": {
+        "wyc_wind_index": {
+          "name": "wyc_wind_index",
+          "columns": [
+            "index"
+          ]
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {},
+      "uniqueConstraints": {},
+      "checkConstraint": {}
+    }
+  },
+  "views": {},
+  "_meta": {
+    "schemas": {},
+    "tables": {},
+    "columns": {}
+  },
+  "internal": {
+    "tables": {
+      "WYCDatabase": {
+        "columns": {
+          "JoinDate": {
+            "isDefaultAnExpression": true
+          }
+        }
+      }
+    },
+    "indexes": {}
+  }
+}
