@@ -46,6 +46,7 @@ export const wycDatabase = mysqlTable(
     unique('IDX_WYCNumber').on(table.wycNumber),
   ],
 )
+export type Member = typeof wycDatabase.$inferSelect
 
 export const boatTypes = mysqlTable(
   'boat_types',
