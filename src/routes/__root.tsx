@@ -12,13 +12,25 @@ import TanStackQueryDevtools from '../integrations/tanstack-query/devtools'
 
 import appCss from '../styles.css?url'
 
+import { getCurrentUserServerFn } from '../lib/auth-server-fns'
+import type { AuthUser } from '../lib/auth-server-fns'
 import type { QueryClient } from '@tanstack/react-query'
 
 interface MyRouterContext {
   queryClient: QueryClient
+  user: AuthUser | null
+  isAuthenticated: boolean
 }
 
 export const Route = createRootRouteWithContext<MyRouterContext>()({
+  beforeLoad: async () => {
+    // Fetch current user to populate context
+    const authResult = await getCurrentUserServerFn()
+    return {
+      user: authResult.isValid ? authResult.user : null,
+      isAuthenticated: authResult.isValid,
+    }
+  },
   head: () => ({
     meta: [
       {

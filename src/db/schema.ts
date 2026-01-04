@@ -1,5 +1,4 @@
 import {
-  AnyMySqlColumn,
   char,
   date,
   datetime,
@@ -7,7 +6,6 @@ import {
   float,
   index,
   int,
-  mysqlSchema,
   mysqlTable,
   primaryKey,
   text,
@@ -16,7 +14,6 @@ import {
   unique,
   varchar,
 } from 'drizzle-orm/mysql-core'
-import { sql } from 'drizzle-orm'
 
 export const wycDatabase = mysqlTable(
   'WYCDatabase',

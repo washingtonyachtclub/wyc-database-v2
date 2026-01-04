@@ -13,6 +13,9 @@ export const getRouter = () => {
     routeTree,
     context: {
       ...rqContext,
+      // Default auth state - will be populated by beforeLoad in root route
+      user: null,
+      isAuthenticated: false,
     },
 
     defaultPreload: 'intent',

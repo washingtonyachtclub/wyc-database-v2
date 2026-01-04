@@ -1,5 +1,5 @@
-import { createFileRoute, useNavigate } from '@tanstack/react-router'
-import { asc, count, desc, eq, sql } from 'drizzle-orm'
+import { createFileRoute, redirect, useNavigate } from '@tanstack/react-router'
+import { count, desc, eq, sql } from 'drizzle-orm'
 import { memcat, noyes, quarters, wycDatabase } from 'src/db/schema'
 import { createServerFn } from '@tanstack/react-start'
 import {
@@ -20,8 +20,12 @@ import {
   ChevronRight,
   ChevronsLeft,
   ChevronsRight,
+  X,
 } from 'lucide-react'
+import { useEffect, useState } from 'react'
 import db from '../db/index'
+import { requireAuth } from '../lib/auth-middleware'
+import { hashPassword } from '../lib/auth'
 import type { Member } from 'src/db/schema'
 import type { Table } from '@tanstack/react-table'
 
@@ -53,6 +57,18 @@ const getMostRecentWycNumberQueryOptions = () =>
     queryFn: getMostRecentWycNumber,
   })
 
+const getCategoriesQueryOptions = () =>
+  queryOptions({
+    queryKey: ['categories'],
+    queryFn: getCategories,
+  })
+
+const getQuartersQueryOptions = () =>
+  queryOptions({
+    queryKey: ['quarters'],
+    queryFn: getQuarters,
+  })
+
 // ===== SERVER FUNCTIONS =====
 
 export const getMembersTable = createServerFn({ method: 'GET' })
@@ -63,6 +79,9 @@ export const getMembersTable = createServerFn({ method: 'GET' })
     }
   })
   .handler(async ({ data }) => {
+    // Require authentication
+    await requireAuth()
+
     try {
       const pageIndex = data.pageIndex
       const pageSize = data.pageSize
@@ -109,11 +128,44 @@ export const getMostRecentWycNumber = createServerFn({ method: 'GET' }).handler(
   },
 )
 
+export const getCategories = createServerFn({ method: 'GET' }).handler(
+  async () => {
+    await requireAuth()
+    const result = await db.select().from(memcat).orderBy(memcat.index)
+    return result
+  },
+)
+
+export const getQuarters = createServerFn({ method: 'GET' }).handler(
+  async () => {
+    await requireAuth()
+    const result = await db
+      .select()
+      .from(quarters)
+      .orderBy(desc(quarters.index))
+    return result
+  },
+)
+
 export const addMember = createServerFn({ method: 'POST' })
   .inputValidator((data: Member) => data)
   .handler(async ({ data }) => {
+    // Require authentication
+    await requireAuth()
+
     try {
-      const newMember = await db.insert(wycDatabase).values(data).$returningId()
+      // Hash password before storing
+      const hashedPassword = data.password
+        ? hashPassword(data.password)
+        : data.password
+
+      const newMember = await db
+        .insert(wycDatabase)
+        .values({
+          ...data,
+          password: hashedPassword,
+        })
+        .$returningId()
       return { success: true, id: newMember, data }
     } catch (error: any) {
       // Provide more descriptive error messages
@@ -145,6 +197,15 @@ export const Route = createFileRoute('/')({
     return {
       pageIndex: Number(search.pageIndex) || 0,
       pageSize: Number(search.pageSize) || 10,
+    }
+  },
+  beforeLoad: ({ context }) => {
+    // If not authenticated, redirect to login
+    if (!context.isAuthenticated) {
+      throw redirect({
+        to: '/login',
+        search: (prev) => ({ ...prev, redirect: '/' }),
+      })
     }
   },
   loaderDeps: ({ search: { pageIndex, pageSize } }) => ({
@@ -276,19 +337,473 @@ function PaginationControls({
   )
 }
 
+// ===== ADD MEMBER FORM COMPONENT =====
+
+function AddMemberForm({
+  isOpen,
+  onClose,
+  onSuccess,
+}: {
+  isOpen: boolean
+  onClose: () => void
+  onSuccess: () => void
+}) {
+  const queryClient = useQueryClient()
+  const { data: mostRecentNumber } = useQuery(
+    getMostRecentWycNumberQueryOptions(),
+  )
+  const { data: categories = [] } = useQuery(getCategoriesQueryOptions())
+  const { data: quartersData = [] } = useQuery(getQuartersQueryOptions())
+
+  const addMemberMutation = useMutation({
+    mutationFn: addMember,
+    onSuccess: () => {
+      queryClient.invalidateQueries({
+        queryKey: ['members'],
+      })
+      queryClient.invalidateQueries(getMostRecentWycNumberQueryOptions())
+      onSuccess()
+      onClose()
+    },
+  })
+
+  const [formData, setFormData] = useState<Partial<Member>>({
+    wycNumber: 1,
+    category: undefined,
+    expireQtr: undefined,
+    outToSea: 0,
+    joinDate: new Date().toISOString().slice(0, 16),
+    password: '',
+  })
+
+  const [error, setError] = useState<string | null>(null)
+
+  // Update WYC Number when mostRecentNumber changes
+  useEffect(() => {
+    if (isOpen && mostRecentNumber) {
+      setFormData((prev) => ({
+        ...prev,
+        wycNumber: mostRecentNumber + 1,
+      }))
+    }
+  }, [mostRecentNumber, isOpen])
+
+  if (!isOpen) return null
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault()
+    setError(null)
+
+    try {
+      const memberData: Member = {
+        wycNumber: formData.wycNumber!,
+        first: formData.first || null,
+        last: formData.last || null,
+        streetAddress: formData.streetAddress || null,
+        city: formData.city || null,
+        state: formData.state || null,
+        zipCode: formData.zipCode || null,
+        phone1: formData.phone1 || null,
+        phone2: formData.phone2 || null,
+        email: formData.email || null,
+        category: formData.category ?? null,
+        expireQtr: formData.expireQtr ?? 0,
+        studentId: formData.studentId ?? null,
+        password: formData.password || null,
+        outToSea: formData.outToSea ?? 0,
+        joinDate: formData.joinDate
+          ? new Date(formData.joinDate).toISOString()
+          : new Date().toISOString(),
+        imageName: formData.imageName || null,
+      }
+
+      await addMemberMutation.mutateAsync({ data: memberData })
+    } catch (err: any) {
+      setError(err.message || 'Failed to add member. Please try again.')
+    }
+  }
+
+  const handleChange = (
+    e: React.ChangeEvent<
+      HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement
+    >,
+  ) => {
+    const { name, value } = e.target
+    setFormData((prev) => ({
+      ...prev,
+      [name]:
+        name === 'wycNumber' ||
+        name === 'category' ||
+        name === 'expireQtr' ||
+        name === 'studentId' ||
+        name === 'outToSea'
+          ? value === '' || value === 'null'
+            ? null
+            : Number(value)
+          : value === ''
+            ? null
+            : value,
+    }))
+  }
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
+      <div className="bg-background rounded-lg shadow-lg w-full max-w-2xl max-h-[90vh] overflow-y-auto m-4">
+        <div className="sticky top-0 bg-background border-b px-6 py-4 flex items-center justify-between">
+          <h2 className="text-2xl font-bold">Add New Member</h2>
+          <button
+            onClick={onClose}
+            className="text-muted-foreground hover:text-foreground"
+            aria-label="Close"
+          >
+            <X className="h-5 w-5" />
+          </button>
+        </div>
+
+        <form onSubmit={handleSubmit} className="p-6 space-y-4">
+          {error && (
+            <div className="rounded-md bg-destructive/10 p-4 border border-destructive">
+              <div className="text-sm text-destructive">{error}</div>
+            </div>
+          )}
+
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label
+                htmlFor="wycNumber"
+                className="block text-sm font-medium mb-1"
+              >
+                WYC Number *
+              </label>
+              <input
+                id="wycNumber"
+                name="wycNumber"
+                type="number"
+                required
+                value={formData.wycNumber ?? ''}
+                onChange={handleChange}
+                className="w-full px-3 py-2 border rounded"
+              />
+            </div>
+
+            <div>
+              <label
+                htmlFor="joinDate"
+                className="block text-sm font-medium mb-1"
+              >
+                Join Date *
+              </label>
+              <input
+                id="joinDate"
+                name="joinDate"
+                type="datetime-local"
+                required
+                value={formData.joinDate?.slice(0, 16) ?? ''}
+                onChange={handleChange}
+                className="w-full px-3 py-2 border rounded"
+              />
+            </div>
+
+            <div>
+              <label htmlFor="first" className="block text-sm font-medium mb-1">
+                First Name
+              </label>
+              <input
+                id="first"
+                name="first"
+                type="text"
+                maxLength={50}
+                value={formData.first ?? ''}
+                onChange={handleChange}
+                className="w-full px-3 py-2 border rounded"
+              />
+            </div>
+
+            <div>
+              <label htmlFor="last" className="block text-sm font-medium mb-1">
+                Last Name
+              </label>
+              <input
+                id="last"
+                name="last"
+                type="text"
+                maxLength={50}
+                value={formData.last ?? ''}
+                onChange={handleChange}
+                className="w-full px-3 py-2 border rounded"
+              />
+            </div>
+
+            <div>
+              <label htmlFor="email" className="block text-sm font-medium mb-1">
+                Email
+              </label>
+              <input
+                id="email"
+                name="email"
+                type="email"
+                maxLength={50}
+                value={formData.email ?? ''}
+                onChange={handleChange}
+                className="w-full px-3 py-2 border rounded"
+              />
+            </div>
+
+            <div>
+              <label
+                htmlFor="phone1"
+                className="block text-sm font-medium mb-1"
+              >
+                Phone 1
+              </label>
+              <input
+                id="phone1"
+                name="phone1"
+                type="text"
+                maxLength={50}
+                value={formData.phone1 ?? ''}
+                onChange={handleChange}
+                className="w-full px-3 py-2 border rounded"
+              />
+            </div>
+
+            <div>
+              <label
+                htmlFor="phone2"
+                className="block text-sm font-medium mb-1"
+              >
+                Phone 2
+              </label>
+              <input
+                id="phone2"
+                name="phone2"
+                type="text"
+                maxLength={50}
+                value={formData.phone2 ?? ''}
+                onChange={handleChange}
+                className="w-full px-3 py-2 border rounded"
+              />
+            </div>
+
+            <div>
+              <label
+                htmlFor="password"
+                className="block text-sm font-medium mb-1"
+              >
+                Password
+              </label>
+              <input
+                id="password"
+                name="password"
+                type="password"
+                maxLength={50}
+                value={formData.password ?? ''}
+                onChange={handleChange}
+                className="w-full px-3 py-2 border rounded"
+              />
+            </div>
+
+            <div className="col-span-2">
+              <label
+                htmlFor="streetAddress"
+                className="block text-sm font-medium mb-1"
+              >
+                Street Address
+              </label>
+              <input
+                id="streetAddress"
+                name="streetAddress"
+                type="text"
+                maxLength={100}
+                value={formData.streetAddress ?? ''}
+                onChange={handleChange}
+                className="w-full px-3 py-2 border rounded"
+              />
+            </div>
+
+            <div>
+              <label htmlFor="city" className="block text-sm font-medium mb-1">
+                City
+              </label>
+              <input
+                id="city"
+                name="city"
+                type="text"
+                maxLength={50}
+                value={formData.city ?? ''}
+                onChange={handleChange}
+                className="w-full px-3 py-2 border rounded"
+              />
+            </div>
+
+            <div>
+              <label htmlFor="state" className="block text-sm font-medium mb-1">
+                State
+              </label>
+              <input
+                id="state"
+                name="state"
+                type="text"
+                maxLength={20}
+                value={formData.state ?? ''}
+                onChange={handleChange}
+                className="w-full px-3 py-2 border rounded"
+              />
+            </div>
+
+            <div>
+              <label
+                htmlFor="zipCode"
+                className="block text-sm font-medium mb-1"
+              >
+                Zip Code
+              </label>
+              <input
+                id="zipCode"
+                name="zipCode"
+                type="text"
+                maxLength={10}
+                value={formData.zipCode ?? ''}
+                onChange={handleChange}
+                className="w-full px-3 py-2 border rounded"
+              />
+            </div>
+
+            <div>
+              <label
+                htmlFor="category"
+                className="block text-sm font-medium mb-1"
+              >
+                Category
+              </label>
+              <select
+                id="category"
+                name="category"
+                value={formData.category ?? ''}
+                onChange={handleChange}
+                className="w-full px-3 py-2 border rounded"
+              >
+                <option value="">Select Category</option>
+                {categories.map((cat) => (
+                  <option key={cat.index} value={cat.index}>
+                    {cat.text || `Category ${cat.index}`}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            <div>
+              <label
+                htmlFor="expireQtr"
+                className="block text-sm font-medium mb-1"
+              >
+                Expire Quarter *
+              </label>
+              <select
+                id="expireQtr"
+                name="expireQtr"
+                required
+                value={formData.expireQtr ?? ''}
+                onChange={handleChange}
+                className="w-full px-3 py-2 border rounded"
+              >
+                <option value="">Select Quarter</option>
+                {quartersData.map((qtr) => (
+                  <option key={qtr.index} value={qtr.index}>
+                    {qtr.school || qtr.text || `Quarter ${qtr.index}`}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            <div>
+              <label
+                htmlFor="studentId"
+                className="block text-sm font-medium mb-1"
+              >
+                Student ID
+              </label>
+              <input
+                id="studentId"
+                name="studentId"
+                type="number"
+                value={formData.studentId ?? ''}
+                onChange={handleChange}
+                className="w-full px-3 py-2 border rounded"
+              />
+            </div>
+
+            <div>
+              <label
+                htmlFor="outToSea"
+                className="block text-sm font-medium mb-1"
+              >
+                Out to Sea
+              </label>
+              <select
+                id="outToSea"
+                name="outToSea"
+                value={formData.outToSea ?? 0}
+                onChange={handleChange}
+                className="w-full px-3 py-2 border rounded"
+              >
+                <option value={0}>No</option>
+                <option value={1}>Yes</option>
+              </select>
+            </div>
+
+            <div>
+              <label
+                htmlFor="imageName"
+                className="block text-sm font-medium mb-1"
+              >
+                Image Name
+              </label>
+              <input
+                id="imageName"
+                name="imageName"
+                type="text"
+                maxLength={50}
+                value={formData.imageName ?? ''}
+                onChange={handleChange}
+                className="w-full px-3 py-2 border rounded"
+              />
+            </div>
+          </div>
+
+          <div className="flex justify-end gap-2 pt-4 border-t">
+            <button
+              type="button"
+              onClick={onClose}
+              className="px-4 py-2 border rounded hover:bg-accent"
+              disabled={addMemberMutation.isPending}
+            >
+              Cancel
+            </button>
+            <button
+              type="submit"
+              className="px-4 py-2 bg-primary text-primary-foreground rounded hover:opacity-90 disabled:opacity-50"
+              disabled={addMemberMutation.isPending}
+            >
+              {addMemberMutation.isPending ? 'Adding...' : 'Add Member'}
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  )
+}
+
 // ===== COMPONENT =====
 
 function App() {
-  const queryClient = useQueryClient()
   const navigate = useNavigate({ from: '/' })
   const { pageIndex, pageSize } = Route.useSearch()
+  const [isFormOpen, setIsFormOpen] = useState(false)
+  const [formKey, setFormKey] = useState(0)
 
   const { data: membersResponse } = useSuspenseQuery(
     getMembersQueryOptions(pageIndex, pageSize),
-  )
-
-  const { data: mostRecentNumber } = useQuery(
-    getMostRecentWycNumberQueryOptions(),
   )
 
   const members = membersResponse.data
@@ -322,67 +837,28 @@ function App() {
     },
   })
 
-  const addMemberMutation = useMutation({
-    mutationFn: addMember,
-    onSuccess: () => {
-      queryClient.invalidateQueries({
-        queryKey: ['members'],
-      })
-      queryClient.invalidateQueries(getMostRecentWycNumberQueryOptions())
-    },
-  })
-
-  const handleAddMember = async () => {
-    try {
-      // Use cached value if available, otherwise fetch
-      const currentNumber =
-        mostRecentNumber ??
-        (await queryClient.ensureQueryData(
-          getMostRecentWycNumberQueryOptions(),
-        ))
-
-      const newWycNumber = currentNumber + 1
-
-      await addMemberMutation.mutateAsync({
-        data: {
-          last: 'Test',
-          first: 'Member',
-          streetAddress: '123 Main St',
-          city: 'Boston',
-          state: 'MA',
-          zipCode: '02101',
-          phone1: '555-0123',
-          phone2: null,
-          email: 'test@example.com',
-          category: 1,
-          wycNumber: newWycNumber,
-          expireQtr: 4,
-          studentId: null,
-          password: 'test123',
-          outToSea: 0,
-          joinDate: new Date().toISOString(),
-          imageName: null,
-        },
-      })
-
-      alert(`Member added successfully with WYC Number: ${newWycNumber}`)
-    } catch (error: any) {
-      console.error('Error adding member:', error)
-      alert(
-        `Error: ${error.message || 'Failed to add member. Please try again.'}`,
-      )
-    }
+  const handleFormSuccess = () => {
+    // Optionally show success message
+    alert('Member added successfully!')
+    // Reset form by changing key
+    setFormKey((prev) => prev + 1)
   }
 
   return (
     <div className="p-4">
       <h2 className="text-2xl font-bold mb-4">WYC Members</h2>
       <button
-        onClick={handleAddMember}
+        onClick={() => setIsFormOpen(true)}
         className="mb-4 px-4 py-2 bg-primary text-primary-foreground rounded hover:opacity-90"
       >
         Add Member
       </button>
+      <AddMemberForm
+        key={formKey}
+        isOpen={isFormOpen}
+        onClose={() => setIsFormOpen(false)}
+        onSuccess={handleFormSuccess}
+      />
       <PaginationControls
         table={table}
         pageCount={pageCount}
