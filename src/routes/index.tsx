@@ -1,5 +1,5 @@
 import { createFileRoute, redirect, useNavigate } from '@tanstack/react-router'
-import { count, desc, eq, sql } from 'drizzle-orm'
+import { and, asc, count, desc, eq, gte, like, or, sql } from 'drizzle-orm'
 import { memcat, noyes, quarters, wycDatabase } from 'src/db/schema'
 import { createServerFn } from '@tanstack/react-start'
 import {
@@ -13,9 +13,12 @@ import {
   createColumnHelper,
   flexRender,
   getCoreRowModel,
+  getSortedRowModel,
   useReactTable,
 } from '@tanstack/react-table'
 import {
+  ArrowDown,
+  ArrowUp,
   ChevronLeft,
   ChevronRight,
   ChevronsLeft,
@@ -35,17 +38,28 @@ export const memberSelectFields = {
   last: sql<string>`COALESCE(${wycDatabase.last}, '')`.as('last'),
   category: sql<string>`COALESCE(${memcat.text}, 'Unknown')`.as('category'),
   expireQtr: sql<string>`COALESCE(${quarters.school}, 'N/A')`.as('expireQtr'),
+  expireQtrIndex: wycDatabase.expireQtr,
   joinDate: wycDatabase.joinDate,
 }
 
 // ===== QUERY OPTIONS (Read operations) =====
 
-const getMembersQueryOptions = (pageIndex: number, pageSize: number) =>
+const getMembersQueryOptions = (
+  pageIndex: number,
+  pageSize: number,
+  filters?: {
+    wycId?: string
+    category?: number
+    expireQtr?: number
+    expireQtrMode?: 'exactly' | 'atLeast'
+  },
+  sorting?: { id: string; desc: boolean },
+) =>
   queryOptions({
-    queryKey: ['members', pageIndex, pageSize],
+    queryKey: ['members', pageIndex, pageSize, filters, sorting],
     queryFn: async () => {
       const result = await getMembersTable({
-        data: { pageIndex, pageSize },
+        data: { pageIndex, pageSize, filters, sorting },
       })
       return result
     },
@@ -72,34 +86,116 @@ const getQuartersQueryOptions = () =>
 // ===== SERVER FUNCTIONS =====
 
 export const getMembersTable = createServerFn({ method: 'GET' })
-  .inputValidator((input: { pageIndex: number; pageSize: number }) => {
-    return {
-      pageIndex: input.pageIndex,
-      pageSize: input.pageSize,
-    }
-  })
+  .inputValidator(
+    (input: {
+      pageIndex: number
+      pageSize: number
+      filters?: {
+        wycId?: string
+        name?: string
+        category?: number
+        expireQtr?: number
+        expireQtrMode?: 'exactly' | 'atLeast'
+      }
+      sorting?: { id: string; desc: boolean }
+    }) => {
+      return {
+        pageIndex: input.pageIndex,
+        pageSize: input.pageSize,
+        filters: input.filters,
+        sorting: input.sorting,
+      }
+    },
+  )
   .handler(async ({ data }) => {
-    // Require authentication
     await requireAuth()
 
     try {
       const pageIndex = data.pageIndex
       const pageSize = data.pageSize
       const offset = pageIndex * pageSize
+      const filters = data.filters
+      const sorting = data.sorting
 
-      const members = await db
+      const whereConditions = []
+
+      if (filters?.wycId) {
+        const wycIdNum = Number(filters.wycId)
+        if (!isNaN(wycIdNum)) {
+          whereConditions.push(eq(wycDatabase.wycNumber, wycIdNum))
+        }
+      }
+
+      if (filters?.name) {
+        const trimmedName = filters.name.trim()
+        const nameParts = trimmedName.split(/\s+/).filter((part) => part.length > 0)
+        
+        if (nameParts.length >= 2) {
+          const firstNamePattern = `%${nameParts[0]}%`
+          const lastNamePattern = `${nameParts.slice(1).join(' ')}%`
+          whereConditions.push(
+            and(
+              like(wycDatabase.first, firstNamePattern),
+              like(wycDatabase.last, lastNamePattern),
+            )!,
+          )
+        } else if (nameParts.length === 1) {
+          const namePattern = `%${nameParts[0]}%`
+          whereConditions.push(
+            or(
+              like(wycDatabase.first, namePattern),
+              like(wycDatabase.last, namePattern),
+            ),
+          )
+        }
+      }
+
+      if (filters?.category !== undefined && filters.category !== null) {
+        whereConditions.push(eq(wycDatabase.category, filters.category))
+      }
+
+      if (filters?.expireQtr !== undefined && filters.expireQtr !== null) {
+        if (filters.expireQtrMode === 'atLeast') {
+          whereConditions.push(gte(wycDatabase.expireQtr, filters.expireQtr))
+        } else {
+          whereConditions.push(eq(wycDatabase.expireQtr, filters.expireQtr))
+        }
+      }
+
+      const baseQuery = db
         .select(memberSelectFields)
         .from(wycDatabase)
         .leftJoin(memcat, eq(memcat.index, wycDatabase.category))
         .leftJoin(quarters, eq(quarters.index, wycDatabase.expireQtr))
         .leftJoin(noyes, eq(noyes.index, wycDatabase.outToSea))
-        .orderBy(desc(wycDatabase.joinDate))
-        .limit(pageSize)
-        .offset(offset)
 
-      const [totalCountResult] = await db
-        .select({ count: count() })
-        .from(wycDatabase)
+      const queryWithWhere =
+        whereConditions.length > 0
+          ? baseQuery.where(and(...whereConditions))
+          : baseQuery
+
+      let membersQuery
+      if (sorting?.id === 'expireQtr') {
+        membersQuery = sorting.desc
+          ? queryWithWhere.orderBy(desc(wycDatabase.expireQtr))
+          : queryWithWhere.orderBy(asc(wycDatabase.expireQtr))
+      } else if (sorting?.id === 'joinDate') {
+        membersQuery = sorting.desc
+          ? queryWithWhere.orderBy(desc(wycDatabase.joinDate))
+          : queryWithWhere.orderBy(asc(wycDatabase.joinDate))
+      } else {
+        membersQuery = queryWithWhere.orderBy(desc(wycDatabase.joinDate))
+      }
+
+      const members = await membersQuery.limit(pageSize).offset(offset)
+
+      const baseCountQuery = db.select({ count: count() }).from(wycDatabase)
+      const countQuery =
+        whereConditions.length > 0
+          ? baseCountQuery.where(and(...whereConditions))
+          : baseCountQuery
+
+      const [totalCountResult] = await countQuery
       const totalCount = totalCountResult.count
 
       return {
@@ -150,9 +246,7 @@ export const getQuarters = createServerFn({ method: 'GET' }).handler(
 export const addMember = createServerFn({ method: 'POST' })
   .inputValidator((data: Member) => data)
   .handler(async ({ data }) => {
-    // Require authentication
     await requireAuth()
-
     try {
       // Hash password before storing
       const hashedPassword = data.password
@@ -168,14 +262,13 @@ export const addMember = createServerFn({ method: 'POST' })
         .$returningId()
       return { success: true, id: newMember, data }
     } catch (error: any) {
-      // Provide more descriptive error messages
       let errorMessage = 'Failed to add member'
 
       if (
         error?.code === 'ER_DUP_ENTRY' ||
         error?.message?.includes('Duplicate entry')
       ) {
-        errorMessage = `A member with WYC Number ${data.wycNumber} already exists. Please use a different number.`
+        errorMessage = `A member with WYC ID ${data.wycNumber} already exists. Please use a different number.`
       } else if (error?.code === 'ER_NO_DEFAULT_FOR_FIELD') {
         errorMessage = `Missing required field: ${error.message}`
       } else if (error?.code === 'ER_DATA_TOO_LONG') {
@@ -197,10 +290,19 @@ export const Route = createFileRoute('/')({
     return {
       pageIndex: Number(search.pageIndex) || 0,
       pageSize: Number(search.pageSize) || 10,
+      wycId: search.wycId as string | undefined,
+      name: search.name as string | undefined,
+      category: search.category ? Number(search.category) : undefined,
+      expireQtr: search.expireQtr ? Number(search.expireQtr) : undefined,
+      expireQtrMode:
+        (search.expireQtrMode === 'exactly' || search.expireQtrMode === 'atLeast'
+          ? search.expireQtrMode
+          : undefined) as 'exactly' | 'atLeast' | undefined,
+      sortColumn: search.sortColumn as string | undefined,
+      sortDesc: search.sortDesc === 'true' || search.sortDesc === true,
     }
   },
   beforeLoad: ({ context }) => {
-    // If not authenticated, redirect to login
     if (!context.isAuthenticated) {
       throw redirect({
         to: '/login',
@@ -208,13 +310,45 @@ export const Route = createFileRoute('/')({
       })
     }
   },
-  loaderDeps: ({ search: { pageIndex, pageSize } }) => ({
-    pageIndex,
-    pageSize,
-  }),
-  loader: ({ context, deps: { pageIndex, pageSize } }) => {
+  loaderDeps: ({
+    search: {
+      pageIndex,
+      pageSize,
+      wycId,
+      name,
+      category,
+      expireQtr,
+      expireQtrMode,
+      sortColumn,
+      sortDesc,
+    },
+  }) => {
+    const filters =
+      wycId || name || category !== undefined || expireQtr !== undefined
+        ? {
+            wycId,
+            name,
+            category,
+            expireQtr,
+            expireQtrMode,
+          }
+        : undefined
+
+    const sorting =
+      sortColumn && (sortColumn === 'expireQtr' || sortColumn === 'joinDate')
+        ? { id: sortColumn, desc: sortDesc }
+        : undefined
+
+    return {
+      pageIndex,
+      pageSize,
+      filters,
+      sorting,
+    }
+  },
+  loader: ({ context, deps: { pageIndex, pageSize, filters, sorting } }) => {
     return context.queryClient.ensureQueryData(
-      getMembersQueryOptions(pageIndex, pageSize),
+      getMembersQueryOptions(pageIndex, pageSize, filters, sorting),
     )
   },
   component: App,
@@ -228,6 +362,7 @@ type MembersTableRow = {
   last: string
   category: string
   expireQtr: string
+  expireQtrIndex: number
   joinDate: string
 }
 
@@ -235,8 +370,9 @@ const columnHelper = createColumnHelper<MembersTableRow>()
 
 const columns = [
   columnHelper.accessor('wycNumber', {
-    header: 'WYC Number',
+    header: 'WYC ID',
     cell: (info) => info.getValue(),
+    enableSorting: false,
   }),
   columnHelper.accessor(
     (row) => `${row.first || ''} ${row.last || ''}`.trim(),
@@ -244,15 +380,22 @@ const columns = [
       id: 'name',
       header: 'Name',
       cell: (info) => info.getValue() || '—',
+      enableSorting: false,
     },
   ),
   columnHelper.accessor('category', {
     header: 'Category',
     cell: (info) => info.getValue(),
+    enableSorting: false,
   }),
   columnHelper.accessor('expireQtr', {
     header: 'Expire Qtr',
-    cell: (info) => info.getValue(),
+    cell: (info) => {
+      const value = info.getValue()
+      const index = info.row.original.expireQtrIndex
+      return `${value} (${index})`
+    },
+    enableSorting: true,
   }),
   columnHelper.accessor('joinDate', {
     header: 'Join Date (M/D/YYYY)',
@@ -260,6 +403,7 @@ const columns = [
       const date = info.getValue()
       return date ? new Date(date).toLocaleDateString() : '—'
     },
+    enableSorting: true,
   }),
 ]
 
@@ -378,7 +522,6 @@ function AddMemberForm({
 
   const [error, setError] = useState<string | null>(null)
 
-  // Update WYC Number when mostRecentNumber changes
   useEffect(() => {
     if (isOpen && mostRecentNumber) {
       setFormData((prev) => ({
@@ -473,12 +616,14 @@ function AddMemberForm({
                 htmlFor="wycNumber"
                 className="block text-sm font-medium mb-1"
               >
-                WYC Number *
+                WYC ID *
               </label>
               <input
                 id="wycNumber"
                 name="wycNumber"
-                type="number"
+                type="text"
+                inputMode="numeric"
+                pattern="[0-9]*"
                 required
                 value={formData.wycNumber ?? ''}
                 onChange={handleChange}
@@ -794,16 +939,272 @@ function AddMemberForm({
   )
 }
 
+// ===== FILTER COMPONENT =====
+
+function FilterControls({
+  wycId,
+  name,
+  category,
+  expireQtr,
+  expireQtrMode,
+  categories,
+  quarters,
+  onFilterChange,
+  onClearFilters,
+}: {
+  wycId?: string
+  name?: string
+  category?: number
+  expireQtr?: number
+  expireQtrMode?: 'exactly' | 'atLeast'
+  categories: Array<{ index: number; text: string | null }>
+  quarters: Array<{ index: number; text: string | null; school: string | null }>
+  onFilterChange: (filters: {
+    wycId?: string
+    name?: string
+    category?: number
+    expireQtr?: number
+    expireQtrMode?: 'exactly' | 'atLeast'
+  }) => void
+  onClearFilters: () => void
+}) {
+  const [localName, setLocalName] = useState(name || '')
+  const [localWycId, setLocalWycId] = useState(wycId || '')
+
+  useEffect(() => {
+    setLocalName(name || '')
+    setLocalWycId(wycId || '')
+  }, [name, wycId])
+
+  const hasFilters = wycId || name || category !== undefined || expireQtr !== undefined
+
+  const handleSearch = () => {
+    const trimmedWycId = localWycId.trim()
+    const trimmedName = localName.trim()
+    onFilterChange({
+      wycId: trimmedWycId || undefined,
+      name: trimmedName || undefined,
+      category,
+      expireQtr,
+      expireQtrMode,
+    })
+  }
+
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter') {
+      handleSearch()
+    }
+  }
+
+  const handleClear = () => {
+    setLocalName('')
+    setLocalWycId('')
+    onClearFilters()
+  }
+
+  return (
+    <div className="mb-4 p-4 border-2 rounded-lg bg-muted/50">
+      <div className="flex flex-wrap items-end gap-4">
+        <div>
+          <label
+            htmlFor="filter-name"
+            className="block text-sm font-medium mb-1"
+          >
+            Name
+          </label>
+          <input
+            id="filter-name"
+            type="text"
+            value={localName}
+            onChange={(e) => setLocalName(e.target.value)}
+            onKeyDown={handleKeyDown}
+            placeholder="Search by name"
+            className={`px-3 py-2 border-2 rounded text-sm w-48 ${
+              name
+                ? 'bg-primary/10 border-primary'
+                : 'bg-background border-border'
+            }`}
+          />
+        </div>
+
+        <div>
+          <label
+            htmlFor="filter-wyc-id"
+            className="block text-sm font-medium mb-1"
+          >
+            WYC ID
+          </label>
+          <input
+            id="filter-wyc-id"
+            type="text"
+            inputMode="numeric"
+            pattern="[0-9]*"
+            value={localWycId}
+            onChange={(e) => setLocalWycId(e.target.value.replace(/\D/g, ''))}
+            onKeyDown={handleKeyDown}
+            placeholder="Search by WYC ID"
+            className={`px-3 py-2 border-2 rounded text-sm w-32 ${
+              wycId
+                ? 'bg-primary/10 border-primary'
+                : 'bg-background border-border'
+            }`}
+          />
+        </div>
+
+        <div>
+          <label
+            htmlFor="filter-category"
+            className="block text-sm font-medium mb-1"
+          >
+            Category
+          </label>
+          <select
+            id="filter-category"
+            value={category ?? ''}
+            onChange={(e) =>
+              onFilterChange({
+                wycId,
+                name,
+                category: e.target.value ? Number(e.target.value) : undefined,
+                expireQtr,
+                expireQtrMode,
+              })
+            }
+            className={`px-3 py-2 border-2 rounded text-sm ${
+              category !== undefined
+                ? 'bg-primary/10 border-primary'
+                : 'bg-background border-border'
+            }`}
+          >
+            <option value="">All Categories</option>
+            {categories.map((cat) => (
+              <option key={cat.index} value={cat.index}>
+                {cat.text || `Category ${cat.index}`}
+              </option>
+            ))}
+          </select>
+        </div>
+
+        <div>
+          <label
+            htmlFor="filter-expire-qtr-mode"
+            className="block text-sm font-medium mb-1"
+          >
+            Expire Quarter
+          </label>
+          <div className="flex gap-2">
+            <select
+              id="filter-expire-qtr-mode"
+              value={expireQtrMode || 'exactly'}
+              onChange={(e) =>
+                onFilterChange({
+                  wycId,
+                  name,
+                  category,
+                  expireQtr,
+                  expireQtrMode: e.target.value as 'exactly' | 'atLeast',
+                })
+              }
+              className={`px-2 py-2 border-2 rounded text-sm ${
+                expireQtr !== undefined
+                  ? 'bg-primary/10 border-primary'
+                  : 'bg-background border-border'
+              }`}
+            >
+              <option value="exactly">Exactly</option>
+              <option value="atLeast">At least</option>
+            </select>
+            <select
+              id="filter-expire-qtr"
+              value={expireQtr ?? ''}
+              onChange={(e) =>
+                onFilterChange({
+                  wycId,
+                  name,
+                  category,
+                  expireQtr: e.target.value
+                    ? Number(e.target.value)
+                    : undefined,
+                  expireQtrMode: expireQtrMode || 'exactly',
+                })
+              }
+              className={`px-3 py-2 border-2 rounded text-sm ${
+                expireQtr !== undefined
+                  ? 'bg-primary/10 border-primary'
+                  : 'bg-background border-border'
+              }`}
+            >
+              <option value="">All Quarters</option>
+              {quarters.map((qtr) => (
+                <option key={qtr.index} value={qtr.index}>
+                  {qtr.school || qtr.text || `Quarter ${qtr.index}`}
+                </option>
+              ))}
+            </select>
+          </div>
+        </div>
+
+        <div>
+          <button
+            onClick={handleSearch}
+            className="px-4 py-2 text-sm font-medium border-2 border-primary rounded bg-primary text-primary-foreground hover:opacity-90 transition-colors"
+          >
+            Search
+          </button>
+        </div>
+
+        {hasFilters && (
+          <button
+            onClick={handleClear}
+            className="px-4 py-2 text-sm font-medium border-2 border-destructive/50 rounded bg-destructive/10 text-destructive hover:bg-destructive/20 hover:border-destructive transition-colors"
+          >
+            Clear Filters
+          </button>
+        )}
+      </div>
+    </div>
+  )
+}
+
 // ===== COMPONENT =====
 
 function App() {
   const navigate = useNavigate({ from: '/' })
-  const { pageIndex, pageSize } = Route.useSearch()
+  const {
+    pageIndex,
+    pageSize,
+    wycId,
+    name,
+    category,
+    expireQtr,
+    expireQtrMode,
+    sortColumn,
+    sortDesc,
+  } = Route.useSearch()
   const [isFormOpen, setIsFormOpen] = useState(false)
   const [formKey, setFormKey] = useState(0)
 
+  const { data: categories = [] } = useQuery(getCategoriesQueryOptions())
+  const { data: quarters = [] } = useQuery(getQuartersQueryOptions())
+
+  const filters =
+    wycId || name || category !== undefined || expireQtr !== undefined
+      ? {
+          wycId,
+          name,
+          category,
+          expireQtr,
+          expireQtrMode: expireQtrMode || 'exactly',
+        }
+      : undefined
+
+  const sorting =
+    sortColumn && (sortColumn === 'expireQtr' || sortColumn === 'joinDate')
+      ? { id: sortColumn, desc: sortDesc }
+      : undefined
+
   const { data: membersResponse } = useSuspenseQuery(
-    getMembersQueryOptions(pageIndex, pageSize),
+    getMembersQueryOptions(pageIndex, pageSize, filters, sorting),
   )
 
   const members = membersResponse.data
@@ -814,13 +1215,19 @@ function App() {
     data: members,
     columns,
     getCoreRowModel: getCoreRowModel(),
+    getSortedRowModel: getSortedRowModel(),
     manualPagination: true,
+    manualSorting: true,
+    manualFiltering: true,
     pageCount,
     state: {
       pagination: {
         pageIndex,
         pageSize,
       },
+      sorting: sorting
+        ? [{ id: sorting.id, desc: sorting.desc }]
+        : [],
     },
     onPaginationChange: (updater) => {
       const newPagination =
@@ -831,16 +1238,83 @@ function App() {
         search: {
           pageIndex: newPagination.pageIndex,
           pageSize: newPagination.pageSize,
+          wycId,
+          name,
+          category,
+          expireQtr,
+          expireQtrMode,
+          sortColumn,
+          sortDesc,
+        },
+        replace: true,
+      })
+    },
+    onSortingChange: (updater) => {
+      const newSorting =
+        typeof updater === 'function'
+          ? updater(sorting ? [{ id: sorting.id, desc: sorting.desc }] : [])
+          : updater
+
+      const sort = newSorting[0]
+      navigate({
+        search: {
+          pageIndex: 0,
+          pageSize,
+          wycId,
+          name,
+          category,
+          expireQtr,
+          expireQtrMode,
+          sortColumn: sort?.id,
+          sortDesc: sort?.desc || false,
         },
         replace: true,
       })
     },
   })
 
+  const handleFilterChange = (newFilters: {
+    wycId?: string
+    name?: string
+    category?: number
+    expireQtr?: number
+    expireQtrMode?: 'exactly' | 'atLeast'
+  }) => {
+    navigate({
+      search: {
+        pageIndex: 0,
+        pageSize,
+        wycId: newFilters.wycId,
+        name: newFilters.name,
+        category: newFilters.category,
+        expireQtr: newFilters.expireQtr,
+        expireQtrMode: newFilters.expireQtrMode || 'exactly',
+        sortColumn,
+        sortDesc,
+      },
+      replace: true,
+    })
+  }
+
+  const handleClearFilters = () => {
+    navigate({
+      search: {
+        pageIndex: 0,
+        pageSize,
+        wycId: undefined,
+        name: undefined,
+        category: undefined,
+        expireQtr: undefined,
+        expireQtrMode: undefined,
+        sortColumn,
+        sortDesc,
+      },
+      replace: true,
+    })
+  }
+
   const handleFormSuccess = () => {
-    // Optionally show success message
     alert('Member added successfully!')
-    // Reset form by changing key
     setFormKey((prev) => prev + 1)
   }
 
@@ -859,6 +1333,17 @@ function App() {
         onClose={() => setIsFormOpen(false)}
         onSuccess={handleFormSuccess}
       />
+      <FilterControls
+        wycId={wycId}
+        name={name}
+        category={category}
+        expireQtr={expireQtr}
+        expireQtrMode={expireQtrMode || 'exactly'}
+        categories={categories}
+        quarters={quarters}
+        onFilterChange={handleFilterChange}
+        onClearFilters={handleClearFilters}
+      />
       <PaginationControls
         table={table}
         pageCount={pageCount}
@@ -869,19 +1354,45 @@ function App() {
           <thead>
             {table.getHeaderGroups().map((headerGroup) => (
               <tr key={headerGroup.id} className="bg-muted">
-                {headerGroup.headers.map((header) => (
-                  <th
-                    key={header.id}
-                    className="px-4 py-3 text-left font-semibold text-sm border-b"
-                  >
-                    {header.isPlaceholder
-                      ? null
-                      : flexRender(
-                          header.column.columnDef.header,
-                          header.getContext(),
-                        )}
-                  </th>
-                ))}
+                {headerGroup.headers.map((header) => {
+                  const canSort = header.column.getCanSort()
+                  const sortDirection = header.column.getIsSorted()
+                  return (
+                    <th
+                      key={header.id}
+                      className="px-4 py-3 text-left font-semibold text-sm border-b"
+                    >
+                      {header.isPlaceholder ? null : (
+                        <div
+                          className={
+                            canSort
+                              ? 'flex items-center gap-2 cursor-pointer select-none hover:text-foreground'
+                              : ''
+                          }
+                          onClick={header.column.getToggleSortingHandler()}
+                        >
+                          {flexRender(
+                            header.column.columnDef.header,
+                            header.getContext(),
+                          )}
+                          {canSort && (
+                            <span className="inline-flex items-center">
+                              {sortDirection === 'asc' ? (
+                                <ArrowUp className="h-4 w-4" />
+                              ) : sortDirection === 'desc' ? (
+                                <ArrowDown className="h-4 w-4" />
+                              ) : (
+                                <span className="text-muted-foreground opacity-50">
+                                  ↕
+                                </span>
+                              )}
+                            </span>
+                          )}
+                        </div>
+                      )}
+                    </th>
+                  )
+                })}
               </tr>
             ))}
           </thead>
