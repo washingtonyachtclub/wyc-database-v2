@@ -13,3 +13,6 @@ count.txt
 todos.json
 
 .vercel
+
+# Tunnel script (contain server details - use .example file instead)
+tunnel.sh

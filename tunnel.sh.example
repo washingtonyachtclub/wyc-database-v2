@@ -1,0 +1,22 @@
+#!/bin/bash
+# SSH Tunnel Script for DreamHost MySQL Database
+# This script creates an SSH tunnel to connect to your DreamHost MySQL database locally
+#
+# To use this script:
+# 1. Copy this file to tunnel.sh
+# 2. Update the SSH command below with your actual DreamHost details
+# 3. Make it executable: chmod +x tunnel.sh
+# 4. Run: ./tunnel.sh
+
+echo "Setting up SSH tunnel to DreamHost..."
+echo "Local port: 3307"
+echo "Remote MySQL: mysql.yourdomain.com:3306"
+echo ""
+echo "Keep this terminal open while you work. Press Ctrl+C to close the tunnel."
+echo ""
+
+# Create the SSH tunnel
+# Replace with your actual details:
+# ssh -L 3307:mysql.yourdomain.com:3306 your-ssh-user@your-server.dreamhost.com -N
+ssh -L 3307:mysql.yourdomain.com:3306 your-ssh-user@your-server.dreamhost.com -N
+
