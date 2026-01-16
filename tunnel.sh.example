@@ -17,6 +17,5 @@ echo ""
 
 # Create the SSH tunnel
 # Replace with your actual details:
-# ssh -L 3307:mysql.yourdomain.com:3306 your-ssh-user@your-server.dreamhost.com -N
-ssh -L 3307:mysql.yourdomain.com:3306 your-ssh-user@your-server.dreamhost.com -N
+ssh -L 3307:mysql.yourdomain.org:3306 your-ssh-user@your-server.dreamhost.com -N
 
