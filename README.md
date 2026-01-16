@@ -27,22 +27,7 @@ This project connects to a MySQL database on DreamHost. To connect locally, you 
    ./tunnel.sh
    ```
 
-**For Windows (PowerShell):**
-
-1. Copy the example script:
-
-   ```powershell
-   Copy-Item tunnel.ps1.example tunnel.ps1
-   ```
-
-2. Edit `tunnel.ps1` and update the SSH command with your DreamHost details (if different from the defaults)
-
-3. Run the tunnel:
-   ```powershell
-   .\tunnel.ps1
-   ```
-
-**Important:** Keep the tunnel terminal/window open while developing. Press `Ctrl+C` to close it when done.
+**Important:** Keep the tunnel terminal/window open while developing.
 
 ### Environment Configuration
 
