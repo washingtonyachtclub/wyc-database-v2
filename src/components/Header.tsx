@@ -1,10 +1,12 @@
-import { Link, useRouter } from '@tanstack/react-router'
+import { Link, useLocation, useRouter } from '@tanstack/react-router'
 import { useCurrentUser, useLogoutMutation } from '../lib/auth-query-options'
 
 export default function Header() {
   const router = useRouter()
+  const location = useLocation()
   const { user, isAuthenticated } = useCurrentUser()
   const logoutMutation = useLogoutMutation()
+  const isLoginPage = location.pathname === '/login'
 
   const handleLogout = async () => {
     try {
@@ -12,7 +14,7 @@ export default function Header() {
       router.invalidate()
       router.navigate({
         to: '/login',
-        search: (prev) => ({ ...prev, redirect: '/' }),
+        search: { redirect: '/' },
       })
     } catch (error) {
       console.error('Logout error:', error)
@@ -47,13 +49,15 @@ export default function Header() {
                 </button>
               </>
             ) : (
-              <Link
-                to="/login"
-                search={(prev) => ({ ...prev, redirect: '/' })}
-                className="rounded-md bg-indigo-600 px-3 py-2 text-sm font-semibold text-white hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600"
-              >
-                Login
-              </Link>
+              !isLoginPage && (
+                <Link
+                  to="/login"
+                  search={{ redirect: '/' }}
+                  className="rounded-md bg-indigo-600 px-3 py-2 text-sm font-semibold text-white hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600"
+                >
+                  Login
+                </Link>
+              )
             )}
           </div>
         </div>

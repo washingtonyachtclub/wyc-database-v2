@@ -204,7 +204,7 @@ export const Route = createFileRoute('/')({
     if (!context.isAuthenticated) {
       throw redirect({
         to: '/login',
-        search: (prev) => ({ ...prev, redirect: '/' }),
+        search: { redirect: '/' },
       })
     }
   },

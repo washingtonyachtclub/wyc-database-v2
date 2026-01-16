@@ -4,9 +4,8 @@ import { useLoginMutation } from '../lib/auth-query-options'
 
 export const Route = createFileRoute('/login')({
   validateSearch: (search: Record<string, unknown>) => {
-    return {
-      redirect: (search.redirect as string) || '/',
-    }
+    const redirectTo = search.redirect as string | undefined
+    return redirectTo ? { redirect: redirectTo } : {}
   },
   beforeLoad: ({ context }) => {
     // If already authenticated, redirect to home
@@ -40,7 +39,7 @@ function LoginPage() {
 
       if (result.success) {
         // Redirect to the original destination or home
-        navigate({ to: redirectTo || '/' })
+        navigate({ to: redirectTo ?? '/' })
       } else {
         setError(result.message || 'Login failed')
       }
