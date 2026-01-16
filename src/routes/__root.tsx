@@ -2,9 +2,11 @@ import {
   HeadContent,
   Scripts,
   createRootRouteWithContext,
+  useLocation,
 } from '@tanstack/react-router'
 
 import Header from '../components/Header'
+import Sidebar from '../components/Sidebar'
 import { TanStackDevTools } from '../components/TanStackDevTools'
 
 import appCss from '../styles.css?url'
@@ -64,6 +66,9 @@ function NotFound() {
 }
 
 function RootDocument({ children }: { children: React.ReactNode }) {
+  const location = useLocation()
+  const isLoginPage = location.pathname === '/login'
+  
   return (
     <html lang="en">
       <head>
@@ -71,7 +76,15 @@ function RootDocument({ children }: { children: React.ReactNode }) {
       </head>
       <body>
         <Header />
-        {children}
+        {!isLoginPage && (
+          <div className="flex">
+            <Sidebar />
+            <main className="flex-1">
+              {children}
+            </main>
+          </div>
+        )}
+        {isLoginPage && children}
         <TanStackDevTools />
         <Scripts />
       </body>

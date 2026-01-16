@@ -28,7 +28,6 @@ export default function Header() {
           <div className="flex items-center">
             <Link
               to="/"
-              search={(prev) => ({ ...prev, pageIndex: 0, pageSize: 10 })}
               className="text-xl font-bold text-gray-900"
             >
               WYC Database
