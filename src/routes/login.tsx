@@ -55,7 +55,7 @@ function LoginPage() {
             Sign in to your account
           </h2>
           <p className="mt-2 text-center text-sm text-gray-600">
-            Enter your WYC Number and password
+            Enter your WYC ID and password
           </p>
         </div>
         <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
