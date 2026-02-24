@@ -1,15 +1,16 @@
 import { ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight } from 'lucide-react'
 import type { Table } from '@tanstack/react-table'
-import type { MembersTableRow } from './columns'
 
-export function PaginationControls({
+export function PaginationControls<T>({
   table,
   pageCount,
   totalCount,
+  label = 'total records',
 }: {
-  table: Table<MembersTableRow>
+  table: Table<T>
   pageCount: number
   totalCount: number
+  label?: string
 }) {
   const pageSize = table.getState().pagination.pageSize
 
@@ -68,7 +69,7 @@ export function PaginationControls({
         </select>
       </div>
       <div className="text-sm text-muted-foreground">
-        {totalCount} total members
+        {totalCount} {label}
       </div>
     </div>
   )

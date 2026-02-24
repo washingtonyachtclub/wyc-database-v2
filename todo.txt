@@ -1,0 +1,12 @@
+# MVP
+- review existing RBAC and implement
+- testing
+- lessons page good viewing + editing
+  - start populating the calendarDate field in lessons table when creating lesson (old db not doing it)
+
+# Less Important
+- password reset
+- dev tool: view site as x role 
+- easily review out_to_sea statuses (or re-think its usage)
+- track memberships more precisely (by every renewal instance rather than overwriting expireQtr)
+- frontend design
