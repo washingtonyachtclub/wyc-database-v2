@@ -64,6 +64,21 @@ function baseLessonQuery() {
     .leftJoin(instructor2Table, eq(lessons.instructor2, instructor2Table.wycNumber))
 }
 
+export type LessonMutationInput = {
+  type: number | null
+  subtype: string | null
+  day: string | null
+  time: string | null
+  dates: string | null
+  calendarDate: string
+  instructor1: number | null
+  instructor2: number | null
+  description: string | null
+  size: number | null
+  expire: number | null
+  display: number
+}
+
 export const getQuarterLessons = createServerFn({ method: 'GET' }).handler(
   async () => {
     const userId = await requireAuth()
@@ -116,3 +131,75 @@ export const getAllLessons = createServerFn({ method: 'GET' })
 
     return { data, totalCount: totalCountResult.count }
   })
+
+export const getClassTypes = createServerFn({ method: 'GET' }).handler(
+  async () => {
+    await requireAuth()
+    const rows = await db.select().from(classType).orderBy(asc(classType.text))
+    return rows
+  },
+)
+
+export const createLesson = createServerFn({ method: 'POST' })
+  .inputValidator((data: LessonMutationInput) => data)
+  .handler(async ({ data }) => {
+    await requireAuth()
+    try {
+      const id = await db
+        .insert(lessons)
+        .values({
+          type: data.type ?? null,
+          subtype: data.subtype ?? null,
+          day: data.day ?? null,
+          time: data.time ?? null,
+          dates: data.dates ?? null,
+          calendarDate: data.calendarDate,
+          instructor1: data.instructor1 ?? null,
+          instructor2: data.instructor2 ?? null,
+          description: data.description ?? '',
+          size: data.size ?? null,
+          expire: data.expire ?? null,
+          display: data.display ?? 0,
+        })
+        .$returningId()
+
+      return { success: true, id, data }
+    } catch (error: any) {
+      throw new Error(error?.message || 'Failed to create lesson')
+    }
+  })
+
+export const updateLesson = createServerFn({ method: 'POST' })
+  .inputValidator(
+    (input: { index: number } & LessonMutationInput) => ({
+      ...input,
+      index: Number(input.index),
+    }),
+  )
+  .handler(async ({ data }) => {
+    await requireAuth()
+    try {
+      await db
+        .update(lessons)
+        .set({
+          type: data.type ?? null,
+          subtype: data.subtype ?? null,
+          day: data.day ?? null,
+          time: data.time ?? null,
+          dates: data.dates ?? null,
+          calendarDate: data.calendarDate,
+          instructor1: data.instructor1 ?? null,
+          instructor2: data.instructor2 ?? null,
+          description: data.description ?? '',
+          size: data.size ?? null,
+          expire: data.expire ?? null,
+          display: data.display ?? 0,
+        })
+        .where(eq(lessons.index, data.index))
+
+      return { success: true, index: data.index }
+    } catch (error: any) {
+      throw new Error(error?.message || 'Failed to update lesson')
+    }
+  })
+

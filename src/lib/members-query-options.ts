@@ -1,5 +1,6 @@
 import { queryOptions } from '@tanstack/react-query'
 import {
+  getAllMembersLite,
   getCategories,
   getMembersTable,
   getMostRecentWycNumber,
@@ -43,4 +44,11 @@ export const getQuartersQueryOptions = () =>
   queryOptions({
     queryKey: ['quarters'],
     queryFn: getQuarters,
+  })
+
+export const getAllMembersLiteQueryOptions = () =>
+  queryOptions({
+    queryKey: ['members', 'lite'],
+    queryFn: getAllMembersLite,
+    staleTime: 5 * 60 * 1000,
   })

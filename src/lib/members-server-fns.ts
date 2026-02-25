@@ -174,6 +174,21 @@ export const getQuarters = createServerFn({ method: 'GET' }).handler(
   },
 )
 
+export const getAllMembersLite = createServerFn({ method: 'GET' }).handler(
+  async () => {
+    await requireAuth()
+    const result = await db
+      .select({
+        wycNumber: wycDatabase.wycNumber,
+        first: sql<string>`COALESCE(${wycDatabase.first}, '')`.as('first'),
+        last: sql<string>`COALESCE(${wycDatabase.last}, '')`.as('last'),
+      })
+      .from(wycDatabase)
+      .orderBy(asc(wycDatabase.first), asc(wycDatabase.last))
+    return result
+  },
+)
+
 export const addMember = createServerFn({ method: 'POST' })
   .inputValidator((data: Member) => data)
   .handler(async ({ data }) => {

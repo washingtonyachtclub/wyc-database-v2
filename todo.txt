@@ -1,8 +1,7 @@
 # MVP
 - review existing RBAC and implement
 - testing
-- lessons page good viewing + editing
-  - start populating the calendarDate field in lessons table when creating lesson (old db not doing it)
+- Create standard modal format with better UX (esc / click outside to close)
 
 # Less Important
 - password reset

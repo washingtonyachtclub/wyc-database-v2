@@ -6,7 +6,7 @@ import {
   useReactTable,
 } from '@tanstack/react-table'
 import { ArrowDown, ArrowUp } from 'lucide-react'
-import { useMemo } from 'react'
+import { useMemo, useState } from 'react'
 import { useQuery, useSuspenseQuery } from '@tanstack/react-query'
 import { columns } from '../components/lessons/columns'
 import { LessonCard } from '../components/lessons/LessonCard'
@@ -16,6 +16,8 @@ import {
   getQuarterLessonsQueryOptions,
 } from '../lib/lessons-query-options'
 import type { LessonRow } from '../lib/lessons-server-fns'
+import { LessonFormModal } from '../components/lessons/LessonFormModal'
+import { isLessonUpcoming } from '../lib/date-utils'
 
 export const Route = createFileRoute('/lessons')({
   validateSearch: (search: Record<string, unknown>) => ({
@@ -55,6 +57,8 @@ function isMyLesson(lesson: LessonRow, userId: number) {
 function LessonsPage() {
   const navigate = useNavigate({ from: '/lessons' })
   const { pageIndex, pageSize, sortColumn, sortDesc } = Route.useSearch()
+  const [isLessonModalOpen, setIsLessonModalOpen] = useState(false)
+  const [lessonInEdit, setLessonInEdit] = useState<LessonRow | null>(null)
 
   const sorting =
     sortColumn && sortColumn === 'calendarDate'
@@ -71,47 +75,44 @@ function LessonsPage() {
   const userId = quarterData?.userId ?? 0
 
   const {
-    myDisplayed,
-    myNotDisplayed,
-    otherDisplayed,
-    otherNotDisplayed,
+    myUpcoming,
+    otherUpcoming,
+    pastThisQuarter,
     futureLessons,
   } = useMemo(() => {
-    const my: LessonRow[] = []
-    const other: LessonRow[] = []
+    const thisQuarterLessons: LessonRow[] = []
     const future: LessonRow[] = []
 
     for (const lesson of quarterLessons) {
       if (lesson.expire !== null && lesson.expire > currentQuarter) {
         future.push(lesson)
-      } else if (isMyLesson(lesson, userId)) {
-        my.push(lesson)
       } else {
-        other.push(lesson)
+        thisQuarterLessons.push(lesson)
       }
     }
 
-    const partitionByDisplay = (lessons: LessonRow[]) => {
-      const displayed: LessonRow[] = []
-      const notDisplayed: LessonRow[] = []
-      for (const lesson of lessons) {
-        if (lesson.display) {
-          displayed.push(lesson)
+    const myUpcomingLessons: LessonRow[] = []
+    const otherUpcomingLessons: LessonRow[] = []
+    const pastLessonsThisQuarter: LessonRow[] = []
+
+    for (const lesson of thisQuarterLessons) {
+      const upcoming = isLessonUpcoming(lesson.calendarDate)
+
+      if (upcoming) {
+        if (isMyLesson(lesson, userId)) {
+          myUpcomingLessons.push(lesson)
         } else {
-          notDisplayed.push(lesson)
+          otherUpcomingLessons.push(lesson)
         }
+      } else {
+        pastLessonsThisQuarter.push(lesson)
       }
-      return { displayed, notDisplayed }
     }
-
-    const myPartition = partitionByDisplay(my)
-    const otherPartition = partitionByDisplay(other)
 
     return {
-      myDisplayed: myPartition.displayed,
-      myNotDisplayed: myPartition.notDisplayed,
-      otherDisplayed: otherPartition.displayed,
-      otherNotDisplayed: otherPartition.notDisplayed,
+      myUpcoming: myUpcomingLessons,
+      otherUpcoming: otherUpcomingLessons,
+      pastThisQuarter: pastLessonsThisQuarter,
       futureLessons: future,
     }
   }, [quarterLessons, currentQuarter, userId])
@@ -167,35 +168,37 @@ function LessonsPage() {
 
   return (
     <div className="p-4 space-y-8">
-      {/* My Lessons (this quarter, I'm instructor) */}
+      <div className="flex justify-start">
+        <button
+          onClick={() => {
+            setLessonInEdit(null)
+            setIsLessonModalOpen(true)
+          }}
+          className="mb-4 px-4 py-2 bg-accent text-accent-foreground rounded-md border border-accent-foreground/20 hover:opacity-90 font-medium"
+        >
+          New Lesson
+        </button>
+      </div>
+
+      {/* My Upcoming Lessons */}
       <section>
-        <h2 className="text-2xl font-bold mb-4">My Lessons</h2>
-        {myDisplayed.length === 0 && myNotDisplayed.length === 0 ? (
+        <h2 className="text-2xl font-bold mb-4">My upcoming lessons</h2>
+        {myUpcoming.length === 0 ? (
           <p className="text-muted-foreground">
-            You are not instructing any lessons this quarter.
+            You have no upcoming lessons you&apos;re instructing this quarter.
           </p>
         ) : (
-          <div className="space-y-4">
-            {myDisplayed.length > 0 && (
-              <div>
-                <h3 className="text-lg font-semibold mb-2">Displayed</h3>
-                <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-                  {myDisplayed.map((lesson) => (
-                    <LessonCard key={lesson.index} lesson={lesson} />
-                  ))}
-                </div>
-              </div>
-            )}
-            {myNotDisplayed.length > 0 && (
-              <div>
-                <h3 className="text-lg font-semibold mb-2">Not displayed</h3>
-                <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-                  {myNotDisplayed.map((lesson) => (
-                    <LessonCard key={lesson.index} lesson={lesson} />
-                  ))}
-                </div>
-              </div>
-            )}
+          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+            {myUpcoming.map((lesson) => (
+              <LessonCard
+                key={lesson.index}
+                lesson={lesson}
+                onClick={() => {
+                  setLessonInEdit(lesson)
+                  setIsLessonModalOpen(true)
+                }}
+              />
+            ))}
           </div>
         )}
       </section>
@@ -203,28 +206,42 @@ function LessonsPage() {
       {/* Other Lessons This Quarter */}
       <section>
         <h2 className="text-2xl font-bold mb-4">Other Lessons This Quarter</h2>
-        {otherDisplayed.length === 0 && otherNotDisplayed.length === 0 ? (
+        {otherUpcoming.length === 0 && pastThisQuarter.length === 0 ? (
           <p className="text-muted-foreground">
             No other lessons this quarter.
           </p>
         ) : (
           <div className="space-y-4">
-            {otherDisplayed.length > 0 && (
+            {otherUpcoming.length > 0 && (
               <div>
-                <h3 className="text-lg font-semibold mb-2">Displayed</h3>
+                <h3 className="text-lg font-semibold mb-2">Upcoming</h3>
                 <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-                  {otherDisplayed.map((lesson) => (
-                    <LessonCard key={lesson.index} lesson={lesson} />
+                  {otherUpcoming.map((lesson) => (
+                    <LessonCard
+                      key={lesson.index}
+                      lesson={lesson}
+                      onClick={() => {
+                        setLessonInEdit(lesson)
+                        setIsLessonModalOpen(true)
+                      }}
+                    />
                   ))}
                 </div>
               </div>
             )}
-            {otherNotDisplayed.length > 0 && (
+            {pastThisQuarter.length > 0 && (
               <div>
-                <h3 className="text-lg font-semibold mb-2">Not displayed</h3>
+                <h3 className="text-lg font-semibold mb-2">Past</h3>
                 <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-                  {otherNotDisplayed.map((lesson) => (
-                    <LessonCard key={lesson.index} lesson={lesson} />
+                  {pastThisQuarter.map((lesson) => (
+                    <LessonCard
+                      key={lesson.index}
+                      lesson={lesson}
+                      onClick={() => {
+                        setLessonInEdit(lesson)
+                        setIsLessonModalOpen(true)
+                      }}
+                    />
                   ))}
                 </div>
               </div>
@@ -243,7 +260,14 @@ function LessonsPage() {
         ) : (
           <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
             {futureLessons.map((lesson) => (
-              <LessonCard key={lesson.index} lesson={lesson} />
+              <LessonCard
+                key={lesson.index}
+                lesson={lesson}
+                onClick={() => {
+                  setLessonInEdit(lesson)
+                  setIsLessonModalOpen(true)
+                }}
+              />
             ))}
           </div>
         )}
@@ -331,6 +355,16 @@ function LessonsPage() {
           label="total lessons"
         />
       </section>
+
+      <LessonFormModal
+        isOpen={isLessonModalOpen}
+        onClose={() => setIsLessonModalOpen(false)}
+        lesson={lessonInEdit}
+        currentQuarter={currentQuarter}
+        onSuccess={() => {
+          alert('Lesson saved successfully!')
+        }}
+      />
     </div>
   )
 }
