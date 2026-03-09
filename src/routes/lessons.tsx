@@ -15,7 +15,7 @@ import {
   getAllLessonsQueryOptions,
   getQuarterLessonsQueryOptions,
 } from '../lib/lessons-query-options'
-import type { LessonRow } from '../lib/lessons-server-fns'
+import type { LessonTableRow } from '../db/types'
 import { LessonFormModal } from '../components/lessons/LessonFormModal'
 import { isLessonUpcoming } from '../lib/date-utils'
 
@@ -24,6 +24,7 @@ export const Route = createFileRoute('/lessons')({
     pageIndex: Number(search.pageIndex) || 0,
     pageSize: Number(search.pageSize) || 10,
     sortColumn: search.sortColumn as string | undefined,
+    // todo: seems bad to do this here
     sortDesc: search.sortDesc === 'true' || search.sortDesc === true,
   }),
   beforeLoad: ({ context }) => {
@@ -50,7 +51,7 @@ export const Route = createFileRoute('/lessons')({
   component: LessonsPage,
 })
 
-function isMyLesson(lesson: LessonRow, userId: number) {
+function isMyLesson(lesson: LessonTableRow, userId: number) {
   return lesson.instructor1 === userId || lesson.instructor2 === userId
 }
 
@@ -58,7 +59,7 @@ function LessonsPage() {
   const navigate = useNavigate({ from: '/lessons' })
   const { pageIndex, pageSize, sortColumn, sortDesc } = Route.useSearch()
   const [isLessonModalOpen, setIsLessonModalOpen] = useState(false)
-  const [lessonInEdit, setLessonInEdit] = useState<LessonRow | null>(null)
+  const [lessonInEdit, setLessonInEdit] = useState<LessonTableRow | null>(null)
 
   const sorting =
     sortColumn && sortColumn === 'calendarDate'
@@ -80,20 +81,20 @@ function LessonsPage() {
     pastThisQuarter,
     futureLessons,
   } = useMemo(() => {
-    const thisQuarterLessons: LessonRow[] = []
-    const future: LessonRow[] = []
+    const thisQuarterLessons: LessonTableRow[] = []
+    const future: LessonTableRow[] = []
 
     for (const lesson of quarterLessons) {
-      if (lesson.expire !== null && lesson.expire > currentQuarter) {
+      if (lesson.expire > currentQuarter) {
         future.push(lesson)
       } else {
         thisQuarterLessons.push(lesson)
       }
     }
 
-    const myUpcomingLessons: LessonRow[] = []
-    const otherUpcomingLessons: LessonRow[] = []
-    const pastLessonsThisQuarter: LessonRow[] = []
+    const myUpcomingLessons: LessonTableRow[] = []
+    const otherUpcomingLessons: LessonTableRow[] = []
+    const pastLessonsThisQuarter: LessonTableRow[] = []
 
     for (const lesson of thisQuarterLessons) {
       const upcoming = isLessonUpcoming(lesson.calendarDate)
@@ -185,7 +186,7 @@ function LessonsPage() {
         <h2 className="text-2xl font-bold mb-4">My upcoming lessons</h2>
         {myUpcoming.length === 0 ? (
           <p className="text-muted-foreground">
-            You have no upcoming lessons you&apos;re instructing this quarter.
+            You are not instructing any upcoming lessons this quarter.
           </p>
         ) : (
           <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">

@@ -1,7 +1,10 @@
 # MVP
 - review existing RBAC and implement
 - testing
+- security review
 - Create standard modal format with better UX (esc / click outside to close)
+- zod on search params?
+- lessons.tsx using useSearch() instead of useLoaderDeps()
 
 # Less Important
 - manage officers / position holders page
@@ -10,3 +13,4 @@
 - easily review out_to_sea statuses (or re-think its usage)
 - track memberships more precisely (by every renewal instance rather than overwriting expireQtr)
 - frontend design
+- on login: displays login boxes while loading members data (replace with loading indicator)

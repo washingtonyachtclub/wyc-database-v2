@@ -148,3 +148,18 @@ export const addMember = createServerFn({ method: 'POST' })
       throw new Error(errorMessage)
     }
   })
+
+  export const getAllMembersLite = createServerFn({ method: 'GET' }).handler(
+  async () => {
+    await requireAuth()
+    const result = await db
+      .select({
+        wycNumber: wycDatabase.wycNumber,
+        first: wycDatabase.first,
+        last: wycDatabase.last,
+      })
+      .from(wycDatabase)
+      .orderBy(asc(wycDatabase.first), asc(wycDatabase.last))
+    return result
+  },
+)

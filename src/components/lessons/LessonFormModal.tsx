@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { X } from 'lucide-react'
-import type { LessonRow } from '../../lib/lessons-server-fns'
+import type { LessonTableRow } from '../../db/types'
 import {
   createLesson,
   getClassTypes,
@@ -13,7 +13,7 @@ import { MemberCombobox } from '../ui/MemberCombobox'
 type LessonFormModalProps = {
   isOpen: boolean
   onClose: () => void
-  lesson: LessonRow | null
+  lesson: LessonTableRow | null
   currentQuarter: number
   onSuccess: () => void
 }
@@ -70,23 +70,18 @@ export function LessonFormModal({
     if (!isOpen) return
 
     if (lesson) {
-      const matchingType =
-        classTypes && lesson.type
-          ? classTypes.find((ct: any) => ct.text === lesson.type)
-          : undefined
-
       setFormState({
-        typeId: matchingType ? matchingType.index : null,
-        subtype: lesson.subtype ?? '',
-        day: lesson.day ?? '',
-        time: lesson.time ?? '',
-        dates: lesson.dates ?? '',
-        calendarDate: lesson.calendarDate ?? '',
-        instructor1: lesson.instructor1 ?? null,
-        instructor2: lesson.instructor2 ?? null,
-        description: lesson.comments ?? '',
-        size: lesson.size != null ? String(lesson.size) : '',
-        expire: lesson.expire ?? null,
+        typeId: lesson.typeId,
+        subtype: lesson.subtype,
+        day: lesson.day,
+        time: lesson.time,
+        dates: lesson.dates,
+        calendarDate: lesson.calendarDate,
+        instructor1: lesson.instructor1,
+        instructor2: lesson.instructor2,
+        description: lesson.description,
+        size: String(lesson.size),
+        expire: lesson.expire,
         display: lesson.display ? '1' : '0',
       })
     } else {
@@ -312,7 +307,7 @@ export function LessonFormModal({
                 htmlFor="dates"
                 className="block text-sm font-medium mb-1"
               >
-                Dates (display text) *
+                Dates (e.g. March 7th, March 14th) *
               </label>
               <input
                 id="dates"
@@ -330,7 +325,7 @@ export function LessonFormModal({
                 htmlFor="calendarDate"
                 className="block text-sm font-medium mb-1"
               >
-                Calendar Date (Earliest Date if Multiple) *
+                Calendar Date (Earliest Date if Multi-day) *
               </label>
               <input
                 id="calendarDate"

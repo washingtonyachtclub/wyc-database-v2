@@ -1,17 +1,17 @@
 import { AlertTriangle } from 'lucide-react'
-import type { LessonRow } from '../../lib/lessons-server-fns'
+import type { LessonTableRow } from '../../db/types'
 import { isLessonUpcoming } from '../../lib/date-utils'
 
 export function LessonCard({
   lesson,
   onClick,
 }: {
-  lesson: LessonRow
+  lesson: LessonTableRow
   onClick?: () => void
 }) {
   const upcoming = isLessonUpcoming(lesson.calendarDate)
   const showUpcomingNotDisplayedWarning = upcoming && !lesson.display
-  const showDisplayedPastWarning = !upcoming && !!lesson.display
+  const showDisplayedPastWarning = !upcoming && lesson.display
 
   return (
     <div
@@ -23,13 +23,13 @@ export function LessonCard({
       {showUpcomingNotDisplayedWarning && (
         <div className="flex items-center gap-2 text-destructive text-sm mb-2 p-2 rounded bg-destructive/10 border border-destructive/30">
           <AlertTriangle className="h-4 w-4 shrink-0" />
-          <span>Upcoming but not displayed on the website</span>
+          <span>This lesson is upcoming but is not displayed on the website</span>
         </div>
       )}
       {showDisplayedPastWarning && (
         <div className="flex items-center gap-2 text-destructive text-sm mb-2 p-2 rounded bg-destructive/10 border border-destructive/30">
           <AlertTriangle className="h-4 w-4 shrink-0" />
-          <span>Displayed on the website but this lesson is in the past</span>
+          <span>This lesson has passed but is still displayed on the website</span>
         </div>
       )}
       <div className="flex items-start justify-between">
@@ -37,17 +37,15 @@ export function LessonCard({
           <h4 className="font-semibold">
             {lesson.subtype || lesson.type || 'Untitled Lesson'}
           </h4>
-          {lesson.comments && (
+          {lesson.description && (
             <p className="text-sm text-muted-foreground mt-1 line-clamp-2">
-              {lesson.comments}
+              {lesson.description}
             </p>
           )}
         </div>
-        {lesson.size != null && (
-          <span className="text-xs text-muted-foreground whitespace-nowrap ml-4">
-            Size: {lesson.size}
-          </span>
-        )}
+        <span className="text-xs text-muted-foreground whitespace-nowrap ml-4">
+          Size: {lesson.size}
+        </span>
       </div>
       <div className="mt-3 space-y-1 text-sm">
         {lesson.dates && (
