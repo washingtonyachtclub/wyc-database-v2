@@ -6,16 +6,12 @@ import {
   getMostRecentWycNumber,
   getQuarters,
 } from './members-server-fns'
+import type { MemberFilters } from '../db/member-queries'
 
 export const getMembersQueryOptions = (
   pageIndex: number,
   pageSize: number,
-  filters?: {
-    wycId?: string
-    category?: number
-    expireQtr?: number
-    expireQtrMode?: 'exactly' | 'atLeast'
-  },
+  filters?: MemberFilters,
   sorting?: { id: string; desc: boolean },
 ) =>
   queryOptions({

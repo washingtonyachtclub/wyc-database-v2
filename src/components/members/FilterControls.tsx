@@ -1,11 +1,21 @@
 import { useEffect, useState } from 'react'
+import {
+  EXPIRE_QTR_MODES,
+  parseExpireQtrMode,
+  type ExpireQtrFilter,
+  type MemberFilters,
+} from '../../db/member-queries'
+
+const expireQtrModeLabels = {
+  exactly: 'Exactly',
+  atLeast: 'At least',
+} as const
 
 export function FilterControls({
   wycId,
   name,
   category,
-  expireQtr,
-  expireQtrMode,
+  expireQtrFilter,
   categories,
   quarters,
   onFilterChange,
@@ -14,17 +24,10 @@ export function FilterControls({
   wycId?: string
   name?: string
   category?: number
-  expireQtr?: number
-  expireQtrMode?: 'exactly' | 'atLeast'
+  expireQtrFilter?: ExpireQtrFilter
   categories: Array<{ index: number; text: string | null }>
   quarters: Array<{ index: number; text: string | null; school: string | null }>
-  onFilterChange: (filters: {
-    wycId?: string
-    name?: string
-    category?: number
-    expireQtr?: number
-    expireQtrMode?: 'exactly' | 'atLeast'
-  }) => void
+  onFilterChange: (changes: Partial<MemberFilters>) => void
   onClearFilters: () => void
 }) {
   const [localName, setLocalName] = useState(name || '')
@@ -35,7 +38,7 @@ export function FilterControls({
     setLocalWycId(wycId || '')
   }, [name, wycId])
 
-  const hasFilters = wycId || name || category !== undefined || expireQtr !== undefined
+  const hasFilters = wycId || name || category !== undefined || expireQtrFilter
 
   const handleSearch = () => {
     const trimmedWycId = localWycId.trim()
@@ -43,9 +46,6 @@ export function FilterControls({
     onFilterChange({
       wycId: trimmedWycId || undefined,
       name: trimmedName || undefined,
-      category,
-      expireQtr,
-      expireQtrMode,
     })
   }
 
@@ -122,11 +122,7 @@ export function FilterControls({
             value={category ?? ''}
             onChange={(e) =>
               onFilterChange({
-                wycId,
-                name,
                 category: e.target.value ? Number(e.target.value) : undefined,
-                expireQtr,
-                expireQtrMode,
               })
             }
             className={`px-3 py-2 border-2 rounded text-sm ${
@@ -154,41 +150,42 @@ export function FilterControls({
           <div className="flex gap-2">
             <select
               id="filter-expire-qtr-mode"
-              value={expireQtrMode || 'exactly'}
-              onChange={(e) =>
-                onFilterChange({
-                  wycId,
-                  name,
-                  category,
-                  expireQtr,
-                  expireQtrMode: e.target.value as 'exactly' | 'atLeast',
-                })
-              }
+              value={expireQtrFilter?.mode ?? 'exactly'}
+              onChange={(e) => {
+                const mode = parseExpireQtrMode(e.target.value)
+                if (mode && expireQtrFilter) {
+                  onFilterChange({
+                    expireQtrFilter: { ...expireQtrFilter, mode },
+                  })
+                }
+              }}
               className={`px-2 py-2 border-2 rounded text-sm ${
-                expireQtr !== undefined
+                expireQtrFilter
                   ? 'bg-primary/10 border-primary'
                   : 'bg-background border-border'
               }`}
             >
-              <option value="exactly">Exactly</option>
-              <option value="atLeast">At least</option>
+              {EXPIRE_QTR_MODES.map((mode) => (
+                <option key={mode} value={mode}>
+                  {expireQtrModeLabels[mode]}
+                </option>
+              ))}
             </select>
             <select
               id="filter-expire-qtr"
-              value={expireQtr ?? ''}
+              value={expireQtrFilter?.quarter ?? ''}
               onChange={(e) =>
                 onFilterChange({
-                  wycId,
-                  name,
-                  category,
-                  expireQtr: e.target.value
-                    ? Number(e.target.value)
+                  expireQtrFilter: e.target.value
+                    ? {
+                        quarter: Number(e.target.value),
+                        mode: expireQtrFilter?.mode ?? 'exactly',
+                      }
                     : undefined,
-                  expireQtrMode: expireQtrMode || 'exactly',
                 })
               }
               className={`px-3 py-2 border-2 rounded text-sm ${
-                expireQtr !== undefined
+                expireQtrFilter
                   ? 'bg-primary/10 border-primary'
                   : 'bg-background border-border'
               }`}

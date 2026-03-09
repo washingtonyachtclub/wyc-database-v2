@@ -1,17 +1,20 @@
-import { and, asc, count, desc, eq, gte, like, or, sql } from 'drizzle-orm'
+import { asc, count, desc, eq } from 'drizzle-orm'
 import { createServerFn } from '@tanstack/react-start'
-import { memcat, noyes, quarters, wycDatabase } from 'src/db/schema'
+import { memcat, quarters, wycDatabase } from 'src/db/schema'
 import db from '../db/index'
 import { requireAuth } from '../lib/auth-middleware'
 import { hashPassword } from '../lib/auth'
-import type { Member } from 'src/db/schema'
+import type { MemberRow } from 'src/db/types'
+import { toMemberTableRow } from 'src/db/mappers'
+import { withSorting, withPagination } from 'src/db/query-helpers'
+import { withMemberFilters, memberSortColumns, type MemberFilters } from 'src/db/member-queries'
 
-export const memberSelectFields = {
+const memberTableSelectFields = {
   wycNumber: wycDatabase.wycNumber,
-  first: sql<string>`COALESCE(${wycDatabase.first}, '')`.as('first'),
-  last: sql<string>`COALESCE(${wycDatabase.last}, '')`.as('last'),
-  category: sql<string>`COALESCE(${memcat.text}, 'Unknown')`.as('category'),
-  expireQtr: sql<string>`COALESCE(${quarters.school}, 'N/A')`.as('expireQtr'),
+  first: wycDatabase.first,
+  last: wycDatabase.last,
+  category: memcat.text,
+  expireQtrSchoolText: quarters.school,
   expireQtrIndex: wycDatabase.expireQtr,
   joinDate: wycDatabase.joinDate,
 }
@@ -21,13 +24,7 @@ export const getMembersTable = createServerFn({ method: 'GET' })
     (input: {
       pageIndex: number
       pageSize: number
-      filters?: {
-        wycId?: string
-        name?: string
-        category?: number
-        expireQtr?: number
-        expireQtrMode?: 'exactly' | 'atLeast'
-      }
+      filters?: MemberFilters
       sorting?: { id: string; desc: boolean }
     }) => {
       return {
@@ -42,89 +39,28 @@ export const getMembersTable = createServerFn({ method: 'GET' })
     await requireAuth()
 
     try {
-      const pageIndex = data.pageIndex
-      const pageSize = data.pageSize
-      const offset = pageIndex * pageSize
-      const filters = data.filters
-      const sorting = data.sorting
+      const { pageIndex, pageSize, filters, sorting } = data
 
-      const whereConditions = []
-
-      if (filters?.wycId) {
-        const wycIdNum = Number(filters.wycId)
-        if (!isNaN(wycIdNum)) {
-          whereConditions.push(eq(wycDatabase.wycNumber, wycIdNum))
-        }
-      }
-
-      if (filters?.name) {
-        const trimmedName = filters.name.trim()
-        const nameParts = trimmedName.split(/\s+/).filter((part) => part.length > 0)
-
-        if (nameParts.length >= 2) {
-          const firstNamePattern = `%${nameParts[0]}%`
-          const lastNamePattern = `${nameParts.slice(1).join(' ')}%`
-          whereConditions.push(
-            and(
-              like(wycDatabase.first, firstNamePattern),
-              like(wycDatabase.last, lastNamePattern),
-            )!,
-          )
-        } else if (nameParts.length === 1) {
-          const namePattern = `%${nameParts[0]}%`
-          whereConditions.push(
-            or(
-              like(wycDatabase.first, namePattern),
-              like(wycDatabase.last, namePattern),
-            ),
-          )
-        }
-      }
-
-      if (filters?.category !== undefined && filters.category !== null) {
-        whereConditions.push(eq(wycDatabase.category, filters.category))
-      }
-
-      if (filters?.expireQtr !== undefined && filters.expireQtr !== null) {
-        if (filters.expireQtrMode === 'atLeast') {
-          whereConditions.push(gte(wycDatabase.expireQtr, filters.expireQtr))
-        } else {
-          whereConditions.push(eq(wycDatabase.expireQtr, filters.expireQtr))
-        }
-      }
-
-      const baseQuery = db
-        .select(memberSelectFields)
+      const query = db
+        .select(memberTableSelectFields)
         .from(wycDatabase)
         .leftJoin(memcat, eq(memcat.index, wycDatabase.category))
         .leftJoin(quarters, eq(quarters.index, wycDatabase.expireQtr))
-        .leftJoin(noyes, eq(noyes.index, wycDatabase.outToSea))
+        .$dynamic()
 
-      const queryWithWhere =
-        whereConditions.length > 0
-          ? baseQuery.where(and(...whereConditions))
-          : baseQuery
+      withMemberFilters(query, filters)
+      withSorting(query, sorting, memberSortColumns, wycDatabase.joinDate)
+      withPagination(query, pageIndex, pageSize)
 
-      let membersQuery
-      if (sorting?.id === 'expireQtr') {
-        membersQuery = sorting.desc
-          ? queryWithWhere.orderBy(desc(wycDatabase.expireQtr))
-          : queryWithWhere.orderBy(asc(wycDatabase.expireQtr))
-      } else if (sorting?.id === 'joinDate') {
-        membersQuery = sorting.desc
-          ? queryWithWhere.orderBy(desc(wycDatabase.joinDate))
-          : queryWithWhere.orderBy(asc(wycDatabase.joinDate))
-      } else {
-        membersQuery = queryWithWhere.orderBy(desc(wycDatabase.joinDate))
-      }
+      const rawMembers = await query
+      const members = rawMembers.map(toMemberTableRow)
 
-      const members = await membersQuery.limit(pageSize).offset(offset)
+      const countQuery = db
+        .select({ count: count() })
+        .from(wycDatabase)
+        .$dynamic()
 
-      const baseCountQuery = db.select({ count: count() }).from(wycDatabase)
-      const countQuery =
-        whereConditions.length > 0
-          ? baseCountQuery.where(and(...whereConditions))
-          : baseCountQuery
+      withMemberFilters(countQuery, filters)
 
       const [totalCountResult] = await countQuery
       const totalCount = totalCountResult.count
@@ -151,7 +87,7 @@ export const getMostRecentWycNumber = createServerFn({ method: 'GET' }).handler(
       .from(wycDatabase)
       .orderBy(desc(wycDatabase.joinDate))
       .limit(1)
-    return result[0]?.wycNumber ?? 0
+    return result[0]?.wycNumber ?? undefined
   },
 )
 
@@ -174,23 +110,8 @@ export const getQuarters = createServerFn({ method: 'GET' }).handler(
   },
 )
 
-export const getAllMembersLite = createServerFn({ method: 'GET' }).handler(
-  async () => {
-    await requireAuth()
-    const result = await db
-      .select({
-        wycNumber: wycDatabase.wycNumber,
-        first: sql<string>`COALESCE(${wycDatabase.first}, '')`.as('first'),
-        last: sql<string>`COALESCE(${wycDatabase.last}, '')`.as('last'),
-      })
-      .from(wycDatabase)
-      .orderBy(asc(wycDatabase.first), asc(wycDatabase.last))
-    return result
-  },
-)
-
 export const addMember = createServerFn({ method: 'POST' })
-  .inputValidator((data: Member) => data)
+  .inputValidator((data: MemberRow) => data)
   .handler(async ({ data }) => {
     await requireAuth()
     try {

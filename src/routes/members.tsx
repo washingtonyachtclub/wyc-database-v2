@@ -17,6 +17,7 @@ import {
   getMembersQueryOptions,
   getQuartersQueryOptions,
 } from '../lib/members-query-options'
+import type { MemberFilters } from '../db/member-queries'
 
 // ===== ROUTE DEFINITION =====
 
@@ -28,11 +29,12 @@ export const Route = createFileRoute('/members')({
       wycId: search.wycId as string | undefined,
       name: search.name as string | undefined,
       category: search.category ? Number(search.category) : undefined,
-      expireQtr: search.expireQtr ? Number(search.expireQtr) : undefined,
-      expireQtrMode:
-        (search.expireQtrMode === 'exactly' || search.expireQtrMode === 'atLeast'
-          ? search.expireQtrMode
-          : undefined) as 'exactly' | 'atLeast' | undefined,
+      expireQtrFilter: search.expireQtr
+        ? {
+            quarter: Number(search.expireQtr),
+            mode: search.expireQtrMode === 'atLeast' ? 'atLeast' as const : 'exactly' as const,
+          }
+        : undefined,
       sortColumn: search.sortColumn as string | undefined,
       sortDesc: search.sortDesc === 'true' || search.sortDesc === true,
     }
@@ -52,25 +54,23 @@ export const Route = createFileRoute('/members')({
       wycId,
       name,
       category,
-      expireQtr,
-      expireQtrMode,
+      expireQtrFilter,
       sortColumn,
       sortDesc,
     },
   }) => {
-    const filters =
-      wycId || name || category !== undefined || expireQtr !== undefined
+    const filters: MemberFilters | undefined =
+      wycId || name || category !== undefined || expireQtrFilter
         ? {
             wycId,
             name,
             category,
-            expireQtr,
-            expireQtrMode,
+            expireQtrFilter,
           }
         : undefined
 
     const sorting =
-      sortColumn && (sortColumn === 'expireQtr' || sortColumn === 'joinDate')
+      sortColumn && (sortColumn === 'expireQtrSchoolText' || sortColumn === 'joinDate')
         ? { id: sortColumn, desc: sortDesc }
         : undefined
 
@@ -93,38 +93,13 @@ export const Route = createFileRoute('/members')({
 
 function App() {
   const navigate = useNavigate({ from: '/members' })
-  const {
-    pageIndex,
-    pageSize,
-    wycId,
-    name,
-    category,
-    expireQtr,
-    expireQtrMode,
-    sortColumn,
-    sortDesc,
-  } = Route.useSearch()
+  const { wycId, name, category, expireQtrFilter } = Route.useSearch()
+  const { pageIndex, pageSize, filters, sorting } = Route.useLoaderDeps()
   const [isFormOpen, setIsFormOpen] = useState(false)
   const [formKey, setFormKey] = useState(0)
 
   const { data: categories = [] } = useQuery(getCategoriesQueryOptions())
   const { data: quarters = [] } = useQuery(getQuartersQueryOptions())
-
-  const filters =
-    wycId || name || category !== undefined || expireQtr !== undefined
-      ? {
-          wycId,
-          name,
-          category,
-          expireQtr,
-          expireQtrMode: expireQtrMode || 'exactly',
-        }
-      : undefined
-
-  const sorting =
-    sortColumn && (sortColumn === 'expireQtr' || sortColumn === 'joinDate')
-      ? { id: sortColumn, desc: sortDesc }
-      : undefined
 
   const { data: membersResponse } = useSuspenseQuery(
     getMembersQueryOptions(pageIndex, pageSize, filters, sorting),
@@ -158,17 +133,11 @@ function App() {
           ? updater({ pageIndex, pageSize })
           : updater
       navigate({
-        search: {
+        search: (prev) => ({
+          ...prev,
           pageIndex: newPagination.pageIndex,
           pageSize: newPagination.pageSize,
-          wycId,
-          name,
-          category,
-          expireQtr,
-          expireQtrMode,
-          sortColumn,
-          sortDesc,
-        },
+        }),
         replace: true,
       })
     },
@@ -180,58 +149,45 @@ function App() {
 
       const sort = newSorting[0]
       navigate({
-        search: {
+        search: (prev) => ({
+          ...prev,
           pageIndex: 0,
-          pageSize,
-          wycId,
-          name,
-          category,
-          expireQtr,
-          expireQtrMode,
           sortColumn: sort?.id,
           sortDesc: sort?.desc || false,
-        },
+        }),
         replace: true,
       })
     },
   })
 
-  const handleFilterChange = (newFilters: {
-    wycId?: string
-    name?: string
-    category?: number
-    expireQtr?: number
-    expireQtrMode?: 'exactly' | 'atLeast'
-  }) => {
+  const handleFilterChange = (changes: Partial<MemberFilters>) => {
     navigate({
-      search: {
+      search: (prev) => ({
+        ...prev,
         pageIndex: 0,
-        pageSize,
-        wycId: newFilters.wycId,
-        name: newFilters.name,
-        category: newFilters.category,
-        expireQtr: newFilters.expireQtr,
-        expireQtrMode: newFilters.expireQtrMode || 'exactly',
-        sortColumn,
-        sortDesc,
-      },
+        ...('wycId' in changes && { wycId: changes.wycId }),
+        ...('name' in changes && { name: changes.name }),
+        ...('category' in changes && { category: changes.category }),
+        ...('expireQtrFilter' in changes && {
+          expireQtr: changes.expireQtrFilter?.quarter,
+          expireQtrMode: changes.expireQtrFilter?.mode,
+        }),
+      }),
       replace: true,
     })
   }
 
   const handleClearFilters = () => {
     navigate({
-      search: {
+      search: (prev) => ({
+        ...prev,
         pageIndex: 0,
-        pageSize,
         wycId: undefined,
         name: undefined,
         category: undefined,
         expireQtr: undefined,
         expireQtrMode: undefined,
-        sortColumn,
-        sortDesc,
-      },
+      }),
       replace: true,
     })
   }
@@ -260,8 +216,7 @@ function App() {
         wycId={wycId}
         name={name}
         category={category}
-        expireQtr={expireQtr}
-        expireQtrMode={expireQtrMode || 'exactly'}
+        expireQtrFilter={expireQtrFilter}
         categories={categories}
         quarters={quarters}
         onFilterChange={handleFilterChange}

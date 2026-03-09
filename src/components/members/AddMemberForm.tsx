@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { X } from 'lucide-react'
-import type { Member } from 'src/db/schema'
+import type { MemberRow } from 'src/db/types'
 import { addMember } from '../../lib/members-server-fns'
 import {
   getCategoriesQueryOptions,
@@ -37,7 +37,7 @@ export function AddMemberForm({
     },
   })
 
-  const [formData, setFormData] = useState<Partial<Member>>({
+  const [formData, setFormData] = useState<Partial<MemberRow>>({
     wycNumber: 1,
     category: undefined,
     expireQtr: undefined,
@@ -64,7 +64,7 @@ export function AddMemberForm({
     setError(null)
 
     try {
-      const memberData: Member = {
+      const memberData: MemberRow = {
         wycNumber: formData.wycNumber!,
         first: formData.first || null,
         last: formData.last || null,

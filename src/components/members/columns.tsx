@@ -1,16 +1,7 @@
 import { createColumnHelper } from '@tanstack/react-table'
+import type { MemberTableRow } from 'src/db/types'
 
-export type MembersTableRow = {
-  wycNumber: number
-  first: string
-  last: string
-  category: string
-  expireQtr: string
-  expireQtrIndex: number
-  joinDate: string
-}
-
-const columnHelper = createColumnHelper<MembersTableRow>()
+const columnHelper = createColumnHelper<MemberTableRow>()
 
 export const columns = [
   columnHelper.accessor('wycNumber', {
@@ -32,7 +23,7 @@ export const columns = [
     cell: (info) => info.getValue(),
     enableSorting: false,
   }),
-  columnHelper.accessor('expireQtr', {
+  columnHelper.accessor('expireQtrSchoolText', {
     header: 'Expire Qtr',
     cell: (info) => {
       const value = info.getValue()

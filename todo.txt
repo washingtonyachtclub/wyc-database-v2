@@ -4,6 +4,7 @@
 - Create standard modal format with better UX (esc / click outside to close)
 
 # Less Important
+- manage officers / position holders page
 - password reset
 - dev tool: view site as x role 
 - easily review out_to_sea statuses (or re-think its usage)
