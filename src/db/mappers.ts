@@ -1,10 +1,12 @@
 import { TBD_WYC_NUMBER } from './constants'
-import type { Lesson, LessonRow, LessonTableRow, Member, MemberRow, MemberTableRow } from './types'
+import type { ClassType, ClassTypeRow, Lesson, LessonInsert, LessonRow, LessonTableRow, Member, MemberRow, MemberTableRow } from './types'
 
+const num = (value: number | null | undefined): number => value ?? 0
 const str = (value: string | null | undefined): string => value ?? ''
 
-// const fallback = <T>(value: T | null | undefined, def: T): T =>
-//   value ?? def
+function fullName(first: string | null | undefined, last: string | null | undefined): string {
+  return [first?.trim(), last?.trim()].filter(Boolean).join(' ')
+}
 
 export function toMember(row: MemberRow): Member {
   return {
@@ -12,9 +14,18 @@ export function toMember(row: MemberRow): Member {
     first: str(row.first),
     last: str(row.last),
     email: str(row.email),
-    categoryId: row.category ?? 0,
+    categoryId: row.category,
     expireQtrIndex: row.expireQtr,
     joinDate: row.joinDate,
+    streetAddress: str(row.streetAddress),
+    city: str(row.city),
+    state: str(row.state),
+    zipCode: str(row.zipCode),
+    phone1: str(row.phone1),
+    phone2: str(row.phone2),
+    studentId: row.studentId,
+    outToSea: row.outToSea !== 0,
+    imageName: str(row.imageName),
   }
 }
 
@@ -38,16 +49,10 @@ export function toMemberTableRow(row: {
   }
 }
 
-const num = (value: number | null | undefined): number => value ?? 0
-
-function fullName(first: string | null | undefined, last: string | null | undefined): string {
-  return [first?.trim(), last?.trim()].filter(Boolean).join(' ')
-}
-
 export function toLesson(row: LessonRow): Lesson {
   return {
     index: row.index,
-    classTypeId: row.type ?? 0,
+    classTypeId: row.type,
     subtype: str(row.subtype),
     day: str(row.day),
     time: str(row.time),
@@ -59,6 +64,15 @@ export function toLesson(row: LessonRow): Lesson {
     size: num(row.size),
     expire: num(row.expire),
     display: row.display !== 0,
+  }
+}
+
+export function fromLessonInsert(data: LessonInsert) {
+  const { classTypeId, ...rest } = data
+  return {
+    ...rest,
+    type: classTypeId,
+    display: data.display ? 1 : 0,
   }
 }
 
@@ -84,7 +98,7 @@ export function toLessonTableRow(row: {
 }): LessonTableRow {
   return {
     index: row.index,
-    typeId: num(row.typeId),
+    classTypeId: num(row.typeId),
     instructor1: num(row.instructor1),
     instructor2: num(row.instructor2),
     expire: num(row.expire),

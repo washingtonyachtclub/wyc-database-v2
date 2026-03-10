@@ -3,24 +3,10 @@ import { createServerFn } from '@tanstack/react-start'
 import { classType, lessonQuarter, lessons } from 'src/db/schema'
 import db from '../db/index'
 import { requireAuth } from '../lib/auth-middleware'
-import { toLessonTableRow } from 'src/db/mappers'
+import { fromLessonInsert, toLessonTableRow } from 'src/db/mappers'
 import { withSorting, withPagination } from 'src/db/query-helpers'
 import { baseLessonQuery, lessonSortColumns } from 'src/db/lesson-queries'
-
-export type LessonMutationInput = {
-  type: number | null
-  subtype: string | null
-  day: string | null
-  time: string | null
-  dates: string | null
-  calendarDate: string
-  instructor1: number | null
-  instructor2: number | null
-  description: string | null
-  size: number | null
-  expire: number | null
-  display: number
-}
+import type { LessonInsert } from 'src/db/types'
 
 export const getQuarterLessons = createServerFn({ method: 'GET' }).handler(
   async () => {
@@ -84,64 +70,25 @@ export const getClassTypes = createServerFn({ method: 'GET' }).handler(
 )
 
 export const createLesson = createServerFn({ method: 'POST' })
-  .inputValidator((data: LessonMutationInput) => data)
+  .inputValidator((data: LessonInsert) => data)
   .handler(async ({ data }) => {
     await requireAuth()
-    try {
-      const id = await db
-        .insert(lessons)
-        .values({
-          type: data.type ?? null,
-          subtype: data.subtype ?? null,
-          day: data.day ?? null,
-          time: data.time ?? null,
-          dates: data.dates ?? null,
-          calendarDate: data.calendarDate,
-          instructor1: data.instructor1 ?? null,
-          instructor2: data.instructor2 ?? null,
-          description: data.description ?? '',
-          size: data.size ?? null,
-          expire: data.expire ?? null,
-          display: data.display ?? 0,
-        })
-        .$returningId()
-
-      return { success: true, id, data }
-    } catch (error: any) {
-      throw new Error(error?.message || 'Failed to create lesson')
-    }
+    const row = fromLessonInsert(data)
+    const id = await db.insert(lessons).values(row).$returningId()
+    return { success: true, id }
   })
 
 export const updateLesson = createServerFn({ method: 'POST' })
   .inputValidator(
-    (input: { index: number } & LessonMutationInput) => ({
+    (input: { index: number } & LessonInsert) => ({
       ...input,
       index: Number(input.index),
     }),
   )
   .handler(async ({ data }) => {
     await requireAuth()
-    try {
-      await db
-        .update(lessons)
-        .set({
-          type: data.type ?? null,
-          subtype: data.subtype ?? null,
-          day: data.day ?? null,
-          time: data.time ?? null,
-          dates: data.dates ?? null,
-          calendarDate: data.calendarDate,
-          instructor1: data.instructor1 ?? null,
-          instructor2: data.instructor2 ?? null,
-          description: data.description ?? '',
-          size: data.size ?? null,
-          expire: data.expire ?? null,
-          display: data.display ?? 0,
-        })
-        .where(eq(lessons.index, data.index))
-
-      return { success: true, index: data.index }
-    } catch (error: any) {
-      throw new Error(error?.message || 'Failed to update lesson')
-    }
+    const { index, ...rest } = data
+    const row = fromLessonInsert(rest)
+    await db.update(lessons).set(row).where(eq(lessons.index, index))
+    return { success: true, index }
   })

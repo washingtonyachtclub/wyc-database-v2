@@ -16,7 +16,7 @@ import {
   getQuarterLessonsQueryOptions,
 } from '../lib/lessons-query-options'
 import type { LessonTableRow } from '../db/types'
-import { LessonFormModal } from '../components/lessons/LessonFormModal'
+import { LessonFormModal } from '../components/lessons/LessonEditorModal'
 import { isLessonUpcoming } from '../lib/date-utils'
 
 export const Route = createFileRoute('/lessons')({
@@ -183,7 +183,7 @@ function LessonsPage() {
 
       {/* My Upcoming Lessons */}
       <section>
-        <h2 className="text-2xl font-bold mb-4">My upcoming lessons</h2>
+        <h2 className="text-2xl font-bold mb-4">My Upcoming Lessons</h2>
         {myUpcoming.length === 0 ? (
           <p className="text-muted-foreground">
             You are not instructing any upcoming lessons this quarter.
@@ -206,7 +206,7 @@ function LessonsPage() {
 
       {/* Other Lessons This Quarter */}
       <section>
-        <h2 className="text-2xl font-bold mb-4">Other Lessons This Quarter</h2>
+        <h2 className="text-2xl font-bold mb-4">Other Lessons this Quarter</h2>
         {otherUpcoming.length === 0 && pastThisQuarter.length === 0 ? (
           <p className="text-muted-foreground">
             No other lessons this quarter.
@@ -357,15 +357,16 @@ function LessonsPage() {
         />
       </section>
 
-      <LessonFormModal
-        isOpen={isLessonModalOpen}
-        onClose={() => setIsLessonModalOpen(false)}
-        lesson={lessonInEdit}
-        currentQuarter={currentQuarter}
-        onSuccess={() => {
-          alert('Lesson saved successfully!')
-        }}
-      />
+      {isLessonModalOpen && (
+        <LessonFormModal
+          onClose={() => setIsLessonModalOpen(false)}
+          lesson={lessonInEdit}
+          currentQuarter={currentQuarter}
+          onSuccess={() => {
+            alert('Lesson saved successfully!')
+          }}
+        />
+      )}
     </div>
   )
 }

@@ -3,7 +3,7 @@
 - testing
 - security review
 - Create standard modal format with better UX (esc / click outside to close)
-- zod on search params?
+- zod on search params? check input validator?
 - lessons.tsx using useSearch() instead of useLoaderDeps()
 
 # Less Important
@@ -14,3 +14,4 @@
 - track memberships more precisely (by every renewal instance rather than overwriting expireQtr)
 - frontend design
 - on login: displays login boxes while loading members data (replace with loading indicator)
+- member combobox sort by frequency / MRU of some kind
