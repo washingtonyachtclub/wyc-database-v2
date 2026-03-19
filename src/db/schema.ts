@@ -1,5 +1,6 @@
 import {
   char,
+  customType,
   date,
   datetime,
   double,
@@ -13,7 +14,19 @@ import {
   tinyint,
   unique,
   varchar,
-} from 'drizzle-orm/mysql-core'
+} from 'drizzle-orm/mysql-core';
+
+const blobAsText = customType<{ data: string; driverData: Buffer }>({
+  dataType() {
+    return 'blob'
+  },
+  fromDriver(value: Buffer): string {
+    return value.toString('utf-8')
+  },
+  toDriver(value: string): Buffer {
+    return Buffer.from(value, 'utf-8')
+  },
+})
 
 export const wycDatabase = mysqlTable(
   'WYCDatabase',
@@ -27,9 +40,9 @@ export const wycDatabase = mysqlTable(
     phone1: char('Phone1', { length: 50 }),
     phone2: char('Phone2', { length: 50 }),
     email: char('Email', { length: 50 }),
-    category: int('Category'),
+    categoryId: int('Category'),
     wycNumber: int('WYCNumber').default(0).notNull(),
-    expireQtr: int('ExpireQtr').default(0).notNull(),
+    expireQtrIndex: int('ExpireQtr').default(0).notNull(),
     studentId: int('StudentID'),
     password: char({ length: 50 }).default(
       '*5FB1D6D12867BDF49EB3302D5096F1B9030E6264',
@@ -39,7 +52,7 @@ export const wycDatabase = mysqlTable(
     imageName: char('image_name', { length: 50 }),
   },
   (table) => [
-    primaryKey({ columns: [table.wycNumber], name: 'WYCDatabase_WYCNumber' }),
+    primaryKey({ columns: [table.wycNumber] }),
     unique('IDX_WYCNumber').on(table.wycNumber),
   ],
 )
@@ -55,7 +68,7 @@ export const boatTypes = mysqlTable(
     numberInFleet: int().notNull(),
   },
   (table) => [
-    primaryKey({ columns: [table.index], name: 'boat_types__index' }),
+    primaryKey({ columns: [table.index] }),
   ],
 )
 
@@ -72,7 +85,7 @@ export const calendarboats = mysqlTable(
     description: varchar('Description', { length: 500 }).notNull(),
   },
   (table) => [
-    primaryKey({ columns: [table.cBoatId], name: 'calendarboats_cBoatId' }),
+    primaryKey({ columns: [table.cBoatId] }),
   ],
 )
 
@@ -90,7 +103,7 @@ export const calendarconfig = mysqlTable(
     ipdescription: varchar({ length: 255 }).notNull(),
   },
   (table) => [
-    primaryKey({ columns: [table.wacip], name: 'calendarconfig_wacip' }),
+    primaryKey({ columns: [table.wacip] }),
   ],
 )
 
@@ -111,7 +124,7 @@ export const calendartable = mysqlTable(
     numFullWe: int().notNull(),
     numHalfWe: int().notNull(),
   },
-  (table) => [primaryKey({ columns: [table.id], name: 'calendartable_id' })],
+  (table) => [primaryKey({ columns: [table.id] })],
 )
 
 export const checkouts = mysqlTable(
@@ -128,7 +141,7 @@ export const checkouts = mysqlTable(
     relevantRating: int('RelevantRating'),
     chiefId: int('ChiefID'),
   },
-  (table) => [primaryKey({ columns: [table.index], name: 'checkouts__index' })],
+  (table) => [primaryKey({ columns: [table.index] })],
 )
 
 export const classType = mysqlTable(
@@ -138,7 +151,7 @@ export const classType = mysqlTable(
     text: varchar({ length: 80 }),
   },
   (table) => [
-    primaryKey({ columns: [table.index], name: 'class_type__index' }),
+    primaryKey({ columns: [table.index] }),
   ],
 )
 
@@ -149,7 +162,7 @@ export const crew = mysqlTable(
     checkoutId: int('checkout_ID').notNull(),
     crewId: int('crew_ID').notNull(),
   },
-  (table) => [primaryKey({ columns: [table.index], name: 'crew__index' })],
+  (table) => [primaryKey({ columns: [table.index] })],
 )
 
 export const guests = mysqlTable(
@@ -162,7 +175,7 @@ export const guests = mysqlTable(
     email: varchar({ length: 20 }),
     phone: varchar({ length: 15 }),
   },
-  (table) => [primaryKey({ columns: [table.index], name: 'guests__index' })],
+  (table) => [primaryKey({ columns: [table.index] })],
 )
 
 export const keelboatPricing = mysqlTable('keelboat_pricing', {
@@ -179,7 +192,7 @@ export const lessonQuarter = mysqlTable(
     quarter: int({ unsigned: true }).default(0).notNull(),
   },
   (table) => [
-    primaryKey({ columns: [table.index], name: 'lesson_quarter__index' }),
+    primaryKey({ columns: [table.index] }),
   ],
 )
 
@@ -196,14 +209,12 @@ export const lessons = mysqlTable(
     calendarDate: date('CalendarDate', { mode: 'string' }).notNull(),
     instructor1: int(),
     instructor2: int(),
-    // Warning: Can't parse blob from database
-    // blobType: blob("comments"),
-    description: text('Description').notNull(),
+    comments: blobAsText('comments'),
     size: int(),
     expire: int(),
     display: tinyint().default(0).notNull(),
   },
-  (table) => [primaryKey({ columns: [table.index], name: 'lessons__index' })],
+  (table) => [primaryKey({ columns: [table.index] })],
 )
 
 export const memcat = mysqlTable(
@@ -212,7 +223,7 @@ export const memcat = mysqlTable(
     index: int('_index').autoincrement().notNull(),
     text: varchar({ length: 50 }),
   },
-  (table) => [primaryKey({ columns: [table.index], name: 'memcat__index' })],
+  (table) => [primaryKey({ columns: [table.index] })],
 )
 
 export const noyes = mysqlTable(
@@ -221,7 +232,7 @@ export const noyes = mysqlTable(
     index: tinyint('_index').default(0).notNull(),
     text: char({ length: 10 }),
   },
-  (table) => [primaryKey({ columns: [table.index], name: 'noyes__index' })],
+  (table) => [primaryKey({ columns: [table.index] })],
 )
 
 export const officers = mysqlTable(
@@ -233,7 +244,7 @@ export const officers = mysqlTable(
     active: tinyint().default(1).notNull(),
   },
   (table) => [
-    primaryKey({ columns: [table.index], name: 'officers__index' }),
+    primaryKey({ columns: [table.index] }),
     unique('_index').on(table.index),
   ],
 )
@@ -245,7 +256,7 @@ export const options = mysqlTable(
     name: varchar({ length: 80 }),
     value: varchar({ length: 250 }),
   },
-  (table) => [primaryKey({ columns: [table.index], name: 'options__index' })],
+  (table) => [primaryKey({ columns: [table.index] })],
 )
 
 export const posPrivMap = mysqlTable(
@@ -256,7 +267,7 @@ export const posPrivMap = mysqlTable(
     priv: int(),
   },
   (table) => [
-    primaryKey({ columns: [table.index], name: 'pos_priv_map__index' }),
+    primaryKey({ columns: [table.index] }),
   ],
 )
 
@@ -266,7 +277,7 @@ export const posType = mysqlTable(
     index: int('_index').autoincrement().notNull(),
     text: char({ length: 50 }),
   },
-  (table) => [primaryKey({ columns: [table.index], name: 'pos_type__index' })],
+  (table) => [primaryKey({ columns: [table.index] })],
 )
 
 export const positions = mysqlTable(
@@ -280,7 +291,7 @@ export const positions = mysqlTable(
     bookmark: varchar({ length: 50 }),
     jobDesc: varchar('job_desc', { length: 50 }),
   },
-  (table) => [primaryKey({ columns: [table.index], name: 'positions__index' })],
+  (table) => [primaryKey({ columns: [table.index] })],
 )
 
 export const priorityTypes = mysqlTable(
@@ -290,7 +301,7 @@ export const priorityTypes = mysqlTable(
     priority: varchar({ length: 25 }).default('').notNull(),
   },
   (table) => [
-    primaryKey({ columns: [table.index], name: 'priority_types__index' }),
+    primaryKey({ columns: [table.index] }),
   ],
 )
 
@@ -300,7 +311,7 @@ export const privs = mysqlTable(
     index: int('_index').autoincrement().notNull(),
     name: char({ length: 10 }),
   },
-  (table) => [primaryKey({ columns: [table.index], name: 'privs__index' })],
+  (table) => [primaryKey({ columns: [table.index] })],
 )
 
 export const quarters = mysqlTable(
@@ -312,7 +323,7 @@ export const quarters = mysqlTable(
     // you can use { mode: 'date' }, if you want to have Date as type for this column
     endDate: date({ mode: 'string' }),
   },
-  (table) => [primaryKey({ columns: [table.index], name: 'quarters__index' })],
+  (table) => [primaryKey({ columns: [table.index] })],
 )
 
 export const ratings = mysqlTable(
@@ -323,7 +334,7 @@ export const ratings = mysqlTable(
     type: varchar({ length: 10 }).notNull(),
     degree: int().notNull(),
   },
-  (table) => [primaryKey({ columns: [table.index], name: 'ratings__index' })],
+  (table) => [primaryKey({ columns: [table.index] })],
 )
 
 export const recip = mysqlTable('recip', {
@@ -348,7 +359,7 @@ export const sessions = mysqlTable(
     userid: int(),
     time: varchar({ length: 80 }),
   },
-  (table) => [primaryKey({ columns: [table.index], name: 'sessions__index' })],
+  (table) => [primaryKey({ columns: [table.index] })],
 )
 
 export const signups = mysqlTable(
@@ -360,7 +371,7 @@ export const signups = mysqlTable(
   },
   (table) => [
     index('class').on(table.class),
-    primaryKey({ columns: [table.index], name: 'signups__index' }),
+    primaryKey({ columns: [table.index] }),
   ],
 )
 
@@ -394,7 +405,7 @@ export const snc = mysqlTable(
     transpt: tinyint().default(0),
     paymentConfirm: int('payment_confirm').notNull(),
   },
-  (table) => [primaryKey({ columns: [table.index], name: 'snc__index' })],
+  (table) => [primaryKey({ columns: [table.index] })],
 )
 
 export const sncFood = mysqlTable(
@@ -406,7 +417,7 @@ export const sncFood = mysqlTable(
     isDinner: tinyint('is_dinner'),
     cost: int().default(0).notNull(),
   },
-  (table) => [primaryKey({ columns: [table.index], name: 'snc_food__index' })],
+  (table) => [primaryKey({ columns: [table.index] })],
 )
 
 export const sncWork = mysqlTable(
@@ -416,7 +427,7 @@ export const sncWork = mysqlTable(
     text: char({ length: 50 }),
     isAllowed: tinyint('is_allowed'),
   },
-  (table) => [primaryKey({ columns: [table.index], name: 'snc_work__index' })],
+  (table) => [primaryKey({ columns: [table.index] })],
 )
 
 export const wycRatings = mysqlTable(
@@ -431,7 +442,7 @@ export const wycRatings = mysqlTable(
     comments: varchar({ length: 255 }),
   },
   (table) => [
-    primaryKey({ columns: [table.index], name: 'wyc_ratings__index' }),
+    primaryKey({ columns: [table.index] }),
   ],
 )
 
@@ -444,5 +455,5 @@ export const wycWind = mysqlTable(
     windGust: double('wind_gust').notNull(),
     windDirection: varchar('wind_direction', { length: 2 }).notNull(),
   },
-  (table) => [primaryKey({ columns: [table.index], name: 'wyc_wind_index' })],
+  (table) => [primaryKey({ columns: [table.index] })],
 )

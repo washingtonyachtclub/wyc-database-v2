@@ -1,10 +1,9 @@
 # MVP
 - review existing RBAC and implement
-- testing
 - security review
-- Create standard modal format with better UX (esc / click outside to close)
-- zod on search params? check input validator?
+- zod on search params? investigate input validator
 - lessons.tsx using useSearch() instead of useLoaderDeps()
+- view current members on members page
 
 # Less Important
 - manage officers / position holders page

@@ -1,33 +1,37 @@
-import { asc, count, eq, gte } from 'drizzle-orm'
 import { createServerFn } from '@tanstack/react-start'
+import { asc, count, eq, gte } from 'drizzle-orm'
+import { baseLessonQuery, lessonSortColumns } from 'src/db/lesson-queries'
+import { fromLessonInsert, toRichLesson } from 'src/db/mappers'
+import { withPagination, withSorting } from 'src/db/query-helpers'
 import { classType, lessonQuarter, lessons } from 'src/db/schema'
+import type { LessonInsert } from 'src/db/types'
 import db from '../db/index'
 import { requireAuth } from '../lib/auth-middleware'
-import { fromLessonInsert, toLessonTableRow } from 'src/db/mappers'
-import { withSorting, withPagination } from 'src/db/query-helpers'
-import { baseLessonQuery, lessonSortColumns } from 'src/db/lesson-queries'
-import type { LessonInsert } from 'src/db/types'
 
 export const getQuarterLessons = createServerFn({ method: 'GET' }).handler(
   async () => {
     const userId = await requireAuth()
-
-    const [quarterRow] = await db
-      .select({ quarter: lessonQuarter.quarter })
-      .from(lessonQuarter)
-      .where(eq(lessonQuarter.index, 1))
-      .limit(1)
-
-    const currentQuarter = quarterRow?.quarter ?? 0
+    const currentQuarter = await getCurrentQuarter()
 
     const query = baseLessonQuery()
       .where(gte(lessons.expire, currentQuarter))
       .orderBy(asc(lessons.calendarDate), asc(lessons.time))
 
     const raw = await query
-    const data = raw.map(toLessonTableRow)
+    const data = raw.map(toRichLesson)
 
     return { data, currentQuarter, userId }
+  },
+)
+
+export const getCurrentQuarter = createServerFn({ method: 'GET' }).handler(
+  async () => {
+    const quarterRow = await db
+      .select({ quarter: lessonQuarter.quarter })
+      .from(lessonQuarter)
+      .where(eq(lessonQuarter.index, 1))
+      .limit(1)
+    return quarterRow[0].quarter
   },
 )
 
@@ -52,7 +56,7 @@ export const getAllLessons = createServerFn({ method: 'GET' })
     withPagination(query, pageIndex, pageSize)
 
     const raw = await query
-    const data = raw.map(toLessonTableRow)
+    const data = raw.map(toRichLesson)
 
     const [totalCountResult] = await db
       .select({ count: count() })

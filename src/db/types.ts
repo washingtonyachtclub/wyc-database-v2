@@ -1,7 +1,6 @@
-import type { classType, lessons, wycDatabase } from './schema'
+import type { classType } from './schema'
 
-export type MemberRow = typeof wycDatabase.$inferSelect
-
+export type MemberInsert = Omit<Member, 'wycNumber'>
 export type Member = {
   wycNumber: number
   first: string
@@ -18,9 +17,7 @@ export type Member = {
   phone2: string
   studentId: number | null
   outToSea: boolean
-  imageName: string
 }
-
 export type MemberTableRow = {
   wycNumber: number
   first: string
@@ -31,12 +28,10 @@ export type MemberTableRow = {
   joinDate: string
 }
 
-export type LessonRow = typeof lessons.$inferSelect
 export type LessonInsert = Omit<Lesson, 'index'>
-
 export type Lesson = {
   index: number
-  classTypeId: number | null // classType index (FK)
+  classTypeId: number // classType index (FK)
   subtype: string
   day: string
   time: string
@@ -44,17 +39,16 @@ export type Lesson = {
   calendarDate: string
   instructor1: number // wycNumber (FK)
   instructor2: number | null // wycNumber (FK)
-  description: string
+  comments: string
   size: number
   expire: number // quarter index (FK)
   display: boolean
 }
-
-export type LessonTableRow = {
+export type RichLesson = {
   index: number
   classTypeId: number // classType index
   instructor1: number
-  instructor2: number
+  instructor2: number | null
   expire: number // quarter index
   // resolved display fields
   type: string // classType.text
@@ -65,7 +59,7 @@ export type LessonTableRow = {
   calendarDate: string
   instructor1Name: string
   instructor2Name: string
-  description: string
+  comments: string
   size: number
   display: boolean
 }

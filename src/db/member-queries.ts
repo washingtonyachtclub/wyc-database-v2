@@ -1,34 +1,39 @@
 import { and, eq, gte, like, or } from 'drizzle-orm'
 import type { MySqlColumn, MySqlSelect } from 'drizzle-orm/mysql-core'
-import { wycDatabase } from './schema'
+import db from './index'
+import type { MemberFilters } from './member-filter-types'
+import { memcat, quarters, wycDatabase } from './schema'
+
+export const memberTableSelectFields = {
+  wycNumber: wycDatabase.wycNumber,
+  first: wycDatabase.first,
+  last: wycDatabase.last,
+  category: memcat.text,
+  expireQtrSchoolText: quarters.school,
+  expireQtrIndex: wycDatabase.expireQtrIndex,
+  joinDate: wycDatabase.joinDate,
+}
+
+export function baseMemberQuery() {
+  return db
+    .select(memberTableSelectFields)
+    .from(wycDatabase)
+    .leftJoin(memcat, eq(memcat.index, wycDatabase.categoryId))
+    .leftJoin(quarters, eq(quarters.index, wycDatabase.expireQtrIndex))
+}
+
+export type MemberQueryRow = Awaited<ReturnType<typeof baseMemberQuery>>[number]
 
 // Column ID → actual DB column for sorting
 // 'expireQtrSchoolText' sorts by the raw int, not the display string
 export const memberSortColumns: Record<string, MySqlColumn> = {
-  expireQtrSchoolText: wycDatabase.expireQtr,
+  expireQtrSchoolText: wycDatabase.expireQtrIndex,
   joinDate: wycDatabase.joinDate,
   wycNumber: wycDatabase.wycNumber,
   first: wycDatabase.first,
   last: wycDatabase.last,
 }
 
-export const EXPIRE_QTR_MODES = ['exactly', 'atLeast'] as const
-export type ExpireQtrMode = (typeof EXPIRE_QTR_MODES)[number]
-
-export type ExpireQtrFilter = { quarter: number; mode: ExpireQtrMode }
-
-export function parseExpireQtrMode(value: string): ExpireQtrMode | undefined {
-  return (EXPIRE_QTR_MODES as readonly string[]).includes(value)
-    ? (value as ExpireQtrMode)
-    : undefined
-}
-
-export type MemberFilters = {
-  wycId?: string
-  name?: string
-  category?: number
-  expireQtrFilter?: ExpireQtrFilter
-}
 
 export function withMemberFilters<T extends MySqlSelect>(
   qb: T,
@@ -70,15 +75,15 @@ export function withMemberFilters<T extends MySqlSelect>(
   }
 
   if (filters?.category !== undefined && filters.category !== null) {
-    conditions.push(eq(wycDatabase.category, filters.category))
+    conditions.push(eq(wycDatabase.categoryId, filters.category))
   }
 
   if (filters?.expireQtrFilter) {
     const { quarter, mode } = filters.expireQtrFilter
     if (mode === 'atLeast') {
-      conditions.push(gte(wycDatabase.expireQtr, quarter))
+      conditions.push(gte(wycDatabase.expireQtrIndex, quarter))
     } else {
-      conditions.push(eq(wycDatabase.expireQtr, quarter))
+      conditions.push(eq(wycDatabase.expireQtrIndex, quarter))
     }
   }
 

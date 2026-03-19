@@ -4,7 +4,7 @@ import {
   parseExpireQtrMode,
   type ExpireQtrFilter,
   type MemberFilters,
-} from '../../db/member-queries'
+} from '../../db/member-filter-types'
 
 const expireQtrModeLabels = {
   exactly: 'Exactly',

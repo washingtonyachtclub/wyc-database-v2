@@ -1,15 +1,15 @@
 import { useQuery } from '@tanstack/react-query'
-import type { LessonInsert, LessonTableRow } from '../../db/types'
 import { TBD_WYC_NUMBER } from '../../db/constants'
 import { lessonInsertSchema } from '../../db/lesson-schema'
+import type { Lesson, LessonInsert } from '../../db/types'
+import { useAppForm } from '../../hooks/form'
 import { getClassTypesQueryOptions, useCreateLessonMutation, useUpdateLessonMutation } from '../../lib/lessons-query-options'
 import { getQuartersQueryOptions } from '../../lib/members-query-options'
-import { useAppForm } from '../../hooks/form'
 import { MemberCombobox } from '../ui/MemberCombobox'
 import { Modal } from '../ui/Modal'
 
 const emptyDefaults = (expireDefault: number): LessonInsert => ({
-  classTypeId: null,
+  classTypeId: 1,
   subtype: '',
   day: '',
   time: '',
@@ -17,7 +17,7 @@ const emptyDefaults = (expireDefault: number): LessonInsert => ({
   calendarDate: '',
   instructor1: TBD_WYC_NUMBER,
   instructor2: null,
-  description: '',
+  comments: '',
   size: 0,
   expire: expireDefault,
   display: true,
@@ -25,7 +25,7 @@ const emptyDefaults = (expireDefault: number): LessonInsert => ({
 
 type LessonFormModalProps = {
   onClose: () => void
-  lesson: LessonTableRow | null
+  lesson: Lesson | null
   currentQuarter: number
   onSuccess: () => void
 }
@@ -57,7 +57,7 @@ export function LessonFormModal({
         calendarDate: lesson.calendarDate,
         instructor1: lesson.instructor1,
         instructor2: lesson.instructor2,
-        description: lesson.description,
+        comments: lesson.comments,
         size: lesson.size,
         expire: lesson.expire,
         display: lesson.display,
@@ -189,9 +189,9 @@ export function LessonFormModal({
           />
 
           <form.AppField
-            name="description"
+            name="comments"
             children={(field) => (
-              <field.TextAreaField label="Description" className="md:col-span-2" />
+              <field.TextAreaField label="Comments" className="md:col-span-2" />
             )}
           />
 

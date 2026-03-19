@@ -1,12 +1,14 @@
-import { queryOptions } from '@tanstack/react-query'
+import { queryOptions, useMutation, useQueryClient } from '@tanstack/react-query';
+import type { MemberFilters } from '../db/member-filter-types';
 import {
+  createMember,
   getAllMembersLite,
   getCategories,
   getMembersTable,
-  getMostRecentWycNumber,
+  getNextWycNumber,
   getQuarters,
-} from './members-server-fns'
-import type { MemberFilters } from '../db/member-queries'
+  updateMember,
+} from './members-server-fns';
 
 export const getMembersQueryOptions = (
   pageIndex: number,
@@ -24,10 +26,10 @@ export const getMembersQueryOptions = (
     },
   })
 
-export const getMostRecentWycNumberQueryOptions = () =>
+export const getNextWycNumberQueryOptions = () =>
   queryOptions({
-    queryKey: ['mostRecentWycNumber'],
-    queryFn: getMostRecentWycNumber,
+    queryKey: ['nextWycNumber'],
+    queryFn: getNextWycNumber,
   })
 
 export const getCategoriesQueryOptions = () =>
@@ -48,3 +50,27 @@ export const getAllMembersLiteQueryOptions = () =>
     queryFn: getAllMembersLite,
     staleTime: 5 * 60 * 1000,
   })
+
+export const useCreateMemberMutation = (opts: { onSuccess: () => void; onClose: () => void }) => {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: createMember,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['members'] })
+      opts.onSuccess()
+      opts.onClose()
+    },
+  })
+}
+
+export const useUpdateMemberMutation = (opts: { onSuccess: () => void; onClose: () => void }) => {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: updateMember,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['members'] })
+      opts.onSuccess()
+      opts.onClose()
+    },
+  })
+}

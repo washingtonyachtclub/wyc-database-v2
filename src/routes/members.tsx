@@ -1,3 +1,5 @@
+import { getCurrentQuarterQueryOptions } from '@/lib/lessons-query-options'
+import { useQuery, useSuspenseQuery } from '@tanstack/react-query'
 import { createFileRoute, redirect, useNavigate } from '@tanstack/react-router'
 import {
   flexRender,
@@ -7,17 +9,16 @@ import {
 } from '@tanstack/react-table'
 import { ArrowDown, ArrowUp } from 'lucide-react'
 import { useState } from 'react'
-import { useQuery, useSuspenseQuery } from '@tanstack/react-query'
+import { AddMemberModal } from '../components/members/AddMemberModal'
 import { columns } from '../components/members/columns'
-import { PaginationControls } from '../components/members/PaginationControls'
 import { FilterControls } from '../components/members/FilterControls'
-import { AddMemberForm } from '../components/members/AddMemberForm'
+import { PaginationControls } from '../components/members/PaginationControls'
+import type { MemberFilters } from '../db/member-filter-types'
 import {
   getCategoriesQueryOptions,
   getMembersQueryOptions,
   getQuartersQueryOptions,
 } from '../lib/members-query-options'
-import type { MemberFilters } from '../db/member-queries'
 
 // ===== ROUTE DEFINITION =====
 
@@ -95,15 +96,16 @@ function App() {
   const navigate = useNavigate({ from: '/members' })
   const { wycId, name, category, expireQtrFilter } = Route.useSearch()
   const { pageIndex, pageSize, filters, sorting } = Route.useLoaderDeps()
-  const [isFormOpen, setIsFormOpen] = useState(false)
-  const [formKey, setFormKey] = useState(0)
 
   const { data: categories = [] } = useQuery(getCategoriesQueryOptions())
   const { data: quarters = [] } = useQuery(getQuartersQueryOptions())
 
+  const { data: currentQuarter = 1 } = useQuery(getCurrentQuarterQueryOptions())
   const { data: membersResponse } = useSuspenseQuery(
     getMembersQueryOptions(pageIndex, pageSize, filters, sorting),
   )
+
+  const [isAddMemberModalOpen, setIsAddMemberModalOpen] = useState(false)
 
   const members = membersResponse.data
   const totalCount = membersResponse.totalCount
@@ -192,26 +194,15 @@ function App() {
     })
   }
 
-  const handleFormSuccess = () => {
-    alert('Member added successfully!')
-    setFormKey((prev) => prev + 1)
-  }
-
   return (
     <div className="p-4">
       <h2 className="text-2xl font-bold mb-4">WYC Members</h2>
       <button
-        onClick={() => setIsFormOpen(true)}
+        onClick={() => setIsAddMemberModalOpen(true)}
         className="mb-4 px-4 py-2 bg-primary text-primary-foreground rounded hover:opacity-90"
       >
         Add Member
       </button>
-      <AddMemberForm
-        key={formKey}
-        isOpen={isFormOpen}
-        onClose={() => setIsFormOpen(false)}
-        onSuccess={handleFormSuccess}
-      />
       <FilterControls
         wycId={wycId}
         name={name}
@@ -290,6 +281,15 @@ function App() {
           </tbody>
         </table>
       </div>
+      {isAddMemberModalOpen && (
+        <AddMemberModal
+          currentQuarter={currentQuarter}
+          onClose={() => setIsAddMemberModalOpen(false)}
+          onSuccess={() => {
+            alert('Member added successfully!')
+          }}
+        />
+      )}
       <PaginationControls
         table={table}
         pageCount={pageCount}

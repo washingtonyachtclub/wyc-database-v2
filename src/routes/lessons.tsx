@@ -1,3 +1,5 @@
+import { Lesson, RichLesson } from '@/db/types'
+import { useQuery, useSuspenseQuery } from '@tanstack/react-query'
 import { createFileRoute, redirect, useNavigate } from '@tanstack/react-router'
 import {
   flexRender,
@@ -7,17 +9,15 @@ import {
 } from '@tanstack/react-table'
 import { ArrowDown, ArrowUp } from 'lucide-react'
 import { useMemo, useState } from 'react'
-import { useQuery, useSuspenseQuery } from '@tanstack/react-query'
 import { columns } from '../components/lessons/columns'
 import { LessonCard } from '../components/lessons/LessonCard'
+import { LessonFormModal } from '../components/lessons/LessonEditorModal'
 import { PaginationControls } from '../components/members/PaginationControls'
+import { isLessonUpcoming } from '../lib/date-utils'
 import {
   getAllLessonsQueryOptions,
   getQuarterLessonsQueryOptions,
 } from '../lib/lessons-query-options'
-import type { LessonTableRow } from '../db/types'
-import { LessonFormModal } from '../components/lessons/LessonEditorModal'
-import { isLessonUpcoming } from '../lib/date-utils'
 
 export const Route = createFileRoute('/lessons')({
   validateSearch: (search: Record<string, unknown>) => ({
@@ -43,15 +43,17 @@ export const Route = createFileRoute('/lessons')({
     return { pageIndex, pageSize, sorting }
   },
   loader: ({ context, deps: { pageIndex, pageSize, sorting } }) => {
-    context.queryClient.ensureQueryData(getQuarterLessonsQueryOptions())
-    return context.queryClient.ensureQueryData(
-      getAllLessonsQueryOptions(pageIndex, pageSize, sorting),
-    )
+    return {
+      quarterLessons: context.queryClient.ensureQueryData(getQuarterLessonsQueryOptions()),
+      allLessons: context.queryClient.ensureQueryData(
+        getAllLessonsQueryOptions(pageIndex, pageSize, sorting),
+      ),
+    }
   },
   component: LessonsPage,
 })
 
-function isMyLesson(lesson: LessonTableRow, userId: number) {
+function isMyLesson(lesson: Lesson, userId: number) {
   return lesson.instructor1 === userId || lesson.instructor2 === userId
 }
 
@@ -59,7 +61,7 @@ function LessonsPage() {
   const navigate = useNavigate({ from: '/lessons' })
   const { pageIndex, pageSize, sortColumn, sortDesc } = Route.useSearch()
   const [isLessonModalOpen, setIsLessonModalOpen] = useState(false)
-  const [lessonInEdit, setLessonInEdit] = useState<LessonTableRow | null>(null)
+  const [lessonInEdit, setLessonInEdit] = useState<Lesson | null>(null)
 
   const sorting =
     sortColumn && sortColumn === 'calendarDate'
@@ -81,8 +83,8 @@ function LessonsPage() {
     pastThisQuarter,
     futureLessons,
   } = useMemo(() => {
-    const thisQuarterLessons: LessonTableRow[] = []
-    const future: LessonTableRow[] = []
+    const thisQuarterLessons: RichLesson[] = []
+    const future: RichLesson[] = []
 
     for (const lesson of quarterLessons) {
       if (lesson.expire > currentQuarter) {
@@ -92,9 +94,9 @@ function LessonsPage() {
       }
     }
 
-    const myUpcomingLessons: LessonTableRow[] = []
-    const otherUpcomingLessons: LessonTableRow[] = []
-    const pastLessonsThisQuarter: LessonTableRow[] = []
+    const myUpcomingLessons = []
+    const otherUpcomingLessons = []
+    const pastLessonsThisQuarter = []
 
     for (const lesson of thisQuarterLessons) {
       const upcoming = isLessonUpcoming(lesson.calendarDate)

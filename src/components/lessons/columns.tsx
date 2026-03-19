@@ -1,7 +1,7 @@
 import { createColumnHelper } from '@tanstack/react-table'
-import type { LessonTableRow } from '../../db/types'
+import type { RichLesson } from '../../db/types'
 
-const columnHelper = createColumnHelper<LessonTableRow>()
+const columnHelper = createColumnHelper<RichLesson>()
 
 export const columns = [
   columnHelper.accessor('type', {
@@ -32,7 +32,7 @@ export const columns = [
     header: 'Instructor 2',
     enableSorting: false,
   }),
-  columnHelper.accessor('description', {
+  columnHelper.accessor('comments', {
     header: 'Comments',
     cell: (info) => {
       const val = info.getValue()

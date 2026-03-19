@@ -1,5 +1,5 @@
-import { queryOptions, useMutation, useQueryClient } from '@tanstack/react-query'
-import { createLesson, getAllLessons, getClassTypes, getQuarterLessons, updateLesson } from './lessons-server-fns'
+import { queryOptions, useMutation, useQueryClient } from '@tanstack/react-query';
+import { createLesson, getAllLessons, getClassTypes, getCurrentQuarter, getQuarterLessons, updateLesson } from './lessons-server-fns';
 
 export const getQuarterLessonsQueryOptions = () =>
   queryOptions({
@@ -36,6 +36,12 @@ export function useUpdateLessonMutation(opts: { onSuccess: () => void; onClose: 
     },
   })
 }
+
+export const getCurrentQuarterQueryOptions = () =>
+  queryOptions({
+    queryKey: ['lessons', 'currentQuarter'],
+    queryFn: getCurrentQuarter,
+  })
 
 export const getAllLessonsQueryOptions = (
   pageIndex: number,

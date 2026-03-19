@@ -1,7 +1,7 @@
 import { eq } from 'drizzle-orm'
 import { alias, type MySqlColumn } from 'drizzle-orm/mysql-core'
-import { classType, lessons, wycDatabase } from './schema'
 import db from './index'
+import { classType, lessons, wycDatabase } from './schema'
 
 const instructor1Table = alias(wycDatabase, 'i1')
 const instructor2Table = alias(wycDatabase, 'i2')
@@ -26,11 +26,13 @@ export const lessonTableSelectFields = {
   instructor1Last: instructor1Table.last,
   instructor2First: instructor2Table.first,
   instructor2Last: instructor2Table.last,
-  description: lessons.description,
+  comments: lessons.comments,
   size: lessons.size,
   expire: lessons.expire,
   display: lessons.display,
 }
+
+export type LessonQueryRow = Awaited<ReturnType<typeof baseLessonQuery>>[number]
 
 export function baseLessonQuery() {
   return db

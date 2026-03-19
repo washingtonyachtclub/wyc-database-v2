@@ -1,12 +1,12 @@
 import { AlertTriangle } from 'lucide-react'
-import type { LessonTableRow } from '../../db/types'
+import type { RichLesson } from '../../db/types'
 import { isLessonUpcoming } from '../../lib/date-utils'
 
 export function LessonCard({
   lesson,
   onClick,
 }: {
-  lesson: LessonTableRow
+  lesson: RichLesson
   onClick?: () => void
 }) {
   const upcoming = isLessonUpcoming(lesson.calendarDate)
@@ -37,9 +37,9 @@ export function LessonCard({
           <h4 className="font-semibold">
             {lesson.subtype || lesson.type || 'Untitled Lesson'}
           </h4>
-          {lesson.description && (
+          {lesson.comments && (
             <p className="text-sm text-muted-foreground mt-1 line-clamp-2">
-              {lesson.description}
+              {lesson.comments}
             </p>
           )}
         </div>
