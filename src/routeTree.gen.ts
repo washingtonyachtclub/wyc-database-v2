@@ -9,11 +9,17 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as MembershipProcessingRouteImport } from './routes/membership-processing'
 import { Route as MembersRouteImport } from './routes/members'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as LessonsRouteImport } from './routes/lessons'
 import { Route as IndexRouteImport } from './routes/index'
 
+const MembershipProcessingRoute = MembershipProcessingRouteImport.update({
+  id: '/membership-processing',
+  path: '/membership-processing',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const MembersRoute = MembersRouteImport.update({
   id: '/members',
   path: '/members',
@@ -40,12 +46,14 @@ export interface FileRoutesByFullPath {
   '/lessons': typeof LessonsRoute
   '/login': typeof LoginRoute
   '/members': typeof MembersRoute
+  '/membership-processing': typeof MembershipProcessingRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/lessons': typeof LessonsRoute
   '/login': typeof LoginRoute
   '/members': typeof MembersRoute
+  '/membership-processing': typeof MembershipProcessingRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -53,13 +61,20 @@ export interface FileRoutesById {
   '/lessons': typeof LessonsRoute
   '/login': typeof LoginRoute
   '/members': typeof MembersRoute
+  '/membership-processing': typeof MembershipProcessingRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/lessons' | '/login' | '/members'
+  fullPaths: '/' | '/lessons' | '/login' | '/members' | '/membership-processing'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/lessons' | '/login' | '/members'
-  id: '__root__' | '/' | '/lessons' | '/login' | '/members'
+  to: '/' | '/lessons' | '/login' | '/members' | '/membership-processing'
+  id:
+    | '__root__'
+    | '/'
+    | '/lessons'
+    | '/login'
+    | '/members'
+    | '/membership-processing'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -67,10 +82,18 @@ export interface RootRouteChildren {
   LessonsRoute: typeof LessonsRoute
   LoginRoute: typeof LoginRoute
   MembersRoute: typeof MembersRoute
+  MembershipProcessingRoute: typeof MembershipProcessingRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/membership-processing': {
+      id: '/membership-processing'
+      path: '/membership-processing'
+      fullPath: '/membership-processing'
+      preLoaderRoute: typeof MembershipProcessingRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/members': {
       id: '/members'
       path: '/members'
@@ -107,6 +130,7 @@ const rootRouteChildren: RootRouteChildren = {
   LessonsRoute: LessonsRoute,
   LoginRoute: LoginRoute,
   MembersRoute: MembersRoute,
+  MembershipProcessingRoute: MembershipProcessingRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

@@ -8,7 +8,6 @@ export type Member = {
   email: string
   categoryId: number | null
   expireQtrIndex: number
-  joinDate: string
   streetAddress: string
   city: string
   state: string

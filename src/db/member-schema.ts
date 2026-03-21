@@ -14,5 +14,4 @@ export const AddMemberFormSchema = z.object({
   expireQtrIndex: z.number(),
   studentId: z.number().nullable(),
   outToSea: z.boolean(),
-  joinDate: z.string(),
 })

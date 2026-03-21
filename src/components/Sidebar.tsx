@@ -6,6 +6,7 @@ export default function Sidebar() {
   const navItems = [
     { path: '/members', label: 'Members' },
     { path: '/lessons', label: 'Lessons' },
+    { path: '/membership-processing', label: 'Membership Processing' },
   ]
 
   return (

@@ -1,7 +1,8 @@
 import { createServerFn } from '@tanstack/react-start'
 import { and, asc, count, desc, eq, gte, lte } from 'drizzle-orm'
 import { fromMemberInsert, toMemberTableRow } from 'src/db/mappers'
-import { baseMemberQuery, memberSortColumns, withMemberFilters, type MemberFilters } from 'src/db/member-queries'
+import type { MemberFilters } from 'src/db/member-filter-types'
+import { baseMemberQuery, memberSortColumns, withMemberFilters } from 'src/db/member-queries'
 import { withPagination, withSorting } from 'src/db/query-helpers'
 import { memcat, quarters, wycDatabase } from 'src/db/schema'
 import type { MemberInsert } from 'src/db/types'
@@ -183,3 +184,8 @@ export const getAllMembersLite = createServerFn({ method: 'GET' }).handler(
     return result
   },
 )
+
+export const getDatabaseName = createServerFn({ method: 'GET' }).handler(async () => {
+  const url = process.env.DATABASE_URL ?? ''
+  return url.split('/').pop() ?? 'unknown'
+})

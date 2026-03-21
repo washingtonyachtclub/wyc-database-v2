@@ -23,7 +23,6 @@ const emptyDefaults = (expireDefault: number): MemberInsert => ({
   expireQtrIndex: expireDefault,
   studentId: null,
   outToSea: false,
-  joinDate: new Date().toISOString().slice(0, 10),
 })
 
 type AddMemberModalProps = {
@@ -151,13 +150,6 @@ export function AddMemberModal({
                 placeholder="Select quarter"
                 options={quarterOptions}
               />
-            )}
-          />
-
-          <form.AppField
-            name="joinDate"
-            children={(field) => (
-              <field.TextField label="Join Date" required type="date" />
             )}
           />
 
