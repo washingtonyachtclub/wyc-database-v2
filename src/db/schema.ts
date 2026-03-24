@@ -44,9 +44,7 @@ export const wycDatabase = mysqlTable(
     wycNumber: int('WYCNumber').default(0).notNull(),
     expireQtrIndex: int('ExpireQtr').default(0).notNull(),
     studentId: int('StudentID'),
-    password: char({ length: 50 }).default(
-      '*5FB1D6D12867BDF49EB3302D5096F1B9030E6264',
-    ),
+    password: char({ length: 50 }),
     outToSea: tinyint('out_to_sea').default(0),
     joinDate: timestamp('JoinDate', { mode: 'string' }).defaultNow().notNull(),
     imageName: char('image_name', { length: 50 }),
