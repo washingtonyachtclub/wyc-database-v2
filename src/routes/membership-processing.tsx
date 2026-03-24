@@ -1,18 +1,22 @@
+import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
 import { Member } from '@/db/types'
+import { hashPasswordArgon2ServerFn } from '@/lib/auth-server-fns'
 import { getCurrentQuarterQueryOptions } from '@/lib/lessons-query-options'
 import { getAllMembersLiteQueryOptions } from '@/lib/members-query-options'
 import { getDatabaseName, getNextWycNumber } from '@/lib/members-server-fns'
 import { newMemberEmail } from '@/lib/membership-processing/new-member-email-template'
 import { PASSWORD_WORDLIST } from '@/lib/membership-processing/password-wordlist'
 import { returningMemberEmail } from '@/lib/membership-processing/returning-member-email-template'
-import { newMemberSQLQuery, returningMemberSQLQuery } from '@/lib/membership-processing/sql-queries'
+import {
+  newMemberSQLQuery,
+  returningMemberSQLQuery,
+} from '@/lib/membership-processing/sql-queries'
 import { useQuery } from '@tanstack/react-query'
 import { createFileRoute, redirect } from '@tanstack/react-router'
 import Papa from 'papaparse'
 import { Fragment, useState } from 'react'
-import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
-import { Label } from '@/components/ui/label'
 
 export const Route = createFileRoute('/membership-processing')({
   beforeLoad: ({ context }) => {
@@ -37,7 +41,16 @@ export type OldMember = {
 type ParseResult =
   | { kind: 'NewMember'; member: NewMember }
   | { kind: 'OldMember'; member: OldMember }
-  | { kind: 'Error'; error: string }
+  | { kind: 'Error'; error: ParseError }
+
+type ParseError =
+  | { code: 'DATABASE_NOT_PROD'; message: string; rawInput: string }
+  | { code: 'MISSING_WYC_NUMBER'; message: string; rawInput: string; duplicates: DuplicateMatch[] }
+  | { code: 'COLUMN_COUNT_MISMATCH'; message: string }
+  | { code: 'WYC_NOT_FOUND'; message: string }
+  | { code: 'NAME_MISMATCH'; message: string }
+  | { code: 'INVALID_FIELD'; message: string }
+  | { code: 'DATA_LOADING'; message: string }
 
 type DuplicateMatch = {
   wycNumber: number
@@ -54,15 +67,19 @@ type PageState =
       kind: 'NewMember'
       member: NewMember
       password: string
+      argon2Hash: string
       duplicates: DuplicateMatch[]
     }
   | { kind: 'OldMember'; member: OldMember }
-  | { kind: 'Error'; error: string }
+  | { kind: 'Error'; error: ParseError }
 
 const CATEGORY_VALUES = ['Student', 'Employee/Retiree', 'Neither'] as const
 type CategoryText = (typeof CATEGORY_VALUES)[number]
 
-const QUARTER_VALUES = ['Spring 2026', 'Spring 2026, Summer 2026, Fall 2026, Winter 2027'] as const
+const QUARTER_VALUES = [
+  'Spring 2026',
+  'Spring 2026, Summer 2026, Fall 2026, Winter 2027',
+] as const
 type QuarterText = (typeof QUARTER_VALUES)[number]
 
 const MEMBERSHIP_STATUS_VALUES = [
@@ -83,7 +100,12 @@ function CopyBox({ text }: { text: string }) {
 
   return (
     <div className="relative mt-2 rounded border bg-muted">
-      <Button variant="outline" size="sm" onClick={handleCopy} className="absolute top-2 left-2">
+      <Button
+        variant="outline"
+        size="sm"
+        onClick={handleCopy}
+        className="absolute top-2 left-2"
+      >
         {copied ? 'Copied!' : 'Copy'}
       </Button>
       <pre className="whitespace-pre-wrap p-4 pl-20 text-sm">{text}</pre>
@@ -96,9 +118,12 @@ function MembershipProcessingPage() {
   const { data: currentQuarter } = useQuery(getCurrentQuarterQueryOptions())
   const [memberState, setMemberState] = useState<PageState>({ kind: 'Initial' })
   const [input, setInput] = useState<string>('')
+  const [wycNumberEntry, setWycNumberEntry] = useState<string>('')
 
   const headerString = `"Name: First","Name: Last",Email,"Quarterly or Annual Membership","What is your UW Status for the duration of your WYC membership?","What best describes your WYC membership status?","What is your WYC number?","Address: Address Line 1","Address: Address Line 2","Address: City","Address: State","Address: Zip/Postal Code","Address: Country","Primary Phone Number","Alternative Phone Number"`
-  const headerRow = Papa.parse<string[]>(headerString, { header: false }).data[0]
+  const headerRow = Papa.parse<string[]>(headerString, { header: false })
+    .data[0]
+  const wycNumberIndex = headerRow.indexOf('What is your WYC number?')
 
   type Ok<T> = { ok: true; value: T }
   type Err = { ok: false; error: string }
@@ -118,9 +143,15 @@ function MembershipProcessingPage() {
     const array = new Uint32Array(3)
     crypto.getRandomValues(array)
     const capitalize = (w: string) => w.charAt(0).toUpperCase() + w.slice(1)
-    const word1 = capitalize(PASSWORD_WORDLIST[array[0] % PASSWORD_WORDLIST.length])
-    const word2 = capitalize(PASSWORD_WORDLIST[array[1] % PASSWORD_WORDLIST.length])
-    const word3 = capitalize(PASSWORD_WORDLIST[array[2] % PASSWORD_WORDLIST.length])
+    const word1 = capitalize(
+      PASSWORD_WORDLIST[array[0] % PASSWORD_WORDLIST.length],
+    )
+    const word2 = capitalize(
+      PASSWORD_WORDLIST[array[1] % PASSWORD_WORDLIST.length],
+    )
+    const word3 = capitalize(
+      PASSWORD_WORDLIST[array[2] % PASSWORD_WORDLIST.length],
+    )
     return word1 + word2 + word3
   }
 
@@ -156,7 +187,11 @@ function MembershipProcessingPage() {
     }
   }
 
-  function findDuplicates(first: string, last: string, email: string): DuplicateMatch[] {
+  function findDuplicates(
+    first: string,
+    last: string,
+    email: string,
+  ): DuplicateMatch[] {
     if (!allMembers || currentQuarter == null) return []
     const normFirst = first.toLowerCase().trim()
     const normLast = last.toLowerCase().trim()
@@ -164,21 +199,37 @@ function MembershipProcessingPage() {
     const matches: DuplicateMatch[] = []
     for (const m of allMembers) {
       const nameMatch =
-        m.first?.toLowerCase().trim() === normFirst && m.last?.toLowerCase().trim() === normLast
+        m.first?.toLowerCase().trim() === normFirst &&
+        m.last?.toLowerCase().trim() === normLast
       const emailMatch =
-        normEmail !== '' && m.email != null && m.email.toLowerCase().trim() === normEmail
+        normEmail !== '' &&
+        m.email != null &&
+        m.email.toLowerCase().trim() === normEmail
       if (nameMatch || emailMatch) {
         matches.push({
           wycNumber: m.wycNumber,
           first: m.first,
           last: m.last,
           email: m.email,
-          matchMethod: nameMatch && emailMatch ? 'name+email' : nameMatch ? 'name' : 'email',
+          matchMethod:
+            nameMatch && emailMatch
+              ? 'name+email'
+              : nameMatch
+                ? 'name'
+                : 'email',
           status: m.expireQtrIndex >= currentQuarter ? 'active' : 'expired',
         })
       }
     }
     return matches
+  }
+
+  function reprocessWithWycNumber(wycNumberEntry: string): void {
+    const cells = Papa.parse<string[]>(input, { header: false }).data[0]
+    cells[wycNumberIndex] = wycNumberEntry
+    const newInput = Papa.unparse([cells], { header: false })
+    setInput(newInput)
+    handleProcess(newInput)
   }
 
   function parseInput(input: string, nextWycNumber: number): ParseResult {
@@ -200,17 +251,33 @@ function MembershipProcessingPage() {
     const phone1 = get('Primary Phone Number')
     const phone2 = get('Alternative Phone Number')
     const email = get('Email')
-    const rawCategory = get('What is your UW Status for the duration of your WYC membership?')
+    const rawCategory = get(
+      'What is your UW Status for the duration of your WYC membership?',
+    )
     const rawQuartersText = get('Quarterly or Annual Membership')
     const wycNumber = get('What is your WYC number?')
-    const rawMembershipStatus = get('What best describes your WYC membership status?')
+    const rawMembershipStatus = get(
+      'What best describes your WYC membership status?',
+    )
 
     const categoryResult = parseOneOf(rawCategory, CATEGORY_VALUES, 'category')
-    if (!categoryResult.ok) return { kind: 'Error', error: categoryResult.error }
+    if (!categoryResult.ok)
+      return {
+        kind: 'Error',
+        error: { code: 'INVALID_FIELD', message: categoryResult.error },
+      }
     const category = categoryResult.value
 
-    const quartersTextResult = parseOneOf(rawQuartersText, QUARTER_VALUES, 'quarters')
-    if (!quartersTextResult.ok) return { kind: 'Error', error: quartersTextResult.error }
+    const quartersTextResult = parseOneOf(
+      rawQuartersText,
+      QUARTER_VALUES,
+      'quarters',
+    )
+    if (!quartersTextResult.ok)
+      return {
+        kind: 'Error',
+        error: { code: 'INVALID_FIELD', message: quartersTextResult.error },
+      }
     const quartersText = quartersTextResult.value
 
     const membershipStatusResult = parseOneOf(
@@ -218,33 +285,61 @@ function MembershipProcessingPage() {
       MEMBERSHIP_STATUS_VALUES,
       'membership status',
     )
-    if (!membershipStatusResult.ok) return { kind: 'Error', error: membershipStatusResult.error }
+    if (!membershipStatusResult.ok)
+      return {
+        kind: 'Error',
+        error: { code: 'INVALID_FIELD', message: membershipStatusResult.error },
+      }
     const membershipStatus = membershipStatusResult.value
 
     // input validation
     if (inputRow.length !== headerRow.length) {
       return {
         kind: 'Error',
-        error: 'Expected ' + headerRow.length + ' cells, got ' + inputRow.length,
+        error: {
+          code: 'COLUMN_COUNT_MISMATCH',
+          message:
+            'Expected ' + headerRow.length + ' cells, got ' + inputRow.length,
+        },
       }
     } else if (membershipStatus !== 'New member' && !wycNumber) {
       return {
         kind: 'Error',
-        error: 'Returning member but no WYC number provided',
+        error: {
+          code: 'MISSING_WYC_NUMBER',
+          message: 'Returning member but no WYC number provided',
+          rawInput: input,
+          duplicates: findDuplicates(first, last, email),
+        },
       }
     } else if (wycNumber && isNaN(Number(wycNumber))) {
-      return { kind: 'Error', error: 'Invalid WYC number provided' }
+      return {
+        kind: 'Error',
+        error: {
+          code: 'INVALID_FIELD',
+          message: 'Invalid WYC number provided',
+        },
+      }
       // todo: better wycNumber validation
     }
 
-    if (!allMembers) return { kind: 'Error', error: 'Member data still loading' }
+    if (!allMembers)
+      return {
+        kind: 'Error',
+        error: { code: 'DATA_LOADING', message: 'Member data still loading' },
+      }
 
     if (wycNumber) {
-      const dbMember = allMembers?.find((m) => m.wycNumber === Number(wycNumber))
+      const dbMember = allMembers?.find(
+        (m) => m.wycNumber === Number(wycNumber),
+      )
       if (!dbMember) {
         return {
           kind: 'Error',
-          error: `WYC number ${wycNumber} not found in database`,
+          error: {
+            code: 'WYC_NOT_FOUND',
+            message: `WYC number ${wycNumber} not found in database`,
+          },
         }
       }
       if (
@@ -253,7 +348,10 @@ function MembershipProcessingPage() {
       ) {
         return {
           kind: 'Error',
-          error: `Name mismatch for WYC #${wycNumber}:\n  Form: "${first} ${last}"\n  Database: "${dbMember.first} ${dbMember.last}"`,
+          error: {
+            code: 'NAME_MISMATCH',
+            message: `Name mismatch for WYC #${wycNumber}:\n  Form: "${first} ${last}"\n  Database: "${dbMember.first} ${dbMember.last}"`,
+          },
         }
       }
       return {
@@ -294,7 +392,11 @@ function MembershipProcessingPage() {
     if (dbName !== 'production') {
       setMemberState({
         kind: 'Error',
-        error: `Connected to "${dbName}" — switch to prod before processing`,
+        error: {
+          code: 'DATABASE_NOT_PROD',
+          message: `Connected to "${dbName}" — switch to prod before processing`,
+          rawInput: overrideInput ?? input,
+        },
       })
       return
     }
@@ -306,7 +408,9 @@ function MembershipProcessingPage() {
         result.member.last,
         result.member.email,
       )
-      setMemberState({ ...result, password: generatePassword(), duplicates })
+      const password = generatePassword()
+      const argon2Hash = await hashPasswordArgon2ServerFn({ data: password })
+      setMemberState({ ...result, password, argon2Hash, duplicates })
     } else {
       setMemberState(result)
     }
@@ -337,7 +441,11 @@ function MembershipProcessingPage() {
         </Button>
       </div>
       <Label>Enter one comma delimited line of the form</Label>
-      <Input type="text" value={input} onChange={(e) => setInput(e.target.value)} />
+      <Input
+        type="text"
+        value={input}
+        onChange={(e) => setInput(e.target.value)}
+      />
       <Button className="mt-4" onClick={() => handleProcess()}>
         Process
       </Button>
@@ -379,8 +487,16 @@ function MembershipProcessingPage() {
             ))}
           </dl>
           <CopyBox text={memberState.member.email} />
-          <CopyBox text={newMemberEmail(memberState.member, memberState.password)} />
-          <CopyBox text={newMemberSQLQuery(memberState.member, memberState.password)} />
+          <CopyBox
+            text={newMemberEmail(memberState.member, memberState.password)}
+          />
+          <CopyBox
+            text={newMemberSQLQuery(
+              memberState.member,
+              memberState.password,
+              memberState.argon2Hash,
+            )}
+          />
         </div>
       )}
       {memberState.kind === 'OldMember' && (
@@ -411,7 +527,50 @@ function MembershipProcessingPage() {
           />
         </div>
       )}
-      {memberState.kind === 'Error' && <p className="mt-4 text-red-600">{memberState.error}</p>}
+      {memberState.kind === 'Error' && (
+        <>
+          <p className="mt-4 text-red-600">{memberState.error.message}</p>
+          {memberState.error.code === 'MISSING_WYC_NUMBER' && (
+            <div className="mt-4">
+              {memberState.error.duplicates.length > 0 && (
+                <div className="mb-4 rounded border border-yellow-400 bg-yellow-50 p-4 text-yellow-900">
+                  <p className="font-semibold">Possible matches:</p>
+                  <ul className="mt-2 list-disc pl-5">
+                    {memberState.error.duplicates.map((d) => (
+                      <li key={d.wycNumber} className="flex items-center gap-2">
+                        <span>
+                          WYC #{d.wycNumber} — {d.first} {d.last}
+                          {d.email ? ` (${d.email})` : ''}
+                          {' — matched by '}
+                          <span className="font-medium">{d.matchMethod}</span>
+                          {' — '}
+                          <span className={d.status === 'active' ? 'text-green-700 font-medium' : 'text-red-700 font-medium'}>
+                            {d.status}
+                          </span>
+                        </span>
+                        <Button size="sm" variant="outline" onClick={() => reprocessWithWycNumber(String(d.wycNumber))}>
+                          Use #{d.wycNumber}
+                        </Button>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+              <div className="flex gap-2">
+                <Input
+                  type="text"
+                  value={wycNumberEntry}
+                  onChange={(e) => setWycNumberEntry(e.target.value)}
+                  placeholder="WYC Number"
+                />
+                <Button onClick={() => reprocessWithWycNumber(wycNumberEntry)}>
+                  Set WYC Number
+                </Button>
+              </div>
+            </div>
+          )}
+        </>
+      )}
     </div>
   )
 }
