@@ -8,8 +8,8 @@
     "preview": "vite preview",
     "test": "vitest run",
     "lint": "eslint",
-    "format": "prettier",
-    "check": "prettier --write . && eslint --fix"
+    "format": "prettier --write .",
+    "format:check": "prettier --check ."
   },
   "dependencies": {
     "@faker-js/faker": "^10.0.0",
@@ -58,6 +58,7 @@
     "@types/react-dom": "^19.2.0",
     "dotenv-cli": "^10.0.0",
     "drizzle-kit": "^1.0.0-beta.8",
+    "eslint-config-prettier": "^10.1.8",
     "jsdom": "^27.0.0",
     "prettier": "^3.5.3",
     "tsx": "^4.21.0",

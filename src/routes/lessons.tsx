@@ -8,11 +8,11 @@ import {
 } from '@tanstack/react-table'
 import { useMemo, useState } from 'react'
 import { z } from 'zod'
-import { Button } from '../components/ui/button'
 import { columns } from '../components/lessons/columns'
 import { LessonCard } from '../components/lessons/LessonCard'
 import { LessonFormModal } from '../components/lessons/LessonEditorModal'
 import { PaginationControls } from '../components/members/PaginationControls'
+import { Button } from '../components/ui/button'
 import { DataTable } from '../components/ui/DataTable'
 import { isLessonUpcoming } from '../lib/date-utils'
 import {
@@ -46,7 +46,9 @@ export const Route = createFileRoute('/lessons')({
   },
   loader: ({ context, deps: { pageIndex, pageSize, sorting } }) => {
     return {
-      quarterLessons: context.queryClient.ensureQueryData(getQuarterLessonsQueryOptions()),
+      quarterLessons: context.queryClient.ensureQueryData(
+        getQuarterLessonsQueryOptions(),
+      ),
       allLessons: context.queryClient.ensureQueryData(
         getAllLessonsQueryOptions(pageIndex, pageSize, sorting),
       ),
@@ -79,48 +81,44 @@ function LessonsPage() {
   const currentQuarter = quarterData?.currentQuarter ?? 0
   const userId = quarterData?.userId ?? 0
 
-  const {
-    myUpcoming,
-    otherUpcoming,
-    pastThisQuarter,
-    futureLessons,
-  } = useMemo(() => {
-    const thisQuarterLessons: RichLesson[] = []
-    const future: RichLesson[] = []
+  const { myUpcoming, otherUpcoming, pastThisQuarter, futureLessons } =
+    useMemo(() => {
+      const thisQuarterLessons: RichLesson[] = []
+      const future: RichLesson[] = []
 
-    for (const lesson of quarterLessons) {
-      if (lesson.expire > currentQuarter) {
-        future.push(lesson)
-      } else {
-        thisQuarterLessons.push(lesson)
-      }
-    }
-
-    const myUpcomingLessons = []
-    const otherUpcomingLessons = []
-    const pastLessonsThisQuarter = []
-
-    for (const lesson of thisQuarterLessons) {
-      const upcoming = isLessonUpcoming(lesson.calendarDate)
-
-      if (upcoming) {
-        if (isMyLesson(lesson, userId)) {
-          myUpcomingLessons.push(lesson)
+      for (const lesson of quarterLessons) {
+        if (lesson.expire > currentQuarter) {
+          future.push(lesson)
         } else {
-          otherUpcomingLessons.push(lesson)
+          thisQuarterLessons.push(lesson)
         }
-      } else {
-        pastLessonsThisQuarter.push(lesson)
       }
-    }
 
-    return {
-      myUpcoming: myUpcomingLessons,
-      otherUpcoming: otherUpcomingLessons,
-      pastThisQuarter: pastLessonsThisQuarter,
-      futureLessons: future,
-    }
-  }, [quarterLessons, currentQuarter, userId])
+      const myUpcomingLessons = []
+      const otherUpcomingLessons = []
+      const pastLessonsThisQuarter = []
+
+      for (const lesson of thisQuarterLessons) {
+        const upcoming = isLessonUpcoming(lesson.calendarDate)
+
+        if (upcoming) {
+          if (isMyLesson(lesson, userId)) {
+            myUpcomingLessons.push(lesson)
+          } else {
+            otherUpcomingLessons.push(lesson)
+          }
+        } else {
+          pastLessonsThisQuarter.push(lesson)
+        }
+      }
+
+      return {
+        myUpcoming: myUpcomingLessons,
+        otherUpcoming: otherUpcomingLessons,
+        pastThisQuarter: pastLessonsThisQuarter,
+        futureLessons: future,
+      }
+    }, [quarterLessons, currentQuarter, userId])
 
   const allLessons = allLessonsResponse.data
   const totalCount = allLessonsResponse.totalCount
