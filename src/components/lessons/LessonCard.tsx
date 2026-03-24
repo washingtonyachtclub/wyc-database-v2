@@ -11,7 +11,7 @@ export function LessonCard({
 }) {
   const upcoming = isLessonUpcoming(lesson.calendarDate)
   const showUpcomingNotDisplayedWarning = upcoming && !lesson.display
-  const showDisplayedPastWarning = !upcoming && lesson.display
+  const showDisplayedPastWarning = !upcoming && lesson.display && !(lesson.calendarDate === '0000-00-00') // old db inserts with 0000-00-00
 
   return (
     <div
