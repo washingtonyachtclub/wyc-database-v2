@@ -178,6 +178,8 @@ export const getAllMembersLite = createServerFn({ method: 'GET' }).handler(
         wycNumber: wycDatabase.wycNumber,
         first: wycDatabase.first,
         last: wycDatabase.last,
+        email: wycDatabase.email,
+        expireQtrIndex: wycDatabase.expireQtrIndex,
       })
       .from(wycDatabase)
       .orderBy(asc(wycDatabase.first), asc(wycDatabase.last))

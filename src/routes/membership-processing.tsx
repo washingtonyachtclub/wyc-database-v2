@@ -1,4 +1,5 @@
 import { Member } from '@/db/types';
+import { getCurrentQuarterQueryOptions } from '@/lib/lessons-query-options';
 import { getAllMembersLiteQueryOptions } from '@/lib/members-query-options';
 import { getDatabaseName, getNextWycNumber } from '@/lib/members-server-fns';
 import { newMemberEmail } from '@/lib/membership-processing/new-member-email-template';
@@ -35,9 +36,18 @@ type ParseResult =
 | {kind: 'OldMember', member: OldMember}
 | {kind: 'Error', error: string}
 
+type DuplicateMatch = {
+  wycNumber: number
+  first: string | null
+  last: string | null
+  email: string | null
+  matchMethod: 'name' | 'email' | 'name+email'
+  status: 'active' | 'expired'
+}
+
 type PageState =
 | {kind: 'Initial'}
-| {kind: 'NewMember', member: NewMember, password: string}
+| {kind: 'NewMember', member: NewMember, password: string, duplicates: DuplicateMatch[]}
 | {kind: 'OldMember', member: OldMember}
 | {kind: 'Error', error: string}
 
@@ -75,6 +85,7 @@ function CopyBox({ text }: { text: string }) {
 function MembershipProcessingPage() {
 
   const { data: allMembers } = useQuery(getAllMembersLiteQueryOptions());
+  const { data: currentQuarter } = useQuery(getCurrentQuarterQueryOptions());
   const [memberState, setMemberState] = useState<PageState>({kind: 'Initial'});
   const [input, setInput] = useState<string>('');
 
@@ -127,6 +138,34 @@ function MembershipProcessingPage() {
       case 'Employee/Retiree': return 2;
       case 'Neither': return 6
     }
+  }
+
+  function findDuplicates(first: string, last: string, email: string): DuplicateMatch[] {
+    if (!allMembers || currentQuarter == null) return []
+    const normFirst = first.toLowerCase().trim()
+    const normLast = last.toLowerCase().trim()
+    const normEmail = email.toLowerCase().trim()
+    const matches: DuplicateMatch[] = []
+    for (const m of allMembers) {
+      const nameMatch =
+        m.first?.toLowerCase().trim() === normFirst &&
+        m.last?.toLowerCase().trim() === normLast
+      const emailMatch =
+        normEmail !== '' &&
+        m.email != null &&
+        m.email.toLowerCase().trim() === normEmail
+      if (nameMatch || emailMatch) {
+        matches.push({
+          wycNumber: m.wycNumber,
+          first: m.first,
+          last: m.last,
+          email: m.email,
+          matchMethod: nameMatch && emailMatch ? 'name+email' : nameMatch ? 'name' : 'email',
+          status: m.expireQtrIndex >= currentQuarter ? 'active' : 'expired',
+        })
+      }
+    }
+    return matches
   }
 
   function parseInput(input: string, nextWycNumber: number): ParseResult {
@@ -218,7 +257,8 @@ function MembershipProcessingPage() {
     const nextWycNumber = await getNextWycNumber()
     const result = parseInput(overrideInput ?? input, nextWycNumber)
     if (result.kind === 'NewMember') {
-      setMemberState({...result, password: generatePassword()})
+      const duplicates = findDuplicates(result.member.first, result.member.last, result.member.email)
+      setMemberState({...result, password: generatePassword(), duplicates})
     } else {
       setMemberState(result)
     }
@@ -252,6 +292,25 @@ function MembershipProcessingPage() {
 
       {(memberState.kind === 'NewMember') && (
         <div className="mt-4">
+          {memberState.duplicates.length > 0 && (
+            <div className="mb-4 rounded border border-yellow-400 bg-yellow-50 p-4 text-yellow-900">
+              <p className="font-semibold">Possible duplicate(s) found:</p>
+              <ul className="mt-2 list-disc pl-5">
+                {memberState.duplicates.map((d) => (
+                  <li key={d.wycNumber}>
+                    WYC #{d.wycNumber} — {d.first} {d.last}
+                    {d.email ? ` (${d.email})` : ''}
+                    {' — matched by '}
+                    <span className="font-medium">{d.matchMethod}</span>
+                    {' — '}
+                    <span className={d.status === 'active' ? 'text-green-700 font-medium' : 'text-red-700 font-medium'}>
+                      {d.status}
+                    </span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
           <h3 className="font-semibold">New Member</h3>
           <dl className="grid grid-cols-[auto_1fr] gap-x-4">
             {Object.entries(memberState.member).map(([key, value]) => (
