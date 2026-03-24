@@ -1,8 +1,17 @@
 import { useFieldContext, useFormContext } from '../../hooks/form-context'
+import { Button } from './button'
+import { Input } from './input'
+import { Label } from './label'
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from './select'
+import { Textarea } from './textarea'
 
 // --- Shared helpers ---
-
-const inputClass = 'w-full px-3 py-2 border rounded'
 
 function FieldError({ errors }: { errors: Array<any> }) {
   if (errors.length === 0) return null
@@ -30,18 +39,17 @@ export function TextField({
   const field = useFieldContext<string>()
   return (
     <div className={className}>
-      <label htmlFor={field.name} className="block text-sm font-medium mb-1">
+      <Label htmlFor={field.name} className="mb-1">
         {label}
         {required && ' *'}
-      </label>
-      <input
+      </Label>
+      <Input
         id={field.name}
         type={type}
         placeholder={placeholder}
         value={field.state.value}
         onBlur={field.handleBlur}
         onChange={(e) => field.handleChange(e.target.value)}
-        className={inputClass}
       />
       <FieldError errors={field.state.meta.errors} />
     </div>
@@ -62,17 +70,16 @@ export function TextAreaField({
   const field = useFieldContext<string>()
   return (
     <div className={className}>
-      <label htmlFor={field.name} className="block text-sm font-medium mb-1">
+      <Label htmlFor={field.name} className="mb-1">
         {label}
         {required && ' *'}
-      </label>
-      <textarea
+      </Label>
+      <Textarea
         id={field.name}
         rows={rows}
         value={field.state.value}
         onBlur={field.handleBlur}
         onChange={(e) => field.handleChange(e.target.value)}
-        className={inputClass}
       />
       <FieldError errors={field.state.meta.errors} />
     </div>
@@ -91,17 +98,16 @@ export function NumberField({
   const field = useFieldContext<number>()
   return (
     <div className={className}>
-      <label htmlFor={field.name} className="block text-sm font-medium mb-1">
+      <Label htmlFor={field.name} className="mb-1">
         {label}
         {required && ' *'}
-      </label>
-      <input
+      </Label>
+      <Input
         id={field.name}
         type="number"
         value={field.state.value}
         onBlur={field.handleBlur}
         onChange={(e) => field.handleChange(e.target.valueAsNumber)}
-        className={inputClass}
       />
       <FieldError errors={field.state.meta.errors} />
     </div>
@@ -124,28 +130,27 @@ export function SelectField({
   const field = useFieldContext<number | null>()
   return (
     <div className={className}>
-      <label htmlFor={field.name} className="block text-sm font-medium mb-1">
+      <Label className="mb-1">
         {label}
         {required && ' *'}
-      </label>
-      <select
-        id={field.name}
-        value={field.state.value ?? ''}
-        onBlur={field.handleBlur}
-        onChange={(e) =>
-          field.handleChange(
-            e.target.value === '' ? null : Number(e.target.value),
-          )
+      </Label>
+      <Select
+        value={field.state.value != null ? String(field.state.value) : ''}
+        onValueChange={(value) =>
+          field.handleChange(value === '' ? null : Number(value))
         }
-        className={inputClass}
       >
-        {placeholder && <option value="">{placeholder}</option>}
-        {options.map((opt) => (
-          <option key={opt.value} value={opt.value}>
-            {opt.label}
-          </option>
-        ))}
-      </select>
+        <SelectTrigger onBlur={field.handleBlur}>
+          <SelectValue placeholder={placeholder} />
+        </SelectTrigger>
+        <SelectContent>
+          {options.map((opt) => (
+            <SelectItem key={opt.value} value={String(opt.value)}>
+              {opt.label}
+            </SelectItem>
+          ))}
+        </SelectContent>
+      </Select>
       <FieldError errors={field.state.meta.errors} />
     </div>
   )
@@ -165,19 +170,19 @@ export function BooleanSelectField({
   const field = useFieldContext<boolean>()
   return (
     <div className={className}>
-      <label htmlFor={field.name} className="block text-sm font-medium mb-1">
-        {label}
-      </label>
-      <select
-        id={field.name}
+      <Label className="mb-1">{label}</Label>
+      <Select
         value={field.state.value ? '1' : '0'}
-        onBlur={field.handleBlur}
-        onChange={(e) => field.handleChange(e.target.value === '1')}
-        className={inputClass}
+        onValueChange={(value) => field.handleChange(value === '1')}
       >
-        <option value="1">{trueLabel}</option>
-        <option value="0">{falseLabel}</option>
-      </select>
+        <SelectTrigger onBlur={field.handleBlur}>
+          <SelectValue />
+        </SelectTrigger>
+        <SelectContent>
+          <SelectItem value="1">{trueLabel}</SelectItem>
+          <SelectItem value="0">{falseLabel}</SelectItem>
+        </SelectContent>
+      </Select>
       <FieldError errors={field.state.meta.errors} />
     </div>
   )
@@ -197,13 +202,9 @@ export function SubmitButton({
     <form.Subscribe
       selector={(state) => [state.canSubmit, state.isSubmitting] as const}
       children={([canSubmit, isSubmitting]) => (
-        <button
-          type="submit"
-          disabled={!canSubmit || isSubmitting}
-          className="px-4 py-2 bg-primary text-primary-foreground rounded text-sm disabled:opacity-70"
-        >
+        <Button type="submit" disabled={!canSubmit || isSubmitting}>
           {isSubmitting ? submittingLabel : label}
-        </button>
+        </Button>
       )}
     />
   )

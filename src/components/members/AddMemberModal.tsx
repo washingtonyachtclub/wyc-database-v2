@@ -1,4 +1,5 @@
 import { useQuery } from '@tanstack/react-query'
+import { Button } from '../ui/button'
 import { AddMemberFormSchema } from '../../db/member-schema'
 import type { MemberInsert } from '../../db/types'
 import { useAppForm } from '../../hooks/form'
@@ -169,13 +170,9 @@ export function AddMemberModal({
         </div>
 
         <div className="flex justify-end gap-2 pt-4 border-t">
-          <button
-            type="button"
-            onClick={onClose}
-            className="px-4 py-2 border rounded text-sm"
-          >
+          <Button type="button" variant="outline" onClick={onClose}>
             Cancel
-          </button>
+          </Button>
           <form.AppForm>
             <form.SubmitButton label="Add Member" submittingLabel="Adding..." />
           </form.AppForm>

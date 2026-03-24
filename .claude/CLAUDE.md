@@ -60,6 +60,37 @@ No null handling, no query logic, no SQL inline. Just wiring.
 - String comparison works for sorting/filtering YYYY-MM-DD values.
 - If you need `Date` methods in a component, use `parseCalendarDate()` from `date-utils.ts` at the point of use.
 
+## UI components (shadcn/ui)
+
+This project uses [shadcn/ui](https://ui.shadcn.com) — source-owned components in `src/components/ui/` built on Radix primitives + Tailwind CSS.
+
+### Rules
+
+- **Never use raw HTML elements** for interactive UI. Use the shadcn equivalents:
+  - `<input>` → `<Input>` from `@/components/ui/input`
+  - `<button>` → `<Button>` from `@/components/ui/button`
+  - `<textarea>` → `<Textarea>` from `@/components/ui/textarea`
+  - `<label>` → `<Label>` from `@/components/ui/label`
+  - `<select>` → `<Select>` + `<SelectTrigger>` + `<SelectContent>` + `<SelectItem>` from `@/components/ui/select` (Radix-based, uses `onValueChange(value: string)` not `e.target.value`)
+  - `<table>` → use `<DataTable table={table} />` from `@/components/ui/DataTable` for TanStack Table instances
+  - Modal/dialog → `<Modal>` from `@/components/ui/Modal` (wraps shadcn Dialog)
+  - Searchable dropdown → `<MemberCombobox>` from `@/components/ui/MemberCombobox` (wraps shadcn Popover + Command)
+- **Exception**: Native `<select>` is acceptable for filter controls that need conditional active-state styling (e.g., `FilterControls.tsx`). Use the shared `selectClass` constant for consistent styling.
+- **Use `cn()` from `@/lib/utils`** for conditional/merged class names.
+- **Use theme tokens** (`bg-primary`, `text-muted-foreground`, `border-input`, etc.) — never hardcode colors like `bg-indigo-600` or `text-gray-900`.
+
+### Form fields + TanStack Form
+
+Form fields are in `src/components/ui/app-form-fields.tsx` and are registered with TanStack Form via `src/hooks/form.ts`. They use `useFieldContext`/`useFormContext` internally. Components: `TextField`, `TextAreaField`, `NumberField`, `SelectField`, `BooleanSelectField`, `SubmitButton`. These all use shadcn primitives internally — don't bypass them with raw HTML in form modals.
+
+### Available shadcn primitives
+
+`button.tsx`, `input.tsx`, `textarea.tsx`, `label.tsx`, `select.tsx`, `dialog.tsx`, `table.tsx`, `popover.tsx`, `command.tsx` — all in `src/components/ui/`.
+
+### Adding new shadcn components
+
+The project has a zod v3/v4 peer dep conflict (`.npmrc` has `legacy-peer-deps=true`). If `npx shadcn@latest add <component>` fails on network or dep issues, create the component file manually in `src/components/ui/` following the shadcn source patterns. Required deps: `@radix-ui/react-*` (install with `npm install --legacy-peer-deps`).
+
 ## Route data flow pattern
 
 - Use `Route.useLoaderDeps()` in components to consume derived state (filters, sorting, pagination) rather than re-deriving it from `Route.useSearch()`. `loaderDeps` is the single source of truth for any transformations on raw search params. The component should only use `useSearch()` for values it passes through directly (e.g., to UI controls).

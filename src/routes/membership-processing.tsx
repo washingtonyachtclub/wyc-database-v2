@@ -10,6 +10,9 @@ import { useQuery } from '@tanstack/react-query';
 import { createFileRoute, redirect } from '@tanstack/react-router';
 import Papa from "papaparse";
 import { Fragment, useState } from 'react';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 
 export const Route = createFileRoute('/membership-processing')({
   beforeLoad: ({ context }) => {
@@ -71,12 +74,14 @@ function CopyBox({ text }: { text: string }) {
 
   return (
     <div className="relative mt-2 rounded border bg-muted">
-      <button
+      <Button
+        variant="outline"
+        size="sm"
         onClick={handleCopy}
-        className="absolute top-2 left-2 rounded border bg-background px-2 py-1 text-xs hover:bg-accent"
+        className="absolute top-2 left-2"
       >
         {copied ? 'Copied!' : 'Copy'}
-      </button>
+      </Button>
       <pre className="whitespace-pre-wrap p-4 pl-20 text-sm">{text}</pre>
     </div>
   );
@@ -268,27 +273,27 @@ function MembershipProcessingPage() {
   const oldMemberExampleInput = `Luka,Ukrainczyk,lukrainczyk@gmail.com,"Spring 2026",Neither,"Current member looking to renew",17323,,,,,,,,`
   return (
     <div className="p-8">
-      <button className="mb-4 px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
-        onClick={() => { setInput(newMemberExampleInput); handleProcess(newMemberExampleInput) }}>
-        Set new member example
-      </button>
-      <button className="mb-4 px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
-        onClick={() => { setInput(oldMemberExampleInput); handleProcess(oldMemberExampleInput) }}>
-        Set old member example
-      </button>
-      <label>
+      <div className="flex gap-2 mb-4">
+        <Button variant="secondary"
+          onClick={() => { setInput(newMemberExampleInput); handleProcess(newMemberExampleInput) }}>
+          Set new member example
+        </Button>
+        <Button variant="secondary"
+          onClick={() => { setInput(oldMemberExampleInput); handleProcess(oldMemberExampleInput) }}>
+          Set old member example
+        </Button>
+      </div>
+      <Label>
         Enter one comma delimited line of the form
-      </label>
-      <input
+      </Label>
+      <Input
         type="text"
-        className="block w-full px-3 py-2 border-2 border-border rounded focus:outline-none focus:border-primary"
         value={input}
         onChange={(e) => setInput(e.target.value)}
       />
-      <button className="mt-4 px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
-        onClick={() => handleProcess()}>
+      <Button className="mt-4" onClick={() => handleProcess()}>
         Process
-      </button>
+      </Button>
 
       {(memberState.kind === 'NewMember') && (
         <div className="mt-4">

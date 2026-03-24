@@ -1,15 +1,31 @@
 import { useEffect, useState } from 'react'
+import { Check, ChevronDown } from 'lucide-react'
 import {
   EXPIRE_QTR_MODES,
   parseExpireQtrMode,
   type ExpireQtrFilter,
   type MemberFilters,
 } from '../../db/member-filter-types'
+import { Button } from '../ui/button'
+import { Command, CommandItem, CommandList } from '../ui/command'
+import { Input } from '../ui/input'
+import { Label } from '../ui/label'
+import { Popover, PopoverContent, PopoverTrigger } from '../ui/popover'
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '../ui/select'
+import { cn } from '@/lib/utils'
 
 const expireQtrModeLabels = {
   exactly: 'Exactly',
   atLeast: 'At least',
 } as const
+
+const ALL = '__all__'
 
 export function FilterControls({
   wycId,
@@ -61,163 +77,211 @@ export function FilterControls({
     onClearFilters()
   }
 
+  const activeClass = 'bg-primary/10 border-primary'
+  const inactiveClass = 'bg-background border-border'
+
   return (
     <div className="mb-4 p-4 border-2 rounded-lg bg-muted/50">
       <div className="flex flex-wrap items-end gap-4">
         <div>
-          <label
-            htmlFor="filter-name"
-            className="block text-sm font-medium mb-1"
-          >
+          <Label htmlFor="filter-name" className="mb-1">
             Name
-          </label>
-          <input
+          </Label>
+          <Input
             id="filter-name"
             type="text"
             value={localName}
             onChange={(e) => setLocalName(e.target.value)}
             onKeyDown={handleKeyDown}
             placeholder="Search by name"
-            className={`px-3 py-2 border-2 rounded text-sm w-48 ${
-              name
-                ? 'bg-primary/10 border-primary'
-                : 'bg-background border-border'
-            }`}
+            className={cn(
+              'w-48 border-2',
+              name ? activeClass : inactiveClass,
+            )}
           />
         </div>
 
         <div>
-          <label
-            htmlFor="filter-wyc-id"
-            className="block text-sm font-medium mb-1"
-          >
+          <Label htmlFor="filter-wyc-id" className="mb-1">
             WYC ID
-          </label>
-          <input
+          </Label>
+          <Input
             id="filter-wyc-id"
             type="text"
             inputMode="numeric"
-            pattern="[0-9]*"
             value={localWycId}
             onChange={(e) => setLocalWycId(e.target.value.replace(/\D/g, ''))}
             onKeyDown={handleKeyDown}
             placeholder="Search by WYC ID"
-            className={`px-3 py-2 border-2 rounded text-sm w-32 ${
-              wycId
-                ? 'bg-primary/10 border-primary'
-                : 'bg-background border-border'
-            }`}
+            className={cn(
+              'w-32 border-2',
+              wycId ? activeClass : inactiveClass,
+            )}
           />
         </div>
 
         <div>
-          <label
-            htmlFor="filter-category"
-            className="block text-sm font-medium mb-1"
-          >
-            Category
-          </label>
-          <select
-            id="filter-category"
-            value={category ?? ''}
-            onChange={(e) =>
+          <Label className="mb-1">Category</Label>
+          <Select
+            value={category !== undefined ? String(category) : ALL}
+            onValueChange={(value) =>
               onFilterChange({
-                category: e.target.value ? Number(e.target.value) : undefined,
+                category: value === ALL ? undefined : Number(value),
               })
             }
-            className={`px-3 py-2 border-2 rounded text-sm ${
-              category !== undefined
-                ? 'bg-primary/10 border-primary'
-                : 'bg-background border-border'
-            }`}
           >
-            <option value="">All Categories</option>
-            {categories.map((cat) => (
-              <option key={cat.index} value={cat.index}>
-                {cat.text || `Category ${cat.index}`}
-              </option>
-            ))}
-          </select>
+            <SelectTrigger
+              className={cn(
+                'border-2',
+                category !== undefined ? activeClass : inactiveClass,
+              )}
+            >
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value={ALL}>All Categories</SelectItem>
+              {categories.map((cat) => (
+                <SelectItem key={cat.index} value={String(cat.index)}>
+                  {cat.text || `Category ${cat.index}`}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
         </div>
 
         <div>
-          <label
-            htmlFor="filter-expire-qtr-mode"
-            className="block text-sm font-medium mb-1"
-          >
-            Expire Quarter
-          </label>
+          <Label className="mb-1">Expire Quarter</Label>
           <div className="flex gap-2">
-            <select
-              id="filter-expire-qtr-mode"
-              value={expireQtrFilter?.mode ?? 'exactly'}
-              onChange={(e) => {
-                const mode = parseExpireQtrMode(e.target.value)
-                if (mode && expireQtrFilter) {
-                  onFilterChange({
-                    expireQtrFilter: { ...expireQtrFilter, mode },
-                  })
-                }
-              }}
-              className={`px-2 py-2 border-2 rounded text-sm ${
-                expireQtrFilter
-                  ? 'bg-primary/10 border-primary'
-                  : 'bg-background border-border'
-              }`}
-            >
-              {EXPIRE_QTR_MODES.map((mode) => (
-                <option key={mode} value={mode}>
-                  {expireQtrModeLabels[mode]}
-                </option>
-              ))}
-            </select>
-            <select
-              id="filter-expire-qtr"
-              value={expireQtrFilter?.quarter ?? ''}
-              onChange={(e) =>
+            <QuarterPicker
+              value={expireQtrFilter?.quarter ?? null}
+              quarters={quarters}
+              isActive={!!expireQtrFilter}
+              activeClass={activeClass}
+              inactiveClass={inactiveClass}
+              onChange={(quarter) =>
                 onFilterChange({
-                  expireQtrFilter: e.target.value
+                  expireQtrFilter: quarter != null
                     ? {
-                        quarter: Number(e.target.value),
+                        quarter,
                         mode: expireQtrFilter?.mode ?? 'exactly',
                       }
                     : undefined,
                 })
               }
-              className={`px-3 py-2 border-2 rounded text-sm ${
-                expireQtrFilter
-                  ? 'bg-primary/10 border-primary'
-                  : 'bg-background border-border'
-              }`}
-            >
-              <option value="">All Quarters</option>
-              {quarters.map((qtr) => (
-                <option key={qtr.index} value={qtr.index}>
-                  {qtr.school || qtr.text || `Quarter ${qtr.index}`}
-                </option>
-              ))}
-            </select>
+            />
+            {expireQtrFilter && (
+              <Select
+                value={expireQtrFilter.mode}
+                onValueChange={(value) => {
+                  const mode = parseExpireQtrMode(value)
+                  if (mode) {
+                    onFilterChange({
+                      expireQtrFilter: { ...expireQtrFilter, mode },
+                    })
+                  }
+                }}
+              >
+                <SelectTrigger
+                  className={cn('border-2', activeClass)}
+                >
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {EXPIRE_QTR_MODES.map((mode) => (
+                    <SelectItem key={mode} value={mode}>
+                      {expireQtrModeLabels[mode]}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            )}
           </div>
         </div>
 
         <div>
-          <button
-            onClick={handleSearch}
-            className="px-4 py-2 text-sm font-medium border-2 border-primary rounded bg-primary text-primary-foreground hover:opacity-90 transition-colors"
-          >
-            Search
-          </button>
+          <Button onClick={handleSearch}>Search</Button>
         </div>
 
         {hasFilters && (
-          <button
-            onClick={handleClear}
-            className="px-4 py-2 text-sm font-medium border-2 border-destructive/50 rounded bg-destructive/10 text-destructive hover:bg-destructive/20 hover:border-destructive transition-colors"
-          >
+          <Button variant="destructive" onClick={handleClear}>
             Clear Filters
-          </button>
+          </Button>
         )}
       </div>
     </div>
+  )
+}
+
+function QuarterPicker({
+  value,
+  quarters,
+  isActive,
+  activeClass,
+  inactiveClass,
+  onChange,
+}: {
+  value: number | null
+  quarters: Array<{ index: number; text: string | null; school: string | null }>
+  isActive: boolean
+  activeClass: string
+  inactiveClass: string
+  onChange: (quarter: number | null) => void
+}) {
+  const [open, setOpen] = useState(false)
+
+  const selectedLabel =
+    value != null
+      ? quarters.find((q) => q.index === value)?.school
+        || quarters.find((q) => q.index === value)?.text
+        || `Quarter ${value}`
+      : 'All Quarters'
+
+  return (
+    <Popover open={open} onOpenChange={setOpen}>
+      <PopoverTrigger asChild>
+        <Button
+          variant="outline"
+          className={cn(
+            'justify-between font-normal border-2',
+            isActive ? activeClass : inactiveClass,
+          )}
+        >
+          {selectedLabel}
+          <ChevronDown className="ml-2 h-4 w-4 opacity-50" />
+        </Button>
+      </PopoverTrigger>
+      <PopoverContent className="w-[var(--radix-popover-trigger-width)] p-0" align="start">
+        <Command>
+          <CommandList className="max-h-60">
+            <CommandItem
+              onSelect={() => {
+                onChange(null)
+                setOpen(false)
+              }}
+            >
+              <Check
+                className={cn('h-4 w-4 shrink-0', value == null ? 'opacity-100' : 'opacity-0')}
+              />
+              All Quarters
+            </CommandItem>
+            {quarters.map((qtr) => (
+              <CommandItem
+                key={qtr.index}
+                value={String(qtr.index)}
+                onSelect={() => {
+                  onChange(qtr.index)
+                  setOpen(false)
+                }}
+              >
+                <Check
+                  className={cn('h-4 w-4 shrink-0', value === qtr.index ? 'opacity-100' : 'opacity-0')}
+                />
+                {qtr.school || qtr.text || `Quarter ${qtr.index}`}
+              </CommandItem>
+            ))}
+          </CommandList>
+        </Command>
+      </PopoverContent>
+    </Popover>
   )
 }

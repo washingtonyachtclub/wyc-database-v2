@@ -1,5 +1,6 @@
 import { Link, useLocation, useRouter } from '@tanstack/react-router'
 import { useCurrentUser, useLogoutMutation } from '../lib/auth-query-options'
+import { Button } from './ui/button'
 
 export default function Header() {
   const router = useRouter()
@@ -22,13 +23,13 @@ export default function Header() {
   }
 
   return (
-    <header className="bg-white shadow">
+    <header className="bg-background shadow border-b">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         <div className="flex h-16 items-center justify-between">
           <div className="flex items-center">
             <Link
               to="/"
-              className="text-xl font-bold text-gray-900"
+              className="text-xl font-bold"
             >
               WYC Database
             </Link>
@@ -36,26 +37,24 @@ export default function Header() {
           <div className="flex items-center gap-4">
             {isAuthenticated && user ? (
               <>
-                <span className="text-sm text-gray-700">
+                <span className="text-sm text-muted-foreground">
                   {user.first} {user.last} ({user.wycNumber})
                 </span>
-                <button
+                <Button
                   onClick={handleLogout}
                   disabled={logoutMutation.isPending}
-                  className="rounded-md bg-indigo-600 px-3 py-2 text-sm font-semibold text-white hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600 disabled:opacity-50"
+                  size="sm"
                 >
                   {logoutMutation.isPending ? 'Logging out...' : 'Logout'}
-                </button>
+                </Button>
               </>
             ) : (
               !isLoginPage && (
-                <Link
-                  to="/login"
-                  search={{ redirect: '/' }}
-                  className="rounded-md bg-indigo-600 px-3 py-2 text-sm font-semibold text-white hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600"
-                >
-                  Login
-                </Link>
+                <Button asChild size="sm">
+                  <Link to="/login" search={{ redirect: '/' }}>
+                    Login
+                  </Link>
+                </Button>
               )
             )}
           </div>

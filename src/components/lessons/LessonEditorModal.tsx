@@ -1,4 +1,5 @@
 import { useQuery } from '@tanstack/react-query'
+import { Button } from '../ui/button'
 import { TBD_WYC_NUMBER } from '../../db/constants'
 import { lessonInsertSchema } from '../../db/lesson-schema'
 import type { Lesson, LessonInsert } from '../../db/types'
@@ -223,13 +224,9 @@ export function LessonFormModal({
         </div>
 
         <div className="flex justify-end gap-2 pt-4 border-t">
-          <button
-            type="button"
-            onClick={onClose}
-            className="px-4 py-2 border rounded text-sm"
-          >
+          <Button type="button" variant="outline" onClick={onClose}>
             Cancel
-          </button>
+          </Button>
           <form.AppForm>
             <form.SubmitButton label="Save Lesson" submittingLabel="Saving..." />
           </form.AppForm>

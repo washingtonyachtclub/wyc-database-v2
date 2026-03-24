@@ -2,17 +2,17 @@ import { Lesson, RichLesson } from '@/db/types'
 import { useQuery, useSuspenseQuery } from '@tanstack/react-query'
 import { createFileRoute, redirect, useNavigate } from '@tanstack/react-router'
 import {
-  flexRender,
   getCoreRowModel,
   getSortedRowModel,
   useReactTable,
 } from '@tanstack/react-table'
-import { ArrowDown, ArrowUp } from 'lucide-react'
 import { useMemo, useState } from 'react'
+import { Button } from '../components/ui/button'
 import { columns } from '../components/lessons/columns'
 import { LessonCard } from '../components/lessons/LessonCard'
 import { LessonFormModal } from '../components/lessons/LessonEditorModal'
 import { PaginationControls } from '../components/members/PaginationControls'
+import { DataTable } from '../components/ui/DataTable'
 import { isLessonUpcoming } from '../lib/date-utils'
 import {
   getAllLessonsQueryOptions,
@@ -172,15 +172,16 @@ function LessonsPage() {
   return (
     <div className="p-4 space-y-8">
       <div className="flex justify-start">
-        <button
+        <Button
+          variant="secondary"
           onClick={() => {
             setLessonInEdit(null)
             setIsLessonModalOpen(true)
           }}
-          className="mb-4 px-4 py-2 bg-accent text-accent-foreground rounded-md border border-accent-foreground/20 hover:opacity-90 font-medium"
+          className="mb-4"
         >
           New Lesson
-        </button>
+        </Button>
       </div>
 
       {/* My Upcoming Lessons */}
@@ -285,72 +286,7 @@ function LessonsPage() {
           totalCount={totalCount}
           label="total lessons"
         />
-        <div className="overflow-x-auto border rounded-lg">
-          <table className="w-full border-collapse">
-            <thead>
-              {table.getHeaderGroups().map((headerGroup) => (
-                <tr key={headerGroup.id} className="bg-muted">
-                  {headerGroup.headers.map((header) => {
-                    const canSort = header.column.getCanSort()
-                    const sortDirection = header.column.getIsSorted()
-                    return (
-                      <th
-                        key={header.id}
-                        className="px-4 py-3 text-left font-semibold text-sm border-b"
-                      >
-                        {header.isPlaceholder ? null : (
-                          <div
-                            className={
-                              canSort
-                                ? 'flex items-center gap-2 cursor-pointer select-none hover:text-foreground'
-                                : ''
-                            }
-                            onClick={header.column.getToggleSortingHandler()}
-                          >
-                            {flexRender(
-                              header.column.columnDef.header,
-                              header.getContext(),
-                            )}
-                            {canSort && (
-                              <span className="inline-flex items-center">
-                                {sortDirection === 'asc' ? (
-                                  <ArrowUp className="h-4 w-4" />
-                                ) : sortDirection === 'desc' ? (
-                                  <ArrowDown className="h-4 w-4" />
-                                ) : (
-                                  <span className="text-muted-foreground opacity-50">
-                                    ↕
-                                  </span>
-                                )}
-                              </span>
-                            )}
-                          </div>
-                        )}
-                      </th>
-                    )
-                  })}
-                </tr>
-              ))}
-            </thead>
-            <tbody>
-              {table.getRowModel().rows.map((row) => (
-                <tr
-                  key={row.id}
-                  className="border-b hover:bg-accent transition-colors"
-                >
-                  {row.getVisibleCells().map((cell) => (
-                    <td key={cell.id} className="px-4 py-3 text-sm">
-                      {flexRender(
-                        cell.column.columnDef.cell,
-                        cell.getContext(),
-                      )}
-                    </td>
-                  ))}
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+        <DataTable table={table} />
         <PaginationControls
           table={table}
           pageCount={pageCount}

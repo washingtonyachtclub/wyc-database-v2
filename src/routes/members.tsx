@@ -2,17 +2,17 @@ import { getCurrentQuarterQueryOptions } from '@/lib/lessons-query-options'
 import { useQuery, useSuspenseQuery } from '@tanstack/react-query'
 import { createFileRoute, redirect, useNavigate } from '@tanstack/react-router'
 import {
-  flexRender,
   getCoreRowModel,
   getSortedRowModel,
   useReactTable,
 } from '@tanstack/react-table'
-import { ArrowDown, ArrowUp } from 'lucide-react'
 import { useState } from 'react'
 import { AddMemberModal } from '../components/members/AddMemberModal'
+import { Button } from '../components/ui/button'
 import { columns } from '../components/members/columns'
 import { FilterControls } from '../components/members/FilterControls'
 import { PaginationControls } from '../components/members/PaginationControls'
+import { DataTable } from '../components/ui/DataTable'
 import type { MemberFilters } from '../db/member-filter-types'
 import {
   getCategoriesQueryOptions,
@@ -197,12 +197,9 @@ function App() {
   return (
     <div className="p-4">
       <h2 className="text-2xl font-bold mb-4">WYC Members</h2>
-      <button
-        onClick={() => setIsAddMemberModalOpen(true)}
-        className="mb-4 px-4 py-2 bg-primary text-primary-foreground rounded hover:opacity-90"
-      >
+      <Button onClick={() => setIsAddMemberModalOpen(true)} className="mb-4">
         Add Member
-      </button>
+      </Button>
       <FilterControls
         wycId={wycId}
         name={name}
@@ -218,69 +215,7 @@ function App() {
         pageCount={pageCount}
         totalCount={totalCount}
       />
-      <div className="overflow-x-auto border rounded-lg">
-        <table className="w-full border-collapse">
-          <thead>
-            {table.getHeaderGroups().map((headerGroup) => (
-              <tr key={headerGroup.id} className="bg-muted">
-                {headerGroup.headers.map((header) => {
-                  const canSort = header.column.getCanSort()
-                  const sortDirection = header.column.getIsSorted()
-                  return (
-                    <th
-                      key={header.id}
-                      className="px-4 py-3 text-left font-semibold text-sm border-b"
-                    >
-                      {header.isPlaceholder ? null : (
-                        <div
-                          className={
-                            canSort
-                              ? 'flex items-center gap-2 cursor-pointer select-none hover:text-foreground'
-                              : ''
-                          }
-                          onClick={header.column.getToggleSortingHandler()}
-                        >
-                          {flexRender(
-                            header.column.columnDef.header,
-                            header.getContext(),
-                          )}
-                          {canSort && (
-                            <span className="inline-flex items-center">
-                              {sortDirection === 'asc' ? (
-                                <ArrowUp className="h-4 w-4" />
-                              ) : sortDirection === 'desc' ? (
-                                <ArrowDown className="h-4 w-4" />
-                              ) : (
-                                <span className="text-muted-foreground opacity-50">
-                                  ↕
-                                </span>
-                              )}
-                            </span>
-                          )}
-                        </div>
-                      )}
-                    </th>
-                  )
-                })}
-              </tr>
-            ))}
-          </thead>
-          <tbody>
-            {table.getRowModel().rows.map((row) => (
-              <tr
-                key={row.id}
-                className="border-b hover:bg-accent transition-colors"
-              >
-                {row.getVisibleCells().map((cell) => (
-                  <td key={cell.id} className="px-4 py-3 text-sm">
-                    {flexRender(cell.column.columnDef.cell, cell.getContext())}
-                  </td>
-                ))}
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
+      <DataTable table={table} />
       {isAddMemberModalOpen && (
         <AddMemberModal
           currentQuarter={currentQuarter}
