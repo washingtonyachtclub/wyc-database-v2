@@ -1,5 +1,5 @@
+import type { RichLesson } from '@/db/lesson-schema'
 import { AlertTriangle } from 'lucide-react'
-import type { RichLesson } from '../../db/types'
 import { isLessonUpcoming } from '../../lib/date-utils'
 
 export function LessonCard({ lesson, onClick }: { lesson: RichLesson; onClick?: () => void }) {

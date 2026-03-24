@@ -1,7 +1,8 @@
 import { wycDatabase } from 'drizzle/schema'
 import type { LessonQueryRow } from './lesson-queries'
+import type { LessonInsert, RichLesson } from './lesson-schema'
 import type { MemberQueryRow } from './member-queries'
-import type { LessonInsert, MemberInsert, MemberTableRow, RichLesson } from './types'
+import type { MemberInsert, MemberTableRow } from './types'
 
 const num = (value: number | null | undefined): number => value ?? 0
 const str = (value: string | null | undefined): string => value ?? ''

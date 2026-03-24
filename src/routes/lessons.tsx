@@ -1,4 +1,4 @@
-import { Lesson, RichLesson } from '@/db/types'
+import type { Lesson, RichLesson } from '@/db/lesson-schema'
 import { useQuery, useSuspenseQuery } from '@tanstack/react-query'
 import { createFileRoute, redirect, useNavigate } from '@tanstack/react-router'
 import { getCoreRowModel, getSortedRowModel, useReactTable } from '@tanstack/react-table'
@@ -57,7 +57,6 @@ function LessonsPage() {
   const navigate = useNavigate({ from: '/lessons' })
   const { pageIndex, pageSize, sortColumn, sortDesc } = Route.useSearch()
   const [isLessonModalOpen, setIsLessonModalOpen] = useState(false)
-  const [lessonInEdit, setLessonInEdit] = useState<Lesson | null>(null)
 
   const sorting =
     sortColumn && sortColumn === 'calendarDate' ? { id: sortColumn, desc: sortDesc } : undefined
@@ -159,14 +158,7 @@ function LessonsPage() {
   return (
     <div className="p-4 space-y-8">
       <div className="flex justify-start">
-        <Button
-          variant="secondary"
-          onClick={() => {
-            setLessonInEdit(null)
-            setIsLessonModalOpen(true)
-          }}
-          className="mb-4"
-        >
+        <Button variant="secondary" onClick={() => setIsLessonModalOpen(true)} className="mb-4">
           New Lesson
         </Button>
       </div>
@@ -181,14 +173,7 @@ function LessonsPage() {
         ) : (
           <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
             {myUpcoming.map((lesson) => (
-              <LessonCard
-                key={lesson.index}
-                lesson={lesson}
-                onClick={() => {
-                  setLessonInEdit(lesson)
-                  setIsLessonModalOpen(true)
-                }}
-              />
+              <LessonCard key={lesson.index} lesson={lesson} />
             ))}
           </div>
         )}
@@ -206,14 +191,7 @@ function LessonsPage() {
                 <h3 className="text-lg font-semibold mb-2">Upcoming</h3>
                 <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
                   {otherUpcoming.map((lesson) => (
-                    <LessonCard
-                      key={lesson.index}
-                      lesson={lesson}
-                      onClick={() => {
-                        setLessonInEdit(lesson)
-                        setIsLessonModalOpen(true)
-                      }}
-                    />
+                    <LessonCard key={lesson.index} lesson={lesson} />
                   ))}
                 </div>
               </div>
@@ -223,14 +201,7 @@ function LessonsPage() {
                 <h3 className="text-lg font-semibold mb-2">Past</h3>
                 <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
                   {pastThisQuarter.map((lesson) => (
-                    <LessonCard
-                      key={lesson.index}
-                      lesson={lesson}
-                      onClick={() => {
-                        setLessonInEdit(lesson)
-                        setIsLessonModalOpen(true)
-                      }}
-                    />
+                    <LessonCard key={lesson.index} lesson={lesson} />
                   ))}
                 </div>
               </div>
@@ -247,14 +218,7 @@ function LessonsPage() {
         ) : (
           <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
             {futureLessons.map((lesson) => (
-              <LessonCard
-                key={lesson.index}
-                lesson={lesson}
-                onClick={() => {
-                  setLessonInEdit(lesson)
-                  setIsLessonModalOpen(true)
-                }}
-              />
+              <LessonCard key={lesson.index} lesson={lesson} />
             ))}
           </div>
         )}
@@ -281,7 +245,6 @@ function LessonsPage() {
       {isLessonModalOpen && (
         <LessonFormModal
           onClose={() => setIsLessonModalOpen(false)}
-          lesson={lessonInEdit}
           currentQuarter={currentQuarter}
           onSuccess={() => {
             alert('Lesson saved successfully!')

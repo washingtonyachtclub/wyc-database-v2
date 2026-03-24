@@ -14,3 +14,40 @@ export const lessonInsertSchema = z.object({
   expire: z.number({ error: 'Expire quarter is required' }),
   display: z.boolean(),
 })
+
+export type LessonInsert = z.infer<typeof lessonInsertSchema>
+
+export type Lesson = {
+  index: number
+  classTypeId: number // classType index (FK)
+  subtype: string
+  day: string
+  time: string
+  dates: string
+  calendarDate: string
+  instructor1: number // wycNumber (FK)
+  instructor2: number | null // wycNumber (FK)
+  comments: string
+  size: number
+  expire: number // quarter index (FK)
+  display: boolean
+}
+export type RichLesson = {
+  index: number
+  classTypeId: number // classType index
+  instructor1: number
+  instructor2: number | null
+  expire: number // quarter index
+  // resolved display fields
+  type: string // classType.text
+  subtype: string
+  day: string
+  time: string
+  dates: string
+  calendarDate: string
+  instructor1Name: string
+  instructor2Name: string
+  comments: string
+  size: number
+  display: boolean
+}

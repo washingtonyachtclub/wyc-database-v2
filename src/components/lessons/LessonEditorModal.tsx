@@ -1,15 +1,14 @@
 import { useQuery } from '@tanstack/react-query'
-import { Button } from '../ui/button'
 import { TBD_WYC_NUMBER } from '../../db/constants'
+import type { LessonInsert } from '../../db/lesson-schema'
 import { lessonInsertSchema } from '../../db/lesson-schema'
-import type { Lesson, LessonInsert } from '../../db/types'
 import { useAppForm } from '../../hooks/form'
 import {
   getClassTypesQueryOptions,
   useCreateLessonMutation,
-  useUpdateLessonMutation,
 } from '../../lib/lessons-query-options'
 import { getQuartersQueryOptions } from '../../lib/members-query-options'
+import { Button } from '../ui/button'
 import { MemberCombobox } from '../ui/MemberCombobox'
 import { Modal } from '../ui/Modal'
 
@@ -30,14 +29,12 @@ const emptyDefaults = (expireDefault: number): LessonInsert => ({
 
 type LessonFormModalProps = {
   onClose: () => void
-  lesson: Lesson | null
   currentQuarter: number
   onSuccess: () => void
 }
 
 export function LessonFormModal({
   onClose,
-  lesson,
   currentQuarter,
   onSuccess,
 }: LessonFormModalProps) {
@@ -47,44 +44,18 @@ export function LessonFormModal({
   const defaultQuarter = quarters.find((q) => q.index === currentQuarter) ?? quarters[0]
 
   const createLessonMutation = useCreateLessonMutation({ onSuccess, onClose })
-  const updateLessonMutation = useUpdateLessonMutation({ onSuccess, onClose })
-
-  const isUpdate = !!lesson
-
-  const defaultValues: LessonInsert = isUpdate
-    ? {
-        classTypeId: lesson.classTypeId,
-        subtype: lesson.subtype,
-        day: lesson.day,
-        time: lesson.time,
-        dates: lesson.dates,
-        calendarDate: lesson.calendarDate,
-        instructor1: lesson.instructor1,
-        instructor2: lesson.instructor2,
-        comments: lesson.comments,
-        size: lesson.size,
-        expire: lesson.expire,
-        display: lesson.display,
-      }
-    : emptyDefaults(defaultQuarter?.index ?? 0)
 
   const form = useAppForm({
-    defaultValues,
+    defaultValues: emptyDefaults(defaultQuarter?.index ?? 0),
     validators: {
       onSubmit: lessonInsertSchema,
     },
     onSubmit: async ({ value }) => {
-      if (isUpdate) {
-        await updateLessonMutation.mutateAsync({
-          data: { index: lesson.index, ...value },
-        })
-      } else {
-        await createLessonMutation.mutateAsync({ data: value })
-      }
+      await createLessonMutation.mutateAsync({ data: value })
     },
   })
 
-  const mutationError = createLessonMutation.error?.message || updateLessonMutation.error?.message
+  const mutationError = createLessonMutation.error?.message
 
   const classTypeOptions = classTypes.map((ct) => ({
     value: ct.index,
@@ -97,7 +68,7 @@ export function LessonFormModal({
   }))
 
   return (
-    <Modal onClose={onClose} title={isUpdate ? 'Edit Lesson' : 'New Lesson'}>
+    <Modal onClose={onClose} title="New Lesson">
       <form
         onSubmit={(e) => {
           e.preventDefault()

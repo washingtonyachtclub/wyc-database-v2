@@ -1,10 +1,10 @@
 import { createServerFn } from '@tanstack/react-start'
 import { asc, count, eq, gte } from 'drizzle-orm'
 import { baseLessonQuery, lessonSortColumns } from 'src/db/lesson-queries'
+import type { LessonInsert } from 'src/db/lesson-schema'
 import { fromLessonInsert, toRichLesson } from 'src/db/mappers'
 import { withPagination, withSorting } from 'src/db/query-helpers'
 import { classType, lessonQuarter, lessons } from 'src/db/schema'
-import type { LessonInsert } from 'src/db/types'
 import db from '../db/index'
 import { requireAuth } from '../lib/auth-middleware'
 
