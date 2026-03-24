@@ -18,7 +18,7 @@ Migrate password hashing from MySQL's double-SHA1 (`*` prefix format) to Argon2i
 
 ---
 
-## Phase 1: Add the `password_bcrypt` column
+## Phase 1: Add the `password_argon2` column
 
 **Goal:** Schema change only. No behavior change. Both systems unaffected.
 
@@ -85,7 +85,7 @@ npm install argon2 --legacy-peer-deps
 
 ## Phase 2: Dual-hash authentication
 
-**Goal:** New system checks bcrypt first, falls back to legacy SHA1. On successful legacy login, transparently upgrades user to bcrypt. Old system remains untouched.
+**Goal:** New system checks both Argon2id and legacy SHA1, accepting either. On successful legacy-only login, transparently upgrades user to Argon2id. Old system remains untouched.
 
 ### 2.1 — Update `src/lib/auth.ts`
 
@@ -141,16 +141,25 @@ export async function verifyPasswordArgon2(password: string, storedHash: string)
 }
 
 // ──────────────────────────────────────────────
-// Unified verification (tries Argon2id first, falls back to legacy)
+// Unified verification (checks BOTH hashes, accepts either)
 // ──────────────────────────────────────────────
 
 export type VerifyResult = {
   valid: boolean
-  needsUpgrade: boolean // true = matched legacy hash, caller should write Argon2id
+  needsUpgrade: boolean // true = caller should write/update the Argon2id hash
 }
 
 /**
- * Verify a password against both hash formats.
+ * Verify a password against both hash formats (OR logic).
+ *
+ * During the parallel period, the old system can change the legacy `password`
+ * column at any time (e.g., user resets password via old PHP site). If we only
+ * checked Argon2id when it exists, a stale Argon2id hash would block login
+ * even though the legacy hash is correct. So we check both and accept either.
+ *
+ * needsUpgrade is true when:
+ * - No Argon2id hash exists yet (first upgrade), OR
+ * - The legacy hash matched but Argon2id didn't (password was changed via old system)
  *
  * @param password      - Plaintext password from login form
  * @param legacyHash    - Value of `password` column (MySQL SHA1 format, nullable)
@@ -162,25 +171,27 @@ export async function verifyPasswordDual(
   legacyHash: string | null,
   argon2Hash: string | null,
 ): Promise<VerifyResult> {
-  // 1. If Argon2id hash exists, check it first (this is the upgraded path)
-  if (argon2Hash) {
-    const valid = await verifyPasswordArgon2(password, argon2Hash)
-    return { valid, needsUpgrade: false }
-  }
+  // Check both hashes in parallel
+  const [argon2Valid, legacyValid] = await Promise.all([
+    argon2Hash ? verifyPasswordArgon2(password, argon2Hash) : false,
+    legacyHash ? verifyPasswordLegacy(password, legacyHash) : false,
+  ])
 
-  // 2. Fall back to legacy hash
-  if (legacyHash) {
-    const valid = verifyPasswordLegacy(password, legacyHash)
-    return { valid, needsUpgrade: valid } // if valid, caller should upgrade
-  }
+  // Accept either hash
+  const valid = argon2Valid || legacyValid
 
-  // 3. No hash at all (should not happen, but handle gracefully)
-  return { valid: false, needsUpgrade: false }
+  // Needs upgrade if:
+  // - valid login but no Argon2id hash yet, OR
+  // - legacy matched but Argon2id didn't (old system changed the password)
+  const needsUpgrade = valid && !argon2Valid
+
+  return { valid, needsUpgrade }
 }
 ```
 
 **Design decisions:**
 
+- **OR logic, not fallback:** Both hashes are checked every time (in parallel). This handles the case where a user changes their password through the old system — their legacy hash updates but their Argon2id hash becomes stale. The OR check accepts either, and `needsUpgrade` triggers a re-hash so the Argon2id column stays in sync.
 - `verifyPasswordDual` returns `needsUpgrade` so the caller (login handler) can decide to write the Argon2id hash. This keeps `auth.ts` pure (no DB imports).
 - Argon2id functions are `async` because `argon2.hash` and `argon2.verify` are CPU-bound — the async versions use a thread pool and don't block the event loop.
 - Uses `argon2.argon2id` variant explicitly. Argon2id is the recommended variant — it combines Argon2i's side-channel resistance with Argon2d's GPU resistance.
@@ -294,8 +305,8 @@ export const loginServerFn = createServerFn({ method: 'POST' })
 **What changed vs. the current handler:**
 
 - `db.select()` now uses explicit field selection instead of `.select()` (avoids pulling all columns, and explicitly grabs both password fields)
-- `verifyPassword(data.password, userPassword)` → `verifyPasswordDual(data.password, user.password, user.passwordBcrypt)`
-- Added the upgrade block: if `needsUpgrade`, hash with bcrypt and write to `password_bcrypt`
+- `verifyPassword(data.password, userPassword)` → `verifyPasswordDual(data.password, user.password, user.passwordArgon2)`
+- Added the upgrade block: if `needsUpgrade`, hash with Argon2id and write to `password_argon2`
 - Session creation and everything else is unchanged
 
 ### 2.3 — Update password change/reset flows
@@ -342,7 +353,11 @@ No changes needed to:
 - `src/lib/session.ts` — session management is unchanged
 - `src/lib/auth-middleware.ts` — `requireAuth()` checks session, not password
 - Any component code — login form stays the same
-- The old Perl/PHP system — it doesn't know about `password_bcrypt`
+- The old Perl/PHP system — it doesn't know about `password_argon2`
+
+### 2.5 — TODOs
+
+- [ ] Check that membership processing (`src/lib/membership-processing/`) writes an Argon2id hash (in addition to the legacy hash) when creating new members. New members should get both `password` and `password_argon2` set on insert so they don't need a transparent upgrade on first login.
 
 ---
 

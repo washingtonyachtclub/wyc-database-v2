@@ -45,6 +45,7 @@ export const wycDatabase = mysqlTable(
     expireQtrIndex: int('ExpireQtr').default(0).notNull(),
     studentId: int('StudentID'),
     password: char({ length: 50 }),
+    passwordArgon2: varchar('password_argon2', { length: 255 }),
     outToSea: tinyint('out_to_sea').default(0),
     joinDate: timestamp('JoinDate', { mode: 'string' }).defaultNow().notNull(),
     imageName: char('image_name', { length: 50 }),
@@ -231,7 +232,10 @@ export const officers = mysqlTable(
     position: int(),
     active: tinyint().default(1).notNull(),
   },
-  (table) => [primaryKey({ columns: [table.index] }), unique('_index').on(table.index)],
+  (table) => [
+    primaryKey({ columns: [table.index] }),
+    unique('_index').on(table.index),
+  ],
 )
 
 export const options = mysqlTable(
@@ -350,7 +354,10 @@ export const signups = mysqlTable(
     class: int().default(0).notNull(),
     student: int().default(0).notNull(),
   },
-  (table) => [index('class').on(table.class), primaryKey({ columns: [table.index] })],
+  (table) => [
+    index('class').on(table.class),
+    primaryKey({ columns: [table.index] }),
+  ],
 )
 
 export const snc = mysqlTable(

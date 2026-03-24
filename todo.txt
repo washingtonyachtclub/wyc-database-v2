@@ -1,5 +1,4 @@
 # MVP
-- prettier
 - memberInsert duplicated with addMemberFormSchema?
 - review existing RBAC and implement
 - security review
