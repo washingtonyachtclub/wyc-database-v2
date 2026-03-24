@@ -7,6 +7,7 @@ import {
   useReactTable,
 } from '@tanstack/react-table'
 import { useMemo, useState } from 'react'
+import { z } from 'zod'
 import { Button } from '../components/ui/button'
 import { columns } from '../components/lessons/columns'
 import { LessonCard } from '../components/lessons/LessonCard'
@@ -19,14 +20,15 @@ import {
   getQuarterLessonsQueryOptions,
 } from '../lib/lessons-query-options'
 
+const lessonSearchSchema = z.object({
+  pageIndex: z.number().catch(0),
+  pageSize: z.number().catch(10),
+  sortColumn: z.string().optional(),
+  sortDesc: z.boolean().catch(false),
+})
+
 export const Route = createFileRoute('/lessons')({
-  validateSearch: (search: Record<string, unknown>) => ({
-    pageIndex: Number(search.pageIndex) || 0,
-    pageSize: Number(search.pageSize) || 10,
-    sortColumn: search.sortColumn as string | undefined,
-    // todo: seems bad to do this here
-    sortDesc: search.sortDesc === 'true' || search.sortDesc === true,
-  }),
+  validateSearch: lessonSearchSchema,
   beforeLoad: ({ context }) => {
     if (!context.isAuthenticated) {
       throw redirect({

@@ -7,6 +7,7 @@ import {
   useReactTable,
 } from '@tanstack/react-table'
 import { useState } from 'react'
+import { z } from 'zod'
 import { AddMemberModal } from '../components/members/AddMemberModal'
 import { Button } from '../components/ui/button'
 import { columns } from '../components/members/columns'
@@ -22,24 +23,20 @@ import {
 
 // ===== ROUTE DEFINITION =====
 
+const memberSearchSchema = z.object({
+  pageIndex: z.number().catch(0),
+  pageSize: z.number().catch(10),
+  wycId: z.string().optional(),
+  name: z.string().optional(),
+  category: z.number().optional(),
+  expireQtr: z.number().optional(),
+  expireQtrMode: z.enum(['exactly', 'atLeast']).catch('exactly'),
+  sortColumn: z.string().optional(),
+  sortDesc: z.boolean().catch(false),
+})
+
 export const Route = createFileRoute('/members')({
-  validateSearch: (search: Record<string, unknown>) => {
-    return {
-      pageIndex: Number(search.pageIndex) || 0,
-      pageSize: Number(search.pageSize) || 10,
-      wycId: search.wycId as string | undefined,
-      name: search.name as string | undefined,
-      category: search.category ? Number(search.category) : undefined,
-      expireQtrFilter: search.expireQtr
-        ? {
-            quarter: Number(search.expireQtr),
-            mode: search.expireQtrMode === 'atLeast' ? 'atLeast' as const : 'exactly' as const,
-          }
-        : undefined,
-      sortColumn: search.sortColumn as string | undefined,
-      sortDesc: search.sortDesc === 'true' || search.sortDesc === true,
-    }
-  },
+  validateSearch: memberSearchSchema,
   beforeLoad: ({ context }) => {
     if (!context.isAuthenticated) {
       throw redirect({
@@ -55,11 +52,16 @@ export const Route = createFileRoute('/members')({
       wycId,
       name,
       category,
-      expireQtrFilter,
+      expireQtr,
+      expireQtrMode,
       sortColumn,
       sortDesc,
     },
   }) => {
+    const expireQtrFilter = expireQtr
+      ? { quarter: expireQtr, mode: expireQtrMode }
+      : undefined
+
     const filters: MemberFilters | undefined =
       wycId || name || category !== undefined || expireQtrFilter
         ? {
@@ -94,8 +96,9 @@ export const Route = createFileRoute('/members')({
 
 function App() {
   const navigate = useNavigate({ from: '/members' })
-  const { wycId, name, category, expireQtrFilter } = Route.useSearch()
+  const { wycId, name, category } = Route.useSearch()
   const { pageIndex, pageSize, filters, sorting } = Route.useLoaderDeps()
+  const expireQtrFilter = filters?.expireQtrFilter
 
   const { data: categories = [] } = useQuery(getCategoriesQueryOptions())
   const { data: quarters = [] } = useQuery(getQuartersQueryOptions())
@@ -188,7 +191,6 @@ function App() {
         name: undefined,
         category: undefined,
         expireQtr: undefined,
-        expireQtrMode: undefined,
       }),
       replace: true,
     })
