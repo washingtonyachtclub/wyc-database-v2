@@ -1,11 +1,7 @@
 import { getCurrentQuarterQueryOptions } from '@/lib/lessons-query-options'
 import { useQuery, useSuspenseQuery } from '@tanstack/react-query'
 import { createFileRoute, redirect, useNavigate } from '@tanstack/react-router'
-import {
-  getCoreRowModel,
-  getSortedRowModel,
-  useReactTable,
-} from '@tanstack/react-table'
+import { getCoreRowModel, getSortedRowModel, useReactTable } from '@tanstack/react-table'
 import { useState } from 'react'
 import { z } from 'zod'
 import { AddMemberModal } from '../components/members/AddMemberModal'
@@ -58,9 +54,7 @@ export const Route = createFileRoute('/members')({
       sortDesc,
     },
   }) => {
-    const expireQtrFilter = expireQtr
-      ? { quarter: expireQtr, mode: expireQtrMode }
-      : undefined
+    const expireQtrFilter = expireQtr ? { quarter: expireQtr, mode: expireQtrMode } : undefined
 
     const filters: MemberFilters | undefined =
       wycId || name || category !== undefined || expireQtrFilter
@@ -128,15 +122,11 @@ function App() {
         pageIndex,
         pageSize,
       },
-      sorting: sorting
-        ? [{ id: sorting.id, desc: sorting.desc }]
-        : [],
+      sorting: sorting ? [{ id: sorting.id, desc: sorting.desc }] : [],
     },
     onPaginationChange: (updater) => {
       const newPagination =
-        typeof updater === 'function'
-          ? updater({ pageIndex, pageSize })
-          : updater
+        typeof updater === 'function' ? updater({ pageIndex, pageSize }) : updater
       navigate({
         search: (prev) => ({
           ...prev,
@@ -212,11 +202,7 @@ function App() {
         onFilterChange={handleFilterChange}
         onClearFilters={handleClearFilters}
       />
-      <PaginationControls
-        table={table}
-        pageCount={pageCount}
-        totalCount={totalCount}
-      />
+      <PaginationControls table={table} pageCount={pageCount} totalCount={totalCount} />
       <DataTable table={table} />
       {isAddMemberModalOpen && (
         <AddMemberModal
@@ -227,11 +213,7 @@ function App() {
           }}
         />
       )}
-      <PaginationControls
-        table={table}
-        pageCount={pageCount}
-        totalCount={totalCount}
-      />
+      <PaginationControls table={table} pageCount={pageCount} totalCount={totalCount} />
     </div>
   )
 }

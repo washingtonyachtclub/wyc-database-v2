@@ -11,13 +11,7 @@ import { Command, CommandItem, CommandList } from '../ui/command'
 import { Input } from '../ui/input'
 import { Label } from '../ui/label'
 import { Popover, PopoverContent, PopoverTrigger } from '../ui/popover'
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '../ui/select'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select'
 import { cn } from '@/lib/utils'
 
 const expireQtrModeLabels = {
@@ -94,10 +88,7 @@ export function FilterControls({
             onChange={(e) => setLocalName(e.target.value)}
             onKeyDown={handleKeyDown}
             placeholder="Search by name"
-            className={cn(
-              'w-48 border-2',
-              name ? activeClass : inactiveClass,
-            )}
+            className={cn('w-48 border-2', name ? activeClass : inactiveClass)}
           />
         </div>
 
@@ -113,10 +104,7 @@ export function FilterControls({
             onChange={(e) => setLocalWycId(e.target.value.replace(/\D/g, ''))}
             onKeyDown={handleKeyDown}
             placeholder="Search by WYC ID"
-            className={cn(
-              'w-32 border-2',
-              wycId ? activeClass : inactiveClass,
-            )}
+            className={cn('w-32 border-2', wycId ? activeClass : inactiveClass)}
           />
         </div>
 
@@ -131,10 +119,7 @@ export function FilterControls({
             }
           >
             <SelectTrigger
-              className={cn(
-                'border-2',
-                category !== undefined ? activeClass : inactiveClass,
-              )}
+              className={cn('border-2', category !== undefined ? activeClass : inactiveClass)}
             >
               <SelectValue />
             </SelectTrigger>
@@ -160,12 +145,13 @@ export function FilterControls({
               inactiveClass={inactiveClass}
               onChange={(quarter) =>
                 onFilterChange({
-                  expireQtrFilter: quarter != null
-                    ? {
-                        quarter,
-                        mode: expireQtrFilter?.mode ?? 'exactly',
-                      }
-                    : undefined,
+                  expireQtrFilter:
+                    quarter != null
+                      ? {
+                          quarter,
+                          mode: expireQtrFilter?.mode ?? 'exactly',
+                        }
+                      : undefined,
                 })
               }
             />
@@ -181,9 +167,7 @@ export function FilterControls({
                   }
                 }}
               >
-                <SelectTrigger
-                  className={cn('border-2', activeClass)}
-                >
+                <SelectTrigger className={cn('border-2', activeClass)}>
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
@@ -231,9 +215,9 @@ function QuarterPicker({
 
   const selectedLabel =
     value != null
-      ? quarters.find((q) => q.index === value)?.school
-        || quarters.find((q) => q.index === value)?.text
-        || `Quarter ${value}`
+      ? quarters.find((q) => q.index === value)?.school ||
+        quarters.find((q) => q.index === value)?.text ||
+        `Quarter ${value}`
       : 'All Quarters'
 
   return (
@@ -274,7 +258,10 @@ function QuarterPicker({
                 }}
               >
                 <Check
-                  className={cn('h-4 w-4 shrink-0', value === qtr.index ? 'opacity-100' : 'opacity-0')}
+                  className={cn(
+                    'h-4 w-4 shrink-0',
+                    value === qtr.index ? 'opacity-100' : 'opacity-0',
+                  )}
                 />
                 {qtr.school || qtr.text || `Quarter ${qtr.index}`}
               </CommandItem>

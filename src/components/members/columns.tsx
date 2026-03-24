@@ -9,15 +9,12 @@ export const columns = [
     cell: (info) => info.getValue(),
     enableSorting: false,
   }),
-  columnHelper.accessor(
-    (row) => `${row.first || ''} ${row.last || ''}`.trim(),
-    {
-      id: 'name',
-      header: 'Name',
-      cell: (info) => info.getValue() || '—',
-      enableSorting: false,
-    },
-  ),
+  columnHelper.accessor((row) => `${row.first || ''} ${row.last || ''}`.trim(), {
+    id: 'name',
+    header: 'Name',
+    cell: (info) => info.getValue() || '—',
+    enableSorting: false,
+  }),
   columnHelper.accessor('category', {
     header: 'Category',
     cell: (info) => info.getValue(),

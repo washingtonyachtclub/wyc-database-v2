@@ -2,16 +2,12 @@ import { AlertTriangle } from 'lucide-react'
 import type { RichLesson } from '../../db/types'
 import { isLessonUpcoming } from '../../lib/date-utils'
 
-export function LessonCard({
-  lesson,
-  onClick,
-}: {
-  lesson: RichLesson
-  onClick?: () => void
-}) {
+export function LessonCard({ lesson, onClick }: { lesson: RichLesson; onClick?: () => void }) {
   const upcoming = isLessonUpcoming(lesson.calendarDate)
   const showUpcomingNotDisplayedWarning = upcoming && !lesson.display
-  const showDisplayedPastWarning = !upcoming && lesson.display && !(lesson.calendarDate === '0000-00-00') // old db inserts with 0000-00-00
+  // old db inserts with 0000-00-00 for calendarDate
+  const showDisplayedPastWarning =
+    !upcoming && lesson.display && !(lesson.calendarDate === '0000-00-00')
 
   return (
     <div
@@ -34,13 +30,9 @@ export function LessonCard({
       )}
       <div className="flex items-start justify-between">
         <div>
-          <h4 className="font-semibold">
-            {lesson.subtype || lesson.type || 'Untitled Lesson'}
-          </h4>
+          <h4 className="font-semibold">{lesson.subtype || lesson.type || 'Untitled Lesson'}</h4>
           {lesson.comments && (
-            <p className="text-sm text-muted-foreground mt-1 line-clamp-2">
-              {lesson.comments}
-            </p>
+            <p className="text-sm text-muted-foreground mt-1 line-clamp-2">{lesson.comments}</p>
           )}
         </div>
         <span className="text-xs text-muted-foreground whitespace-nowrap ml-4">
@@ -48,15 +40,11 @@ export function LessonCard({
         </span>
       </div>
       <div className="mt-3 space-y-1 text-sm">
-        {lesson.dates && (
-          <div className="text-foreground font-medium">{lesson.dates}</div>
-        )}
+        {lesson.dates && <div className="text-foreground font-medium">{lesson.dates}</div>}
         {(lesson.day || lesson.time) && (
           <div className="text-muted-foreground">
             {lesson.day && <span>{lesson.day}</span>}
-            {lesson.day && lesson.time && (
-              <span className="mx-1 text-xs align-middle">•</span>
-            )}
+            {lesson.day && lesson.time && <span className="mx-1 text-xs align-middle">•</span>}
             {lesson.time && <span>{lesson.time}</span>}
           </div>
         )}

@@ -1,5 +1,5 @@
-import { queryOptions, useMutation, useQueryClient } from '@tanstack/react-query';
-import type { MemberFilters } from '../db/member-filter-types';
+import { queryOptions, useMutation, useQueryClient } from '@tanstack/react-query'
+import type { MemberFilters } from '../db/member-filter-types'
 import {
   createMember,
   getAllMembersLite,
@@ -8,7 +8,7 @@ import {
   getNextWycNumber,
   getQuarters,
   updateMember,
-} from './members-server-fns';
+} from './members-server-fns'
 
 export const getMembersQueryOptions = (
   pageIndex: number,

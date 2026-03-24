@@ -18,4 +18,3 @@ export function isLessonUpcoming(calendarDate: string): boolean {
   const todayPacific = getTodayPacificDateString()
   return calendarDate >= todayPacific
 }
-

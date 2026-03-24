@@ -15,11 +15,7 @@ export function withSorting<T extends MySqlSelect>(
   return qb
 }
 
-export function withPagination<T extends MySqlSelect>(
-  qb: T,
-  pageIndex: number,
-  pageSize: number,
-) {
+export function withPagination<T extends MySqlSelect>(qb: T, pageIndex: number, pageSize: number) {
   qb.limit(pageSize).offset(pageIndex * pageSize)
 
   return qb

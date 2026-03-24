@@ -34,9 +34,7 @@ export const wycDatabase = mysqlTable(
     wycNumber: int('WYCNumber').default(0).notNull(),
     expireQtr: int('ExpireQtr').default(0).notNull(),
     studentId: int('StudentID'),
-    password: char({ length: 50 }).default(
-      '*5FB1D6D12867BDF49EB3302D5096F1B9030E6264',
-    ),
+    password: char({ length: 50 }).default('*5FB1D6D12867BDF49EB3302D5096F1B9030E6264'),
     outToSea: tinyint('out_to_sea').default(0),
     joinDate: timestamp('JoinDate', { mode: 'string' }).defaultNow().notNull(),
     imageName: char('image_name', { length: 50 }),
@@ -57,9 +55,7 @@ export const boatTypes = mysqlTable(
     fleet: varchar({ length: 80 }).notNull(),
     numberInFleet: int().notNull(),
   },
-  (table) => [
-    primaryKey({ columns: [table.index], name: 'boat_types__index' }),
-  ],
+  (table) => [primaryKey({ columns: [table.index], name: 'boat_types__index' })],
 )
 
 export const calendaradmin = mysqlTable('calendaradmin', {
@@ -74,9 +70,7 @@ export const calendarboats = mysqlTable(
     name: varchar({ length: 50 }).notNull(),
     description: varchar('Description', { length: 500 }).notNull(),
   },
-  (table) => [
-    primaryKey({ columns: [table.cBoatId], name: 'calendarboats_cBoatId' }),
-  ],
+  (table) => [primaryKey({ columns: [table.cBoatId], name: 'calendarboats_cBoatId' })],
 )
 
 export const calendarcomment = mysqlTable('calendarcomment', {
@@ -92,9 +86,7 @@ export const calendarconfig = mysqlTable(
     wacip: varchar({ length: 15 }).notNull(),
     ipdescription: varchar({ length: 255 }).notNull(),
   },
-  (table) => [
-    primaryKey({ columns: [table.wacip], name: 'calendarconfig_wacip' }),
-  ],
+  (table) => [primaryKey({ columns: [table.wacip], name: 'calendarconfig_wacip' })],
 )
 
 export const calendartable = mysqlTable(
@@ -140,9 +132,7 @@ export const classType = mysqlTable(
     index: int('_index').autoincrement().notNull(),
     text: varchar({ length: 80 }),
   },
-  (table) => [
-    primaryKey({ columns: [table.index], name: 'class_type__index' }),
-  ],
+  (table) => [primaryKey({ columns: [table.index], name: 'class_type__index' })],
 )
 
 export const crew = mysqlTable(
@@ -181,9 +171,7 @@ export const lessonQuarter = mysqlTable(
     index: int('_index', { unsigned: true }).autoincrement().notNull(),
     quarter: int({ unsigned: true }).default(0).notNull(),
   },
-  (table) => [
-    primaryKey({ columns: [table.index], name: 'lesson_quarter__index' }),
-  ],
+  (table) => [primaryKey({ columns: [table.index], name: 'lesson_quarter__index' })],
 )
 
 export const lessons = mysqlTable(
@@ -258,9 +246,7 @@ export const posPrivMap = mysqlTable(
     position: int(),
     priv: int(),
   },
-  (table) => [
-    primaryKey({ columns: [table.index], name: 'pos_priv_map__index' }),
-  ],
+  (table) => [primaryKey({ columns: [table.index], name: 'pos_priv_map__index' })],
 )
 
 export const posType = mysqlTable(
@@ -292,9 +278,7 @@ export const priorityTypes = mysqlTable(
     index: int('_index').autoincrement().notNull(),
     priority: varchar({ length: 25 }).default('').notNull(),
   },
-  (table) => [
-    primaryKey({ columns: [table.index], name: 'priority_types__index' }),
-  ],
+  (table) => [primaryKey({ columns: [table.index], name: 'priority_types__index' })],
 )
 
 export const privs = mysqlTable(
@@ -433,9 +417,7 @@ export const wycRatings = mysqlTable(
     examiner: int(),
     comments: varchar({ length: 255 }),
   },
-  (table) => [
-    primaryKey({ columns: [table.index], name: 'wyc_ratings__index' }),
-  ],
+  (table) => [primaryKey({ columns: [table.index], name: 'wyc_ratings__index' })],
 )
 
 export const wycWind = mysqlTable(

@@ -1,11 +1,7 @@
 import { Lesson, RichLesson } from '@/db/types'
 import { useQuery, useSuspenseQuery } from '@tanstack/react-query'
 import { createFileRoute, redirect, useNavigate } from '@tanstack/react-router'
-import {
-  getCoreRowModel,
-  getSortedRowModel,
-  useReactTable,
-} from '@tanstack/react-table'
+import { getCoreRowModel, getSortedRowModel, useReactTable } from '@tanstack/react-table'
 import { useMemo, useState } from 'react'
 import { z } from 'zod'
 import { columns } from '../components/lessons/columns'
@@ -39,16 +35,12 @@ export const Route = createFileRoute('/lessons')({
   },
   loaderDeps: ({ search: { pageIndex, pageSize, sortColumn, sortDesc } }) => {
     const sorting =
-      sortColumn && sortColumn === 'calendarDate'
-        ? { id: sortColumn, desc: sortDesc }
-        : undefined
+      sortColumn && sortColumn === 'calendarDate' ? { id: sortColumn, desc: sortDesc } : undefined
     return { pageIndex, pageSize, sorting }
   },
   loader: ({ context, deps: { pageIndex, pageSize, sorting } }) => {
     return {
-      quarterLessons: context.queryClient.ensureQueryData(
-        getQuarterLessonsQueryOptions(),
-      ),
+      quarterLessons: context.queryClient.ensureQueryData(getQuarterLessonsQueryOptions()),
       allLessons: context.queryClient.ensureQueryData(
         getAllLessonsQueryOptions(pageIndex, pageSize, sorting),
       ),
@@ -68,9 +60,7 @@ function LessonsPage() {
   const [lessonInEdit, setLessonInEdit] = useState<Lesson | null>(null)
 
   const sorting =
-    sortColumn && sortColumn === 'calendarDate'
-      ? { id: sortColumn, desc: sortDesc }
-      : undefined
+    sortColumn && sortColumn === 'calendarDate' ? { id: sortColumn, desc: sortDesc } : undefined
 
   const { data: quarterData } = useQuery(getQuarterLessonsQueryOptions())
   const { data: allLessonsResponse } = useSuspenseQuery(
@@ -81,44 +71,43 @@ function LessonsPage() {
   const currentQuarter = quarterData?.currentQuarter ?? 0
   const userId = quarterData?.userId ?? 0
 
-  const { myUpcoming, otherUpcoming, pastThisQuarter, futureLessons } =
-    useMemo(() => {
-      const thisQuarterLessons: RichLesson[] = []
-      const future: RichLesson[] = []
+  const { myUpcoming, otherUpcoming, pastThisQuarter, futureLessons } = useMemo(() => {
+    const thisQuarterLessons: RichLesson[] = []
+    const future: RichLesson[] = []
 
-      for (const lesson of quarterLessons) {
-        if (lesson.expire > currentQuarter) {
-          future.push(lesson)
+    for (const lesson of quarterLessons) {
+      if (lesson.expire > currentQuarter) {
+        future.push(lesson)
+      } else {
+        thisQuarterLessons.push(lesson)
+      }
+    }
+
+    const myUpcomingLessons = []
+    const otherUpcomingLessons = []
+    const pastLessonsThisQuarter = []
+
+    for (const lesson of thisQuarterLessons) {
+      const upcoming = isLessonUpcoming(lesson.calendarDate)
+
+      if (upcoming) {
+        if (isMyLesson(lesson, userId)) {
+          myUpcomingLessons.push(lesson)
         } else {
-          thisQuarterLessons.push(lesson)
+          otherUpcomingLessons.push(lesson)
         }
+      } else {
+        pastLessonsThisQuarter.push(lesson)
       }
+    }
 
-      const myUpcomingLessons = []
-      const otherUpcomingLessons = []
-      const pastLessonsThisQuarter = []
-
-      for (const lesson of thisQuarterLessons) {
-        const upcoming = isLessonUpcoming(lesson.calendarDate)
-
-        if (upcoming) {
-          if (isMyLesson(lesson, userId)) {
-            myUpcomingLessons.push(lesson)
-          } else {
-            otherUpcomingLessons.push(lesson)
-          }
-        } else {
-          pastLessonsThisQuarter.push(lesson)
-        }
-      }
-
-      return {
-        myUpcoming: myUpcomingLessons,
-        otherUpcoming: otherUpcomingLessons,
-        pastThisQuarter: pastLessonsThisQuarter,
-        futureLessons: future,
-      }
-    }, [quarterLessons, currentQuarter, userId])
+    return {
+      myUpcoming: myUpcomingLessons,
+      otherUpcoming: otherUpcomingLessons,
+      pastThisQuarter: pastLessonsThisQuarter,
+      futureLessons: future,
+    }
+  }, [quarterLessons, currentQuarter, userId])
 
   const allLessons = allLessonsResponse.data
   const totalCount = allLessonsResponse.totalCount
@@ -138,9 +127,7 @@ function LessonsPage() {
     },
     onPaginationChange: (updater) => {
       const newPagination =
-        typeof updater === 'function'
-          ? updater({ pageIndex, pageSize })
-          : updater
+        typeof updater === 'function' ? updater({ pageIndex, pageSize }) : updater
       navigate({
         search: {
           pageIndex: newPagination.pageIndex,
@@ -211,9 +198,7 @@ function LessonsPage() {
       <section>
         <h2 className="text-2xl font-bold mb-4">Other Lessons this Quarter</h2>
         {otherUpcoming.length === 0 && pastThisQuarter.length === 0 ? (
-          <p className="text-muted-foreground">
-            No other lessons this quarter.
-          </p>
+          <p className="text-muted-foreground">No other lessons this quarter.</p>
         ) : (
           <div className="space-y-4">
             {otherUpcoming.length > 0 && (
@@ -258,9 +243,7 @@ function LessonsPage() {
       <section>
         <h2 className="text-2xl font-bold mb-4">Future Quarter Lessons</h2>
         {futureLessons.length === 0 ? (
-          <p className="text-muted-foreground">
-            No lessons scheduled for future quarters.
-          </p>
+          <p className="text-muted-foreground">No lessons scheduled for future quarters.</p>
         ) : (
           <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
             {futureLessons.map((lesson) => (

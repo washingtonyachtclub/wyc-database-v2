@@ -135,9 +135,7 @@
       "compositePrimaryKeys": {
         "WYCDatabase_WYCNumber": {
           "name": "WYCDatabase_WYCNumber",
-          "columns": [
-            "WYCNumber"
-          ]
+          "columns": ["WYCNumber"]
         }
       },
       "indexes": {},
@@ -145,9 +143,7 @@
       "uniqueConstraints": {
         "IDX_WYCNumber": {
           "name": "IDX_WYCNumber",
-          "columns": [
-            "WYCNumber"
-          ]
+          "columns": ["WYCNumber"]
         }
       },
       "checkConstraint": {}
@@ -201,9 +197,7 @@
       "compositePrimaryKeys": {
         "boat_types__index": {
           "name": "boat_types__index",
-          "columns": [
-            "_index"
-          ]
+          "columns": ["_index"]
         }
       },
       "indexes": {},
@@ -263,9 +257,7 @@
       "compositePrimaryKeys": {
         "calendarboats_cBoatId": {
           "name": "calendarboats_cBoatId",
-          "columns": [
-            "cBoatId"
-          ]
+          "columns": ["cBoatId"]
         }
       },
       "indexes": {},
@@ -332,9 +324,7 @@
       "compositePrimaryKeys": {
         "calendarconfig_wacip": {
           "name": "calendarconfig_wacip",
-          "columns": [
-            "wacip"
-          ]
+          "columns": ["wacip"]
         }
       },
       "indexes": {},
@@ -440,9 +430,7 @@
       "compositePrimaryKeys": {
         "calendartable_id": {
           "name": "calendartable_id",
-          "columns": [
-            "id"
-          ]
+          "columns": ["id"]
         }
       },
       "indexes": {},
@@ -527,9 +515,7 @@
       "compositePrimaryKeys": {
         "checkouts__index": {
           "name": "checkouts__index",
-          "columns": [
-            "_index"
-          ]
+          "columns": ["_index"]
         }
       },
       "indexes": {},
@@ -558,9 +544,7 @@
       "compositePrimaryKeys": {
         "class_type__index": {
           "name": "class_type__index",
-          "columns": [
-            "_index"
-          ]
+          "columns": ["_index"]
         }
       },
       "indexes": {},
@@ -596,9 +580,7 @@
       "compositePrimaryKeys": {
         "crew__index": {
           "name": "crew__index",
-          "columns": [
-            "_index"
-          ]
+          "columns": ["_index"]
         }
       },
       "indexes": {},
@@ -655,9 +637,7 @@
       "compositePrimaryKeys": {
         "guests__index": {
           "name": "guests__index",
-          "columns": [
-            "_index"
-          ]
+          "columns": ["_index"]
         }
       },
       "indexes": {},
@@ -725,9 +705,7 @@
       "compositePrimaryKeys": {
         "lesson_quarter__index": {
           "name": "lesson_quarter__index",
-          "columns": [
-            "_index"
-          ]
+          "columns": ["_index"]
         }
       },
       "indexes": {},
@@ -841,9 +819,7 @@
       "compositePrimaryKeys": {
         "lessons__index": {
           "name": "lessons__index",
-          "columns": [
-            "_index"
-          ]
+          "columns": ["_index"]
         }
       },
       "indexes": {},
@@ -872,9 +848,7 @@
       "compositePrimaryKeys": {
         "memcat__index": {
           "name": "memcat__index",
-          "columns": [
-            "_index"
-          ]
+          "columns": ["_index"]
         }
       },
       "indexes": {},
@@ -904,9 +878,7 @@
       "compositePrimaryKeys": {
         "noyes__index": {
           "name": "noyes__index",
-          "columns": [
-            "_index"
-          ]
+          "columns": ["_index"]
         }
       },
       "indexes": {},
@@ -950,9 +922,7 @@
       "compositePrimaryKeys": {
         "officers__index": {
           "name": "officers__index",
-          "columns": [
-            "_index"
-          ]
+          "columns": ["_index"]
         }
       },
       "indexes": {},
@@ -960,9 +930,7 @@
       "uniqueConstraints": {
         "_index": {
           "name": "_index",
-          "columns": [
-            "_index"
-          ]
+          "columns": ["_index"]
         }
       },
       "checkConstraint": {}
@@ -995,9 +963,7 @@
       "compositePrimaryKeys": {
         "options__index": {
           "name": "options__index",
-          "columns": [
-            "_index"
-          ]
+          "columns": ["_index"]
         }
       },
       "indexes": {},
@@ -1033,9 +999,7 @@
       "compositePrimaryKeys": {
         "pos_priv_map__index": {
           "name": "pos_priv_map__index",
-          "columns": [
-            "_index"
-          ]
+          "columns": ["_index"]
         }
       },
       "indexes": {},
@@ -1064,9 +1028,7 @@
       "compositePrimaryKeys": {
         "pos_type__index": {
           "name": "pos_type__index",
-          "columns": [
-            "_index"
-          ]
+          "columns": ["_index"]
         }
       },
       "indexes": {},
@@ -1132,9 +1094,7 @@
       "compositePrimaryKeys": {
         "positions__index": {
           "name": "positions__index",
-          "columns": [
-            "_index"
-          ]
+          "columns": ["_index"]
         }
       },
       "indexes": {},
@@ -1164,9 +1124,7 @@
       "compositePrimaryKeys": {
         "priority_types__index": {
           "name": "priority_types__index",
-          "columns": [
-            "_index"
-          ]
+          "columns": ["_index"]
         }
       },
       "indexes": {},
@@ -1195,9 +1153,7 @@
       "compositePrimaryKeys": {
         "privs__index": {
           "name": "privs__index",
-          "columns": [
-            "_index"
-          ]
+          "columns": ["_index"]
         }
       },
       "indexes": {},
@@ -1240,9 +1196,7 @@
       "compositePrimaryKeys": {
         "quarters__index": {
           "name": "quarters__index",
-          "columns": [
-            "_index"
-          ]
+          "columns": ["_index"]
         }
       },
       "indexes": {},
@@ -1285,9 +1239,7 @@
       "compositePrimaryKeys": {
         "ratings__index": {
           "name": "ratings__index",
-          "columns": [
-            "_index"
-          ]
+          "columns": ["_index"]
         }
       },
       "indexes": {},
@@ -1417,9 +1369,7 @@
       "compositePrimaryKeys": {
         "sessions__index": {
           "name": "sessions__index",
-          "columns": [
-            "_index"
-          ]
+          "columns": ["_index"]
         }
       },
       "indexes": {},
@@ -1457,17 +1407,13 @@
       "compositePrimaryKeys": {
         "signups__index": {
           "name": "signups__index",
-          "columns": [
-            "_index"
-          ]
+          "columns": ["_index"]
         }
       },
       "indexes": {
         "class": {
           "name": "class",
-          "columns": [
-            "class"
-          ],
+          "columns": ["class"],
           "isUnique": false
         }
       },
@@ -1665,9 +1611,7 @@
       "compositePrimaryKeys": {
         "snc__index": {
           "name": "snc__index",
-          "columns": [
-            "_index"
-          ]
+          "columns": ["_index"]
         }
       },
       "indexes": {},
@@ -1718,9 +1662,7 @@
       "compositePrimaryKeys": {
         "snc_food__index": {
           "name": "snc_food__index",
-          "columns": [
-            "_index"
-          ]
+          "columns": ["_index"]
         }
       },
       "indexes": {},
@@ -1756,9 +1698,7 @@
       "compositePrimaryKeys": {
         "snc_work__index": {
           "name": "snc_work__index",
-          "columns": [
-            "_index"
-          ]
+          "columns": ["_index"]
         }
       },
       "indexes": {},
@@ -1815,9 +1755,7 @@
       "compositePrimaryKeys": {
         "wyc_ratings__index": {
           "name": "wyc_ratings__index",
-          "columns": [
-            "_index"
-          ]
+          "columns": ["_index"]
         }
       },
       "indexes": {},
@@ -1867,9 +1805,7 @@
       "compositePrimaryKeys": {
         "wyc_wind_index": {
           "name": "wyc_wind_index",
-          "columns": [
-            "index"
-          ]
+          "columns": ["index"]
         }
       },
       "indexes": {},

@@ -26,9 +26,7 @@ export function hashPassword(password: string): string {
  */
 export function verifyPassword(password: string, storedHash: string): boolean {
   // Remove * prefix if present
-  const hashWithoutPrefix = storedHash.startsWith('*')
-    ? storedHash.slice(1)
-    : storedHash
+  const hashWithoutPrefix = storedHash.startsWith('*') ? storedHash.slice(1) : storedHash
 
   // Hash the provided password
   const hashedPassword = hashPassword(password)
@@ -37,8 +35,5 @@ export function verifyPassword(password: string, storedHash: string): boolean {
     : hashedPassword
 
   // Compare (case-insensitive for MySQL compatibility)
-  return (
-    hashedPasswordWithoutPrefix.toUpperCase() ===
-    hashWithoutPrefix.toUpperCase()
-  )
+  return hashedPasswordWithoutPrefix.toUpperCase() === hashWithoutPrefix.toUpperCase()
 }

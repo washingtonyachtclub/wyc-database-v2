@@ -103,51 +103,47 @@ export const loginServerFn = createServerFn({ method: 'POST' })
  * Logout server function
  * Deletes session and clears cookie
  */
-export const logoutServerFn = createServerFn({ method: 'POST' }).handler(
-  async () => {
-    try {
-      const session = await useAppSession()
-      await session.clear()
+export const logoutServerFn = createServerFn({ method: 'POST' }).handler(async () => {
+  try {
+    const session = await useAppSession()
+    await session.clear()
 
-      return {
-        success: true,
-        message: 'Logout successful',
-      } satisfies LogoutResponse
-    } catch (error: any) {
-      console.error('Logout error:', error)
-      return {
-        success: false,
-        message: error?.message || 'An error occurred during logout',
-      } satisfies LogoutResponse
-    }
-  },
-)
+    return {
+      success: true,
+      message: 'Logout successful',
+    } satisfies LogoutResponse
+  } catch (error: any) {
+    console.error('Logout error:', error)
+    return {
+      success: false,
+      message: error?.message || 'An error occurred during logout',
+    } satisfies LogoutResponse
+  }
+})
 
 /**
  * Get current user server function
  * Validates session and returns user info if authenticated
  */
-export const getCurrentUserServerFn = createServerFn({ method: 'GET' }).handler(
-  async () => {
-    try {
-      const session = await useAppSession()
-      const sessionData = session.data
+export const getCurrentUserServerFn = createServerFn({ method: 'GET' }).handler(async () => {
+  try {
+    const session = await useAppSession()
+    const sessionData = session.data
 
-      if (!sessionData.userId || !sessionData.user) {
-        return {
-          isValid: false,
-        } satisfies CurrentUserResponse
-      }
-
-      return {
-        isValid: true,
-        user: sessionData.user,
-      } satisfies CurrentUserResponse
-    } catch (error: any) {
-      console.error('Get current user error:', error)
+    if (!sessionData.userId || !sessionData.user) {
       return {
         isValid: false,
       } satisfies CurrentUserResponse
     }
-  },
-)
+
+    return {
+      isValid: true,
+      user: sessionData.user,
+    } satisfies CurrentUserResponse
+  } catch (error: any) {
+    console.error('Get current user error:', error)
+    return {
+      isValid: false,
+    } satisfies CurrentUserResponse
+  }
+})

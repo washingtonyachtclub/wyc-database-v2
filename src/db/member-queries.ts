@@ -34,7 +34,6 @@ export const memberSortColumns: Record<string, MySqlColumn> = {
   last: wycDatabase.last,
 }
 
-
 export function withMemberFilters<T extends MySqlSelect>(
   qb: T,
   filters: MemberFilters | undefined,
@@ -58,19 +57,11 @@ export function withMemberFilters<T extends MySqlSelect>(
       const firstNamePattern = `%${nameParts[0]}%`
       const lastNamePattern = `${nameParts.slice(1).join(' ')}%`
       conditions.push(
-        and(
-          like(wycDatabase.first, firstNamePattern),
-          like(wycDatabase.last, lastNamePattern),
-        )!,
+        and(like(wycDatabase.first, firstNamePattern), like(wycDatabase.last, lastNamePattern))!,
       )
     } else if (nameParts.length === 1) {
       const namePattern = `%${nameParts[0]}%`
-      conditions.push(
-        or(
-          like(wycDatabase.first, namePattern),
-          like(wycDatabase.last, namePattern),
-        ),
-      )
+      conditions.push(or(like(wycDatabase.first, namePattern), like(wycDatabase.last, namePattern)))
     }
   }
 

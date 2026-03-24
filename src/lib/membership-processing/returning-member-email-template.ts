@@ -1,4 +1,9 @@
-export function returningMemberEmail(first: string, last: string, wycNumber: number, newExpireQtrSchoolText: string): string {
+export function returningMemberEmail(
+  first: string,
+  last: string,
+  wycNumber: number,
+  newExpireQtrSchoolText: string,
+): string {
   return `Hello ${first} ${last},
 
 Your WYC membership has been renewed!

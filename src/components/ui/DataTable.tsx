@@ -1,13 +1,6 @@
 import { flexRender, type Table as TanStackTable } from '@tanstack/react-table'
 import { ArrowDown, ArrowUp } from 'lucide-react'
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from './table'
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from './table'
 
 type DataTableProps<T> = {
   table: TanStackTable<T>
@@ -34,10 +27,7 @@ export function DataTable<T>({ table }: DataTableProps<T>) {
                         }
                         onClick={header.column.getToggleSortingHandler()}
                       >
-                        {flexRender(
-                          header.column.columnDef.header,
-                          header.getContext(),
-                        )}
+                        {flexRender(header.column.columnDef.header, header.getContext())}
                         {canSort && (
                           <span className="inline-flex items-center">
                             {sortDirection === 'asc' ? (
@@ -45,9 +35,7 @@ export function DataTable<T>({ table }: DataTableProps<T>) {
                             ) : sortDirection === 'desc' ? (
                               <ArrowDown className="h-4 w-4" />
                             ) : (
-                              <span className="text-muted-foreground opacity-50">
-                                ↕
-                              </span>
+                              <span className="text-muted-foreground opacity-50">↕</span>
                             )}
                           </span>
                         )}

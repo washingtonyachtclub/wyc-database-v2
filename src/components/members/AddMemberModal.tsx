@@ -32,11 +32,7 @@ type AddMemberModalProps = {
   onSuccess: () => void
 }
 
-export function AddMemberModal({
-  onClose,
-  currentQuarter,
-  onSuccess,
-}: AddMemberModalProps) {
+export function AddMemberModal({ onClose, currentQuarter, onSuccess }: AddMemberModalProps) {
   const { data: quarters = [] } = useQuery(getQuartersQueryOptions())
   const { data: categories = [] } = useQuery(getCategoriesQueryOptions())
   const createMemberMutation = useCreateMemberMutation({ onSuccess, onClose })
@@ -75,9 +71,7 @@ export function AddMemberModal({
       >
         {createMemberMutation.error && (
           <div className="rounded-md bg-destructive/10 p-4 border border-destructive">
-            <div className="text-sm text-destructive">
-              {createMemberMutation.error.message}
-            </div>
+            <div className="text-sm text-destructive">{createMemberMutation.error.message}</div>
           </div>
         )}
 
@@ -106,30 +100,18 @@ export function AddMemberModal({
             )}
           />
 
-          <form.AppField
-            name="city"
-            children={(field) => <field.TextField label="City" />}
-          />
+          <form.AppField name="city" children={(field) => <field.TextField label="City" />} />
 
-          <form.AppField
-            name="state"
-            children={(field) => <field.TextField label="State" />}
-          />
+          <form.AppField name="state" children={(field) => <field.TextField label="State" />} />
 
           <form.AppField
             name="zipCode"
             children={(field) => <field.TextField label="Zip Code" />}
           />
 
-          <form.AppField
-            name="phone1"
-            children={(field) => <field.TextField label="Phone 1" />}
-          />
+          <form.AppField name="phone1" children={(field) => <field.TextField label="Phone 1" />} />
 
-          <form.AppField
-            name="phone2"
-            children={(field) => <field.TextField label="Phone 2" />}
-          />
+          <form.AppField name="phone2" children={(field) => <field.TextField label="Phone 2" />} />
 
           <form.AppField
             name="categoryId"
@@ -156,16 +138,12 @@ export function AddMemberModal({
 
           <form.AppField
             name="studentId"
-            children={(field) => (
-              <field.NumberField label="Student ID" />
-            )}
+            children={(field) => <field.NumberField label="Student ID" />}
           />
 
           <form.AppField
             name="outToSea"
-            children={(field) => (
-              <field.BooleanSelectField label="Out to Sea" />
-            )}
+            children={(field) => <field.BooleanSelectField label="Out to Sea" />}
           />
         </div>
 

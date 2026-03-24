@@ -8,40 +8,32 @@ import type { LessonInsert } from 'src/db/types'
 import db from '../db/index'
 import { requireAuth } from '../lib/auth-middleware'
 
-export const getQuarterLessons = createServerFn({ method: 'GET' }).handler(
-  async () => {
-    const userId = await requireAuth()
-    const currentQuarter = await getCurrentQuarter()
+export const getQuarterLessons = createServerFn({ method: 'GET' }).handler(async () => {
+  const userId = await requireAuth()
+  const currentQuarter = await getCurrentQuarter()
 
-    const query = baseLessonQuery()
-      .where(gte(lessons.expire, currentQuarter))
-      .orderBy(asc(lessons.calendarDate), asc(lessons.time))
+  const query = baseLessonQuery()
+    .where(gte(lessons.expire, currentQuarter))
+    .orderBy(asc(lessons.calendarDate), asc(lessons.time))
 
-    const raw = await query
-    const data = raw.map(toRichLesson)
+  const raw = await query
+  const data = raw.map(toRichLesson)
 
-    return { data, currentQuarter, userId }
-  },
-)
+  return { data, currentQuarter, userId }
+})
 
-export const getCurrentQuarter = createServerFn({ method: 'GET' }).handler(
-  async () => {
-    const quarterRow = await db
-      .select({ quarter: lessonQuarter.quarter })
-      .from(lessonQuarter)
-      .where(eq(lessonQuarter.index, 1))
-      .limit(1)
-    return quarterRow[0].quarter
-  },
-)
+export const getCurrentQuarter = createServerFn({ method: 'GET' }).handler(async () => {
+  const quarterRow = await db
+    .select({ quarter: lessonQuarter.quarter })
+    .from(lessonQuarter)
+    .where(eq(lessonQuarter.index, 1))
+    .limit(1)
+  return quarterRow[0].quarter
+})
 
 export const getAllLessons = createServerFn({ method: 'GET' })
   .inputValidator(
-    (input: {
-      pageIndex: number
-      pageSize: number
-      sorting?: { id: string; desc: boolean }
-    }) => ({
+    (input: { pageIndex: number; pageSize: number; sorting?: { id: string; desc: boolean } }) => ({
       pageIndex: input.pageIndex,
       pageSize: input.pageSize,
       sorting: input.sorting,
@@ -58,20 +50,16 @@ export const getAllLessons = createServerFn({ method: 'GET' })
     const raw = await query
     const data = raw.map(toRichLesson)
 
-    const [totalCountResult] = await db
-      .select({ count: count() })
-      .from(lessons)
+    const [totalCountResult] = await db.select({ count: count() }).from(lessons)
 
     return { data, totalCount: totalCountResult.count }
   })
 
-export const getClassTypes = createServerFn({ method: 'GET' }).handler(
-  async () => {
-    await requireAuth()
-    const rows = await db.select().from(classType).orderBy(asc(classType.text))
-    return rows
-  },
-)
+export const getClassTypes = createServerFn({ method: 'GET' }).handler(async () => {
+  await requireAuth()
+  const rows = await db.select().from(classType).orderBy(asc(classType.text))
+  return rows
+})
 
 export const createLesson = createServerFn({ method: 'POST' })
   .inputValidator((data: LessonInsert) => data)
@@ -83,12 +71,10 @@ export const createLesson = createServerFn({ method: 'POST' })
   })
 
 export const updateLesson = createServerFn({ method: 'POST' })
-  .inputValidator(
-    (input: { index: number } & LessonInsert) => ({
-      ...input,
-      index: Number(input.index),
-    }),
-  )
+  .inputValidator((input: { index: number } & LessonInsert) => ({
+    ...input,
+    index: Number(input.index),
+  }))
   .handler(async ({ data }) => {
     await requireAuth()
     const { index, ...rest } = data

@@ -68,7 +68,7 @@ function NotFound() {
 function RootDocument({ children }: { children: React.ReactNode }) {
   const location = useLocation()
   const isLoginPage = location.pathname === '/login'
-  
+
   return (
     <html lang="en">
       <head>
@@ -79,9 +79,7 @@ function RootDocument({ children }: { children: React.ReactNode }) {
         {!isLoginPage && (
           <div className="flex">
             <Sidebar />
-            <main className="flex-1">
-              {children}
-            </main>
+            <main className="flex-1">{children}</main>
           </div>
         )}
         {isLoginPage && children}

@@ -4,7 +4,11 @@ import { TBD_WYC_NUMBER } from '../../db/constants'
 import { lessonInsertSchema } from '../../db/lesson-schema'
 import type { Lesson, LessonInsert } from '../../db/types'
 import { useAppForm } from '../../hooks/form'
-import { getClassTypesQueryOptions, useCreateLessonMutation, useUpdateLessonMutation } from '../../lib/lessons-query-options'
+import {
+  getClassTypesQueryOptions,
+  useCreateLessonMutation,
+  useUpdateLessonMutation,
+} from '../../lib/lessons-query-options'
 import { getQuartersQueryOptions } from '../../lib/members-query-options'
 import { MemberCombobox } from '../ui/MemberCombobox'
 import { Modal } from '../ui/Modal'
@@ -40,8 +44,7 @@ export function LessonFormModal({
   const { data: quarters = [] } = useQuery(getQuartersQueryOptions())
   const { data: classTypes = [] } = useQuery(getClassTypesQueryOptions())
 
-  const defaultQuarter =
-    quarters.find((q) => q.index === currentQuarter) ?? quarters[0]
+  const defaultQuarter = quarters.find((q) => q.index === currentQuarter) ?? quarters[0]
 
   const createLessonMutation = useCreateLessonMutation({ onSuccess, onClose })
   const updateLessonMutation = useUpdateLessonMutation({ onSuccess, onClose })
@@ -81,8 +84,7 @@ export function LessonFormModal({
     },
   })
 
-  const mutationError =
-    createLessonMutation.error?.message || updateLessonMutation.error?.message
+  const mutationError = createLessonMutation.error?.message || updateLessonMutation.error?.message
 
   const classTypeOptions = classTypes.map((ct) => ({
     value: ct.index,
@@ -128,9 +130,7 @@ export function LessonFormModal({
 
           <form.AppField
             name="day"
-            children={(field) => (
-              <field.TextField label="Day of week" required />
-            )}
+            children={(field) => <field.TextField label="Day of week" required />}
           />
 
           <form.AppField
@@ -144,7 +144,7 @@ export function LessonFormModal({
               <field.TextField
                 label="Dates"
                 required
-                placeholder='March 7th, March 14th'
+                placeholder="March 7th, March 14th"
                 className="md:col-span-2"
               />
             )}
@@ -168,9 +168,7 @@ export function LessonFormModal({
                 <MemberCombobox
                   label="Instructor 1"
                   value={field.state.value}
-                  onChange={(wycNumber) =>
-                    field.handleChange(wycNumber ?? TBD_WYC_NUMBER)
-                  }
+                  onChange={(wycNumber) => field.handleChange(wycNumber ?? TBD_WYC_NUMBER)}
                 />
               </div>
             )}
@@ -191,16 +189,12 @@ export function LessonFormModal({
 
           <form.AppField
             name="comments"
-            children={(field) => (
-              <field.TextAreaField label="Comments" className="md:col-span-2" />
-            )}
+            children={(field) => <field.TextAreaField label="Comments" className="md:col-span-2" />}
           />
 
           <form.AppField
             name="size"
-            children={(field) => (
-              <field.NumberField label="Size" required />
-            )}
+            children={(field) => <field.NumberField label="Size" required />}
           />
 
           <form.AppField
@@ -217,9 +211,7 @@ export function LessonFormModal({
 
           <form.AppField
             name="display"
-            children={(field) => (
-              <field.BooleanSelectField label="Display (show on website)" />
-            )}
+            children={(field) => <field.BooleanSelectField label="Display (show on website)" />}
           />
         </div>
 

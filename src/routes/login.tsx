@@ -103,11 +103,7 @@ function LoginPage() {
             </div>
           </div>
 
-          <Button
-            type="submit"
-            disabled={loginMutation.isPending}
-            className="w-full"
-          >
+          <Button type="submit" disabled={loginMutation.isPending} className="w-full">
             {loginMutation.isPending ? 'Signing in...' : 'Sign in'}
           </Button>
         </form>

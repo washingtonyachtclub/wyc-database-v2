@@ -38,6 +38,7 @@ This codebase uses a 3-layer type system with null cleanup at the mapper boundar
 ### Server functions (`src/lib/*-server-fns.ts`)
 
 Thin wiring layer. Pattern:
+
 ```
 baseQuery().$dynamic()
   → withFilters() → withSorting() → withPagination()
@@ -45,6 +46,7 @@ baseQuery().$dynamic()
   → raw.map(toTableRow)
   → return { data, totalCount }
 ```
+
 No null handling, no query logic, no SQL inline. Just wiring.
 
 ### Components consume clean types

@@ -2,21 +2,14 @@ import { useFieldContext, useFormContext } from '../../hooks/form-context'
 import { Button } from './button'
 import { Input } from './input'
 import { Label } from './label'
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from './select'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './select'
 import { Textarea } from './textarea'
 
 // --- Shared helpers ---
 
 function FieldError({ errors }: { errors: Array<any> }) {
   if (errors.length === 0) return null
-  const message =
-    typeof errors[0] === 'string' ? errors[0] : errors[0]?.message ?? ''
+  const message = typeof errors[0] === 'string' ? errors[0] : (errors[0]?.message ?? '')
   if (!message) return null
   return <p className="text-sm text-destructive mt-1">{message}</p>
 }
@@ -136,9 +129,7 @@ export function SelectField({
       </Label>
       <Select
         value={field.state.value != null ? String(field.state.value) : ''}
-        onValueChange={(value) =>
-          field.handleChange(value === '' ? null : Number(value))
-        }
+        onValueChange={(value) => field.handleChange(value === '' ? null : Number(value))}
       >
         <SelectTrigger onBlur={field.handleBlur}>
           <SelectValue placeholder={placeholder} />

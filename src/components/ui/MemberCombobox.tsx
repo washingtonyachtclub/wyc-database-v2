@@ -64,20 +64,14 @@ export function MemberCombobox({
               !selectedLabel && 'text-muted-foreground',
             )}
           >
-            <span className="truncate">
-              {selectedLabel ?? placeholder}
-            </span>
+            <span className="truncate">{selectedLabel ?? placeholder}</span>
             <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
           </Button>
         </PopoverTrigger>
 
         <PopoverContent className="w-[var(--radix-popover-trigger-width)] p-0" align="start">
           <Command shouldFilter={false}>
-            <CommandInput
-              value={search}
-              onValueChange={setSearch}
-              placeholder={placeholder}
-            />
+            <CommandInput value={search} onValueChange={setSearch} placeholder={placeholder} />
             <CommandList className="max-h-60">
               {trimmedSearch.length < MIN_SEARCH_LENGTH ? (
                 <div className="py-6 text-center text-sm text-muted-foreground">
@@ -108,9 +102,7 @@ export function MemberCombobox({
                         />
                         <span>
                           {displayName}{' '}
-                          <span className="text-muted-foreground">
-                            ({member.wycNumber})
-                          </span>
+                          <span className="text-muted-foreground">({member.wycNumber})</span>
                         </span>
                       </CommandItem>
                     )

@@ -1,9 +1,7 @@
 import { z } from 'zod'
 
 export const lessonInsertSchema = z.object({
-  classTypeId: z
-    .number({ error: 'Type is required' })
-    .min(1, 'Type is required'),
+  classTypeId: z.number({ error: 'Type is required' }).min(1, 'Type is required'),
   subtype: z.string().min(1, 'Title is required'),
   day: z.string().min(1, 'Day of week is required'),
   time: z.string().min(1, 'Time is required'),

@@ -27,10 +27,7 @@ export default function Header() {
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         <div className="flex h-16 items-center justify-between">
           <div className="flex items-center">
-            <Link
-              to="/"
-              className="text-xl font-bold"
-            >
+            <Link to="/" className="text-xl font-bold">
               WYC Database
             </Link>
           </div>
@@ -40,11 +37,7 @@ export default function Header() {
                 <span className="text-sm text-muted-foreground">
                   {user.first} {user.last} ({user.wycNumber})
                 </span>
-                <Button
-                  onClick={handleLogout}
-                  disabled={logoutMutation.isPending}
-                  size="sm"
-                >
+                <Button onClick={handleLogout} disabled={logoutMutation.isPending} size="sm">
                   {logoutMutation.isPending ? 'Logging out...' : 'Logout'}
                 </Button>
               </>
