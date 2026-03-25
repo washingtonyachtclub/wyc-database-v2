@@ -9,6 +9,7 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as OfficersRouteImport } from './routes/officers'
 import { Route as MembershipProcessingRouteImport } from './routes/membership-processing'
 import { Route as MembersRouteImport } from './routes/members'
 import { Route as LoginRouteImport } from './routes/login'
@@ -17,6 +18,11 @@ import { Route as IndexRouteImport } from './routes/index'
 import { Route as MembersWycNumberRouteImport } from './routes/members_.$wycNumber'
 import { Route as LessonsLessonIndexRouteImport } from './routes/lessons_.$lessonIndex'
 
+const OfficersRoute = OfficersRouteImport.update({
+  id: '/officers',
+  path: '/officers',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const MembershipProcessingRoute = MembershipProcessingRouteImport.update({
   id: '/membership-processing',
   path: '/membership-processing',
@@ -59,6 +65,7 @@ export interface FileRoutesByFullPath {
   '/login': typeof LoginRoute
   '/members': typeof MembersRoute
   '/membership-processing': typeof MembershipProcessingRoute
+  '/officers': typeof OfficersRoute
   '/lessons/$lessonIndex': typeof LessonsLessonIndexRoute
   '/members/$wycNumber': typeof MembersWycNumberRoute
 }
@@ -68,6 +75,7 @@ export interface FileRoutesByTo {
   '/login': typeof LoginRoute
   '/members': typeof MembersRoute
   '/membership-processing': typeof MembershipProcessingRoute
+  '/officers': typeof OfficersRoute
   '/lessons/$lessonIndex': typeof LessonsLessonIndexRoute
   '/members/$wycNumber': typeof MembersWycNumberRoute
 }
@@ -78,6 +86,7 @@ export interface FileRoutesById {
   '/login': typeof LoginRoute
   '/members': typeof MembersRoute
   '/membership-processing': typeof MembershipProcessingRoute
+  '/officers': typeof OfficersRoute
   '/lessons_/$lessonIndex': typeof LessonsLessonIndexRoute
   '/members_/$wycNumber': typeof MembersWycNumberRoute
 }
@@ -89,6 +98,7 @@ export interface FileRouteTypes {
     | '/login'
     | '/members'
     | '/membership-processing'
+    | '/officers'
     | '/lessons/$lessonIndex'
     | '/members/$wycNumber'
   fileRoutesByTo: FileRoutesByTo
@@ -98,6 +108,7 @@ export interface FileRouteTypes {
     | '/login'
     | '/members'
     | '/membership-processing'
+    | '/officers'
     | '/lessons/$lessonIndex'
     | '/members/$wycNumber'
   id:
@@ -107,6 +118,7 @@ export interface FileRouteTypes {
     | '/login'
     | '/members'
     | '/membership-processing'
+    | '/officers'
     | '/lessons_/$lessonIndex'
     | '/members_/$wycNumber'
   fileRoutesById: FileRoutesById
@@ -117,12 +129,20 @@ export interface RootRouteChildren {
   LoginRoute: typeof LoginRoute
   MembersRoute: typeof MembersRoute
   MembershipProcessingRoute: typeof MembershipProcessingRoute
+  OfficersRoute: typeof OfficersRoute
   LessonsLessonIndexRoute: typeof LessonsLessonIndexRoute
   MembersWycNumberRoute: typeof MembersWycNumberRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/officers': {
+      id: '/officers'
+      path: '/officers'
+      fullPath: '/officers'
+      preLoaderRoute: typeof OfficersRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/membership-processing': {
       id: '/membership-processing'
       path: '/membership-processing'
@@ -181,6 +201,7 @@ const rootRouteChildren: RootRouteChildren = {
   LoginRoute: LoginRoute,
   MembersRoute: MembersRoute,
   MembershipProcessingRoute: MembershipProcessingRoute,
+  OfficersRoute: OfficersRoute,
   LessonsLessonIndexRoute: LessonsLessonIndexRoute,
   MembersWycNumberRoute: MembersWycNumberRoute,
 }

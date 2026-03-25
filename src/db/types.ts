@@ -38,6 +38,17 @@ export type MemberRating = {
   comments: string
 }
 
+export type Officer = {
+  index: number
+  wycNumber: number
+  memberName: string
+  positionId: number
+  positionName: string
+  positionType: string
+  isDuesExempt: boolean
+  active: boolean
+}
+
 export type ClassTypeRow = typeof classType.$inferSelect
 export type ClassType = {
   index: number

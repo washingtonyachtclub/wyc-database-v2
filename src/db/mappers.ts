@@ -1,9 +1,10 @@
 import type { LessonQueryRow } from './lesson-queries'
 import type { LessonInsert, RichLesson } from './lesson-schema'
 import type { MemberQueryRow } from './member-queries'
+import type { OfficerQueryRow } from './officer-queries'
 import type { RatingQueryRow } from './rating-queries'
 import { wycDatabase } from './schema'
-import type { Member, MemberInsert, MemberRating, MemberTableRow } from './types'
+import type { Member, MemberInsert, MemberRating, MemberTableRow, Officer } from './types'
 
 const num = (value: number | null | undefined): number => value ?? 0
 const str = (value: string | null | undefined): string => value ?? ''
@@ -77,6 +78,19 @@ export function toRichLesson(row: LessonQueryRow): RichLesson {
     comments: str(row.comments),
     size: num(row.size),
     display: row.display !== 0,
+  }
+}
+
+export function toOfficer(row: OfficerQueryRow): Officer {
+  return {
+    index: row.index,
+    wycNumber: num(row.wycNumber),
+    memberName: fullName(row.memberFirst, row.memberLast),
+    positionId: num(row.positionId),
+    positionName: str(row.positionName),
+    positionType: row.positionType ?? '<Unknown>',
+    isDuesExempt: (row.isDuesExempt ?? 0) !== 0,
+    active: row.active !== 0,
   }
 }
 
