@@ -5,6 +5,7 @@ import {
   getAllMembersLite,
   getCategories,
   getMemberById,
+  getMemberRatings,
   getMembersTable,
   getNextWycNumber,
   getQuarters,
@@ -52,6 +53,12 @@ export const getMemberByIdQueryOptions = (wycNumber: number) =>
     queryFn: async () => {
       return await getMemberById({ data: { wycNumber } })
     },
+  })
+
+export const getMemberRatingsQueryOptions = (wycNumber: number) =>
+  queryOptions({
+    queryKey: ['members', 'ratings', wycNumber],
+    queryFn: () => getMemberRatings({ data: { wycNumber } }),
   })
 
 export const getAllMembersLiteQueryOptions = () =>

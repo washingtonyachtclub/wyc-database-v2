@@ -8,6 +8,7 @@
   - see all members with given rating
 - password reset
   - forgot ID/password
+- backfill all calendar dates in lessons table with LLM
 
 # Less Important
 - manage officers / position holders page

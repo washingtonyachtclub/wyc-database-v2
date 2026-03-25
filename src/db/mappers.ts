@@ -1,8 +1,9 @@
 import type { LessonQueryRow } from './lesson-queries'
 import type { LessonInsert, RichLesson } from './lesson-schema'
 import type { MemberQueryRow } from './member-queries'
+import type { RatingQueryRow } from './rating-queries'
 import { wycDatabase } from './schema'
-import type { Member, MemberInsert, MemberTableRow } from './types'
+import type { Member, MemberInsert, MemberRating, MemberTableRow } from './types'
 
 const num = (value: number | null | undefined): number => value ?? 0
 const str = (value: string | null | undefined): string => value ?? ''
@@ -76,5 +77,16 @@ export function toRichLesson(row: LessonQueryRow): RichLesson {
     comments: str(row.comments),
     size: num(row.size),
     display: row.display !== 0,
+  }
+}
+
+export function toMemberRating(row: RatingQueryRow): MemberRating {
+  return {
+    index: row.index,
+    ratingText: str(row.ratingText),
+    ratingDegree: num(row.ratingDegree),
+    date: str(row.date),
+    examinerName: fullName(row.examinerFirst, row.examinerLast),
+    comments: str(row.comments),
   }
 }

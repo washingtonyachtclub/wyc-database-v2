@@ -28,6 +28,15 @@ export type MemberTableRow = {
   joinDate: string
 }
 
+export type MemberRating = {
+  index: number
+  ratingText: string
+  ratingDegree: number
+  date: string
+  examinerName: string
+  comments: string
+}
+
 export type ClassTypeRow = typeof classType.$inferSelect
 export type ClassType = {
   index: number
