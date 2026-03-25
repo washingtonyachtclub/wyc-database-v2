@@ -5,12 +5,23 @@ import { useAppForm } from '@/hooks/form'
 import {
   getClassTypesQueryOptions,
   getLessonByIdQueryOptions,
+  useRemoveStudentMutation,
   useUpdateLessonMutation,
 } from '@/lib/lessons-query-options'
 import { getQuartersQueryOptions } from '@/lib/members-query-options'
 import { useQuery, useSuspenseQuery } from '@tanstack/react-query'
 import { createFileRoute, redirect } from '@tanstack/react-router'
 import { useState } from 'react'
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '../components/ui/alert-dialog'
 import { Button } from '../components/ui/button'
 import { Checkbox } from '../components/ui/checkbox'
 import { Label } from '../components/ui/label'
@@ -57,7 +68,18 @@ function LessonDetailPage() {
     )
   }
 
-  const { lesson, lessonStudents } = lessonDetails
+  const { lesson, enrolledStudents, waitlistedStudents } = lessonDetails
+  const [studentToRemove, setStudentToRemove] = useState<{
+    wycNumber: number
+    name: string
+  } | null>(null)
+  const removeMutation = useRemoveStudentMutation(lesson.index)
+
+  const handleRemove = (student: { wycNumber: number; first: string; last: string }) =>
+    setStudentToRemove({
+      wycNumber: student.wycNumber,
+      name: `${student.first} ${student.last}`,
+    })
 
   return (
     <div className="p-4 space-y-8">
@@ -69,27 +91,95 @@ function LessonDetailPage() {
 
       <section>
         <h2 className="text-lg font-semibold mb-2">
-          Students ({lessonStudents.length})
+          Enrolled ({enrolledStudents.length}/{lesson.size})
         </h2>
-        {lessonStudents.length === 0 ? (
-          <p className="text-muted-foreground">No students enrolled.</p>
-        ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="rounded-md border border-border p-4">
-              <h3 className="text-sm font-medium text-muted-foreground mb-2">Names</h3>
-              <div className="space-y-1">
-                {lessonStudents.map((student) => (
-                  <div key={student.wycNumber} className="text-sm">
-                    {student.first} {student.last}
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            <EmailCopyBox emails={lessonStudents.map((s) => s.email).filter(Boolean)} />
-          </div>
-        )}
+        <StudentList students={enrolledStudents} onRemove={handleRemove} emptyMessage="No students enrolled." />
       </section>
+
+      <section>
+        <h2 className="text-lg font-semibold mb-2">
+          Waitlist ({waitlistedStudents.length})
+        </h2>
+        <StudentList students={waitlistedStudents} onRemove={handleRemove} emptyMessage="No students on waitlist." />
+      </section>
+
+      <AlertDialog open={!!studentToRemove} onOpenChange={(open) => !open && setStudentToRemove(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Remove Student</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to remove <strong>{studentToRemove?.name}</strong> from{' '}
+              <strong>{lesson.subtype}</strong>?
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              onClick={() => {
+                if (studentToRemove) {
+                  removeMutation.mutate(studentToRemove.wycNumber)
+                  setStudentToRemove(null)
+                }
+              }}
+            >
+              Remove
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+    </div>
+  )
+}
+
+function StudentList({
+  students,
+  onRemove,
+  emptyMessage,
+}: {
+  students: { wycNumber: number; first: string; last: string; email: string }[]
+  onRemove: (student: { wycNumber: number; first: string; last: string }) => void
+  emptyMessage: string
+}) {
+  if (students.length === 0) {
+    return <p className="text-muted-foreground">{emptyMessage}</p>
+  }
+
+  return (
+    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+      <div className="rounded-md border border-border p-4">
+        <h3 className="text-sm font-medium text-muted-foreground mb-2">Names</h3>
+        <div className="space-y-1">
+          {students.map((student) => (
+            <div key={student.wycNumber} className="text-sm flex items-center justify-between">
+              <span>{student.first} {student.last}</span>
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                className="h-6 w-6 p-0 text-muted-foreground hover:text-destructive"
+                onClick={() => onRemove(student)}
+              >
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  className="h-3.5 w-3.5"
+                >
+                  <line x1="18" y1="6" x2="6" y2="18" />
+                  <line x1="6" y1="6" x2="18" y2="18" />
+                </svg>
+              </Button>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      <EmailCopyBox emails={students.map((s) => s.email).filter(Boolean)} />
     </div>
   )
 }

@@ -155,6 +155,10 @@ function LessonsPage() {
     },
   })
 
+  function goToLesson(lessonIndex: number) {
+    navigate({ to: '/lessons/$lessonIndex', params: { lessonIndex: String(lessonIndex) } })
+  }
+
   return (
     <div className="p-4 space-y-8">
       <div className="flex justify-start">
@@ -173,7 +177,7 @@ function LessonsPage() {
         ) : (
           <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
             {myUpcoming.map((lesson) => (
-              <LessonCard key={lesson.index} lesson={lesson} />
+              <LessonCard key={lesson.index} lesson={lesson} onClick={() => goToLesson(lesson.index)} />
             ))}
           </div>
         )}
@@ -191,7 +195,7 @@ function LessonsPage() {
                 <h3 className="text-lg font-semibold mb-2">Upcoming</h3>
                 <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
                   {otherUpcoming.map((lesson) => (
-                    <LessonCard key={lesson.index} lesson={lesson} />
+                    <LessonCard key={lesson.index} lesson={lesson} onClick={() => goToLesson(lesson.index)} />
                   ))}
                 </div>
               </div>
@@ -201,7 +205,7 @@ function LessonsPage() {
                 <h3 className="text-lg font-semibold mb-2">Past</h3>
                 <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
                   {pastThisQuarter.map((lesson) => (
-                    <LessonCard key={lesson.index} lesson={lesson} />
+                    <LessonCard key={lesson.index} lesson={lesson} onClick={() => goToLesson(lesson.index)} />
                   ))}
                 </div>
               </div>
@@ -218,7 +222,7 @@ function LessonsPage() {
         ) : (
           <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
             {futureLessons.map((lesson) => (
-              <LessonCard key={lesson.index} lesson={lesson} />
+              <LessonCard key={lesson.index} lesson={lesson} onClick={() => goToLesson(lesson.index)} />
             ))}
           </div>
         )}

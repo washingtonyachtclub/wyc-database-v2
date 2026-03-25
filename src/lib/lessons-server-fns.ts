@@ -1,5 +1,5 @@
 import { createServerFn } from '@tanstack/react-start'
-import { asc, count, eq, gte } from 'drizzle-orm'
+import { and, asc, count, eq, gte } from 'drizzle-orm'
 import { baseLessonQuery, lessonSortColumns } from 'src/db/lesson-queries'
 import type { LessonInsert } from 'src/db/lesson-schema'
 import { fromLessonInsert, toRichLesson } from 'src/db/mappers'
@@ -84,7 +84,10 @@ export const getLessonById = createServerFn({ method: 'GET' })
       }
     })
 
-    return { lesson, lessonStudents }
+    const enrolledStudents = lessonStudents.slice(0, lesson.size)
+    const waitlistedStudents = lessonStudents.slice(lesson.size)
+
+    return { lesson, enrolledStudents, waitlistedStudents }
   })
 
 export const getClassTypes = createServerFn({ method: 'GET' }).handler(async () => {
@@ -113,4 +116,17 @@ export const updateLesson = createServerFn({ method: 'POST' })
     const row = fromLessonInsert(rest)
     await db.update(lessons).set(row).where(eq(lessons.index, index))
     return { success: true, index }
+  })
+
+export const removeStudentFromLesson = createServerFn({ method: 'POST' })
+  .inputValidator((input: { lessonId: number; studentWycNumber: number }) => ({
+    lessonId: input.lessonId,
+    studentWycNumber: input.studentWycNumber,
+  }))
+  .handler(async ({ data: { lessonId, studentWycNumber } }) => {
+    await requireAuth()
+    await db
+      .delete(signups)
+      .where(and(eq(signups.class, lessonId), eq(signups.student, studentWycNumber)))
+    return { success: true }
   })

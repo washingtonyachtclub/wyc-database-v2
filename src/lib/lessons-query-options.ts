@@ -6,6 +6,7 @@ import {
   getCurrentQuarter,
   getLessonById,
   getQuarterLessons,
+  removeStudentFromLesson,
   updateLesson,
 } from './lessons-server-fns'
 
@@ -50,6 +51,17 @@ export function useUpdateLessonMutation(opts: { onSuccess: () => void; onClose: 
       queryClient.invalidateQueries({ queryKey: ['lessons'] })
       opts.onSuccess()
       opts.onClose()
+    },
+  })
+}
+
+export function useRemoveStudentMutation(lessonId: number) {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: (studentWycNumber: number) =>
+      removeStudentFromLesson({ data: { lessonId, studentWycNumber } }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['lessons', 'byId', lessonId] })
     },
   })
 }
