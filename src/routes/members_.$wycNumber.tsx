@@ -1,4 +1,5 @@
 import type { Member, MemberProfileUpdate } from '@/db/types'
+import { MemberCheckoutsSection } from '@/components/members/MemberCheckoutsSection'
 import { MemberLessonsSection } from '@/components/members/MemberLessonsSection'
 import { MemberPositionsSection } from '@/components/members/MemberPositionsSection'
 import { MemberRatingsGivenSection } from '@/components/members/MemberRatingsGivenSection'
@@ -73,6 +74,7 @@ function MemberDetailPage() {
         title="Lessons Signed Up For (Past 12 Months)"
         queryOptions={getMemberLessonsSignedUpQueryOptions(member.wycNumber, since)}
       />
+      <MemberCheckoutsSection wycNumber={member.wycNumber} since={since} />
       <MemberPositionsSection wycNumber={member.wycNumber} />
     </div>
   )

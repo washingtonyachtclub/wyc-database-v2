@@ -49,6 +49,18 @@ export type Officer = {
   active: boolean
 }
 
+export type Checkout = {
+  index: number
+  wycNumber: number
+  skipperName: string
+  boatId: number
+  boatName: string
+  fleet: string
+  destination: string
+  departureDate: string
+  departureTime: string
+}
+
 export type ClassTypeRow = typeof classType.$inferSelect
 export type ClassType = {
   index: number

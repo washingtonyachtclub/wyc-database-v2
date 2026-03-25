@@ -1,10 +1,11 @@
+import type { CheckoutQueryRow } from './checkout-queries'
 import type { LessonQueryRow } from './lesson-queries'
 import type { LessonInsert, RichLesson } from './lesson-schema'
 import type { MemberQueryRow } from './member-queries'
 import type { OfficerQueryRow } from './officer-queries'
 import type { RatingQueryRow } from './rating-queries'
 import { wycDatabase } from './schema'
-import type { Member, MemberInsert, MemberRating, MemberTableRow, Officer } from './types'
+import type { Checkout, Member, MemberInsert, MemberRating, MemberTableRow, Officer } from './types'
 
 const num = (value: number | null | undefined): number => value ?? 0
 const str = (value: string | null | undefined): string => value ?? ''
@@ -78,6 +79,21 @@ export function toRichLesson(row: LessonQueryRow): RichLesson {
     comments: str(row.comments),
     size: num(row.size),
     display: row.display !== 0,
+  }
+}
+
+export function toCheckout(row: CheckoutQueryRow): Checkout {
+  const timeDeparture = str(row.timeDeparture)
+  return {
+    index: row.index,
+    wycNumber: row.wycNumber,
+    skipperName: fullName(row.skipperFirst, row.skipperLast),
+    boatId: num(row.boatId),
+    boatName: str(row.boatName),
+    fleet: str(row.fleet),
+    destination: str(row.destination),
+    departureDate: timeDeparture.slice(0, 10),
+    departureTime: timeDeparture.slice(11, 16),
   }
 }
 
