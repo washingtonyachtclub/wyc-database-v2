@@ -1,11 +1,11 @@
 import { createServerFn } from '@tanstack/react-start'
 import { and, asc, count, desc, eq, gte, lte } from 'drizzle-orm'
-import { fromMemberInsert, toMemberTableRow } from 'src/db/mappers'
+import { fromMemberInsert, toMember, toMemberTableRow } from 'src/db/mappers'
 import type { MemberFilters } from 'src/db/member-filter-types'
 import { baseMemberQuery, memberSortColumns, withMemberFilters } from 'src/db/member-queries'
 import { withPagination, withSorting } from 'src/db/query-helpers'
 import { memcat, quarters, wycDatabase } from 'src/db/schema'
-import type { MemberInsert } from 'src/db/types'
+import type { MemberInsert, MemberProfileUpdate } from 'src/db/types'
 import db from '../db/index'
 import { requireAuth } from '../lib/auth-middleware'
 
@@ -169,6 +169,30 @@ export const getAllMembersLite = createServerFn({ method: 'GET' }).handler(async
     .orderBy(asc(wycDatabase.first), asc(wycDatabase.last))
   return result
 })
+
+export const getMemberById = createServerFn({ method: 'GET' })
+  .inputValidator((input: { wycNumber: number }) => ({ wycNumber: Number(input.wycNumber) }))
+  .handler(async ({ data: { wycNumber } }) => {
+    await requireAuth()
+    const [row] = await db.select().from(wycDatabase).where(eq(wycDatabase.wycNumber, wycNumber))
+    if (!row) return null
+    return toMember(row)
+  })
+
+export const updateMemberProfile = createServerFn({ method: 'POST' })
+  .inputValidator((input: { wycNumber: number } & MemberProfileUpdate) => ({
+    ...input,
+    wycNumber: Number(input.wycNumber),
+  }))
+  .handler(async ({ data }) => {
+    await requireAuth()
+    const { wycNumber, outToSea, ...rest } = data
+    await db
+      .update(wycDatabase)
+      .set({ ...rest, outToSea: outToSea ? 1 : 0 })
+      .where(eq(wycDatabase.wycNumber, wycNumber))
+    return { success: true, wycNumber }
+  })
 
 export const getDatabaseName = createServerFn({ method: 'GET' }).handler(async () => {
   const url = process.env.DATABASE_URL ?? ''

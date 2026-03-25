@@ -14,6 +14,7 @@ import { Route as MembersRouteImport } from './routes/members'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as LessonsRouteImport } from './routes/lessons'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as MembersWycNumberRouteImport } from './routes/members_.$wycNumber'
 import { Route as LessonsLessonIndexRouteImport } from './routes/lessons_.$lessonIndex'
 
 const MembershipProcessingRoute = MembershipProcessingRouteImport.update({
@@ -41,6 +42,11 @@ const IndexRoute = IndexRouteImport.update({
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const MembersWycNumberRoute = MembersWycNumberRouteImport.update({
+  id: '/members_/$wycNumber',
+  path: '/members/$wycNumber',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const LessonsLessonIndexRoute = LessonsLessonIndexRouteImport.update({
   id: '/lessons_/$lessonIndex',
   path: '/lessons/$lessonIndex',
@@ -54,6 +60,7 @@ export interface FileRoutesByFullPath {
   '/members': typeof MembersRoute
   '/membership-processing': typeof MembershipProcessingRoute
   '/lessons/$lessonIndex': typeof LessonsLessonIndexRoute
+  '/members/$wycNumber': typeof MembersWycNumberRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -62,6 +69,7 @@ export interface FileRoutesByTo {
   '/members': typeof MembersRoute
   '/membership-processing': typeof MembershipProcessingRoute
   '/lessons/$lessonIndex': typeof LessonsLessonIndexRoute
+  '/members/$wycNumber': typeof MembersWycNumberRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -71,6 +79,7 @@ export interface FileRoutesById {
   '/members': typeof MembersRoute
   '/membership-processing': typeof MembershipProcessingRoute
   '/lessons_/$lessonIndex': typeof LessonsLessonIndexRoute
+  '/members_/$wycNumber': typeof MembersWycNumberRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -81,6 +90,7 @@ export interface FileRouteTypes {
     | '/members'
     | '/membership-processing'
     | '/lessons/$lessonIndex'
+    | '/members/$wycNumber'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -89,6 +99,7 @@ export interface FileRouteTypes {
     | '/members'
     | '/membership-processing'
     | '/lessons/$lessonIndex'
+    | '/members/$wycNumber'
   id:
     | '__root__'
     | '/'
@@ -97,6 +108,7 @@ export interface FileRouteTypes {
     | '/members'
     | '/membership-processing'
     | '/lessons_/$lessonIndex'
+    | '/members_/$wycNumber'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -106,6 +118,7 @@ export interface RootRouteChildren {
   MembersRoute: typeof MembersRoute
   MembershipProcessingRoute: typeof MembershipProcessingRoute
   LessonsLessonIndexRoute: typeof LessonsLessonIndexRoute
+  MembersWycNumberRoute: typeof MembersWycNumberRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -145,6 +158,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/members_/$wycNumber': {
+      id: '/members_/$wycNumber'
+      path: '/members/$wycNumber'
+      fullPath: '/members/$wycNumber'
+      preLoaderRoute: typeof MembersWycNumberRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/lessons_/$lessonIndex': {
       id: '/lessons_/$lessonIndex'
       path: '/lessons/$lessonIndex'
@@ -162,6 +182,7 @@ const rootRouteChildren: RootRouteChildren = {
   MembersRoute: MembersRoute,
   MembershipProcessingRoute: MembershipProcessingRoute,
   LessonsLessonIndexRoute: LessonsLessonIndexRoute,
+  MembersWycNumberRoute: MembersWycNumberRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

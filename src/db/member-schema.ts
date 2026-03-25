@@ -15,3 +15,8 @@ export const AddMemberFormSchema = z.object({
   studentId: z.number().nullable(),
   outToSea: z.boolean(),
 })
+
+export const MemberProfileUpdateSchema = AddMemberFormSchema.omit({
+  expireQtrIndex: true,
+  categoryId: true,
+})

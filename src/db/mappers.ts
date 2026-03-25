@@ -1,14 +1,33 @@
-import { wycDatabase } from 'drizzle/schema'
 import type { LessonQueryRow } from './lesson-queries'
 import type { LessonInsert, RichLesson } from './lesson-schema'
 import type { MemberQueryRow } from './member-queries'
-import type { MemberInsert, MemberTableRow } from './types'
+import { wycDatabase } from './schema'
+import type { Member, MemberInsert, MemberTableRow } from './types'
 
 const num = (value: number | null | undefined): number => value ?? 0
 const str = (value: string | null | undefined): string => value ?? ''
 
 function fullName(first: string | null | undefined, last: string | null | undefined): string {
   return [first?.trim(), last?.trim()].filter(Boolean).join(' ')
+}
+
+export function toMember(row: typeof wycDatabase.$inferSelect): Member {
+  return {
+    wycNumber: row.wycNumber,
+    first: str(row.first),
+    last: str(row.last),
+    email: str(row.email),
+    categoryId: row.categoryId ?? null,
+    expireQtrIndex: row.expireQtrIndex,
+    streetAddress: str(row.streetAddress),
+    city: str(row.city),
+    state: str(row.state),
+    zipCode: str(row.zipCode),
+    phone1: str(row.phone1),
+    phone2: str(row.phone2),
+    studentId: row.studentId ?? null,
+    outToSea: (row.outToSea ?? 0) !== 0,
+  }
 }
 
 export function toMemberTableRow(row: MemberQueryRow): MemberTableRow {

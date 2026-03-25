@@ -1,14 +1,21 @@
 # MVP
-- memberInsert duplicated with addMemberFormSchema?
+- resolve package dependencies
 - review existing RBAC and implement
 - security review
+- ratings:
+  - administer
+  - see ratings for given member
+  - see all members with given rating
+- password reset
+  - forgot ID/password
 
 # Less Important
 - manage officers / position holders page
-- password reset
 - dev tool: view site as x role 
 - easily review out_to_sea statuses (or re-think its usage)
 - track memberships more precisely (by every renewal instance rather than overwriting expireQtr)
-- frontend design
-- on login: displays login boxes while loading members data (replace with loading indicator)
+- UI design overhaul
 - member combobox sort by frequency / MRU of some kind
+- replace old db lesson sign-ups
+  - emails, wiring up to main website
+- test UX on mobile

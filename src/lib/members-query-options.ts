@@ -4,10 +4,12 @@ import {
   createMember,
   getAllMembersLite,
   getCategories,
+  getMemberById,
   getMembersTable,
   getNextWycNumber,
   getQuarters,
   updateMember,
+  updateMemberProfile,
 } from './members-server-fns'
 
 export const getMembersQueryOptions = (
@@ -44,6 +46,14 @@ export const getQuartersQueryOptions = () =>
     queryFn: getQuarters,
   })
 
+export const getMemberByIdQueryOptions = (wycNumber: number) =>
+  queryOptions({
+    queryKey: ['members', 'byId', wycNumber],
+    queryFn: async () => {
+      return await getMemberById({ data: { wycNumber } })
+    },
+  })
+
 export const getAllMembersLiteQueryOptions = () =>
   queryOptions({
     queryKey: ['members', 'lite'],
@@ -71,6 +81,16 @@ export const useUpdateMemberMutation = (opts: { onSuccess: () => void; onClose: 
       queryClient.invalidateQueries({ queryKey: ['members'] })
       opts.onSuccess()
       opts.onClose()
+    },
+  })
+}
+
+export function useUpdateMemberProfileMutation() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: updateMemberProfile,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['members'] })
     },
   })
 }
