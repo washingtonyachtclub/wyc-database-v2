@@ -1,10 +1,17 @@
 import { createServerFn } from '@tanstack/react-start'
 import { and, asc, count, desc, eq, gte, lte } from 'drizzle-orm'
-import { fromMemberInsert, toMember, toMemberRating, toMemberTableRow } from 'src/db/mappers'
+import { baseLessonsSignedUpQuery, baseLessonsTaughtQuery } from 'src/db/lesson-queries'
+import {
+  fromMemberInsert,
+  toMember,
+  toMemberRating,
+  toMemberTableRow,
+  toRichLesson,
+} from 'src/db/mappers'
 import type { MemberFilters } from 'src/db/member-filter-types'
 import { baseMemberQuery, memberSortColumns, withMemberFilters } from 'src/db/member-queries'
-import { baseMemberRatingsQuery } from 'src/db/rating-queries'
 import { withPagination, withSorting } from 'src/db/query-helpers'
+import { baseMemberRatingsQuery, baseRatingsGivenQuery } from 'src/db/rating-queries'
 import { memcat, quarters, wycDatabase } from 'src/db/schema'
 import type { MemberInsert, MemberProfileUpdate } from 'src/db/types'
 import db from '../db/index'
@@ -112,7 +119,6 @@ export const getQuarters = createServerFn({ method: 'GET' }).handler(async () =>
   return result
 })
 
-// todo: use getNextWycNumber to get the next wycNumber and add to values
 export const createMember = createServerFn({ method: 'POST' })
   .inputValidator((data: MemberInsert) => data)
   .handler(async ({ data }) => {
@@ -201,6 +207,39 @@ export const getMemberRatings = createServerFn({ method: 'GET' })
     await requireAuth()
     const raw = await baseMemberRatingsQuery(wycNumber)
     return raw.map(toMemberRating)
+  })
+
+export const getMemberRatingsGiven = createServerFn({ method: 'GET' })
+  .inputValidator((input: { wycNumber: number; since?: string }) => ({
+    wycNumber: Number(input.wycNumber),
+    since: input.since,
+  }))
+  .handler(async ({ data: { wycNumber, since } }) => {
+    await requireAuth()
+    const raw = await baseRatingsGivenQuery(wycNumber, since)
+    return raw.map(toMemberRating)
+  })
+
+export const getMemberLessonsTaught = createServerFn({ method: 'GET' })
+  .inputValidator((input: { wycNumber: number; since?: string }) => ({
+    wycNumber: Number(input.wycNumber),
+    since: input.since,
+  }))
+  .handler(async ({ data: { wycNumber, since } }) => {
+    await requireAuth()
+    const raw = await baseLessonsTaughtQuery(wycNumber, since)
+    return raw.map(toRichLesson)
+  })
+
+export const getMemberLessonsSignedUp = createServerFn({ method: 'GET' })
+  .inputValidator((input: { wycNumber: number; since?: string }) => ({
+    wycNumber: Number(input.wycNumber),
+    since: input.since,
+  }))
+  .handler(async ({ data: { wycNumber, since } }) => {
+    await requireAuth()
+    const raw = await baseLessonsSignedUpQuery(wycNumber, since)
+    return raw.map(toRichLesson)
   })
 
 export const getDatabaseName = createServerFn({ method: 'GET' }).handler(async () => {

@@ -5,7 +5,10 @@ import {
   getAllMembersLite,
   getCategories,
   getMemberById,
+  getMemberLessonsSignedUp,
+  getMemberLessonsTaught,
   getMemberRatings,
+  getMemberRatingsGiven,
   getMembersTable,
   getNextWycNumber,
   getQuarters,
@@ -59,6 +62,24 @@ export const getMemberRatingsQueryOptions = (wycNumber: number) =>
   queryOptions({
     queryKey: ['members', 'ratings', wycNumber],
     queryFn: () => getMemberRatings({ data: { wycNumber } }),
+  })
+
+export const getMemberRatingsGivenQueryOptions = (wycNumber: number, since?: string) =>
+  queryOptions({
+    queryKey: ['members', 'ratingsGiven', wycNumber, since],
+    queryFn: () => getMemberRatingsGiven({ data: { wycNumber, since } }),
+  })
+
+export const getMemberLessonsTaughtQueryOptions = (wycNumber: number, since?: string) =>
+  queryOptions({
+    queryKey: ['members', 'lessonsTaught', wycNumber, since],
+    queryFn: () => getMemberLessonsTaught({ data: { wycNumber, since } }),
+  })
+
+export const getMemberLessonsSignedUpQueryOptions = (wycNumber: number, since?: string) =>
+  queryOptions({
+    queryKey: ['members', 'lessonsSignedUp', wycNumber, since],
+    queryFn: () => getMemberLessonsSignedUp({ data: { wycNumber, since } }),
   })
 
 export const getAllMembersLiteQueryOptions = () =>

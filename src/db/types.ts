@@ -33,6 +33,7 @@ export type MemberRating = {
   ratingText: string
   ratingDegree: number
   date: string
+  memberName: string
   examinerName: string
   comments: string
 }

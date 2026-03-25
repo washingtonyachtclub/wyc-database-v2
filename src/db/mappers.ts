@@ -86,6 +86,7 @@ export function toMemberRating(row: RatingQueryRow): MemberRating {
     ratingText: str(row.ratingText),
     ratingDegree: num(row.ratingDegree),
     date: str(row.date),
+    memberName: fullName(row.memberFirst, row.memberLast),
     examinerName: fullName(row.examinerFirst, row.examinerLast),
     comments: str(row.comments),
   }
