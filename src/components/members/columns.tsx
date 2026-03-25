@@ -1,3 +1,4 @@
+import { Link } from '@tanstack/react-router'
 import { createColumnHelper } from '@tanstack/react-table'
 import type { MemberTableRow } from 'src/db/types'
 
@@ -6,7 +7,15 @@ const columnHelper = createColumnHelper<MemberTableRow>()
 export const columns = [
   columnHelper.accessor('wycNumber', {
     header: 'WYC ID',
-    cell: (info) => info.getValue(),
+    cell: (info) => (
+      <Link
+        to="/members/$wycNumber"
+        params={{ wycNumber: String(info.getValue()) }}
+        className="text-primary underline"
+      >
+        {info.getValue()}
+      </Link>
+    ),
     enableSorting: false,
   }),
   columnHelper.accessor((row) => `${row.first || ''} ${row.last || ''}`.trim(), {
