@@ -1,6 +1,9 @@
-import { and, desc, eq, gte } from 'drizzle-orm'
+import { and, count, desc, eq, gte } from 'drizzle-orm'
+import type { MySqlColumn, MySqlSelect } from 'drizzle-orm/mysql-core'
 import { alias } from 'drizzle-orm/mysql-core'
 import db from './index'
+import type { RatingFilters } from './rating-filter-types'
+import { nameSearchCondition } from './query-helpers'
 import { ratings, wycDatabase, wycRatings } from './schema'
 
 const memberTable = alias(wycDatabase, 'member')
@@ -8,6 +11,9 @@ const examinerTable = alias(wycDatabase, 'examiner')
 
 export const ratingSelectFields = {
   index: wycRatings.index,
+  member: wycRatings.member,
+  ratingIndex: wycRatings.rating,
+  examiner: wycRatings.examiner,
   ratingText: ratings.text,
   ratingDegree: ratings.degree,
   date: wycRatings.date,
@@ -29,6 +35,53 @@ export function baseMemberRatingsQuery(wycNumber: number) {
     .leftJoin(examinerTable, eq(wycRatings.examiner, examinerTable.wycNumber))
     .where(eq(wycRatings.member, wycNumber))
     .orderBy(desc(wycRatings.date))
+}
+
+export function baseAllRatingsQuery() {
+  return db
+    .select(ratingSelectFields)
+    .from(wycRatings)
+    .leftJoin(ratings, eq(ratings.index, wycRatings.rating))
+    .leftJoin(memberTable, eq(wycRatings.member, memberTable.wycNumber))
+    .leftJoin(examinerTable, eq(wycRatings.examiner, examinerTable.wycNumber))
+}
+
+export function baseAllRatingsCountQuery() {
+  return db
+    .select({ count: count() })
+    .from(wycRatings)
+    .leftJoin(ratings, eq(ratings.index, wycRatings.rating))
+    .leftJoin(memberTable, eq(wycRatings.member, memberTable.wycNumber))
+    .leftJoin(examinerTable, eq(wycRatings.examiner, examinerTable.wycNumber))
+}
+
+export const ratingSortColumns: Record<string, MySqlColumn> = {
+  date: wycRatings.date,
+  ratingText: ratings.text,
+  memberName: memberTable.last,
+  examinerName: examinerTable.last,
+}
+
+export function withRatingFilters<T extends MySqlSelect>(
+  qb: T,
+  filters: RatingFilters | undefined,
+) {
+  const conditions = []
+
+  if (filters?.ratingIndex !== undefined) {
+    conditions.push(eq(wycRatings.rating, filters.ratingIndex))
+  }
+
+  if (filters?.name) {
+    const cond = nameSearchCondition(memberTable.first, memberTable.last, filters.name)
+    if (cond) conditions.push(cond)
+  }
+
+  if (conditions.length > 0) {
+    qb.where(and(...conditions))
+  }
+
+  return qb
 }
 
 export function baseRatingsGivenQuery(wycNumber: number, since?: string) {

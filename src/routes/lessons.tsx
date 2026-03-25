@@ -39,12 +39,10 @@ export const Route = createFileRoute('/lessons')({
     return { pageIndex, pageSize, sorting }
   },
   loader: ({ context, deps: { pageIndex, pageSize, sorting } }) => {
-    return {
-      quarterLessons: context.queryClient.ensureQueryData(getQuarterLessonsQueryOptions()),
-      allLessons: context.queryClient.ensureQueryData(
-        getAllLessonsQueryOptions(pageIndex, pageSize, sorting),
-      ),
-    }
+    context.queryClient.ensureQueryData(getQuarterLessonsQueryOptions())
+    return context.queryClient.ensureQueryData(
+      getAllLessonsQueryOptions(pageIndex, pageSize, sorting),
+    )
   },
   component: LessonsPage,
 })

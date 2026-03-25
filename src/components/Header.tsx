@@ -1,3 +1,5 @@
+import { getDatabaseName } from '@/lib/members-server-fns'
+import { useQuery } from '@tanstack/react-query'
 import { Link, useLocation, useRouter } from '@tanstack/react-router'
 import { useCurrentUser, useLogoutMutation } from '../lib/auth-query-options'
 import { Button } from './ui/button'
@@ -8,6 +10,11 @@ export default function Header() {
   const { user, isAuthenticated } = useCurrentUser()
   const logoutMutation = useLogoutMutation()
   const isLoginPage = location.pathname === '/login'
+  const { data: dbName } = useQuery({
+    queryKey: ['databaseName'],
+    queryFn: () => getDatabaseName(),
+    staleTime: Infinity,
+  })
 
   const handleLogout = async () => {
     try {
@@ -30,6 +37,11 @@ export default function Header() {
             <Link to="/" className="text-xl font-bold">
               WYC Database
             </Link>
+            {import.meta.env.DEV && dbName && (
+              <span className="ml-3 rounded bg-yellow-200 px-2 py-0.5 text-xs font-semibold text-yellow-900">
+                {dbName}
+              </span>
+            )}
           </div>
           <div className="flex items-center gap-4">
             {isAuthenticated && user ? (

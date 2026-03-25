@@ -30,6 +30,9 @@ export type MemberTableRow = {
 
 export type MemberRating = {
   index: number
+  member: number
+  ratingIndex: number
+  examiner: number
   ratingText: string
   ratingDegree: number
   date: string

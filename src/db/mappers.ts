@@ -113,6 +113,9 @@ export function toOfficer(row: OfficerQueryRow): Officer {
 export function toMemberRating(row: RatingQueryRow): MemberRating {
   return {
     index: row.index,
+    member: num(row.member),
+    ratingIndex: num(row.ratingIndex),
+    examiner: num(row.examiner),
     ratingText: str(row.ratingText),
     ratingDegree: num(row.ratingDegree),
     date: str(row.date),

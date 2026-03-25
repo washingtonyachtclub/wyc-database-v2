@@ -1,7 +1,8 @@
-import { and, eq, gte, like, or } from 'drizzle-orm'
+import { and, eq, gte } from 'drizzle-orm'
 import type { MySqlColumn, MySqlSelect } from 'drizzle-orm/mysql-core'
 import db from './index'
 import type { MemberFilters } from './member-filter-types'
+import { nameSearchCondition } from './query-helpers'
 import { memcat, quarters, wycDatabase } from './schema'
 
 export const memberTableSelectFields = {
@@ -48,21 +49,8 @@ export function withMemberFilters<T extends MySqlSelect>(
   }
 
   if (filters?.name) {
-    const nameParts = filters.name
-      .trim()
-      .split(/\s+/)
-      .filter((part) => part.length > 0)
-
-    if (nameParts.length >= 2) {
-      const firstNamePattern = `%${nameParts[0]}%`
-      const lastNamePattern = `${nameParts.slice(1).join(' ')}%`
-      conditions.push(
-        and(like(wycDatabase.first, firstNamePattern), like(wycDatabase.last, lastNamePattern))!,
-      )
-    } else if (nameParts.length === 1) {
-      const namePattern = `%${nameParts[0]}%`
-      conditions.push(or(like(wycDatabase.first, namePattern), like(wycDatabase.last, namePattern)))
-    }
+    const cond = nameSearchCondition(wycDatabase.first, wycDatabase.last, filters.name)
+    if (cond) conditions.push(cond)
   }
 
   if (filters?.category !== undefined && filters.category !== null) {

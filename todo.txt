@@ -2,9 +2,6 @@
 - resolve package dependencies
 - review existing RBAC and implement
 - security review
-- ratings:
-  - administer
-  - see all members with given rating
 - password reset
   - forgot ID/password on login page
 - backfill all calendar dates in lessons table with LLM

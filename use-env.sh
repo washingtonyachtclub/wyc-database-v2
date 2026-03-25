@@ -1,11 +1,20 @@
 #!/bin/bash
-# Usage: source use-env.sh dev|prod
+# Usage: source use-env.sh dev|prod-readonly|prod-write
 # Copies the matching .env file to .env.local and reminds you to restart the dev server.
 
 if [ -z "$1" ]; then
-  echo "Usage: source use-env.sh dev|prod"
+  echo "Usage: source use-env.sh dev|prod-readonly|prod-write"
   return 1 2>/dev/null || exit 1
 fi
+
+case "$1" in
+  dev|prod-readonly|prod-write) ;;
+  *)
+    echo "Error: invalid environment '$1'"
+    echo "Usage: source use-env.sh dev|prod-readonly|prod-write"
+    return 1 2>/dev/null || exit 1
+    ;;
+esac
 
 ENV_FILE=".env.$1"
 

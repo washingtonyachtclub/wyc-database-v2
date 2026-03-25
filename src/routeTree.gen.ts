@@ -9,15 +9,22 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as RatingsRouteImport } from './routes/ratings'
 import { Route as OfficersRouteImport } from './routes/officers'
 import { Route as MembershipProcessingRouteImport } from './routes/membership-processing'
 import { Route as MembersRouteImport } from './routes/members'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as LessonsRouteImport } from './routes/lessons'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as RatingsRatingIndexRouteImport } from './routes/ratings_.$ratingIndex'
 import { Route as MembersWycNumberRouteImport } from './routes/members_.$wycNumber'
 import { Route as LessonsLessonIndexRouteImport } from './routes/lessons_.$lessonIndex'
 
+const RatingsRoute = RatingsRouteImport.update({
+  id: '/ratings',
+  path: '/ratings',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const OfficersRoute = OfficersRouteImport.update({
   id: '/officers',
   path: '/officers',
@@ -48,6 +55,11 @@ const IndexRoute = IndexRouteImport.update({
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const RatingsRatingIndexRoute = RatingsRatingIndexRouteImport.update({
+  id: '/ratings_/$ratingIndex',
+  path: '/ratings/$ratingIndex',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const MembersWycNumberRoute = MembersWycNumberRouteImport.update({
   id: '/members_/$wycNumber',
   path: '/members/$wycNumber',
@@ -66,8 +78,10 @@ export interface FileRoutesByFullPath {
   '/members': typeof MembersRoute
   '/membership-processing': typeof MembershipProcessingRoute
   '/officers': typeof OfficersRoute
+  '/ratings': typeof RatingsRoute
   '/lessons/$lessonIndex': typeof LessonsLessonIndexRoute
   '/members/$wycNumber': typeof MembersWycNumberRoute
+  '/ratings/$ratingIndex': typeof RatingsRatingIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -76,8 +90,10 @@ export interface FileRoutesByTo {
   '/members': typeof MembersRoute
   '/membership-processing': typeof MembershipProcessingRoute
   '/officers': typeof OfficersRoute
+  '/ratings': typeof RatingsRoute
   '/lessons/$lessonIndex': typeof LessonsLessonIndexRoute
   '/members/$wycNumber': typeof MembersWycNumberRoute
+  '/ratings/$ratingIndex': typeof RatingsRatingIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -87,8 +103,10 @@ export interface FileRoutesById {
   '/members': typeof MembersRoute
   '/membership-processing': typeof MembershipProcessingRoute
   '/officers': typeof OfficersRoute
+  '/ratings': typeof RatingsRoute
   '/lessons_/$lessonIndex': typeof LessonsLessonIndexRoute
   '/members_/$wycNumber': typeof MembersWycNumberRoute
+  '/ratings_/$ratingIndex': typeof RatingsRatingIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -99,8 +117,10 @@ export interface FileRouteTypes {
     | '/members'
     | '/membership-processing'
     | '/officers'
+    | '/ratings'
     | '/lessons/$lessonIndex'
     | '/members/$wycNumber'
+    | '/ratings/$ratingIndex'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -109,8 +129,10 @@ export interface FileRouteTypes {
     | '/members'
     | '/membership-processing'
     | '/officers'
+    | '/ratings'
     | '/lessons/$lessonIndex'
     | '/members/$wycNumber'
+    | '/ratings/$ratingIndex'
   id:
     | '__root__'
     | '/'
@@ -119,8 +141,10 @@ export interface FileRouteTypes {
     | '/members'
     | '/membership-processing'
     | '/officers'
+    | '/ratings'
     | '/lessons_/$lessonIndex'
     | '/members_/$wycNumber'
+    | '/ratings_/$ratingIndex'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -130,12 +154,21 @@ export interface RootRouteChildren {
   MembersRoute: typeof MembersRoute
   MembershipProcessingRoute: typeof MembershipProcessingRoute
   OfficersRoute: typeof OfficersRoute
+  RatingsRoute: typeof RatingsRoute
   LessonsLessonIndexRoute: typeof LessonsLessonIndexRoute
   MembersWycNumberRoute: typeof MembersWycNumberRoute
+  RatingsRatingIndexRoute: typeof RatingsRatingIndexRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/ratings': {
+      id: '/ratings'
+      path: '/ratings'
+      fullPath: '/ratings'
+      preLoaderRoute: typeof RatingsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/officers': {
       id: '/officers'
       path: '/officers'
@@ -178,6 +211,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/ratings_/$ratingIndex': {
+      id: '/ratings_/$ratingIndex'
+      path: '/ratings/$ratingIndex'
+      fullPath: '/ratings/$ratingIndex'
+      preLoaderRoute: typeof RatingsRatingIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/members_/$wycNumber': {
       id: '/members_/$wycNumber'
       path: '/members/$wycNumber'
@@ -202,8 +242,10 @@ const rootRouteChildren: RootRouteChildren = {
   MembersRoute: MembersRoute,
   MembershipProcessingRoute: MembershipProcessingRoute,
   OfficersRoute: OfficersRoute,
+  RatingsRoute: RatingsRoute,
   LessonsLessonIndexRoute: LessonsLessonIndexRoute,
   MembersWycNumberRoute: MembersWycNumberRoute,
+  RatingsRatingIndexRoute: RatingsRatingIndexRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

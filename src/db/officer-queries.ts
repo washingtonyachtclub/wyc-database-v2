@@ -1,4 +1,5 @@
-import { desc, eq } from 'drizzle-orm'
+import { desc, eq, inArray } from 'drizzle-orm'
+import { OFFICER_PAGE_POSITIONS } from './constants'
 import db from './index'
 import { officers, posType, positions, wycDatabase } from './schema'
 
@@ -24,6 +25,27 @@ export function baseOfficersQuery() {
     .leftJoin(positions, eq(officers.position, positions.index))
     .leftJoin(posType, eq(positions.type, posType.index))
     .orderBy(desc(officers.active))
+}
+
+/** Officers page query — only positions matching the current org chart */
+export function officerPageQuery() {
+  return db
+    .select(officerSelectFields)
+    .from(officers)
+    .leftJoin(wycDatabase, eq(officers.member, wycDatabase.wycNumber))
+    .leftJoin(positions, eq(officers.position, positions.index))
+    .leftJoin(posType, eq(positions.type, posType.index))
+    .where(inArray(positions.index, [...OFFICER_PAGE_POSITIONS]))
+    .orderBy(desc(officers.active))
+}
+
+/** Whitelisted positions for the officer page dropdown */
+export function getOfficerPagePositions() {
+  return db
+    .select({ index: positions.index, name: positions.name })
+    .from(positions)
+    .where(inArray(positions.index, [...OFFICER_PAGE_POSITIONS]))
+    .orderBy(positions.sortorder)
 }
 
 export function baseMemberPositionsQuery(wycNumber: number) {
