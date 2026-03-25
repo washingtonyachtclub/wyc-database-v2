@@ -51,3 +51,9 @@ export type RichLesson = {
   size: number
   display: boolean
 }
+type LessonStudent = {
+  wycNumber: number
+  first: string
+  last: string
+  email: string
+}

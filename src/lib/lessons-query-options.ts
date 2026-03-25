@@ -4,6 +4,7 @@ import {
   getAllLessons,
   getClassTypes,
   getCurrentQuarter,
+  getLessonById,
   getQuarterLessons,
   updateLesson,
 } from './lessons-server-fns'
@@ -12,6 +13,15 @@ export const getQuarterLessonsQueryOptions = () =>
   queryOptions({
     queryKey: ['lessons', 'quarter'],
     queryFn: getQuarterLessons,
+  })
+
+export const getLessonByIdQueryOptions = (id: number) =>
+  queryOptions({
+    queryKey: ['lessons', 'byId', id],
+    queryFn: async () => {
+      const result = await getLessonById({ data: { id } })
+      return result
+    },
   })
 
 export const getClassTypesQueryOptions = () =>

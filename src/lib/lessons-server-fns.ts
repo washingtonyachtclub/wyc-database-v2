@@ -4,7 +4,7 @@ import { baseLessonQuery, lessonSortColumns } from 'src/db/lesson-queries'
 import type { LessonInsert } from 'src/db/lesson-schema'
 import { fromLessonInsert, toRichLesson } from 'src/db/mappers'
 import { withPagination, withSorting } from 'src/db/query-helpers'
-import { classType, lessonQuarter, lessons } from 'src/db/schema'
+import { classType, lessonQuarter, lessons, signups, wycDatabase } from 'src/db/schema'
 import db from '../db/index'
 import { requireAuth } from '../lib/auth-middleware'
 
@@ -53,6 +53,38 @@ export const getAllLessons = createServerFn({ method: 'GET' })
     const [totalCountResult] = await db.select({ count: count() }).from(lessons)
 
     return { data, totalCount: totalCountResult.count }
+  })
+
+export const getLessonById = createServerFn({ method: 'GET' })
+  .inputValidator((input: { id: number }) => ({ id: input.id }))
+  .handler(async ({ data: { id } }) => {
+    await requireAuth()
+    const [lessonRow] = await baseLessonQuery().where(eq(lessons.index, id))
+    if (!lessonRow) return null
+
+    const lesson = toRichLesson(lessonRow)
+    const students = await db
+      .select({
+        wycNumber: wycDatabase.wycNumber,
+        first: wycDatabase.first,
+        last: wycDatabase.last,
+        email: wycDatabase.email,
+      })
+      .from(signups)
+      .innerJoin(wycDatabase, eq(signups.student, wycDatabase.wycNumber))
+      .where(eq(signups.class, id))
+      .orderBy(asc(signups.index))
+
+    const lessonStudents = students.map((s) => {
+      return {
+        wycNumber: s.wycNumber,
+        first: s.first || '<Unknown>',
+        last: s.last || '<Unknown>',
+        email: s.email || '<Unknown>',
+      }
+    })
+
+    return { lesson, lessonStudents }
   })
 
 export const getClassTypes = createServerFn({ method: 'GET' }).handler(async () => {
