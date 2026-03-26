@@ -14,18 +14,14 @@ import {
   returningMemberSQLQuery,
 } from '@/lib/membership-processing/sql-queries'
 import { useQuery } from '@tanstack/react-query'
-import { createFileRoute, redirect } from '@tanstack/react-router'
+import { createFileRoute } from '@tanstack/react-router'
+import { requirePrivilegeForRoute } from '../lib/route-guards'
 import Papa from 'papaparse'
 import { Fragment, useState } from 'react'
 
 export const Route = createFileRoute('/membership-processing')({
   beforeLoad: ({ context }) => {
-    if (!context.isAuthenticated) {
-      throw redirect({
-        to: '/login',
-        search: { redirect: '/membership-processing' },
-      })
-    }
+    requirePrivilegeForRoute(context, '/membership-processing')
   },
   component: MembershipProcessingPage,
 })

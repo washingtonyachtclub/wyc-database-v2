@@ -10,7 +10,8 @@ import {
 } from '@/lib/lessons-query-options'
 import { getQuartersQueryOptions } from '@/lib/members-query-options'
 import { useQuery, useSuspenseQuery } from '@tanstack/react-query'
-import { createFileRoute, redirect } from '@tanstack/react-router'
+import { createFileRoute } from '@tanstack/react-router'
+import { requirePrivilegeForRoute } from '../lib/route-guards'
 import { useState } from 'react'
 import {
   AlertDialog,
@@ -29,12 +30,7 @@ import { MemberCombobox } from '../components/ui/MemberCombobox'
 
 export const Route = createFileRoute('/lessons_/$lessonIndex')({
   beforeLoad: ({ context }) => {
-    if (!context.isAuthenticated) {
-      throw redirect({
-        to: '/login',
-        search: { redirect: '/lessons' },
-      })
-    }
+    requirePrivilegeForRoute(context, '/lessons/$lessonIndex')
   },
   component: LessonDetailPage,
 })

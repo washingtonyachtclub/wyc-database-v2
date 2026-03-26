@@ -14,11 +14,13 @@ import appCss from '../styles.css?url'
 import { getCurrentUserServerFn } from '../lib/auth-server-fns'
 import type { AuthUser } from '../lib/auth-server-fns'
 import type { QueryClient } from '@tanstack/react-query'
+import type { Privilege } from '../lib/permissions'
 
 interface MyRouterContext {
   queryClient: QueryClient
   user: AuthUser | null
   isAuthenticated: boolean
+  privileges: Privilege[]
 }
 
 export const Route = createRootRouteWithContext<MyRouterContext>()({
@@ -28,6 +30,7 @@ export const Route = createRootRouteWithContext<MyRouterContext>()({
     return {
       user: authResult.isValid ? authResult.user : null,
       isAuthenticated: authResult.isValid,
+      privileges: authResult.privileges ?? [],
     }
   },
   head: () => ({

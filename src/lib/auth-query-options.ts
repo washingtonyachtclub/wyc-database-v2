@@ -65,6 +65,7 @@ export const useCurrentUser = () => {
   return {
     user: query.data?.isValid ? query.data.user : null,
     isAuthenticated: query.data?.isValid ?? false,
+    privileges: query.data?.privileges ?? [],
     isLoading: query.isLoading,
     isError: query.isError,
   }

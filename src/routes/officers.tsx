@@ -8,18 +8,14 @@ import {
   getOfficerPageQueryOptions,
   useSetOfficerActiveMutation,
 } from '@/lib/officers-query-options'
+import { requirePrivilegeForRoute } from '@/lib/route-guards'
 import { cn } from '@/lib/utils'
 import { useSuspenseQuery } from '@tanstack/react-query'
-import { Link, createFileRoute, redirect } from '@tanstack/react-router'
+import { Link, createFileRoute } from '@tanstack/react-router'
 
 export const Route = createFileRoute('/officers')({
   beforeLoad: ({ context }) => {
-    if (!context.isAuthenticated) {
-      throw redirect({
-        to: '/login',
-        search: { redirect: '/officers' },
-      })
-    }
+    requirePrivilegeForRoute(context, '/officers')
   },
   component: OfficersPage,
 })

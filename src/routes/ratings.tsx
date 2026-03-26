@@ -1,5 +1,5 @@
 import { useQuery, useSuspenseQuery } from '@tanstack/react-query'
-import { createFileRoute, redirect, useNavigate } from '@tanstack/react-router'
+import { createFileRoute, useNavigate } from '@tanstack/react-router'
 import { getCoreRowModel, getSortedRowModel, useReactTable } from '@tanstack/react-table'
 import { useState } from 'react'
 import { z } from 'zod'
@@ -11,6 +11,7 @@ import { Button } from '../components/ui/button'
 import { DataTable } from '../components/ui/DataTable'
 import type { RatingFilters } from '../db/rating-filter-types'
 import { useCurrentUser } from '../lib/auth-query-options'
+import { requirePrivilegeForRoute } from '../lib/route-guards'
 import {
   getAllRatingsQueryOptions,
   getRatingTypesQueryOptions,
@@ -28,12 +29,7 @@ const ratingSearchSchema = z.object({
 export const Route = createFileRoute('/ratings')({
   validateSearch: ratingSearchSchema,
   beforeLoad: ({ context }) => {
-    if (!context.isAuthenticated) {
-      throw redirect({
-        to: '/login',
-        search: { redirect: '/ratings' },
-      })
-    }
+    requirePrivilegeForRoute(context, '/ratings')
   },
   loaderDeps: ({ search: { pageIndex, pageSize, name, ratingIndex, sortColumn, sortDesc } }) => {
     const filters: RatingFilters | undefined =

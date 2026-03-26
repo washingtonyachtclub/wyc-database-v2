@@ -15,6 +15,7 @@ import { Route as MembershipProcessingRouteImport } from './routes/membership-pr
 import { Route as MembersRouteImport } from './routes/members'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as LessonsRouteImport } from './routes/lessons'
+import { Route as ForbiddenRouteImport } from './routes/forbidden'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as RatingsRatingIndexRouteImport } from './routes/ratings_.$ratingIndex'
 import { Route as MembersWycNumberRouteImport } from './routes/members_.$wycNumber'
@@ -50,6 +51,11 @@ const LessonsRoute = LessonsRouteImport.update({
   path: '/lessons',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ForbiddenRoute = ForbiddenRouteImport.update({
+  id: '/forbidden',
+  path: '/forbidden',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
@@ -73,6 +79,7 @@ const LessonsLessonIndexRoute = LessonsLessonIndexRouteImport.update({
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/forbidden': typeof ForbiddenRoute
   '/lessons': typeof LessonsRoute
   '/login': typeof LoginRoute
   '/members': typeof MembersRoute
@@ -85,6 +92,7 @@ export interface FileRoutesByFullPath {
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/forbidden': typeof ForbiddenRoute
   '/lessons': typeof LessonsRoute
   '/login': typeof LoginRoute
   '/members': typeof MembersRoute
@@ -98,6 +106,7 @@ export interface FileRoutesByTo {
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/forbidden': typeof ForbiddenRoute
   '/lessons': typeof LessonsRoute
   '/login': typeof LoginRoute
   '/members': typeof MembersRoute
@@ -112,6 +121,7 @@ export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
+    | '/forbidden'
     | '/lessons'
     | '/login'
     | '/members'
@@ -124,6 +134,7 @@ export interface FileRouteTypes {
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
+    | '/forbidden'
     | '/lessons'
     | '/login'
     | '/members'
@@ -136,6 +147,7 @@ export interface FileRouteTypes {
   id:
     | '__root__'
     | '/'
+    | '/forbidden'
     | '/lessons'
     | '/login'
     | '/members'
@@ -149,6 +161,7 @@ export interface FileRouteTypes {
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  ForbiddenRoute: typeof ForbiddenRoute
   LessonsRoute: typeof LessonsRoute
   LoginRoute: typeof LoginRoute
   MembersRoute: typeof MembersRoute
@@ -204,6 +217,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof LessonsRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/forbidden': {
+      id: '/forbidden'
+      path: '/forbidden'
+      fullPath: '/forbidden'
+      preLoaderRoute: typeof ForbiddenRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/': {
       id: '/'
       path: '/'
@@ -237,6 +257,7 @@ declare module '@tanstack/react-router' {
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  ForbiddenRoute: ForbiddenRoute,
   LessonsRoute: LessonsRoute,
   LoginRoute: LoginRoute,
   MembersRoute: MembersRoute,

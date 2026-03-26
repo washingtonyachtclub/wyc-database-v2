@@ -1,8 +1,9 @@
 import { createServerFn } from '@tanstack/react-start'
-import { eq } from 'drizzle-orm'
+import { and, count, eq, gte, or } from 'drizzle-orm'
 import db from 'src/db/index'
-import { wycDatabase } from 'src/db/schema'
+import { lessonQuarter, lessons, officers, posPrivMap, privs, wycDatabase } from 'src/db/schema'
 import { hashPasswordArgon2, verifyPasswordDual } from './auth'
+import type { Privilege } from './permissions'
 import { useAppSession } from './session'
 
 export type AuthUser = {
@@ -26,6 +27,51 @@ export type LogoutResponse = {
 export type CurrentUserResponse = {
   isValid: boolean
   user?: AuthUser
+  privileges?: Privilege[]
+}
+
+/**
+ * Load a user's privileges from the officers → positions → pos_priv_map → privs chain,
+ * plus the dynamic "instr" check against the lessons table.
+ */
+async function loadUserPrivileges(wycNumber: number): Promise<Privilege[]> {
+  // 1. Get privileges from officer positions
+  const privRows = await db
+    .selectDistinct({ name: privs.name })
+    .from(officers)
+    .innerJoin(posPrivMap, eq(officers.position, posPrivMap.position))
+    .innerJoin(privs, eq(posPrivMap.priv, privs.index))
+    .where(and(eq(officers.member, wycNumber), eq(officers.active, 1)))
+
+  const userPrivileges: Privilege[] = privRows
+    .map((r) => r.name?.trim())
+    .filter((name): name is Privilege => name === 'db' || name === 'rtgs')
+
+  // 2. Dynamic "instr" check — is the user an instructor for any current-quarter lesson?
+  const quarterRow = await db
+    .select({ quarter: lessonQuarter.quarter })
+    .from(lessonQuarter)
+    .where(eq(lessonQuarter.index, 1))
+    .limit(1)
+
+  if (quarterRow.length > 0) {
+    const currentQtr = quarterRow[0].quarter
+    const instrRows = await db
+      .select({ n: count() })
+      .from(lessons)
+      .where(
+        and(
+          or(eq(lessons.instructor1, wycNumber), eq(lessons.instructor2, wycNumber)),
+          gte(lessons.expire, currentQtr),
+        ),
+      )
+
+    if (instrRows[0].n > 0 && !userPrivileges.includes('instr')) {
+      userPrivileges.push('instr')
+    }
+  }
+
+  return userPrivileges
 }
 
 /**
@@ -94,10 +140,12 @@ export const loginServerFn = createServerFn({ method: 'POST' })
         last: user.last,
         email: user.email,
       }
+      const privileges = await loadUserPrivileges(user.wycNumber)
 
       await session.update({
         userId: user.wycNumber,
         user: userData,
+        privileges,
       })
 
       return {
@@ -163,6 +211,7 @@ export const getCurrentUserServerFn = createServerFn({ method: 'GET' }).handler(
       return {
         isValid: true,
         user: sessionData.user,
+        privileges: sessionData.privileges ?? [],
       } satisfies CurrentUserResponse
     } catch (error: any) {
       console.error('Get current user error:', error)

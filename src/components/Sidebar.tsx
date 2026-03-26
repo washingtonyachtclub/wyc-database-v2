@@ -1,17 +1,24 @@
 import { Link, useLocation } from '@tanstack/react-router'
 import { useCurrentUser } from '../lib/auth-query-options'
+import { hasPrivilege, routePermissions } from '../lib/permissions'
+import type { ProtectedRoute } from '../lib/permissions'
 
 export default function Sidebar() {
   const location = useLocation()
-  const { user } = useCurrentUser()
+  const { user, privileges } = useCurrentUser()
 
   const navItems = [
-    { path: '/members', label: 'Members' },
-    { path: '/lessons', label: 'Lessons' },
-    { path: '/ratings', label: 'Ratings' },
-    { path: '/officers', label: 'Officers' },
-    { path: '/membership-processing', label: 'Membership Processing' },
+    { path: '/members' as const, label: 'Members' },
+    { path: '/lessons' as const, label: 'Lessons' },
+    { path: '/ratings' as const, label: 'Ratings' },
+    { path: '/officers' as const, label: 'Officers' },
+    { path: '/membership-processing' as const, label: 'Membership Processing' },
   ]
+
+  const visibleNavItems = navItems.filter((item) => {
+    const required = routePermissions[item.path as ProtectedRoute]
+    return hasPrivilege(privileges, required)
+  })
 
   const myProfilePath = user ? `/members/${user.wycNumber}` : null
 
@@ -31,7 +38,7 @@ export default function Sidebar() {
             My Profile
           </Link>
         )}
-        {navItems.map((item) => {
+        {visibleNavItems.map((item) => {
           const isActive = location.pathname === item.path
           return (
             <Link

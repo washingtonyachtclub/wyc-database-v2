@@ -6,10 +6,10 @@ import { fromLessonInsert, toRichLesson } from 'src/db/mappers'
 import { withPagination, withSorting } from 'src/db/query-helpers'
 import { classType, lessonQuarter, lessons, signups, wycDatabase } from 'src/db/schema'
 import db from '../db/index'
-import { requireAuth } from '../lib/auth-middleware'
+import { requirePrivilege } from '../lib/auth-middleware'
 
 export const getQuarterLessons = createServerFn({ method: 'GET' }).handler(async () => {
-  const userId = await requireAuth()
+  const userId = await requirePrivilege('db')
   const currentQuarter = await getCurrentQuarter()
 
   const query = baseLessonQuery()
@@ -40,7 +40,7 @@ export const getAllLessons = createServerFn({ method: 'GET' })
     }),
   )
   .handler(async ({ data: { pageIndex, pageSize, sorting } }) => {
-    await requireAuth()
+    await requirePrivilege('db')
 
     const query = baseLessonQuery().$dynamic()
 
@@ -58,7 +58,7 @@ export const getAllLessons = createServerFn({ method: 'GET' })
 export const getLessonById = createServerFn({ method: 'GET' })
   .inputValidator((input: { id: number }) => ({ id: input.id }))
   .handler(async ({ data: { id } }) => {
-    await requireAuth()
+    await requirePrivilege('db')
     const [lessonRow] = await baseLessonQuery().where(eq(lessons.index, id))
     if (!lessonRow) return null
 
@@ -91,7 +91,7 @@ export const getLessonById = createServerFn({ method: 'GET' })
   })
 
 export const getClassTypes = createServerFn({ method: 'GET' }).handler(async () => {
-  await requireAuth()
+  await requirePrivilege('db')
   const rows = await db.select().from(classType).orderBy(asc(classType.text))
   return rows
 })
@@ -99,7 +99,7 @@ export const getClassTypes = createServerFn({ method: 'GET' }).handler(async () 
 export const createLesson = createServerFn({ method: 'POST' })
   .inputValidator((data: LessonInsert) => data)
   .handler(async ({ data }) => {
-    await requireAuth()
+    await requirePrivilege('db')
     const row = fromLessonInsert(data)
     const id = await db.insert(lessons).values(row).$returningId()
     return { success: true, id }
@@ -111,7 +111,7 @@ export const updateLesson = createServerFn({ method: 'POST' })
     index: Number(input.index),
   }))
   .handler(async ({ data }) => {
-    await requireAuth()
+    await requirePrivilege('db')
     const { index, ...rest } = data
     const row = fromLessonInsert(rest)
     await db.update(lessons).set(row).where(eq(lessons.index, index))
@@ -124,7 +124,7 @@ export const removeStudentFromLesson = createServerFn({ method: 'POST' })
     studentWycNumber: input.studentWycNumber,
   }))
   .handler(async ({ data: { lessonId, studentWycNumber } }) => {
-    await requireAuth()
+    await requirePrivilege('db')
     await db
       .delete(signups)
       .where(and(eq(signups.class, lessonId), eq(signups.student, studentWycNumber)))

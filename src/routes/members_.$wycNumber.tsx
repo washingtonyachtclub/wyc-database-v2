@@ -16,15 +16,17 @@ import {
 } from '@/lib/members-query-options'
 import { useQuery, useSuspenseQuery } from '@tanstack/react-query'
 import { createFileRoute, redirect } from '@tanstack/react-router'
+import { hasPrivilege } from '../lib/permissions'
 import { useMemo, useState } from 'react'
 
 export const Route = createFileRoute('/members_/$wycNumber')({
-  beforeLoad: ({ context }) => {
+  beforeLoad: ({ context, params }) => {
     if (!context.isAuthenticated) {
-      throw redirect({
-        to: '/login',
-        search: { redirect: '/members' },
-      })
+      throw redirect({ to: '/login' })
+    }
+    const isOwnProfile = context.user?.wycNumber === Number(params.wycNumber)
+    if (!isOwnProfile && !hasPrivilege(context.privileges, ['db'])) {
+      throw redirect({ to: '/forbidden' })
     }
   },
   component: MemberDetailPage,

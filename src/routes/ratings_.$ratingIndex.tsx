@@ -6,7 +6,8 @@ import {
   useUpdateRatingMutation,
 } from '@/lib/ratings-query-options'
 import { useSuspenseQuery } from '@tanstack/react-query'
-import { createFileRoute, Link, redirect, useNavigate } from '@tanstack/react-router'
+import { createFileRoute, Link, useNavigate } from '@tanstack/react-router'
+import { requirePrivilegeForRoute } from '../lib/route-guards'
 import { useState } from 'react'
 import {
   AlertDialog,
@@ -22,12 +23,7 @@ import { Button } from '../components/ui/button'
 
 export const Route = createFileRoute('/ratings_/$ratingIndex')({
   beforeLoad: ({ context }) => {
-    if (!context.isAuthenticated) {
-      throw redirect({
-        to: '/login',
-        search: { redirect: '/ratings' },
-      })
-    }
+    requirePrivilegeForRoute(context, '/ratings/$ratingIndex')
   },
   loader: ({ context, params: { ratingIndex } }) => {
     return context.queryClient.ensureQueryData(getRatingByIdQueryOptions(Number(ratingIndex)))

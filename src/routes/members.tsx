@@ -1,6 +1,6 @@
 import { getCurrentQuarterQueryOptions } from '@/lib/lessons-query-options'
 import { useQuery, useSuspenseQuery } from '@tanstack/react-query'
-import { createFileRoute, redirect, useNavigate } from '@tanstack/react-router'
+import { createFileRoute, useNavigate } from '@tanstack/react-router'
 import { getCoreRowModel, getSortedRowModel, useReactTable } from '@tanstack/react-table'
 import { useState } from 'react'
 import { z } from 'zod'
@@ -11,6 +11,7 @@ import { FilterControls } from '../components/members/FilterControls'
 import { PaginationControls } from '../components/members/PaginationControls'
 import { DataTable } from '../components/ui/DataTable'
 import type { MemberFilters } from '../db/member-filter-types'
+import { requirePrivilegeForRoute } from '../lib/route-guards'
 import {
   getCategoriesQueryOptions,
   getMembersQueryOptions,
@@ -34,12 +35,7 @@ const memberSearchSchema = z.object({
 export const Route = createFileRoute('/members')({
   validateSearch: memberSearchSchema,
   beforeLoad: ({ context }) => {
-    if (!context.isAuthenticated) {
-      throw redirect({
-        to: '/login',
-        search: { redirect: '/members' },
-      })
-    }
+    requirePrivilegeForRoute(context, '/members')
   },
   loaderDeps: ({
     search: {

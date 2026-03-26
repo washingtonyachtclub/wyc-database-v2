@@ -10,16 +10,16 @@ import {
   officerPageQuery,
 } from 'src/db/officer-queries'
 import { officers } from 'src/db/schema'
-import { requireAuth } from '../lib/auth-middleware'
+import { requirePrivilege } from '../lib/auth-middleware'
 
 export const getAllOfficers = createServerFn({ method: 'GET' }).handler(async () => {
-  await requireAuth()
+  await requirePrivilege('db')
   const raw = await baseOfficersQuery()
   return raw.map(toOfficer)
 })
 
 export const getOfficerPageOfficers = createServerFn({ method: 'GET' }).handler(async () => {
-  await requireAuth()
+  await requirePrivilege('db')
   const raw = await officerPageQuery()
   return raw.map(toOfficer)
 })
@@ -30,7 +30,7 @@ export const setOfficerActive = createServerFn({ method: 'POST' })
     active: input.active,
   }))
   .handler(async ({ data: { index, active } }) => {
-    await requireAuth()
+    await requirePrivilege('db')
     await db
       .update(officers)
       .set({ active: active ? 1 : 0 })
@@ -39,14 +39,14 @@ export const setOfficerActive = createServerFn({ method: 'POST' })
   })
 
 export const getPositionsForOfficerPage = createServerFn({ method: 'GET' }).handler(async () => {
-  await requireAuth()
+  await requirePrivilege('db')
   return getOfficerPagePositions()
 })
 
 export const createOfficer = createServerFn({ method: 'POST' })
   .inputValidator((data: OfficerInsert) => data)
   .handler(async ({ data }) => {
-    await requireAuth()
+    await requirePrivilege('db')
     const id = await db.insert(officers).values(data).$returningId()
     return { success: true, id }
   })
@@ -54,7 +54,7 @@ export const createOfficer = createServerFn({ method: 'POST' })
 export const getMemberPositions = createServerFn({ method: 'GET' })
   .inputValidator((input: { wycNumber: number }) => ({ wycNumber: Number(input.wycNumber) }))
   .handler(async ({ data: { wycNumber } }) => {
-    await requireAuth()
+    await requirePrivilege('db')
     const raw = await baseMemberPositionsQuery(wycNumber)
     return raw.map(toOfficer)
   })

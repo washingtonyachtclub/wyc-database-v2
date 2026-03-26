@@ -1,6 +1,6 @@
 import type { Lesson, RichLesson } from '@/db/lesson-schema'
 import { useQuery, useSuspenseQuery } from '@tanstack/react-query'
-import { createFileRoute, redirect, useNavigate } from '@tanstack/react-router'
+import { createFileRoute, useNavigate } from '@tanstack/react-router'
 import { getCoreRowModel, getSortedRowModel, useReactTable } from '@tanstack/react-table'
 import { useMemo, useState } from 'react'
 import { z } from 'zod'
@@ -11,6 +11,7 @@ import { PaginationControls } from '../components/members/PaginationControls'
 import { Button } from '../components/ui/button'
 import { DataTable } from '../components/ui/DataTable'
 import { isLessonUpcoming } from '../lib/date-utils'
+import { requirePrivilegeForRoute } from '../lib/route-guards'
 import {
   getAllLessonsQueryOptions,
   getQuarterLessonsQueryOptions,
@@ -26,12 +27,7 @@ const lessonSearchSchema = z.object({
 export const Route = createFileRoute('/lessons')({
   validateSearch: lessonSearchSchema,
   beforeLoad: ({ context }) => {
-    if (!context.isAuthenticated) {
-      throw redirect({
-        to: '/login',
-        search: { redirect: '/lessons' },
-      })
-    }
+    requirePrivilegeForRoute(context, '/lessons')
   },
   loaderDeps: ({ search: { pageIndex, pageSize, sortColumn, sortDesc } }) => {
     const sorting =

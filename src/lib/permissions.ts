@@ -1,0 +1,36 @@
+export type Privilege = 'db' | 'rtgs' | 'instr'
+
+/**
+ * Permission registry — single source of truth for route access control.
+ *
+ * Every route must be listed. An empty array means "any authenticated user."
+ * A non-empty array uses OR logic: user needs ANY ONE of the listed privileges.
+ * Routes NOT in this map are denied by default (fail-closed).
+ */
+export const routePermissions = {
+  '/': [],
+  '/members': ['db'],
+  '/members/$wycNumber': ['db'], // own-profile exception handled in route beforeLoad
+  '/lessons': ['db'],
+  '/lessons/$lessonIndex': ['db'],
+  '/ratings': ['rtgs', 'instr'],
+  '/ratings/$ratingIndex': ['rtgs', 'instr'],
+  '/officers': ['db'],
+  '/membership-processing': ['db'],
+  '/forbidden': [],
+} as const satisfies Record<string, readonly Privilege[]>
+
+export type ProtectedRoute = keyof typeof routePermissions
+
+/**
+ * Check if a user has any of the required privileges (OR logic).
+ * Returns true if required is empty (no privilege needed).
+ */
+export function hasPrivilege(
+  userPrivileges: readonly Privilege[],
+  required: readonly Privilege[],
+): boolean {
+  if (required.length === 0) return true
+  return required.some((p) => userPrivileges.includes(p))
+}
+

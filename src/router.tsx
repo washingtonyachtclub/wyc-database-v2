@@ -16,6 +16,7 @@ export const getRouter = () => {
       // Default auth state - will be populated by beforeLoad in root route
       user: null,
       isAuthenticated: false,
+      privileges: [],
     },
 
     defaultPreload: 'intent',

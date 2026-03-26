@@ -1,13 +1,9 @@
-import { createFileRoute, redirect } from '@tanstack/react-router'
+import { createFileRoute } from '@tanstack/react-router'
+import { requirePrivilegeForRoute } from '../lib/route-guards'
 
 export const Route = createFileRoute('/')({
   beforeLoad: ({ context }) => {
-    if (!context.isAuthenticated) {
-      throw redirect({
-        to: '/login',
-        search: { redirect: '/' },
-      })
-    }
+    requirePrivilegeForRoute(context, '/')
   },
   component: HomePage,
 })

@@ -6,7 +6,6 @@
   - forgot ID/password on login page
 - backfill all calendar dates in lessons table with LLM
   - will fix the Lessons Taught section on Member page
-- clean up officers table active flags
 
 # Less Important
 - manage officers / position holders page
