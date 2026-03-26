@@ -1,10 +1,10 @@
 # MVP
-- resolve package dependencies
-- security review
-  - general review + github notifs
 - password reset
   - forgot ID/password on login page
 - figure out deployment and url / redirecting for new site
+- chiefs pages
+- coder / privs page
+- support table pages (especially ratings)
 
 # Less Important
 - easily review out_to_sea statuses (or re-think its usage)

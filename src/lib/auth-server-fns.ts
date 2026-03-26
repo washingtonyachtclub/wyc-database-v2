@@ -10,6 +10,7 @@ import {
   wycDatabase,
 } from 'src/db/schema'
 import { hashPasswordArgon2, verifyPasswordDual } from './auth'
+import { requirePrivilege } from './auth-middleware'
 import type { Privilege } from './permissions'
 import { useAppSession, type SessionData } from './session'
 
@@ -172,6 +173,7 @@ export const loginServerFn = createServerFn({ method: 'POST' })
 export const hashPasswordArgon2ServerFn = createServerFn({ method: 'POST' })
   .inputValidator((input: string) => input)
   .handler(async ({ data }) => {
+    await requirePrivilege('db')
     return hashPasswordArgon2(data)
   })
 
@@ -236,8 +238,8 @@ export const getCurrentUserServerFn = createServerFn({ method: 'GET' }).handler(
 export const setDevPrivilegesServerFn = createServerFn({ method: 'POST' })
   .inputValidator((input: { privileges: Privilege[] | null }) => input)
   .handler(async ({ data }) => {
-    if (process.env.NODE_ENV === 'production') {
-      throw new Error('Dev privilege override is not available in production')
+    if (process.env.NODE_ENV !== 'development') {
+      throw new Error('Dev privilege override is only available in development')
     }
 
     const session = await useAppSession()
@@ -273,8 +275,8 @@ export const setDevPrivilegesServerFn = createServerFn({ method: 'POST' })
 export const setDevMemberServerFn = createServerFn({ method: 'POST' })
   .inputValidator((input: { wycNumber: number | null }) => input)
   .handler(async ({ data }) => {
-    if (process.env.NODE_ENV === 'production') {
-      throw new Error('Dev member emulation is not available in production')
+    if (process.env.NODE_ENV !== 'development') {
+      throw new Error('Dev member emulation is only available in development')
     }
 
     const session = await useAppSession()

@@ -49,6 +49,13 @@ baseQuery().$dynamic()
 
 No null handling, no query logic, no SQL inline. Just wiring.
 
+### Error handling in server functions
+
+- **Never forward `error.message`, `error.code`, `error.stack`, or `error.toString()` to the client.** These can leak database schema, SQL fragments, and internal details.
+- Always `console.error` the full error server-side for debugging.
+- Return or throw a static, generic message: `throw new Error('Failed to create member')`, not `throw new Error(`Failed: ${error.message}`)`.
+- For known MySQL error codes (e.g., `ER_DATA_TOO_LONG`), use a human-friendly message without interpolating the raw error: `'Data too long for one or more fields'`, not `'Data too long: ${error.message}'`.
+
 ### Components consume clean types
 
 - Column definitions are simple accessors — no fallback formatting.

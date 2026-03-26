@@ -199,21 +199,30 @@ export const updateMemberProfile = createServerFn({ method: 'POST' })
   .handler(async ({ data }) => {
     await requireSelfOrPrivilege(data.wycNumber, 'db')
     const hasDb = await sessionHasPrivilege('db')
-    const { wycNumber, outToSea, categoryId, expireQtrIndex, ...rest } = data
-
-    const updateData: Record<string, unknown> = { ...rest }
+    const updateData: Record<string, unknown> = {
+      first: data.first,
+      last: data.last,
+      email: data.email,
+      streetAddress: data.streetAddress,
+      city: data.city,
+      state: data.state,
+      zipCode: data.zipCode,
+      phone1: data.phone1,
+      phone2: data.phone2,
+      studentId: data.studentId,
+    }
     // Admin-only fields — only applied if user has db privilege
     if (hasDb) {
-      updateData.outToSea = outToSea ? 1 : 0
-      updateData.categoryId = categoryId
-      updateData.expireQtrIndex = expireQtrIndex
+      updateData.outToSea = data.outToSea ? 1 : 0
+      updateData.categoryId = data.categoryId
+      updateData.expireQtrIndex = data.expireQtrIndex
     }
 
     await db
       .update(wycDatabase)
       .set(updateData)
-      .where(eq(wycDatabase.wycNumber, wycNumber))
-    return { success: true, wycNumber }
+      .where(eq(wycDatabase.wycNumber, data.wycNumber))
+    return { success: true, wycNumber: data.wycNumber }
   })
 
 export const getMemberRatings = createServerFn({ method: 'GET' })
