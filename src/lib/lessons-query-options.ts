@@ -6,6 +6,8 @@ import {
   getClassTypes,
   getCurrentQuarter,
   getLessonById,
+  getMyLessonsTaught,
+  getMySignedUpLessons,
   getQuarterLessons,
   removeStudentFromLesson,
   updateLesson,
@@ -81,6 +83,18 @@ export const getCurrentQuarterQueryOptions = () =>
   queryOptions({
     queryKey: ['lessons', 'currentQuarter'],
     queryFn: getCurrentQuarter,
+  })
+
+export const getMyLessonsTaughtQueryOptions = () =>
+  queryOptions({
+    queryKey: ['lessons', 'myTeaching'],
+    queryFn: getMyLessonsTaught,
+  })
+
+export const getMySignedUpLessonsQueryOptions = () =>
+  queryOptions({
+    queryKey: ['lessons', 'mySignedUp'],
+    queryFn: getMySignedUpLessons,
   })
 
 export const getAllLessonsQueryOptions = (

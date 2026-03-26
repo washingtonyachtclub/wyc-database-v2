@@ -11,8 +11,9 @@ import {
 } from '@/lib/lessons-query-options'
 import { getQuartersQueryOptions } from '@/lib/members-query-options'
 import { useQuery, useSuspenseQuery } from '@tanstack/react-query'
-import { createFileRoute, useNavigate } from '@tanstack/react-router'
-import { requirePrivilegeForRoute } from '../lib/route-guards'
+import { createFileRoute, redirect, useNavigate } from '@tanstack/react-router'
+import { useCurrentUser } from '../lib/auth-query-options'
+import { hasPrivilege } from '../lib/permissions'
 import { useState } from 'react'
 import {
   AlertDialog,
@@ -31,7 +32,9 @@ import { MemberCombobox } from '../components/ui/MemberCombobox'
 
 export const Route = createFileRoute('/lessons_/$lessonIndex')({
   beforeLoad: ({ context }) => {
-    requirePrivilegeForRoute(context, '/lessons/$lessonIndex')
+    if (!context.isAuthenticated) {
+      throw redirect({ to: '/login' })
+    }
   },
   component: LessonDetailPage,
 })
@@ -66,6 +69,8 @@ function LessonDetailPage() {
   }
 
   const navigate = useNavigate()
+  const { privileges } = useCurrentUser()
+  const hasDb = hasPrivilege(privileges, ['db'])
   const { lesson, enrolledStudents, waitlistedStudents } = lessonDetails
   const [studentToRemove, setStudentToRemove] = useState<{
     wycNumber: number
@@ -129,39 +134,43 @@ function LessonDetailPage() {
         </AlertDialogContent>
       </AlertDialog>
 
-      <div className="pt-4 border-t">
-        <Button variant="destructive" onClick={() => setShowDeleteDialog(true)}>
-          Delete Lesson
-        </Button>
-      </div>
+      {hasDb && (
+        <>
+          <div className="pt-4 border-t">
+            <Button variant="destructive" onClick={() => setShowDeleteDialog(true)}>
+              Delete Lesson
+            </Button>
+          </div>
 
-      <AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Delete Lesson</AlertDialogTitle>
-            <AlertDialogDescription>
-              Are you sure you want to delete <strong>{lesson.subtype}</strong>? This will also
-              remove all student signups. This action cannot be undone.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction
-              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-              onClick={() => {
-                deleteMutation.mutate(
-                  { data: { index: lesson.index } },
-                  {
-                    onSuccess: () => navigate({ to: '/lessons', search: {} as any }),
-                  },
-                )
-              }}
-            >
-              Delete
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
+          <AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
+            <AlertDialogContent>
+              <AlertDialogHeader>
+                <AlertDialogTitle>Delete Lesson</AlertDialogTitle>
+                <AlertDialogDescription>
+                  Are you sure you want to delete <strong>{lesson.subtype}</strong>? This will also
+                  remove all student signups. This action cannot be undone.
+                </AlertDialogDescription>
+              </AlertDialogHeader>
+              <AlertDialogFooter>
+                <AlertDialogCancel>Cancel</AlertDialogCancel>
+                <AlertDialogAction
+                  className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                  onClick={() => {
+                    deleteMutation.mutate(
+                      { data: { index: lesson.index } },
+                      {
+                        onSuccess: () => navigate({ to: '/lessons', search: {} as any }),
+                      },
+                    )
+                  }}
+                >
+                  Delete
+                </AlertDialogAction>
+              </AlertDialogFooter>
+            </AlertDialogContent>
+          </AlertDialog>
+        </>
+      )}
     </div>
   )
 }

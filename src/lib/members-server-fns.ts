@@ -168,7 +168,7 @@ export const updateMember = createServerFn({ method: 'POST' })
   })
 
 export const getAllMembersLite = createServerFn({ method: 'GET' }).handler(async () => {
-  await requirePrivilege('db')
+  await requirePrivilege('db', 'rtgs')
   const result = await db
     .select({
       wycNumber: wycDatabase.wycNumber,

@@ -1,3 +1,6 @@
+import { eq } from 'drizzle-orm'
+import { lessons } from 'src/db/schema'
+import db from '../db/index'
 import { hasPrivilege } from './permissions'
 import type { Privilege } from './permissions'
 import { useAppSession } from './session'
@@ -81,6 +84,46 @@ export async function sessionHasPrivilege(...required: Privilege[]): Promise<boo
   const session = await useAppSession()
   const userPrivs = session.data.privileges ?? []
   return hasPrivilege(userPrivs, required)
+}
+
+/**
+ * Allows access if the authenticated user is instructor1 or instructor2 of the given lesson,
+ * OR if the user has any of the required privileges.
+ * Returns the authenticated user ID.
+ */
+export async function requireInstructorOrPrivilege(
+  lessonIndex: number,
+  ...required: Privilege[]
+): Promise<number> {
+  const session = await useAppSession()
+  const sessionData = session.data
+
+  if (!sessionData.userId) {
+    throw new Error('Unauthorized: No session found')
+  }
+
+  // Fast path: check privilege
+  const userPrivs = sessionData.privileges ?? []
+  if (required.length > 0 && hasPrivilege(userPrivs, required)) {
+    return sessionData.userId
+  }
+
+  // Slow path: check instructor status
+  const [lesson] = await db
+    .select({ instructor1: lessons.instructor1, instructor2: lessons.instructor2 })
+    .from(lessons)
+    .where(eq(lessons.index, lessonIndex))
+    .limit(1)
+
+  if (!lesson) {
+    throw new Error('Not found: Lesson does not exist')
+  }
+
+  if (lesson.instructor1 === sessionData.userId || lesson.instructor2 === sessionData.userId) {
+    return sessionData.userId
+  }
+
+  throw new Error('Forbidden: Insufficient privileges')
 }
 
 /**

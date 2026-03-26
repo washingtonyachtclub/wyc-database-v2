@@ -12,7 +12,8 @@ export const routePermissions = {
   '/members': ['db'],
   '/members/$wycNumber': ['db'], // own-profile exception handled in route beforeLoad
   '/lessons': ['db'],
-  '/lessons/$lessonIndex': ['db'],
+  '/lessons/$lessonIndex': [], // auth only; server functions enforce per-lesson instructor-or-db access
+  '/my-lessons': [],
   '/ratings': ['rtgs'],
   '/ratings/$ratingIndex': ['rtgs'],
   '/officers': ['db'],

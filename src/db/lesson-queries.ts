@@ -1,4 +1,4 @@
-import { and, desc, eq, gte, or } from 'drizzle-orm'
+import { and, asc, desc, eq, gte, or } from 'drizzle-orm'
 import { alias, type MySqlColumn } from 'drizzle-orm/mysql-core'
 import db from './index'
 import { classType, lessons, signups, wycDatabase } from './schema'
@@ -59,6 +59,28 @@ export function baseLessonsTaughtQuery(wycNumber: number, since?: string) {
     .leftJoin(instructor2Table, eq(lessons.instructor2, instructor2Table.wycNumber))
     .where(and(...conditions))
     .orderBy(desc(lessons.calendarDate))
+}
+
+const signedUpLessonSelectFields = {
+  ...lessonTableSelectFields,
+  signupIndex: signups.index,
+  instructor1Email: instructor1Table.email,
+  instructor2Email: instructor2Table.email,
+}
+
+export type SignedUpLessonQueryRow =
+  Awaited<ReturnType<typeof baseSignedUpWithDetailsQuery>>[number]
+
+export function baseSignedUpWithDetailsQuery(wycNumber: number, minExpire: number) {
+  return db
+    .select(signedUpLessonSelectFields)
+    .from(signups)
+    .innerJoin(lessons, eq(signups.class, lessons.index))
+    .leftJoin(classType, eq(classType.index, lessons.type))
+    .leftJoin(instructor1Table, eq(lessons.instructor1, instructor1Table.wycNumber))
+    .leftJoin(instructor2Table, eq(lessons.instructor2, instructor2Table.wycNumber))
+    .where(and(eq(signups.student, wycNumber), gte(lessons.expire, minExpire)))
+    .orderBy(asc(lessons.calendarDate), asc(lessons.time))
 }
 
 export function baseLessonsSignedUpQuery(wycNumber: number, since?: string) {
