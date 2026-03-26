@@ -16,7 +16,4 @@ export const AddMemberFormSchema = z.object({
   outToSea: z.boolean(),
 })
 
-export const MemberProfileUpdateSchema = AddMemberFormSchema.omit({
-  expireQtrIndex: true,
-  categoryId: true,
-})
+export const MemberProfileUpdateSchema = AddMemberFormSchema

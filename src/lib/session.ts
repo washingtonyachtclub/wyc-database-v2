@@ -6,6 +6,10 @@ export type SessionData = {
   userId?: number
   user?: AuthUser
   privileges?: Privilege[]
+  /** Set when dev-emulating a different member. Stores the real logged-in user's ID. */
+  realUserId?: number
+  /** Set when dev-emulating a different member. Stores the real logged-in user object. */
+  realUser?: AuthUser
 }
 
 /**

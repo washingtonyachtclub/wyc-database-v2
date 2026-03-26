@@ -118,6 +118,15 @@ export const updateLesson = createServerFn({ method: 'POST' })
     return { success: true, index }
   })
 
+export const deleteLesson = createServerFn({ method: 'POST' })
+  .inputValidator((input: { index: number }) => input)
+  .handler(async ({ data: { index } }) => {
+    await requirePrivilege('db')
+    await db.delete(signups).where(eq(signups.class, index))
+    await db.delete(lessons).where(eq(lessons.index, index))
+    return { success: true }
+  })
+
 export const removeStudentFromLesson = createServerFn({ method: 'POST' })
   .inputValidator((input: { lessonId: number; studentWycNumber: number }) => ({
     lessonId: input.lessonId,

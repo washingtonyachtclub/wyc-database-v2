@@ -5,12 +5,13 @@ import { useAppForm } from '@/hooks/form'
 import {
   getClassTypesQueryOptions,
   getLessonByIdQueryOptions,
+  useDeleteLessonMutation,
   useRemoveStudentMutation,
   useUpdateLessonMutation,
 } from '@/lib/lessons-query-options'
 import { getQuartersQueryOptions } from '@/lib/members-query-options'
 import { useQuery, useSuspenseQuery } from '@tanstack/react-query'
-import { createFileRoute } from '@tanstack/react-router'
+import { createFileRoute, useNavigate } from '@tanstack/react-router'
 import { requirePrivilegeForRoute } from '../lib/route-guards'
 import { useState } from 'react'
 import {
@@ -64,12 +65,15 @@ function LessonDetailPage() {
     )
   }
 
+  const navigate = useNavigate()
   const { lesson, enrolledStudents, waitlistedStudents } = lessonDetails
   const [studentToRemove, setStudentToRemove] = useState<{
     wycNumber: number
     name: string
   } | null>(null)
   const removeMutation = useRemoveStudentMutation(lesson.index)
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false)
+  const deleteMutation = useDeleteLessonMutation()
 
   const handleRemove = (student: { wycNumber: number; first: string; last: string }) =>
     setStudentToRemove({
@@ -120,6 +124,40 @@ function LessonDetailPage() {
               }}
             >
               Remove
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      <div className="pt-4 border-t">
+        <Button variant="destructive" onClick={() => setShowDeleteDialog(true)}>
+          Delete Lesson
+        </Button>
+      </div>
+
+      <AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete Lesson</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to delete <strong>{lesson.subtype}</strong>? This will also
+              remove all student signups. This action cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              onClick={() => {
+                deleteMutation.mutate(
+                  { data: { index: lesson.index } },
+                  {
+                    onSuccess: () => navigate({ to: '/lessons', search: {} as any }),
+                  },
+                )
+              }}
+            >
+              Delete
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

@@ -1,6 +1,7 @@
 import { queryOptions, useMutation, useQueryClient } from '@tanstack/react-query'
 import {
   createLesson,
+  deleteLesson,
   getAllLessons,
   getClassTypes,
   getCurrentQuarter,
@@ -62,6 +63,16 @@ export function useRemoveStudentMutation(lessonId: number) {
       removeStudentFromLesson({ data: { lessonId, studentWycNumber } }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['lessons', 'byId', lessonId] })
+    },
+  })
+}
+
+export function useDeleteLessonMutation() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: deleteLesson,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['lessons'] })
     },
   })
 }

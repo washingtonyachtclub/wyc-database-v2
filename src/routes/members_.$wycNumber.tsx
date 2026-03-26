@@ -16,6 +16,7 @@ import {
 } from '@/lib/members-query-options'
 import { useQuery, useSuspenseQuery } from '@tanstack/react-query'
 import { createFileRoute, redirect } from '@tanstack/react-router'
+import { useCurrentUser } from '../lib/auth-query-options'
 import { hasPrivilege } from '../lib/permissions'
 import { useMemo, useState } from 'react'
 
@@ -33,7 +34,7 @@ export const Route = createFileRoute('/members_/$wycNumber')({
 })
 
 function memberToDefaults(member: Member): MemberProfileUpdate {
-  const { wycNumber, expireQtrIndex, categoryId, ...rest } = member
+  const { wycNumber, ...rest } = member
   return rest
 }
 
@@ -48,6 +49,8 @@ function useTwelveMonthsAgo() {
 function MemberDetailPage() {
   const { wycNumber } = Route.useParams()
   const { data: member } = useSuspenseQuery(getMemberByIdQueryOptions(Number(wycNumber)))
+  const { privileges } = useCurrentUser()
+  const hasDb = hasPrivilege(privileges, ['db'])
   const since = useTwelveMonthsAgo()
 
   if (!member) {
@@ -64,8 +67,8 @@ function MemberDetailPage() {
         WYC #{member.wycNumber} — {member.first} {member.last}
       </h1>
 
-      <MemberReadOnlyFields member={member} />
-      <MemberEditForm member={member} />
+      <MemberReadOnlyFields member={member} hasDb={hasDb} />
+      <MemberEditForm member={member} hasDb={hasDb} />
       <MemberRatingsSection wycNumber={member.wycNumber} />
       <MemberRatingsGivenSection wycNumber={member.wycNumber} since={since} />
       <MemberLessonsSection
@@ -82,7 +85,7 @@ function MemberDetailPage() {
   )
 }
 
-function MemberReadOnlyFields({ member }: { member: Member }) {
+function MemberReadOnlyFields({ member, hasDb }: { member: Member; hasDb: boolean }) {
   const { data: quarters = [] } = useQuery(getQuartersQueryOptions())
   const { data: categories = [] } = useQuery(getCategoriesQueryOptions())
 
@@ -98,20 +101,30 @@ function MemberReadOnlyFields({ member }: { member: Member }) {
         <p className="text-sm text-muted-foreground">WYC Number</p>
         <p className="text-lg font-medium">{member.wycNumber}</p>
       </div>
-      <div>
-        <p className="text-sm text-muted-foreground">Expire Quarter</p>
-        <p className="text-lg font-medium">{quarterLabel}</p>
-      </div>
-      <div>
-        <p className="text-sm text-muted-foreground">Category</p>
-        <p className="text-lg font-medium">{categoryLabel}</p>
-      </div>
+      {!hasDb && (
+        <>
+          <div>
+            <p className="text-sm text-muted-foreground">Expire Quarter</p>
+            <p className="text-lg font-medium">{quarterLabel}</p>
+          </div>
+          <div>
+            <p className="text-sm text-muted-foreground">Category</p>
+            <p className="text-lg font-medium">{categoryLabel}</p>
+          </div>
+          <div>
+            <p className="text-sm text-muted-foreground">Out to Sea</p>
+            <p className="text-lg font-medium">{member.outToSea ? 'Yes' : 'No'}</p>
+          </div>
+        </>
+      )}
     </div>
   )
 }
 
-function MemberEditForm({ member }: { member: Member }) {
+function MemberEditForm({ member, hasDb }: { member: Member; hasDb: boolean }) {
   const [saveMessage, setSaveMessage] = useState('')
+  const { data: quarters = [] } = useQuery(getQuartersQueryOptions())
+  const { data: categories = [] } = useQuery(getCategoriesQueryOptions())
 
   const updateMutation = useUpdateMemberProfileMutation()
 
@@ -128,6 +141,16 @@ function MemberEditForm({ member }: { member: Member }) {
   })
 
   const mutationError = updateMutation.error?.message
+
+  const categoryOptions = categories.map((c) => ({
+    value: c.index,
+    label: c.text || `Category ${c.index}`,
+  }))
+
+  const quarterOptions = quarters.map((q) => ({
+    value: q.index,
+    label: q.school || q.text || `Quarter ${q.index}`,
+  }))
 
   return (
     <form
@@ -192,10 +215,37 @@ function MemberEditForm({ member }: { member: Member }) {
           children={(field) => <field.NumberField label="Student ID" />}
         />
 
-        <form.AppField
-          name="outToSea"
-          children={(field) => <field.BooleanSelectField label="Out to Sea" />}
-        />
+        {hasDb && (
+          <>
+            <form.AppField
+              name="categoryId"
+              children={(field) => (
+                <field.SelectField
+                  label="Category"
+                  placeholder="Select category"
+                  options={categoryOptions}
+                />
+              )}
+            />
+
+            <form.AppField
+              name="expireQtrIndex"
+              children={(field) => (
+                <field.SelectField
+                  label="Expire Quarter"
+                  required
+                  placeholder="Select quarter"
+                  options={quarterOptions}
+                />
+              )}
+            />
+
+            <form.AppField
+              name="outToSea"
+              children={(field) => <field.BooleanSelectField label="Out to Sea" />}
+            />
+          </>
+        )}
       </div>
 
       <div className="flex justify-start gap-2 pt-4 border-t">

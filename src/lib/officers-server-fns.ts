@@ -10,7 +10,7 @@ import {
   officerPageQuery,
 } from 'src/db/officer-queries'
 import { officers } from 'src/db/schema'
-import { requirePrivilege } from '../lib/auth-middleware'
+import { requirePrivilege, requireSelfOrPrivilege } from '../lib/auth-middleware'
 
 export const getAllOfficers = createServerFn({ method: 'GET' }).handler(async () => {
   await requirePrivilege('db')
@@ -54,7 +54,7 @@ export const createOfficer = createServerFn({ method: 'POST' })
 export const getMemberPositions = createServerFn({ method: 'GET' })
   .inputValidator((input: { wycNumber: number }) => ({ wycNumber: Number(input.wycNumber) }))
   .handler(async ({ data: { wycNumber } }) => {
-    await requirePrivilege('db')
+    await requireSelfOrPrivilege(wycNumber, 'db')
     const raw = await baseMemberPositionsQuery(wycNumber)
     return raw.map(toOfficer)
   })

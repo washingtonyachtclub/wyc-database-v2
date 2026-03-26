@@ -1,10 +1,17 @@
 import { createServerFn } from '@tanstack/react-start'
 import { and, count, eq, gte, or } from 'drizzle-orm'
 import db from 'src/db/index'
-import { lessonQuarter, lessons, officers, posPrivMap, privs, wycDatabase } from 'src/db/schema'
+import {
+  lessonQuarter,
+  lessons,
+  officers,
+  posPrivMap,
+  privs,
+  wycDatabase,
+} from 'src/db/schema'
 import { hashPasswordArgon2, verifyPasswordDual } from './auth'
 import type { Privilege } from './permissions'
-import { useAppSession } from './session'
+import { useAppSession, type SessionData } from './session'
 
 export type AuthUser = {
   wycNumber: number
@@ -47,7 +54,7 @@ async function loadUserPrivileges(wycNumber: number): Promise<Privilege[]> {
     .map((r) => r.name?.trim())
     .filter((name): name is Privilege => name === 'db' || name === 'rtgs')
 
-  // 2. Dynamic "instr" check — is the user an instructor for any current-quarter lesson?
+  // 2. Dynamic "rtgs" grant — instructors for current-quarter lessons get ratings access
   const quarterRow = await db
     .select({ quarter: lessonQuarter.quarter })
     .from(lessonQuarter)
@@ -66,8 +73,8 @@ async function loadUserPrivileges(wycNumber: number): Promise<Privilege[]> {
         ),
       )
 
-    if (instrRows[0].n > 0 && !userPrivileges.includes('instr')) {
-      userPrivileges.push('instr')
+    if (instrRows[0].n > 0 && !userPrivileges.includes('rtgs')) {
+      userPrivileges.push('rtgs')
     }
   }
 
@@ -221,3 +228,113 @@ export const getCurrentUserServerFn = createServerFn({ method: 'GET' }).handler(
     }
   },
 )
+
+/**
+ * DEV ONLY: Override the current session's privileges for testing RBAC.
+ * Pass null to clear the override and restore real privileges.
+ */
+export const setDevPrivilegesServerFn = createServerFn({ method: 'POST' })
+  .inputValidator((input: { privileges: Privilege[] | null }) => input)
+  .handler(async ({ data }) => {
+    if (process.env.NODE_ENV === 'production') {
+      throw new Error('Dev privilege override is not available in production')
+    }
+
+    const session = await useAppSession()
+    const sessionData = session.data
+
+    if (!sessionData.userId || !sessionData.user) {
+      throw new Error('Not authenticated')
+    }
+
+    if (data.privileges === null) {
+      // Restore privileges for current identity (may be emulated member)
+      const currentUserId = sessionData.userId!
+      const realPrivileges = await loadUserPrivileges(currentUserId)
+      await session.update({
+        ...sessionData,
+        privileges: realPrivileges,
+      } satisfies SessionData)
+      return { privileges: realPrivileges }
+    }
+
+    await session.update({
+      ...sessionData,
+      privileges: data.privileges,
+    } satisfies SessionData)
+    return { privileges: data.privileges }
+  })
+
+/**
+ * DEV ONLY: Emulate a different member (full impersonation).
+ * Overrides session userId, user, and privileges.
+ * Pass null to restore the original identity.
+ */
+export const setDevMemberServerFn = createServerFn({ method: 'POST' })
+  .inputValidator((input: { wycNumber: number | null }) => input)
+  .handler(async ({ data }) => {
+    if (process.env.NODE_ENV === 'production') {
+      throw new Error('Dev member emulation is not available in production')
+    }
+
+    const session = await useAppSession()
+    const sessionData = session.data
+
+    if (!sessionData.userId || !sessionData.user) {
+      throw new Error('Not authenticated')
+    }
+
+    if (data.wycNumber === null) {
+      // Restore original identity
+      if (!sessionData.realUserId || !sessionData.realUser) {
+        return { user: sessionData.user, privileges: sessionData.privileges ?? [] }
+      }
+      const realPrivileges = await loadUserPrivileges(sessionData.realUserId)
+      await session.update({
+        userId: sessionData.realUserId,
+        user: sessionData.realUser,
+        privileges: realPrivileges,
+        realUserId: undefined,
+        realUser: undefined,
+      } satisfies SessionData)
+      return { user: sessionData.realUser, privileges: realPrivileges }
+    }
+
+    // Look up target member
+    const [targetRow] = await db
+      .select({
+        wycNumber: wycDatabase.wycNumber,
+        first: wycDatabase.first,
+        last: wycDatabase.last,
+        email: wycDatabase.email,
+      })
+      .from(wycDatabase)
+      .where(eq(wycDatabase.wycNumber, data.wycNumber))
+      .limit(1)
+
+    if (!targetRow) {
+      throw new Error(`Member ${data.wycNumber} not found`)
+    }
+
+    const targetUser: AuthUser = {
+      wycNumber: targetRow.wycNumber,
+      first: targetRow.first,
+      last: targetRow.last,
+      email: targetRow.email,
+    }
+    const targetPrivileges = await loadUserPrivileges(targetRow.wycNumber)
+
+    // Save real identity if not already emulating
+    const realUserId = sessionData.realUserId ?? sessionData.userId
+    const realUser = sessionData.realUser ?? sessionData.user
+
+    await session.update({
+      userId: targetRow.wycNumber,
+      user: targetUser,
+      privileges: targetPrivileges,
+      realUserId: realUserId,
+      realUser: realUser,
+    } satisfies SessionData)
+
+    return { user: targetUser, privileges: targetPrivileges }
+  })

@@ -1,4 +1,4 @@
-export type Privilege = 'db' | 'rtgs' | 'instr'
+export type Privilege = 'db' | 'rtgs'
 
 /**
  * Permission registry — single source of truth for route access control.
@@ -13,8 +13,8 @@ export const routePermissions = {
   '/members/$wycNumber': ['db'], // own-profile exception handled in route beforeLoad
   '/lessons': ['db'],
   '/lessons/$lessonIndex': ['db'],
-  '/ratings': ['rtgs', 'instr'],
-  '/ratings/$ratingIndex': ['rtgs', 'instr'],
+  '/ratings': ['rtgs'],
+  '/ratings/$ratingIndex': ['rtgs'],
   '/officers': ['db'],
   '/membership-processing': ['db'],
   '/forbidden': [],

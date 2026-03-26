@@ -1,11 +1,9 @@
 # MVP
 - resolve package dependencies
-- review existing RBAC and implement
 - security review
 - password reset
   - forgot ID/password on login page
-- backfill all calendar dates in lessons table with LLM
-  - will fix the Lessons Taught section on Member page
+- figure out deployment and url / redirecting for new site
 
 # Less Important
 - manage officers / position holders page

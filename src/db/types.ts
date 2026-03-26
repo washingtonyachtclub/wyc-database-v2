@@ -1,7 +1,7 @@
 import type { classType } from './schema'
 
 export type MemberInsert = Omit<Member, 'wycNumber'>
-export type MemberProfileUpdate = Omit<MemberInsert, 'expireQtrIndex' | 'categoryId'>
+export type MemberProfileUpdate = MemberInsert
 export type Member = {
   wycNumber: number
   first: string

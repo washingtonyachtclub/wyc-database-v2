@@ -3,6 +3,7 @@ import { useQuery } from '@tanstack/react-query'
 import { Link, useLocation, useRouter } from '@tanstack/react-router'
 import { useCurrentUser, useLogoutMutation } from '../lib/auth-query-options'
 import { Button } from './ui/button'
+import { DevPrivilegeEmulator } from './DevPrivilegeEmulator'
 
 export default function Header() {
   const router = useRouter()
@@ -46,6 +47,7 @@ export default function Header() {
           <div className="flex items-center gap-4">
             {isAuthenticated && user ? (
               <>
+                {import.meta.env.DEV && <DevPrivilegeEmulator />}
                 <span className="text-sm text-muted-foreground">
                   {user.first} {user.last} ({user.wycNumber})
                 </span>

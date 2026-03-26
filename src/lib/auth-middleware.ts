@@ -42,6 +42,48 @@ export async function requirePrivilege(...required: Privilege[]): Promise<number
 }
 
 /**
+ * Allows access if the authenticated user matches targetWycNumber (own data),
+ * OR if the user has any of the required privileges.
+ * Returns the authenticated user ID.
+ */
+export async function requireSelfOrPrivilege(
+  targetWycNumber: number,
+  ...required: Privilege[]
+): Promise<number> {
+  const session = await useAppSession()
+  const sessionData = session.data
+
+  if (!sessionData.userId) {
+    throw new Error('Unauthorized: No session found')
+  }
+
+  // Own data — always allowed
+  if (sessionData.userId === targetWycNumber) {
+    return sessionData.userId
+  }
+
+  // Someone else's data — need privilege
+  if (required.length > 0) {
+    const userPrivs = sessionData.privileges ?? []
+    if (!hasPrivilege(userPrivs, required)) {
+      throw new Error('Forbidden: Insufficient privileges')
+    }
+  }
+
+  return sessionData.userId
+}
+
+/**
+ * Check if the current session has any of the given privileges.
+ * Does not throw — returns a boolean. Requires an active session.
+ */
+export async function sessionHasPrivilege(...required: Privilege[]): Promise<boolean> {
+  const session = await useAppSession()
+  const userPrivs = session.data.privileges ?? []
+  return hasPrivilege(userPrivs, required)
+}
+
+/**
  * Middleware function for optional authentication.
  * Returns user ID if authenticated, null otherwise.
  */
