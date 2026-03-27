@@ -16,4 +16,6 @@ export const AddMemberFormSchema = z.object({
   outToSea: z.boolean(),
 })
 
+export type AddMemberForm = z.infer<typeof AddMemberFormSchema>
 export const MemberProfileUpdateSchema = AddMemberFormSchema
+export type MemberProfileUpdate = z.infer<typeof MemberProfileUpdateSchema>

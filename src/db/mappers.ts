@@ -3,10 +3,11 @@ import type { ChiefQueryRow } from './chief-queries'
 import type { LessonQueryRow } from './lesson-queries'
 import type { LessonInsert, RichLesson } from './lesson-schema'
 import type { MemberQueryRow } from './member-queries'
+import type { AddMemberForm } from './member-schema'
 import type { OfficerQueryRow } from './officer-queries'
 import type { RatingQueryRow } from './rating-queries'
 import { wycDatabase } from './schema'
-import type { Checkout, Member, MemberInsert, MemberRating, MemberTableRow, Officer } from './types'
+import type { Checkout, Member, MemberRating, MemberTableRow, Officer } from './types'
 
 const num = (value: number | null | undefined): number => value ?? 0
 const str = (value: string | null | undefined): string => value ?? ''
@@ -31,6 +32,7 @@ export function toMember(row: typeof wycDatabase.$inferSelect): Member {
     phone2: str(row.phone2),
     studentId: row.studentId ?? null,
     outToSea: (row.outToSea ?? 0) !== 0,
+    joinDate: row.joinDate,
   }
 }
 
@@ -46,7 +48,7 @@ export function toMemberTableRow(row: MemberQueryRow): MemberTableRow {
   }
 }
 
-export function fromMemberInsert(data: MemberInsert): typeof wycDatabase.$inferInsert {
+export function fromMemberInsert(data: AddMemberForm): typeof wycDatabase.$inferInsert {
   return {
     ...data,
     outToSea: data.outToSea ? 1 : 0,

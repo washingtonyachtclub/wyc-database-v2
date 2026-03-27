@@ -1,16 +1,15 @@
 import { useQuery } from '@tanstack/react-query'
-import { Button } from '../ui/button'
-import { AddMemberFormSchema } from '../../db/member-schema'
-import type { MemberInsert } from '../../db/types'
+import { AddMemberForm, AddMemberFormSchema } from '../../db/member-schema'
 import { useAppForm } from '../../hooks/form'
 import {
   getCategoriesQueryOptions,
   getQuartersQueryOptions,
   useCreateMemberMutation,
 } from '../../lib/members-query-options'
+import { Button } from '../ui/button'
 import { Modal } from '../ui/Modal'
 
-const emptyDefaults = (expireDefault: number): MemberInsert => ({
+const emptyDefaults = (expireDefault: number): AddMemberForm => ({
   last: '',
   first: '',
   streetAddress: '',

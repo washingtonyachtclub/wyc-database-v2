@@ -10,10 +10,10 @@ import {
 } from 'src/db/mappers'
 import type { MemberFilters } from 'src/db/member-filter-types'
 import { baseMemberQuery, memberSortColumns, withMemberFilters } from 'src/db/member-queries'
+import { AddMemberForm, MemberProfileUpdate } from 'src/db/member-schema'
 import { withPagination, withSorting } from 'src/db/query-helpers'
 import { baseMemberRatingsQuery, baseRatingsGivenQuery } from 'src/db/rating-queries'
 import { memcat, quarters, wycDatabase } from 'src/db/schema'
-import type { MemberInsert, MemberProfileUpdate } from 'src/db/types'
 import db from '../db/index'
 import {
   requireAuth,
@@ -125,7 +125,7 @@ export const getQuarters = createServerFn({ method: 'GET' }).handler(async () =>
 })
 
 export const createMember = createServerFn({ method: 'POST' })
-  .inputValidator((data: MemberInsert) => data)
+  .inputValidator((data: AddMemberForm) => data)
   .handler(async ({ data }) => {
     await requirePrivilege('db')
     try {
@@ -155,7 +155,7 @@ export const createMember = createServerFn({ method: 'POST' })
   })
 
 export const updateMember = createServerFn({ method: 'POST' })
-  .inputValidator((input: { wycNumber: number } & MemberInsert) => ({
+  .inputValidator((input: { wycNumber: number } & AddMemberForm) => ({
     ...input,
     wycNumber: Number(input.wycNumber),
   }))
@@ -218,10 +218,7 @@ export const updateMemberProfile = createServerFn({ method: 'POST' })
       updateData.expireQtrIndex = data.expireQtrIndex
     }
 
-    await db
-      .update(wycDatabase)
-      .set(updateData)
-      .where(eq(wycDatabase.wycNumber, data.wycNumber))
+    await db.update(wycDatabase).set(updateData).where(eq(wycDatabase.wycNumber, data.wycNumber))
     return { success: true, wycNumber: data.wycNumber }
   })
 

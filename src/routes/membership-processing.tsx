@@ -27,7 +27,7 @@ export const Route = createFileRoute('/membership-processing')({
   component: MembershipProcessingPage,
 })
 
-type NewMember = Member
+type NewMember = Omit<Member, 'joinDate'>
 export type OldMember = {
   wycNumber: number
   newExpireQtr: number

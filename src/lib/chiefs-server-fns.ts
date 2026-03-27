@@ -16,13 +16,7 @@ function formatChiefType(positionName: string, positionId: number): string {
 
 export const getChiefsTable = createServerFn({ method: 'GET' })
   .inputValidator(
-    (input: {
-      pageIndex: number
-      pageSize: number
-      filters?: ChiefFilters
-    }) => ({
-      pageIndex: input.pageIndex,
-      pageSize: input.pageSize,
+    (input: { filters?: ChiefFilters }) => ({
       filters: input.filters,
     }),
   )
@@ -30,7 +24,7 @@ export const getChiefsTable = createServerFn({ method: 'GET' })
     await requirePrivilege('db')
 
     try {
-      const { pageIndex, pageSize, filters } = data
+      const { filters } = data
 
       const query = baseChiefsQuery().$dynamic()
       withChiefFilters(query, filters)
@@ -64,12 +58,7 @@ export const getChiefsTable = createServerFn({ method: 'GET' })
         }))
         .sort((a, b) => a.memberName.localeCompare(b.memberName))
 
-      // Paginate in TS (dataset is small enough)
-      const totalCount = allChiefs.length
-      const start = pageIndex * pageSize
-      const pagedData = allChiefs.slice(start, start + pageSize)
-
-      return { data: pagedData, totalCount }
+      return allChiefs
     } catch (error) {
       console.error('Failed to fetch chiefs:', error)
       throw new Error('Failed to fetch chiefs')

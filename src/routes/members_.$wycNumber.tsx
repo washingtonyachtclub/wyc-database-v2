@@ -1,11 +1,11 @@
-import { Button } from '@/components/ui/button'
 import { MemberCheckoutsSection } from '@/components/members/MemberCheckoutsSection'
 import { MemberLessonsSection } from '@/components/members/MemberLessonsSection'
 import { MemberPositionsSection } from '@/components/members/MemberPositionsSection'
 import { MemberRatingsGivenSection } from '@/components/members/MemberRatingsGivenSection'
 import { MemberRatingsSection } from '@/components/members/MemberRatingsSection'
-import { MemberProfileUpdateSchema } from '@/db/member-schema'
-import type { Member, MemberProfileUpdate } from '@/db/types'
+import { Button } from '@/components/ui/button'
+import { MemberProfileUpdate, MemberProfileUpdateSchema } from '@/db/member-schema'
+import type { Member } from '@/db/types'
 import { useAppForm } from '@/hooks/form'
 import {
   getCategoriesQueryOptions,
@@ -35,7 +35,7 @@ export const Route = createFileRoute('/members_/$wycNumber')({
 })
 
 function memberToDefaults(member: Member): MemberProfileUpdate {
-  const { wycNumber, ...rest } = member
+  const { wycNumber, joinDate, ...rest } = member
   return rest
 }
 
@@ -69,11 +69,7 @@ function MemberDetailPage() {
         <h1 className="text-2xl font-bold">
           WYC #{member.wycNumber} — {member.first} {member.last}
         </h1>
-        {!isEditing && (
-          <Button onClick={() => setIsEditing(true)}>
-            Edit Info
-          </Button>
-        )}
+        {!isEditing && <Button onClick={() => setIsEditing(true)}>Edit Info</Button>}
       </div>
 
       {isEditing ? (
@@ -132,6 +128,7 @@ function MemberReadOnlyInfo({ member }: { member: Member }) {
         <ReadOnlyField label="Category" value={categoryLabel} />
         <ReadOnlyField label="Expire Quarter" value={quarterLabel} />
         <ReadOnlyField label="Out to Sea" value={member.outToSea ? 'Yes' : 'No'} />
+        <ReadOnlyField label="Join Date" value={new Date(member.joinDate).toLocaleDateString()} />
       </div>
     </div>
   )
@@ -187,6 +184,8 @@ function MemberEditForm({
           <div className="text-sm text-destructive">{mutationError}</div>
         </div>
       )}
+
+      <ReadOnlyField label="Join Date" value={new Date(member.joinDate).toLocaleDateString()} />
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <form.AppField

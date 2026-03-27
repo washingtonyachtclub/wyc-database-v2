@@ -2,7 +2,6 @@ import { columns } from '@/components/chiefs/columns'
 import { Checkbox } from '@/components/ui/checkbox'
 import { DataTable } from '@/components/ui/DataTable'
 import { Label } from '@/components/ui/label'
-import { PaginationControls } from '@/components/members/PaginationControls'
 import { Button } from '@/components/ui/button'
 import {
   Select,
@@ -23,8 +22,6 @@ import { z } from 'zod'
 const ALL = '__all__'
 
 const chiefSearchSchema = z.object({
-  pageIndex: z.number().catch(0),
-  pageSize: z.number().catch(10),
   chiefType: z.number().optional(),
   showOutToSea: z.boolean().catch(false),
 })
@@ -34,14 +31,12 @@ export const Route = createFileRoute('/chiefs')({
   beforeLoad: ({ context }) => {
     requirePrivilegeForRoute(context, '/chiefs')
   },
-  loaderDeps: ({ search: { pageIndex, pageSize, chiefType, showOutToSea } }) => {
+  loaderDeps: ({ search: { chiefType, showOutToSea } }) => {
     const filters: ChiefFilters = { chiefType, showOutToSea }
-    return { pageIndex, pageSize, filters }
+    return { filters }
   },
-  loader: ({ context, deps: { pageIndex, pageSize, filters } }) => {
-    return context.queryClient.ensureQueryData(
-      getChiefsQueryOptions(pageIndex, pageSize, filters),
-    )
+  loader: ({ context, deps: { filters } }) => {
+    return context.queryClient.ensureQueryData(getChiefsQueryOptions(filters))
   },
   component: ChiefsPage,
 })
@@ -49,39 +44,15 @@ export const Route = createFileRoute('/chiefs')({
 function ChiefsPage() {
   const navigate = useNavigate({ from: '/chiefs' })
   const { chiefType, showOutToSea } = Route.useSearch()
-  const { pageIndex, pageSize, filters } = Route.useLoaderDeps()
+  const { filters } = Route.useLoaderDeps()
 
   const { data: chiefTypes = [] } = useQuery(getChiefTypesQueryOptions())
-  const { data: chiefsResponse } = useSuspenseQuery(
-    getChiefsQueryOptions(pageIndex, pageSize, filters),
-  )
-
-  const chiefs = chiefsResponse.data
-  const totalCount = chiefsResponse.totalCount
-  const pageCount = Math.ceil(totalCount / pageSize)
+  const { data: chiefs } = useSuspenseQuery(getChiefsQueryOptions(filters))
 
   const table = useReactTable({
     data: chiefs,
     columns,
     getCoreRowModel: getCoreRowModel(),
-    manualPagination: true,
-    manualFiltering: true,
-    pageCount,
-    state: {
-      pagination: { pageIndex, pageSize },
-    },
-    onPaginationChange: (updater) => {
-      const newPagination =
-        typeof updater === 'function' ? updater({ pageIndex, pageSize }) : updater
-      navigate({
-        search: (prev) => ({
-          ...prev,
-          pageIndex: newPagination.pageIndex,
-          pageSize: newPagination.pageSize,
-        }),
-        replace: true,
-      })
-    },
   })
 
   const hasFilters = chiefType !== undefined || showOutToSea
@@ -103,7 +74,6 @@ function ChiefsPage() {
                 navigate({
                   search: (prev) => ({
                     ...prev,
-                    pageIndex: 0,
                     chiefType: value === ALL ? undefined : Number(value),
                   }),
                   replace: true,
@@ -137,7 +107,6 @@ function ChiefsPage() {
                 navigate({
                   search: (prev) => ({
                     ...prev,
-                    pageIndex: 0,
                     showOutToSea: checked === true,
                   }),
                   replace: true,
@@ -154,7 +123,6 @@ function ChiefsPage() {
                 navigate({
                   search: (prev) => ({
                     ...prev,
-                    pageIndex: 0,
                     chiefType: undefined,
                     showOutToSea: false,
                   }),
@@ -168,9 +136,8 @@ function ChiefsPage() {
         </div>
       </div>
 
-      <PaginationControls table={table} pageCount={pageCount} totalCount={totalCount} />
+      <p className="text-sm text-muted-foreground mb-2">{chiefs.length} chiefs</p>
       <DataTable table={table} />
-      <PaginationControls table={table} pageCount={pageCount} totalCount={totalCount} />
     </div>
   )
 }

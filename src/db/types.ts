@@ -1,7 +1,5 @@
 import type { classType } from './schema'
 
-export type MemberInsert = Omit<Member, 'wycNumber'>
-export type MemberProfileUpdate = MemberInsert
 export type Member = {
   wycNumber: number
   first: string
@@ -17,6 +15,7 @@ export type Member = {
   phone2: string
   studentId: number | null
   outToSea: boolean
+  joinDate: string
 }
 export type MemberTableRow = {
   wycNumber: number
