@@ -12,7 +12,7 @@ export const columns = [
       <Link
         to="/ratings/$ratingIndex"
         params={{ ratingIndex: String(info.getValue()) }}
-        className="text-primary underline"
+        className="underline"
       >
         {info.getValue()}
       </Link>
@@ -33,7 +33,7 @@ export const columns = [
       <Link
         to="/members/$wycNumber"
         params={{ wycNumber: String(info.row.original.member) }}
-        className="text-primary underline"
+        className="underline"
       >
         {info.getValue()}
       </Link>
@@ -46,7 +46,7 @@ export const columns = [
       <Link
         to="/members/$wycNumber"
         params={{ wycNumber: String(info.row.original.examiner) }}
-        className="text-primary underline"
+        className="underline"
       >
         {info.getValue()}
       </Link>

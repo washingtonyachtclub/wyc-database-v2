@@ -1,27 +1,29 @@
+import { Link } from '@tanstack/react-router'
 import { createColumnHelper } from '@tanstack/react-table'
 import type { RichLesson } from '../../db/types'
 
 const columnHelper = createColumnHelper<RichLesson>()
 
 export const columns = [
+  columnHelper.accessor('index', {
+    header: 'Index',
+    cell: (info) => (
+      <Link
+        to="/lessons/$lessonIndex"
+        params={{ lessonIndex: String(info.getValue()) }}
+        className="underline"
+      >
+        {info.getValue()}
+      </Link>
+    ),
+    enableSorting: false,
+  }),
   columnHelper.accessor('type', {
     header: 'Type',
     enableSorting: false,
   }),
   columnHelper.accessor('subtype', {
     header: 'Subtype',
-    enableSorting: false,
-  }),
-  columnHelper.accessor('day', {
-    header: 'Day',
-    enableSorting: false,
-  }),
-  columnHelper.accessor('time', {
-    header: 'Time',
-    enableSorting: false,
-  }),
-  columnHelper.accessor('dates', {
-    header: 'Dates',
     enableSorting: false,
   }),
   columnHelper.accessor('instructor1Name', {

@@ -1,4 +1,3 @@
-import { useState } from 'react'
 import { AddOfficerModal } from '@/components/officers/AddOfficerModal'
 import { Button } from '@/components/ui/button'
 import { OFFICER_PAGE_SECTIONS } from '@/db/constants'
@@ -12,6 +11,7 @@ import { requirePrivilegeForRoute } from '@/lib/route-guards'
 import { cn } from '@/lib/utils'
 import { useSuspenseQuery } from '@tanstack/react-query'
 import { Link, createFileRoute } from '@tanstack/react-router'
+import { useState } from 'react'
 
 export const Route = createFileRoute('/officers')({
   beforeLoad: ({ context }) => {
@@ -78,14 +78,11 @@ function OfficersPage() {
                   ) : (
                     <ul className="space-y-1">
                       {holders.map((officer) => (
-                        <li
-                          key={officer.index}
-                          className="flex items-center justify-between gap-2"
-                        >
+                        <li key={officer.index} className="flex items-center justify-between gap-2">
                           <Link
                             to="/members/$wycNumber"
                             params={{ wycNumber: String(officer.wycNumber) }}
-                            className="text-sm text-primary"
+                            className="text-sm"
                           >
                             {officer.memberName}
                           </Link>
@@ -145,7 +142,7 @@ function OfficersPage() {
                     <Link
                       to="/members/$wycNumber"
                       params={{ wycNumber: String(officer.wycNumber) }}
-                      className="text-primary underline"
+                      className="underline"
                     >
                       {officer.memberName}
                     </Link>

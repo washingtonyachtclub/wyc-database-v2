@@ -12,7 +12,7 @@ export function DataTable<T>({ table }: DataTableProps<T>) {
       <Table>
         <TableHeader>
           {table.getHeaderGroups().map((headerGroup) => (
-            <TableRow key={headerGroup.id} className="bg-muted hover:bg-muted">
+            <TableRow key={headerGroup.id} className="bg-primary/5 hover:bg-primary/5">
               {headerGroup.headers.map((header) => {
                 const canSort = header.column.getCanSort()
                 const sortDirection = header.column.getIsSorted()

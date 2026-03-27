@@ -11,7 +11,7 @@ export const columns = [
       <Link
         to="/members/$wycNumber"
         params={{ wycNumber: String(info.getValue()) }}
-        className="text-primary underline"
+        className="underline"
       >
         {info.getValue()}
       </Link>

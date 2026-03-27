@@ -156,7 +156,7 @@ function LessonsPage() {
   return (
     <div className="p-4 space-y-8">
       <div className="flex justify-start">
-        <Button variant="secondary" onClick={() => setIsLessonModalOpen(true)} className="mb-4">
+        <Button onClick={() => setIsLessonModalOpen(true)} className="mb-4">
           New Lesson
         </Button>
       </div>

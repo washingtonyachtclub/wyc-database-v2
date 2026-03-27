@@ -18,6 +18,8 @@ export const routePermissions = {
   '/ratings/$ratingIndex': ['rtgs'],
   '/officers': ['db'],
   '/membership-processing': ['db'],
+  '/set-password': [],
+  '/email-test': ['db'],
   '/forbidden': [],
 } as const satisfies Record<string, readonly Privilege[]>
 

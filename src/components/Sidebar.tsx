@@ -13,6 +13,7 @@ export default function Sidebar() {
     { path: '/ratings' as const, label: 'Ratings' },
     { path: '/officers' as const, label: 'Officers & Positions' },
     { path: '/membership-processing' as const, label: 'Membership Processing' },
+    { path: '/email-test' as const, label: 'Email Test' },
   ]
 
   const visibleNavItems = navItems.filter((item) => {
@@ -35,8 +36,8 @@ export default function Sidebar() {
               params={{ wycNumber: String(user!.wycNumber) }}
               className={`block px-4 py-2 rounded-md transition-colors ${
                 location.pathname === myProfilePath
-                  ? 'bg-primary text-primary-foreground font-semibold'
-                  : 'hover:bg-accent text-foreground'
+                  ? 'bg-primary/10 text-primary font-semibold'
+                  : 'hover:bg-primary/5 text-foreground'
               }`}
             >
               My Profile
@@ -45,11 +46,21 @@ export default function Sidebar() {
               to="/my-lessons"
               className={`block px-4 py-2 rounded-md transition-colors ${
                 location.pathname === '/my-lessons'
-                  ? 'bg-primary text-primary-foreground font-semibold'
-                  : 'hover:bg-accent text-foreground'
+                  ? 'bg-primary/10 text-primary font-semibold'
+                  : 'hover:bg-primary/5 text-foreground'
               }`}
             >
               My Lessons
+            </Link>
+            <Link
+              to="/set-password"
+              className={`block px-4 py-2 rounded-md transition-colors ${
+                location.pathname === '/set-password'
+                  ? 'bg-primary/10 text-primary font-semibold'
+                  : 'hover:bg-primary/5 text-foreground'
+              }`}
+            >
+              Set Password
             </Link>
           </>
         )}
@@ -66,8 +77,8 @@ export default function Sidebar() {
               to={item.path}
               className={`block px-4 py-2 rounded-md transition-colors ${
                 isActive
-                  ? 'bg-primary text-primary-foreground font-semibold'
-                  : 'hover:bg-accent text-foreground'
+                  ? 'bg-primary/10 text-primary font-semibold'
+                  : 'hover:bg-primary/5 text-foreground'
               }`}
             >
               {item.label}

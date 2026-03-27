@@ -1,4 +1,4 @@
 export type RatingFilters = {
-  name?: string
+  memberWycNumber?: number
   ratingIndex?: number
 }

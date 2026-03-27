@@ -4,13 +4,14 @@ import { Link, useLocation, useRouter } from '@tanstack/react-router'
 import { useCurrentUser, useLogoutMutation } from '../lib/auth-query-options'
 import { Button } from './ui/button'
 import { DevPrivilegeEmulator } from './DevPrivilegeEmulator'
+import { Sailboat } from 'lucide-react'
 
 export default function Header() {
   const router = useRouter()
   const location = useLocation()
   const { user, isAuthenticated } = useCurrentUser()
   const logoutMutation = useLogoutMutation()
-  const isLoginPage = location.pathname === '/login'
+  const isBarePage = ['/login', '/forgot-password'].includes(location.pathname)
   const { data: dbName } = useQuery({
     queryKey: ['databaseName'],
     queryFn: () => getDatabaseName(),
@@ -35,7 +36,8 @@ export default function Header() {
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         <div className="flex h-16 items-center justify-between">
           <div className="flex items-center">
-            <Link to="/" className="text-xl font-bold">
+            <Link to="/" className="flex items-center gap-2 text-xl font-bold">
+              <Sailboat className="h-6 w-6 text-primary" />
               WYC Database
             </Link>
             {import.meta.env.DEV && dbName && (
@@ -56,7 +58,7 @@ export default function Header() {
                 </Button>
               </>
             ) : (
-              !isLoginPage && (
+              !isBarePage && (
                 <Button asChild size="sm">
                   <Link to="/login" search={{ redirect: '/' }}>
                     Login

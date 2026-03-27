@@ -20,7 +20,7 @@ import {
 const ratingSearchSchema = z.object({
   pageIndex: z.number().catch(0),
   pageSize: z.number().catch(10),
-  name: z.string().optional(),
+  memberWycNumber: z.number().optional(),
   ratingIndex: z.number().optional(),
   sortColumn: z.string().optional(),
   sortDesc: z.boolean().catch(false),
@@ -31,9 +31,9 @@ export const Route = createFileRoute('/ratings')({
   beforeLoad: ({ context }) => {
     requirePrivilegeForRoute(context, '/ratings')
   },
-  loaderDeps: ({ search: { pageIndex, pageSize, name, ratingIndex, sortColumn, sortDesc } }) => {
+  loaderDeps: ({ search: { pageIndex, pageSize, memberWycNumber, ratingIndex, sortColumn, sortDesc } }) => {
     const filters: RatingFilters | undefined =
-      name || ratingIndex !== undefined ? { name, ratingIndex } : undefined
+      memberWycNumber !== undefined || ratingIndex !== undefined ? { memberWycNumber, ratingIndex } : undefined
 
     const sorting =
       sortColumn && sortColumn in ratingSortableColumns
@@ -63,7 +63,7 @@ const ratingSortableColumns: Record<string, true> = {
 
 function RatingsPage() {
   const navigate = useNavigate({ from: '/ratings' })
-  const { name, ratingIndex } = Route.useSearch()
+  const { memberWycNumber, ratingIndex } = Route.useSearch()
   const { pageIndex, pageSize, filters, sorting } = Route.useLoaderDeps()
   const [isAddModalOpen, setIsAddModalOpen] = useState(false)
   const { user } = useCurrentUser()
@@ -125,7 +125,7 @@ function RatingsPage() {
       search: (prev) => ({
         ...prev,
         pageIndex: 0,
-        ...('name' in changes && { name: changes.name }),
+        ...('memberWycNumber' in changes && { memberWycNumber: changes.memberWycNumber }),
         ...('ratingIndex' in changes && { ratingIndex: changes.ratingIndex }),
       }),
       replace: true,
@@ -137,7 +137,7 @@ function RatingsPage() {
       search: (prev) => ({
         ...prev,
         pageIndex: 0,
-        name: undefined,
+        memberWycNumber: undefined,
         ratingIndex: undefined,
       }),
       replace: true,
@@ -147,11 +147,11 @@ function RatingsPage() {
   return (
     <div className="p-4">
       <h2 className="text-2xl font-bold mb-4">Ratings</h2>
-      <Button variant="secondary" onClick={() => setIsAddModalOpen(true)} className="mb-4">
+      <Button onClick={() => setIsAddModalOpen(true)} className="mb-4">
         New Rating
       </Button>
       <RatingFilterControls
-        name={name}
+        memberWycNumber={memberWycNumber}
         ratingIndex={ratingIndex}
         ratingTypes={ratingTypes}
         onFilterChange={handleFilterChange}

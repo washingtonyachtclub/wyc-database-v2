@@ -3,7 +3,6 @@ import type { MySqlColumn, MySqlSelect } from 'drizzle-orm/mysql-core'
 import { alias } from 'drizzle-orm/mysql-core'
 import db from './index'
 import type { RatingFilters } from './rating-filter-types'
-import { nameSearchCondition } from './query-helpers'
 import { ratings, wycDatabase, wycRatings } from './schema'
 
 const memberTable = alias(wycDatabase, 'member')
@@ -72,9 +71,8 @@ export function withRatingFilters<T extends MySqlSelect>(
     conditions.push(eq(wycRatings.rating, filters.ratingIndex))
   }
 
-  if (filters?.name) {
-    const cond = nameSearchCondition(memberTable.first, memberTable.last, filters.name)
-    if (cond) conditions.push(cond)
+  if (filters?.memberWycNumber !== undefined) {
+    conditions.push(eq(wycRatings.member, filters.memberWycNumber))
   }
 
   if (conditions.length > 0) {

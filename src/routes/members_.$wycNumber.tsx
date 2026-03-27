@@ -1,10 +1,11 @@
-import type { Member, MemberProfileUpdate } from '@/db/types'
+import { Button } from '@/components/ui/button'
 import { MemberCheckoutsSection } from '@/components/members/MemberCheckoutsSection'
 import { MemberLessonsSection } from '@/components/members/MemberLessonsSection'
 import { MemberPositionsSection } from '@/components/members/MemberPositionsSection'
 import { MemberRatingsGivenSection } from '@/components/members/MemberRatingsGivenSection'
 import { MemberRatingsSection } from '@/components/members/MemberRatingsSection'
 import { MemberProfileUpdateSchema } from '@/db/member-schema'
+import type { Member, MemberProfileUpdate } from '@/db/types'
 import { useAppForm } from '@/hooks/form'
 import {
   getCategoriesQueryOptions,
@@ -16,9 +17,9 @@ import {
 } from '@/lib/members-query-options'
 import { useQuery, useSuspenseQuery } from '@tanstack/react-query'
 import { createFileRoute, redirect } from '@tanstack/react-router'
+import { useMemo, useState } from 'react'
 import { useCurrentUser } from '../lib/auth-query-options'
 import { hasPrivilege } from '../lib/permissions'
-import { useMemo, useState } from 'react'
 
 export const Route = createFileRoute('/members_/$wycNumber')({
   beforeLoad: ({ context, params }) => {
@@ -52,6 +53,7 @@ function MemberDetailPage() {
   const { privileges } = useCurrentUser()
   const hasDb = hasPrivilege(privileges, ['db'])
   const since = useTwelveMonthsAgo()
+  const [isEditing, setIsEditing] = useState(false)
 
   if (!member) {
     return (
@@ -63,12 +65,23 @@ function MemberDetailPage() {
 
   return (
     <div className="p-4 space-y-8">
-      <h1 className="text-2xl font-bold">
-        WYC #{member.wycNumber} — {member.first} {member.last}
-      </h1>
+      <div className="flex items-center justify-between">
+        <h1 className="text-2xl font-bold">
+          WYC #{member.wycNumber} — {member.first} {member.last}
+        </h1>
+        {!isEditing && (
+          <Button onClick={() => setIsEditing(true)}>
+            Edit Info
+          </Button>
+        )}
+      </div>
 
-      <MemberReadOnlyFields member={member} hasDb={hasDb} />
-      <MemberEditForm member={member} hasDb={hasDb} />
+      {isEditing ? (
+        <MemberEditForm member={member} hasDb={hasDb} onCancel={() => setIsEditing(false)} />
+      ) : (
+        <MemberReadOnlyInfo member={member} />
+      )}
+
       <MemberRatingsSection wycNumber={member.wycNumber} />
       <MemberRatingsGivenSection wycNumber={member.wycNumber} since={since} />
       <MemberLessonsSection
@@ -85,44 +98,54 @@ function MemberDetailPage() {
   )
 }
 
-function MemberReadOnlyFields({ member, hasDb }: { member: Member; hasDb: boolean }) {
+function ReadOnlyField({ label, value }: { label: string; value: string }) {
+  return (
+    <div>
+      <p className="text-sm text-muted-foreground">{label}</p>
+      <p className="text-base">{value || '—'}</p>
+    </div>
+  )
+}
+
+function MemberReadOnlyInfo({ member }: { member: Member }) {
   const { data: quarters = [] } = useQuery(getQuartersQueryOptions())
   const { data: categories = [] } = useQuery(getCategoriesQueryOptions())
 
   const quarterLabel =
     quarters.find((q) => q.index === member.expireQtrIndex)?.school ||
     `Quarter ${member.expireQtrIndex}`
-  const categoryLabel =
-    categories.find((c) => c.index === member.categoryId)?.text || 'None'
+  const categoryLabel = categories.find((c) => c.index === member.categoryId)?.text || 'None'
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-      <div>
-        <p className="text-sm text-muted-foreground">WYC Number</p>
-        <p className="text-lg font-medium">{member.wycNumber}</p>
+    <div className="space-y-4">
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+        <ReadOnlyField label="First Name" value={member.first} />
+        <ReadOnlyField label="Last Name" value={member.last} />
+        <ReadOnlyField label="Email" value={member.email} />
+        <ReadOnlyField label="Student ID" value={member.studentId?.toString() ?? ''} />
+        <ReadOnlyField label="Street Address" value={member.streetAddress} />
+        <ReadOnlyField label="City" value={member.city} />
+        <ReadOnlyField label="State" value={member.state} />
+        <ReadOnlyField label="Zip Code" value={member.zipCode} />
+        <ReadOnlyField label="Phone 1" value={member.phone1} />
+        <ReadOnlyField label="Phone 2" value={member.phone2} />
+        <ReadOnlyField label="Category" value={categoryLabel} />
+        <ReadOnlyField label="Expire Quarter" value={quarterLabel} />
+        <ReadOnlyField label="Out to Sea" value={member.outToSea ? 'Yes' : 'No'} />
       </div>
-      {!hasDb && (
-        <>
-          <div>
-            <p className="text-sm text-muted-foreground">Expire Quarter</p>
-            <p className="text-lg font-medium">{quarterLabel}</p>
-          </div>
-          <div>
-            <p className="text-sm text-muted-foreground">Category</p>
-            <p className="text-lg font-medium">{categoryLabel}</p>
-          </div>
-          <div>
-            <p className="text-sm text-muted-foreground">Out to Sea</p>
-            <p className="text-lg font-medium">{member.outToSea ? 'Yes' : 'No'}</p>
-          </div>
-        </>
-      )}
     </div>
   )
 }
 
-function MemberEditForm({ member, hasDb }: { member: Member; hasDb: boolean }) {
-  const [saveMessage, setSaveMessage] = useState('')
+function MemberEditForm({
+  member,
+  hasDb,
+  onCancel,
+}: {
+  member: Member
+  hasDb: boolean
+  onCancel: () => void
+}) {
   const { data: quarters = [] } = useQuery(getQuartersQueryOptions())
   const { data: categories = [] } = useQuery(getCategoriesQueryOptions())
 
@@ -134,9 +157,8 @@ function MemberEditForm({ member, hasDb }: { member: Member; hasDb: boolean }) {
       onSubmit: MemberProfileUpdateSchema,
     },
     onSubmit: async ({ value }) => {
-      setSaveMessage('')
       await updateMutation.mutateAsync({ data: { wycNumber: member.wycNumber, ...value } })
-      setSaveMessage('Member saved.')
+      onCancel()
     },
   })
 
@@ -166,12 +188,6 @@ function MemberEditForm({ member, hasDb }: { member: Member; hasDb: boolean }) {
         </div>
       )}
 
-      {saveMessage && (
-        <div className="rounded-md bg-green-500/10 p-4 border border-green-500">
-          <div className="text-sm text-green-700">{saveMessage}</div>
-        </div>
-      )}
-
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <form.AppField
           name="first"
@@ -192,19 +208,14 @@ function MemberEditForm({ member, hasDb }: { member: Member; hasDb: boolean }) {
 
         <form.AppField
           name="streetAddress"
-          children={(field) => (
-            <field.TextField label="Street Address" className="md:col-span-2" />
-          )}
+          children={(field) => <field.TextField label="Street Address" className="md:col-span-2" />}
         />
 
         <form.AppField name="city" children={(field) => <field.TextField label="City" />} />
 
         <form.AppField name="state" children={(field) => <field.TextField label="State" />} />
 
-        <form.AppField
-          name="zipCode"
-          children={(field) => <field.TextField label="Zip Code" />}
-        />
+        <form.AppField name="zipCode" children={(field) => <field.TextField label="Zip Code" />} />
 
         <form.AppField name="phone1" children={(field) => <field.TextField label="Phone 1" />} />
 
@@ -252,6 +263,9 @@ function MemberEditForm({ member, hasDb }: { member: Member; hasDb: boolean }) {
         <form.AppForm>
           <form.SubmitButton label="Update Member" submittingLabel="Saving..." />
         </form.AppForm>
+        <Button variant="outline" type="button" onClick={onCancel}>
+          Cancel
+        </Button>
       </div>
     </form>
   )

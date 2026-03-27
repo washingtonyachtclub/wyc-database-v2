@@ -62,7 +62,7 @@ function RatingDetailPage() {
             <Link
               to="/members/$wycNumber"
               params={{ wycNumber: String(rating.member) }}
-              className="text-primary underline"
+              className="underline"
             >
               {rating.memberName}
             </Link>
@@ -74,7 +74,7 @@ function RatingDetailPage() {
             <Link
               to="/members/$wycNumber"
               params={{ wycNumber: String(rating.examiner) }}
-              className="text-primary underline"
+              className="underline"
             >
               {rating.examinerName}
             </Link>

@@ -9,6 +9,7 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as SetPasswordRouteImport } from './routes/set-password'
 import { Route as RatingsRouteImport } from './routes/ratings'
 import { Route as OfficersRouteImport } from './routes/officers'
 import { Route as MyLessonsRouteImport } from './routes/my-lessons'
@@ -16,12 +17,19 @@ import { Route as MembershipProcessingRouteImport } from './routes/membership-pr
 import { Route as MembersRouteImport } from './routes/members'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as LessonsRouteImport } from './routes/lessons'
+import { Route as ForgotPasswordRouteImport } from './routes/forgot-password'
 import { Route as ForbiddenRouteImport } from './routes/forbidden'
+import { Route as EmailTestRouteImport } from './routes/email-test'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as RatingsRatingIndexRouteImport } from './routes/ratings_.$ratingIndex'
 import { Route as MembersWycNumberRouteImport } from './routes/members_.$wycNumber'
 import { Route as LessonsLessonIndexRouteImport } from './routes/lessons_.$lessonIndex'
 
+const SetPasswordRoute = SetPasswordRouteImport.update({
+  id: '/set-password',
+  path: '/set-password',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const RatingsRoute = RatingsRouteImport.update({
   id: '/ratings',
   path: '/ratings',
@@ -57,9 +65,19 @@ const LessonsRoute = LessonsRouteImport.update({
   path: '/lessons',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ForgotPasswordRoute = ForgotPasswordRouteImport.update({
+  id: '/forgot-password',
+  path: '/forgot-password',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ForbiddenRoute = ForbiddenRouteImport.update({
   id: '/forbidden',
   path: '/forbidden',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const EmailTestRoute = EmailTestRouteImport.update({
+  id: '/email-test',
+  path: '/email-test',
   getParentRoute: () => rootRouteImport,
 } as any)
 const IndexRoute = IndexRouteImport.update({
@@ -85,7 +103,9 @@ const LessonsLessonIndexRoute = LessonsLessonIndexRouteImport.update({
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/email-test': typeof EmailTestRoute
   '/forbidden': typeof ForbiddenRoute
+  '/forgot-password': typeof ForgotPasswordRoute
   '/lessons': typeof LessonsRoute
   '/login': typeof LoginRoute
   '/members': typeof MembersRoute
@@ -93,13 +113,16 @@ export interface FileRoutesByFullPath {
   '/my-lessons': typeof MyLessonsRoute
   '/officers': typeof OfficersRoute
   '/ratings': typeof RatingsRoute
+  '/set-password': typeof SetPasswordRoute
   '/lessons/$lessonIndex': typeof LessonsLessonIndexRoute
   '/members/$wycNumber': typeof MembersWycNumberRoute
   '/ratings/$ratingIndex': typeof RatingsRatingIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/email-test': typeof EmailTestRoute
   '/forbidden': typeof ForbiddenRoute
+  '/forgot-password': typeof ForgotPasswordRoute
   '/lessons': typeof LessonsRoute
   '/login': typeof LoginRoute
   '/members': typeof MembersRoute
@@ -107,6 +130,7 @@ export interface FileRoutesByTo {
   '/my-lessons': typeof MyLessonsRoute
   '/officers': typeof OfficersRoute
   '/ratings': typeof RatingsRoute
+  '/set-password': typeof SetPasswordRoute
   '/lessons/$lessonIndex': typeof LessonsLessonIndexRoute
   '/members/$wycNumber': typeof MembersWycNumberRoute
   '/ratings/$ratingIndex': typeof RatingsRatingIndexRoute
@@ -114,7 +138,9 @@ export interface FileRoutesByTo {
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/email-test': typeof EmailTestRoute
   '/forbidden': typeof ForbiddenRoute
+  '/forgot-password': typeof ForgotPasswordRoute
   '/lessons': typeof LessonsRoute
   '/login': typeof LoginRoute
   '/members': typeof MembersRoute
@@ -122,6 +148,7 @@ export interface FileRoutesById {
   '/my-lessons': typeof MyLessonsRoute
   '/officers': typeof OfficersRoute
   '/ratings': typeof RatingsRoute
+  '/set-password': typeof SetPasswordRoute
   '/lessons_/$lessonIndex': typeof LessonsLessonIndexRoute
   '/members_/$wycNumber': typeof MembersWycNumberRoute
   '/ratings_/$ratingIndex': typeof RatingsRatingIndexRoute
@@ -130,7 +157,9 @@ export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
+    | '/email-test'
     | '/forbidden'
+    | '/forgot-password'
     | '/lessons'
     | '/login'
     | '/members'
@@ -138,13 +167,16 @@ export interface FileRouteTypes {
     | '/my-lessons'
     | '/officers'
     | '/ratings'
+    | '/set-password'
     | '/lessons/$lessonIndex'
     | '/members/$wycNumber'
     | '/ratings/$ratingIndex'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
+    | '/email-test'
     | '/forbidden'
+    | '/forgot-password'
     | '/lessons'
     | '/login'
     | '/members'
@@ -152,13 +184,16 @@ export interface FileRouteTypes {
     | '/my-lessons'
     | '/officers'
     | '/ratings'
+    | '/set-password'
     | '/lessons/$lessonIndex'
     | '/members/$wycNumber'
     | '/ratings/$ratingIndex'
   id:
     | '__root__'
     | '/'
+    | '/email-test'
     | '/forbidden'
+    | '/forgot-password'
     | '/lessons'
     | '/login'
     | '/members'
@@ -166,6 +201,7 @@ export interface FileRouteTypes {
     | '/my-lessons'
     | '/officers'
     | '/ratings'
+    | '/set-password'
     | '/lessons_/$lessonIndex'
     | '/members_/$wycNumber'
     | '/ratings_/$ratingIndex'
@@ -173,7 +209,9 @@ export interface FileRouteTypes {
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  EmailTestRoute: typeof EmailTestRoute
   ForbiddenRoute: typeof ForbiddenRoute
+  ForgotPasswordRoute: typeof ForgotPasswordRoute
   LessonsRoute: typeof LessonsRoute
   LoginRoute: typeof LoginRoute
   MembersRoute: typeof MembersRoute
@@ -181,6 +219,7 @@ export interface RootRouteChildren {
   MyLessonsRoute: typeof MyLessonsRoute
   OfficersRoute: typeof OfficersRoute
   RatingsRoute: typeof RatingsRoute
+  SetPasswordRoute: typeof SetPasswordRoute
   LessonsLessonIndexRoute: typeof LessonsLessonIndexRoute
   MembersWycNumberRoute: typeof MembersWycNumberRoute
   RatingsRatingIndexRoute: typeof RatingsRatingIndexRoute
@@ -188,6 +227,13 @@ export interface RootRouteChildren {
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/set-password': {
+      id: '/set-password'
+      path: '/set-password'
+      fullPath: '/set-password'
+      preLoaderRoute: typeof SetPasswordRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/ratings': {
       id: '/ratings'
       path: '/ratings'
@@ -237,11 +283,25 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof LessonsRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/forgot-password': {
+      id: '/forgot-password'
+      path: '/forgot-password'
+      fullPath: '/forgot-password'
+      preLoaderRoute: typeof ForgotPasswordRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/forbidden': {
       id: '/forbidden'
       path: '/forbidden'
       fullPath: '/forbidden'
       preLoaderRoute: typeof ForbiddenRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/email-test': {
+      id: '/email-test'
+      path: '/email-test'
+      fullPath: '/email-test'
+      preLoaderRoute: typeof EmailTestRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/': {
@@ -277,7 +337,9 @@ declare module '@tanstack/react-router' {
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  EmailTestRoute: EmailTestRoute,
   ForbiddenRoute: ForbiddenRoute,
+  ForgotPasswordRoute: ForgotPasswordRoute,
   LessonsRoute: LessonsRoute,
   LoginRoute: LoginRoute,
   MembersRoute: MembersRoute,
@@ -285,6 +347,7 @@ const rootRouteChildren: RootRouteChildren = {
   MyLessonsRoute: MyLessonsRoute,
   OfficersRoute: OfficersRoute,
   RatingsRoute: RatingsRoute,
+  SetPasswordRoute: SetPasswordRoute,
   LessonsLessonIndexRoute: LessonsLessonIndexRoute,
   MembersWycNumberRoute: MembersWycNumberRoute,
   RatingsRatingIndexRoute: RatingsRatingIndexRoute,

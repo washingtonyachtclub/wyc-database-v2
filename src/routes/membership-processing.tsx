@@ -1,4 +1,5 @@
 import { Button } from '@/components/ui/button'
+import { CopyBox } from '@/components/ui/CopyBox'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Member } from '@/db/types'
@@ -7,7 +8,7 @@ import { getCurrentQuarterQueryOptions } from '@/lib/lessons-query-options'
 import { getAllMembersLiteQueryOptions } from '@/lib/members-query-options'
 import { getDatabaseName, getNextWycNumber } from '@/lib/members-server-fns'
 import { newMemberEmail } from '@/lib/membership-processing/new-member-email-template'
-import { PASSWORD_WORDLIST } from '@/lib/membership-processing/password-wordlist'
+import { generatePassphrase } from '@/lib/generate-passphrase'
 import { returningMemberEmail } from '@/lib/membership-processing/returning-member-email-template'
 import {
   newMemberSQLQuery,
@@ -84,31 +85,6 @@ const MEMBERSHIP_STATUS_VALUES = [
   'Previous member looking to rejoin',
 ] as const
 
-function CopyBox({ text }: { text: string }) {
-  const [copied, setCopied] = useState(false)
-
-  function handleCopy() {
-    navigator.clipboard.writeText(text).then(() => {
-      setCopied(true)
-      setTimeout(() => setCopied(false), 2000)
-    })
-  }
-
-  return (
-    <div className="relative mt-2 rounded border bg-muted">
-      <Button
-        variant="outline"
-        size="sm"
-        onClick={handleCopy}
-        className="absolute top-2 left-2"
-      >
-        {copied ? 'Copied!' : 'Copy'}
-      </Button>
-      <pre className="whitespace-pre-wrap p-4 pl-20 text-sm">{text}</pre>
-    </div>
-  )
-}
-
 function MembershipProcessingPage() {
   const { data: allMembers } = useQuery(getAllMembersLiteQueryOptions())
   const { data: currentQuarter } = useQuery(getCurrentQuarterQueryOptions())
@@ -135,21 +111,6 @@ function MembershipProcessingPage() {
     return { ok: false, error: `Invalid ${fieldName}: "${value}"` }
   }
 
-  function generatePassword(): string {
-    const array = new Uint32Array(3)
-    crypto.getRandomValues(array)
-    const capitalize = (w: string) => w.charAt(0).toUpperCase() + w.slice(1)
-    const word1 = capitalize(
-      PASSWORD_WORDLIST[array[0] % PASSWORD_WORDLIST.length],
-    )
-    const word2 = capitalize(
-      PASSWORD_WORDLIST[array[1] % PASSWORD_WORDLIST.length],
-    )
-    const word3 = capitalize(
-      PASSWORD_WORDLIST[array[2] % PASSWORD_WORDLIST.length],
-    )
-    return word1 + word2 + word3
-  }
 
   function extractExpireQtrSchoolText(quarterIndex: number): string {
     switch (quarterIndex) {
@@ -404,7 +365,7 @@ function MembershipProcessingPage() {
         result.member.last,
         result.member.email,
       )
-      const password = generatePassword()
+      const password = generatePassphrase()
       const argon2Hash = await hashPasswordArgon2ServerFn({ data: password })
       setMemberState({ ...result, password, argon2Hash, duplicates })
     } else {

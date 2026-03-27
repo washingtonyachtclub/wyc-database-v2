@@ -1,9 +1,10 @@
-import { createFileRoute, redirect, useNavigate } from '@tanstack/react-router'
+import { createFileRoute, Link, redirect, useNavigate } from '@tanstack/react-router'
 import { useState } from 'react'
 import { useLoginMutation } from '../lib/auth-query-options'
 import { Button } from '../components/ui/button'
 import { Input } from '../components/ui/input'
 import { Label } from '../components/ui/label'
+import { Sailboat } from 'lucide-react'
 
 export const Route = createFileRoute('/login')({
   validateSearch: (search: Record<string, unknown>) => {
@@ -52,16 +53,18 @@ function LoginPage() {
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-muted px-4 py-12 sm:px-6 lg:px-8">
-      <div className="w-full max-w-md space-y-8">
-        <div>
-          <h2 className="mt-6 text-center text-3xl font-bold tracking-tight">
-            Sign in to your account
+      <div className="w-full max-w-md">
+        <div className="rounded-xl bg-card p-8 shadow-lg space-y-8">
+        <div className="flex flex-col items-center">
+          <Sailboat className="h-12 w-12 text-primary" />
+          <h2 className="mt-4 text-center text-3xl font-bold tracking-tight">
+            WYC Database
           </h2>
           <p className="mt-2 text-center text-sm text-muted-foreground">
-            Enter your WYC ID and password
+            Sign in with your WYC ID and password
           </p>
         </div>
-        <form method="POST" className="mt-8 space-y-6" onSubmit={handleSubmit}>
+        <form method="POST" className="space-y-6" onSubmit={handleSubmit}>
           {error && (
             <div className="rounded-md bg-destructive/10 p-4">
               <div className="text-sm text-destructive">{error}</div>
@@ -106,7 +109,14 @@ function LoginPage() {
           <Button type="submit" disabled={loginMutation.isPending} className="w-full">
             {loginMutation.isPending ? 'Signing in...' : 'Sign in'}
           </Button>
+
+          <div className="text-center">
+            <Link to="/forgot-password" className="text-sm text-muted-foreground hover:text-primary">
+              Forgot your password or WYC number?
+            </Link>
+          </div>
         </form>
+        </div>
       </div>
     </div>
   )

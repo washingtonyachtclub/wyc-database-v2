@@ -5,6 +5,7 @@
 - chiefs pages
 - coder / privs page
 - support table pages (especially ratings)
+- rbac documentation
 
 # Less Important
 - easily review out_to_sea statuses (or re-think its usage)

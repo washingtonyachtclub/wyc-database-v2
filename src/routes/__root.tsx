@@ -70,7 +70,7 @@ function NotFound() {
 
 function RootDocument({ children }: { children: React.ReactNode }) {
   const location = useLocation()
-  const isLoginPage = location.pathname === '/login'
+  const isBarePage = ['/login', '/forgot-password'].includes(location.pathname)
 
   return (
     <html lang="en">
@@ -79,13 +79,13 @@ function RootDocument({ children }: { children: React.ReactNode }) {
       </head>
       <body>
         <Header />
-        {!isLoginPage && (
+        {!isBarePage && (
           <div className="flex">
             <Sidebar />
             <main className="flex-1">{children}</main>
           </div>
         )}
-        {isLoginPage && children}
+        {isBarePage && children}
         <TanStackDevTools />
         <Scripts />
       </body>
