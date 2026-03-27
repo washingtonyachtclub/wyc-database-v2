@@ -252,7 +252,7 @@ function MemberEditForm({
 
             <form.AppField
               name="outToSea"
-              children={(field) => <field.BooleanSelectField label="Out to Sea" />}
+              children={(field) => <field.CheckboxField label="Out to Sea" />}
             />
           </>
         )}

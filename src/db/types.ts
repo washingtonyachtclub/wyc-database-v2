@@ -63,10 +63,15 @@ export type Checkout = {
   departureTime: string
 }
 
+export type ChiefRole = {
+  officerIndex: number
+  name: string
+}
+
 export type ChiefTableRow = {
   wycNumber: number
   memberName: string
-  chiefTypes: string // comma-separated display names
+  chiefRoles: ChiefRole[]
 }
 
 export type ClassTypeRow = typeof classType.$inferSelect

@@ -5,7 +5,10 @@ import { Label } from '@/components/ui/label'
 import { Member } from '@/db/types'
 import { hashPasswordArgon2ServerFn } from '@/lib/auth-server-fns'
 import { getCurrentQuarterQueryOptions } from '@/lib/lessons-query-options'
-import { getAllMembersLiteQueryOptions } from '@/lib/members-query-options'
+import {
+  getAllMembersLiteQueryOptions,
+  getQuartersQueryOptions,
+} from '@/lib/members-query-options'
 import { getDatabaseName, getNextWycNumber } from '@/lib/members-server-fns'
 import { newMemberEmail } from '@/lib/membership-processing/new-member-email-template'
 import { generatePassphrase } from '@/lib/generate-passphrase'
@@ -73,12 +76,6 @@ type PageState =
 const CATEGORY_VALUES = ['Student', 'Employee/Retiree', 'Neither'] as const
 type CategoryText = (typeof CATEGORY_VALUES)[number]
 
-const QUARTER_VALUES = [
-  'Spring 2026',
-  'Spring 2026, Summer 2026, Fall 2026, Winter 2027',
-] as const
-type QuarterText = (typeof QUARTER_VALUES)[number]
-
 const MEMBERSHIP_STATUS_VALUES = [
   'New member',
   'Current member looking to renew',
@@ -88,6 +85,7 @@ const MEMBERSHIP_STATUS_VALUES = [
 function MembershipProcessingPage() {
   const { data: allMembers } = useQuery(getAllMembersLiteQueryOptions())
   const { data: currentQuarter } = useQuery(getCurrentQuarterQueryOptions())
+  const { data: quarters } = useQuery(getQuartersQueryOptions())
   const [memberState, setMemberState] = useState<PageState>({ kind: 'Initial' })
   const [input, setInput] = useState<string>('')
   const [wycNumberEntry, setWycNumberEntry] = useState<string>('')
@@ -112,25 +110,23 @@ function MembershipProcessingPage() {
   }
 
 
-  function extractExpireQtrSchoolText(quarterIndex: number): string {
-    switch (quarterIndex) {
-      case 110:
-        return 'Spring 2026'
-      case 113:
-        return 'Winter 2027'
-      default:
-        throw new Error(`Unknown quarter index: ${quarterIndex}`)
+  type QuarterRow = { index: number; school: string | null }
+
+  function resolveExpireQtr(
+    rawQuartersText: string,
+    quartersData: QuarterRow[],
+  ): { ok: true; index: number } | { ok: false; error: string } {
+    const parts = rawQuartersText.split(',').map((s) => s.trim())
+    const lastSchoolText = parts[parts.length - 1]
+    const match = quartersData.find((q) => q.school === lastSchoolText)
+    if (!match) {
+      return { ok: false, error: `Quarter "${lastSchoolText}" not found in database` }
     }
+    return { ok: true, index: match.index }
   }
-  // quartersText: "Winter 2026, Spring 2026, Summer 2026, Fall 2026" or "Spring 2026"
-  // extract the last one in list, convert to quarterIndex
-  function extractExpireQtr(text: QuarterText): number {
-    switch (text) {
-      case 'Spring 2026':
-        return 110
-      case 'Spring 2026, Summer 2026, Fall 2026, Winter 2027':
-        return 113
-    }
+
+  function getSchoolText(quarterIndex: number, quartersData: QuarterRow[]): string {
+    return quartersData.find((q) => q.index === quarterIndex)?.school ?? `Unknown quarter ${quarterIndex}`
   }
 
   function extractCategoryID(text: CategoryText) {
@@ -189,7 +185,7 @@ function MembershipProcessingPage() {
     handleProcess(newInput)
   }
 
-  function parseInput(input: string, nextWycNumber: number): ParseResult {
+  function parseInput(input: string, nextWycNumber: number, quartersData: QuarterRow[]): ParseResult {
     const inputRow = Papa.parse<string[]>(input, { header: false }).data[0]
 
     const get = (key: string) => {
@@ -225,17 +221,13 @@ function MembershipProcessingPage() {
       }
     const category = categoryResult.value
 
-    const quartersTextResult = parseOneOf(
-      rawQuartersText,
-      QUARTER_VALUES,
-      'quarters',
-    )
-    if (!quartersTextResult.ok)
+    const expireQtrResult = resolveExpireQtr(rawQuartersText, quartersData)
+    if (!expireQtrResult.ok)
       return {
         kind: 'Error',
-        error: { code: 'INVALID_FIELD', message: quartersTextResult.error },
+        error: { code: 'INVALID_FIELD', message: expireQtrResult.error },
       }
-    const quartersText = quartersTextResult.value
+    const expireQtrIndex = expireQtrResult.index
 
     const membershipStatusResult = parseOneOf(
       rawMembershipStatus,
@@ -286,6 +278,12 @@ function MembershipProcessingPage() {
         error: { code: 'DATA_LOADING', message: 'Member data still loading' },
       }
 
+    if (!quartersData.length)
+      return {
+        kind: 'Error',
+        error: { code: 'DATA_LOADING', message: 'Quarter data still loading' },
+      }
+
     if (wycNumber) {
       const dbMember = allMembers?.find(
         (m) => m.wycNumber === Number(wycNumber),
@@ -315,7 +313,7 @@ function MembershipProcessingPage() {
         kind: 'OldMember',
         member: {
           wycNumber: Number(wycNumber),
-          newExpireQtr: extractExpireQtr(quartersText),
+          newExpireQtr: expireQtrIndex,
           first: first,
           last: last,
           email: email,
@@ -335,7 +333,7 @@ function MembershipProcessingPage() {
           phone2: phone2,
           email: email,
           categoryId: extractCategoryID(category),
-          expireQtrIndex: extractExpireQtr(quartersText),
+          expireQtrIndex: expireQtrIndex,
           studentId: null,
           outToSea: false,
           wycNumber: nextWycNumber,
@@ -358,7 +356,7 @@ function MembershipProcessingPage() {
       return
     }
     const nextWycNumber = await getNextWycNumber()
-    const result = parseInput(overrideInput ?? input, nextWycNumber)
+    const result = parseInput(overrideInput ?? input, nextWycNumber, quarters ?? [])
     if (result.kind === 'NewMember') {
       const duplicates = findDuplicates(
         result.member.first,
@@ -473,7 +471,7 @@ function MembershipProcessingPage() {
               memberState.member.first,
               memberState.member.last,
               memberState.member.wycNumber,
-              extractExpireQtrSchoolText(memberState.member.newExpireQtr),
+              getSchoolText(memberState.member.newExpireQtr, quarters ?? []),
             )}
           />
           <CopyBox

@@ -7,20 +7,27 @@ export default function Sidebar() {
   const location = useLocation()
   const { user, privileges } = useCurrentUser()
 
-  const navItems = [
+  const adminItems = [
     { path: '/members' as const, label: 'Members' },
     { path: '/lessons' as const, label: 'Lessons' },
     { path: '/ratings' as const, label: 'Ratings' },
     { path: '/officers' as const, label: 'Officers & Positions' },
     { path: '/chiefs' as const, label: 'Chiefs' },
+  ]
+
+  const toolsItems = [
     { path: '/membership-processing' as const, label: 'Membership Processing' },
     { path: '/email-test' as const, label: 'Email Test' },
   ]
 
-  const visibleNavItems = navItems.filter((item) => {
-    const required = routePermissions[item.path as ProtectedRoute]
-    return hasPrivilege(privileges, required)
-  })
+  const filterVisible = (items: typeof adminItems) =>
+    items.filter((item) => {
+      const required = routePermissions[item.path as ProtectedRoute]
+      return hasPrivilege(privileges, required)
+    })
+
+  const visibleAdminItems = filterVisible(adminItems)
+  const visibleToolsItems = filterVisible(toolsItems)
 
   const myProfilePath = user ? `/members/${user.wycNumber}` : null
 
@@ -65,12 +72,33 @@ export default function Sidebar() {
             </Link>
           </>
         )}
-        {visibleNavItems.length > 0 && (
+        {visibleAdminItems.length > 0 && (
           <h3 className="px-4 pt-4 pb-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
             Admin
           </h3>
         )}
-        {visibleNavItems.map((item) => {
+        {visibleAdminItems.map((item) => {
+          const isActive = location.pathname === item.path
+          return (
+            <Link
+              key={item.path}
+              to={item.path}
+              className={`block px-4 py-2 rounded-md transition-colors ${
+                isActive
+                  ? 'bg-primary/10 text-primary font-semibold'
+                  : 'hover:bg-primary/5 text-foreground'
+              }`}
+            >
+              {item.label}
+            </Link>
+          )
+        })}
+        {visibleToolsItems.length > 0 && (
+          <h3 className="px-4 pt-4 pb-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+            Tools
+          </h3>
+        )}
+        {visibleToolsItems.map((item) => {
           const isActive = location.pathname === item.path
           return (
             <Link

@@ -1,8 +1,20 @@
+import { AddChiefModal } from '@/components/chiefs/AddChiefModal'
 import { columns } from '@/components/chiefs/columns'
+import type { ChiefTableMeta } from '@/components/chiefs/columns'
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog'
+import { Button } from '@/components/ui/button'
 import { Checkbox } from '@/components/ui/checkbox'
 import { DataTable } from '@/components/ui/DataTable'
 import { Label } from '@/components/ui/label'
-import { Button } from '@/components/ui/button'
 import {
   Select,
   SelectContent,
@@ -11,12 +23,13 @@ import {
   SelectValue,
 } from '@/components/ui/select'
 import type { ChiefFilters } from '@/db/chief-queries'
-import { getChiefsQueryOptions, getChiefTypesQueryOptions } from '@/lib/chiefs-query-options'
+import { getChiefsQueryOptions, getChiefTypesQueryOptions, useDeleteChiefMutation } from '@/lib/chiefs-query-options'
 import { requirePrivilegeForRoute } from '@/lib/route-guards'
 import { cn } from '@/lib/utils'
 import { useQuery, useSuspenseQuery } from '@tanstack/react-query'
 import { createFileRoute, useNavigate } from '@tanstack/react-router'
 import { getCoreRowModel, useReactTable } from '@tanstack/react-table'
+import { useState } from 'react'
 import { z } from 'zod'
 
 const ALL = '__all__'
@@ -36,10 +49,17 @@ export const Route = createFileRoute('/chiefs')({
     return { filters }
   },
   loader: ({ context, deps: { filters } }) => {
+    context.queryClient.ensureQueryData(getChiefTypesQueryOptions())
     return context.queryClient.ensureQueryData(getChiefsQueryOptions(filters))
   },
   component: ChiefsPage,
 })
+
+type DeleteTarget = {
+  officerIndex: number
+  roleName: string
+  memberName: string
+}
 
 function ChiefsPage() {
   const navigate = useNavigate({ from: '/chiefs' })
@@ -49,10 +69,21 @@ function ChiefsPage() {
   const { data: chiefTypes = [] } = useQuery(getChiefTypesQueryOptions())
   const { data: chiefs } = useSuspenseQuery(getChiefsQueryOptions(filters))
 
+  const [isAddModalOpen, setIsAddModalOpen] = useState(false)
+  const [deleteTarget, setDeleteTarget] = useState<DeleteTarget | null>(null)
+  const deleteMutation = useDeleteChiefMutation()
+
+  const tableMeta: ChiefTableMeta = {
+    onDeleteClick: (officerIndex, roleName, memberName) => {
+      setDeleteTarget({ officerIndex, roleName, memberName })
+    },
+  }
+
   const table = useReactTable({
     data: chiefs,
     columns,
     getCoreRowModel: getCoreRowModel(),
+    meta: tableMeta,
   })
 
   const hasFilters = chiefType !== undefined || showOutToSea
@@ -63,6 +94,10 @@ function ChiefsPage() {
   return (
     <div className="p-4">
       <h2 className="text-2xl font-bold mb-4">Chiefs</h2>
+
+      <Button onClick={() => setIsAddModalOpen(true)} className="mb-4">
+        New Chief
+      </Button>
 
       <div className="mb-4 p-4 border-2 rounded-lg bg-muted/50">
         <div className="flex flex-wrap items-end gap-4">
@@ -138,6 +173,40 @@ function ChiefsPage() {
 
       <p className="text-sm text-muted-foreground mb-2">{chiefs.length} chiefs</p>
       <DataTable table={table} />
+
+      {isAddModalOpen && (
+        <AddChiefModal
+          onClose={() => setIsAddModalOpen(false)}
+          onSuccess={() => {}}
+        />
+      )}
+
+      <AlertDialog open={deleteTarget !== null} onOpenChange={(open) => { if (!open) setDeleteTarget(null) }}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Remove Chief Role</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to remove <strong>{deleteTarget?.roleName}</strong> from{' '}
+              <strong>{deleteTarget?.memberName}</strong>? This action cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              onClick={() => {
+                if (!deleteTarget) return
+                deleteMutation.mutate(
+                  { data: { officerIndex: deleteTarget.officerIndex } },
+                  { onSettled: () => setDeleteTarget(null) },
+                )
+              }}
+            >
+              Remove
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   )
 }

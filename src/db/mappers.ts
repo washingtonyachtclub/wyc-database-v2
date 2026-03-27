@@ -102,6 +102,7 @@ export function toCheckout(row: CheckoutQueryRow): Checkout {
 
 export function toChiefRow(row: ChiefQueryRow) {
   return {
+    officerIndex: row.index,
     wycNumber: num(row.wycNumber),
     memberName: fullName(row.memberFirst, row.memberLast),
     positionId: num(row.positionId),

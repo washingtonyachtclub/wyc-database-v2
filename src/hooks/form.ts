@@ -6,6 +6,7 @@ import {
   NumberField,
   SelectField,
   BooleanSelectField,
+  CheckboxField,
   SubmitButton,
 } from '../components/ui/app-form-fields'
 
@@ -18,6 +19,7 @@ export const { useAppForm } = createFormHook({
     NumberField,
     SelectField,
     BooleanSelectField,
+    CheckboxField,
   },
   formComponents: {
     SubmitButton,

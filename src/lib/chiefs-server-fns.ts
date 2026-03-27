@@ -1,3 +1,4 @@
+import { eq } from 'drizzle-orm'
 import { createServerFn } from '@tanstack/react-start'
 import {
   baseChiefsQuery,
@@ -6,7 +7,9 @@ import {
   withChiefFilters,
 } from 'src/db/chief-queries'
 import { toChiefRow } from 'src/db/mappers'
+import { officers } from 'src/db/schema'
 import type { ChiefTableRow } from 'src/db/types'
+import db from 'src/db'
 import { requirePrivilege } from '../lib/auth-middleware'
 
 function formatChiefType(positionName: string, positionId: number): string {
@@ -31,30 +34,34 @@ export const getChiefsTable = createServerFn({ method: 'GET' })
       const rawRows = await query
       const mapped = rawRows.map(toChiefRow)
 
-      // Group by member — one row per member with all their chief types
+      // Group by member — one row per member with all their chief roles
       const grouped = new Map<
         number,
-        { memberName: string; positions: { id: number; name: string }[] }
+        { memberName: string; roles: { officerIndex: number; positionId: number; positionName: string }[] }
       >()
 
       for (const row of mapped) {
         const existing = grouped.get(row.wycNumber)
+        const role = { officerIndex: row.officerIndex, positionId: row.positionId, positionName: row.positionName }
         if (existing) {
-          existing.positions.push({ id: row.positionId, name: row.positionName })
+          existing.roles.push(role)
         } else {
           grouped.set(row.wycNumber, {
             memberName: row.memberName,
-            positions: [{ id: row.positionId, name: row.positionName }],
+            roles: [role],
           })
         }
       }
 
       // Convert to ChiefTableRow[], sorted by name
       const allChiefs: ChiefTableRow[] = Array.from(grouped.entries())
-        .map(([wycNumber, { memberName, positions }]) => ({
+        .map(([wycNumber, { memberName, roles }]) => ({
           wycNumber,
           memberName,
-          chiefTypes: positions.map((p) => formatChiefType(p.name, p.id)).join(', '),
+          chiefRoles: roles.map((r) => ({
+            officerIndex: r.officerIndex,
+            name: formatChiefType(r.positionName, r.positionId),
+          })),
         }))
         .sort((a, b) => a.memberName.localeCompare(b.memberName))
 
@@ -69,3 +76,16 @@ export const getChiefTypes = createServerFn({ method: 'GET' }).handler(async () 
   await requirePrivilege('db')
   return await getChiefPositions()
 })
+
+export const deleteChief = createServerFn({ method: 'POST' })
+  .inputValidator((input: { officerIndex: number }) => input)
+  .handler(async ({ data: { officerIndex } }) => {
+    await requirePrivilege('db')
+    try {
+      await db.delete(officers).where(eq(officers.index, officerIndex))
+      return { success: true }
+    } catch (error) {
+      console.error('Failed to delete chief:', error)
+      throw new Error('Failed to delete chief')
+    }
+  })

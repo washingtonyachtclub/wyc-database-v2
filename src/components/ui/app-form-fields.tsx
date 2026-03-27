@@ -1,5 +1,7 @@
+import { cn } from '@/lib/utils'
 import { useFieldContext, useFormContext } from '../../hooks/form-context'
 import { Button } from './button'
+import { Checkbox } from './checkbox'
 import { Input } from './input'
 import { Label } from './label'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './select'
@@ -174,6 +176,28 @@ export function BooleanSelectField({
           <SelectItem value="0">{falseLabel}</SelectItem>
         </SelectContent>
       </Select>
+      <FieldError errors={field.state.meta.errors} />
+    </div>
+  )
+}
+
+export function CheckboxField({
+  label,
+  className,
+}: {
+  label: string
+  className?: string
+}) {
+  const field = useFieldContext<boolean>()
+  return (
+    <div className={cn('flex items-center gap-2', className)}>
+      <Checkbox
+        id={field.name}
+        checked={field.state.value}
+        onCheckedChange={(checked) => field.handleChange(checked === true)}
+        onBlur={field.handleBlur}
+      />
+      <Label htmlFor={field.name}>{label}</Label>
       <FieldError errors={field.state.meta.errors} />
     </div>
   )
