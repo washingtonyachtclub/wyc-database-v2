@@ -5,9 +5,11 @@
 - chiefs pages
 - coder / privs page
 - support table pages (especially ratings)
-- rbac documentation
 
 # Less Important
+- automate the stuff in maintenance.md
+  - quarters table
+  - automated email reminder for lesson_quarter
 - easily review out_to_sea statuses (or re-think its usage)
 - track memberships more precisely (by every renewal instance rather than overwriting expireQtr)
 - UI design overhaul

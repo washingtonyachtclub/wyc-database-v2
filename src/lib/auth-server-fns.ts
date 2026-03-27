@@ -165,7 +165,7 @@ export const loginServerFn = createServerFn({ method: 'POST' })
       console.error('Login error:', error)
       return {
         success: false,
-        message: error?.message || 'An error occurred during login',
+        message: 'An error occurred during login',
       } satisfies LoginResponse
     }
   })
@@ -195,7 +195,7 @@ export const logoutServerFn = createServerFn({ method: 'POST' }).handler(
       console.error('Logout error:', error)
       return {
         success: false,
-        message: error?.message || 'An error occurred during logout',
+        message: 'An error occurred during logout',
       } satisfies LogoutResponse
     }
   },

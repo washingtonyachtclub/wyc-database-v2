@@ -12,6 +12,7 @@ export default function Sidebar() {
     { path: '/lessons' as const, label: 'Lessons' },
     { path: '/ratings' as const, label: 'Ratings' },
     { path: '/officers' as const, label: 'Officers & Positions' },
+    { path: '/chiefs' as const, label: 'Chiefs' },
     { path: '/membership-processing' as const, label: 'Membership Processing' },
     { path: '/email-test' as const, label: 'Email Test' },
   ]

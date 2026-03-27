@@ -1,4 +1,5 @@
 import type { CheckoutQueryRow } from './checkout-queries'
+import type { ChiefQueryRow } from './chief-queries'
 import type { LessonQueryRow } from './lesson-queries'
 import type { LessonInsert, RichLesson } from './lesson-schema'
 import type { MemberQueryRow } from './member-queries'
@@ -94,6 +95,15 @@ export function toCheckout(row: CheckoutQueryRow): Checkout {
     destination: str(row.destination),
     departureDate: timeDeparture.slice(0, 10),
     departureTime: timeDeparture.slice(11, 16),
+  }
+}
+
+export function toChiefRow(row: ChiefQueryRow) {
+  return {
+    wycNumber: num(row.wycNumber),
+    memberName: fullName(row.memberFirst, row.memberLast),
+    positionId: num(row.positionId),
+    positionName: str(row.positionName),
   }
 }
 

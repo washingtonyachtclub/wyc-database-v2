@@ -20,6 +20,7 @@ import { Route as LessonsRouteImport } from './routes/lessons'
 import { Route as ForgotPasswordRouteImport } from './routes/forgot-password'
 import { Route as ForbiddenRouteImport } from './routes/forbidden'
 import { Route as EmailTestRouteImport } from './routes/email-test'
+import { Route as ChiefsRouteImport } from './routes/chiefs'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as RatingsRatingIndexRouteImport } from './routes/ratings_.$ratingIndex'
 import { Route as MembersWycNumberRouteImport } from './routes/members_.$wycNumber'
@@ -80,6 +81,11 @@ const EmailTestRoute = EmailTestRouteImport.update({
   path: '/email-test',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ChiefsRoute = ChiefsRouteImport.update({
+  id: '/chiefs',
+  path: '/chiefs',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
@@ -103,6 +109,7 @@ const LessonsLessonIndexRoute = LessonsLessonIndexRouteImport.update({
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/chiefs': typeof ChiefsRoute
   '/email-test': typeof EmailTestRoute
   '/forbidden': typeof ForbiddenRoute
   '/forgot-password': typeof ForgotPasswordRoute
@@ -120,6 +127,7 @@ export interface FileRoutesByFullPath {
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/chiefs': typeof ChiefsRoute
   '/email-test': typeof EmailTestRoute
   '/forbidden': typeof ForbiddenRoute
   '/forgot-password': typeof ForgotPasswordRoute
@@ -138,6 +146,7 @@ export interface FileRoutesByTo {
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/chiefs': typeof ChiefsRoute
   '/email-test': typeof EmailTestRoute
   '/forbidden': typeof ForbiddenRoute
   '/forgot-password': typeof ForgotPasswordRoute
@@ -157,6 +166,7 @@ export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
+    | '/chiefs'
     | '/email-test'
     | '/forbidden'
     | '/forgot-password'
@@ -174,6 +184,7 @@ export interface FileRouteTypes {
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
+    | '/chiefs'
     | '/email-test'
     | '/forbidden'
     | '/forgot-password'
@@ -191,6 +202,7 @@ export interface FileRouteTypes {
   id:
     | '__root__'
     | '/'
+    | '/chiefs'
     | '/email-test'
     | '/forbidden'
     | '/forgot-password'
@@ -209,6 +221,7 @@ export interface FileRouteTypes {
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  ChiefsRoute: typeof ChiefsRoute
   EmailTestRoute: typeof EmailTestRoute
   ForbiddenRoute: typeof ForbiddenRoute
   ForgotPasswordRoute: typeof ForgotPasswordRoute
@@ -304,6 +317,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof EmailTestRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/chiefs': {
+      id: '/chiefs'
+      path: '/chiefs'
+      fullPath: '/chiefs'
+      preLoaderRoute: typeof ChiefsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/': {
       id: '/'
       path: '/'
@@ -337,6 +357,7 @@ declare module '@tanstack/react-router' {
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  ChiefsRoute: ChiefsRoute,
   EmailTestRoute: EmailTestRoute,
   ForbiddenRoute: ForbiddenRoute,
   ForgotPasswordRoute: ForgotPasswordRoute,

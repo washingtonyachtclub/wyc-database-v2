@@ -1,10 +1,10 @@
 import { createFileRoute, Link, redirect, useNavigate } from '@tanstack/react-router'
+import { Sailboat } from 'lucide-react'
 import { useState } from 'react'
-import { useLoginMutation } from '../lib/auth-query-options'
 import { Button } from '../components/ui/button'
 import { Input } from '../components/ui/input'
 import { Label } from '../components/ui/label'
-import { Sailboat } from 'lucide-react'
+import { useLoginMutation } from '../lib/auth-query-options'
 
 export const Route = createFileRoute('/login')({
   validateSearch: (search: Record<string, unknown>) => {
@@ -55,67 +55,68 @@ function LoginPage() {
     <div className="flex min-h-screen items-center justify-center bg-muted px-4 py-12 sm:px-6 lg:px-8">
       <div className="w-full max-w-md">
         <div className="rounded-xl bg-card p-8 shadow-lg space-y-8">
-        <div className="flex flex-col items-center">
-          <Sailboat className="h-12 w-12 text-primary" />
-          <h2 className="mt-4 text-center text-3xl font-bold tracking-tight">
-            WYC Database
-          </h2>
-          <p className="mt-2 text-center text-sm text-muted-foreground">
-            Sign in with your WYC ID and password
-          </p>
-        </div>
-        <form method="POST" className="space-y-6" onSubmit={handleSubmit}>
-          {error && (
-            <div className="rounded-md bg-destructive/10 p-4">
-              <div className="text-sm text-destructive">{error}</div>
-            </div>
-          )}
-          <div className="space-y-4">
-            <div>
-              <Label htmlFor="wyc-number" className="sr-only">
-                WYC Number
-              </Label>
-              <Input
-                id="wyc-number"
-                name="wycNumber"
-                type="text"
-                inputMode="numeric"
-                required
-                autoComplete="username"
-                placeholder="WYC Number"
-                value={wycNumber}
-                onChange={(e) => setWycNumber(e.target.value.replace(/\D/g, ''))}
-                disabled={loginMutation.isPending}
-              />
-            </div>
-            <div>
-              <Label htmlFor="password" className="sr-only">
-                Password
-              </Label>
-              <Input
-                id="password"
-                name="password"
-                type="password"
-                required
-                autoComplete="current-password"
-                placeholder="Password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                disabled={loginMutation.isPending}
-              />
-            </div>
+          <div className="flex flex-col items-center">
+            <Sailboat className="h-12 w-12 text-primary" />
+            <h2 className="mt-4 text-center text-3xl font-bold tracking-tight">WYC Database</h2>
+            <p className="mt-2 text-center text-sm text-muted-foreground">
+              Sign in with your WYC ID and password
+            </p>
           </div>
+          <form method="POST" className="space-y-6" onSubmit={handleSubmit}>
+            {error && (
+              <div className="rounded-md bg-destructive/10 p-4">
+                <div className="text-sm text-destructive">{error}</div>
+              </div>
+            )}
+            <div className="space-y-4">
+              <div>
+                <Label htmlFor="wyc-number" className="sr-only">
+                  WYC Number
+                </Label>
+                <Input
+                  id="wyc-number"
+                  name="wycNumber"
+                  type="text"
+                  inputMode="numeric"
+                  required
+                  autoComplete="username"
+                  placeholder="WYC Number"
+                  value={wycNumber}
+                  onChange={(e) => setWycNumber(e.target.value.replace(/\D/g, ''))}
+                  disabled={loginMutation.isPending}
+                />
+              </div>
+              <div>
+                <Label htmlFor="password" className="sr-only">
+                  Password
+                </Label>
+                <Input
+                  id="password"
+                  name="password"
+                  type="password"
+                  required
+                  autoComplete="current-password"
+                  placeholder="Password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  disabled={loginMutation.isPending}
+                />
+              </div>
+            </div>
 
-          <Button type="submit" disabled={loginMutation.isPending} className="w-full">
-            {loginMutation.isPending ? 'Signing in...' : 'Sign in'}
-          </Button>
+            <Button type="submit" disabled={loginMutation.isPending} className="w-full">
+              {loginMutation.isPending ? 'Signing in...' : 'Sign in'}
+            </Button>
 
-          <div className="text-center">
-            <Link to="/forgot-password" className="text-sm text-muted-foreground hover:text-primary">
-              Forgot your password or WYC number?
-            </Link>
-          </div>
-        </form>
+            <div className="text-center">
+              <Link
+                to="/forgot-password"
+                className="text-sm text-muted-foreground hover:text-primary"
+              >
+                Forgot your password or WYC ID?
+              </Link>
+            </div>
+          </form>
         </div>
       </div>
     </div>
