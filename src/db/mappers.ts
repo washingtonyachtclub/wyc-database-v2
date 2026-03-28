@@ -1,5 +1,6 @@
 import type { CheckoutQueryRow } from './checkout-queries'
 import type { ChiefQueryRow } from './chief-queries'
+import type { HonoraryQueryRow } from './honorary-queries'
 import type { PrivilegeQueryRow } from './privilege-queries'
 import type { LessonQueryRow } from './lesson-queries'
 import type { LessonInsert, RichLesson } from './lesson-schema'
@@ -108,6 +109,16 @@ export function toChiefRow(row: ChiefQueryRow) {
     memberName: fullName(row.memberFirst, row.memberLast),
     positionId: num(row.positionId),
     positionName: str(row.positionName),
+  }
+}
+
+export function toHonoraryRow(row: HonoraryQueryRow) {
+  return {
+    officerIndex: row.officerIndex,
+    wycNumber: num(row.wycNumber),
+    memberName: fullName(row.memberFirst, row.memberLast),
+    expireQtr: str(row.expireQtrSchoolText),
+    expireQtrIndex: num(row.expireQtrIndex),
   }
 }
 

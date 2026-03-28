@@ -1,0 +1,34 @@
+import { queryOptions, useMutation, useQueryClient } from '@tanstack/react-query'
+import { createOfficer } from './officers-server-fns'
+import { deleteHonorary, getHonoraryTable } from './honorary-server-fns'
+
+const HONORARY_POSITION = 1030
+
+export const getHonoraryQueryOptions = () =>
+  queryOptions({
+    queryKey: ['honorary'],
+    queryFn: getHonoraryTable,
+  })
+
+export function useCreateHonoraryMutation(opts: { onSuccess: () => void; onClose: () => void }) {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: (member: number) =>
+      createOfficer({ data: { member, position: HONORARY_POSITION } }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['honorary'] })
+      opts.onSuccess()
+      opts.onClose()
+    },
+  })
+}
+
+export function useDeleteHonoraryMutation() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: deleteHonorary,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['honorary'] })
+    },
+  })
+}

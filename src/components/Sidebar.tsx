@@ -14,6 +14,7 @@ export default function Sidebar() {
     { path: '/officers' as const, label: 'Officers & Positions' },
     { path: '/chiefs' as const, label: 'Chiefs' },
     { path: '/privileges' as const, label: 'Privileges' },
+    { path: '/honorary' as const, label: 'Honorary' },
   ]
 
   const toolsItems = [
