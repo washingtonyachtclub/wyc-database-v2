@@ -4,7 +4,6 @@ import { Link, useLocation, useRouter } from '@tanstack/react-router'
 import { useCurrentUser, useLogoutMutation } from '../lib/auth-query-options'
 import { Button } from './ui/button'
 import { DevPrivilegeEmulator } from './DevPrivilegeEmulator'
-import { Sailboat } from 'lucide-react'
 
 export default function Header() {
   const router = useRouter()
@@ -37,7 +36,7 @@ export default function Header() {
         <div className="flex h-16 items-center justify-between">
           <div className="flex items-center">
             <Link to="/" className="flex items-center gap-2 text-xl font-bold">
-              <Sailboat className="h-6 w-6 text-primary" />
+              <img src="/favicon.png" alt="WYC" className="h-6 w-6" />
               WYC Database
             </Link>
             {import.meta.env.DEV && dbName && (

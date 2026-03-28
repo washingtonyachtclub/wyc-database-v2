@@ -1,5 +1,4 @@
 import { createFileRoute, Link, redirect, useNavigate } from '@tanstack/react-router'
-import { Sailboat } from 'lucide-react'
 import { useState } from 'react'
 import { Button } from '../components/ui/button'
 import { Input } from '../components/ui/input'
@@ -56,7 +55,7 @@ function LoginPage() {
       <div className="w-full max-w-md">
         <div className="rounded-xl bg-card p-8 shadow-lg space-y-8">
           <div className="flex flex-col items-center">
-            <Sailboat className="h-12 w-12 text-primary" />
+            <img src="/favicon.png" alt="WYC" className="h-12 w-12" />
             <h2 className="mt-4 text-center text-3xl font-bold tracking-tight">WYC Database</h2>
             <p className="mt-2 text-center text-sm text-muted-foreground">
               Sign in with your WYC ID and password
@@ -71,7 +70,7 @@ function LoginPage() {
             <div className="space-y-4">
               <div>
                 <Label htmlFor="wyc-number" className="sr-only">
-                  WYC Number
+                  WYC ID
                 </Label>
                 <Input
                   id="wyc-number"
@@ -80,7 +79,7 @@ function LoginPage() {
                   inputMode="numeric"
                   required
                   autoComplete="username"
-                  placeholder="WYC Number"
+                  placeholder="WYC ID"
                   value={wycNumber}
                   onChange={(e) => setWycNumber(e.target.value.replace(/\D/g, ''))}
                   disabled={loginMutation.isPending}

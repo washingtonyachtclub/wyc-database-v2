@@ -1,7 +1,6 @@
 import { createFileRoute, Link } from '@tanstack/react-router'
 import { useMutation } from '@tanstack/react-query'
 import { useState } from 'react'
-import { Sailboat } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -21,7 +20,7 @@ function ForgotPasswordPage() {
       <div className="w-full max-w-md">
         <div className="rounded-xl bg-card p-8 shadow-lg space-y-8">
           <div className="flex flex-col items-center">
-            <Sailboat className="h-12 w-12 text-primary" />
+            <img src="/favicon.png" alt="WYC" className="h-12 w-12" />
             <h2 className="mt-4 text-center text-3xl font-bold tracking-tight">
               WYC Database
             </h2>
