@@ -8,6 +8,7 @@ import {
 import Header from '../components/Header'
 import Sidebar from '../components/Sidebar'
 import { TanStackDevTools } from '../components/TanStackDevTools'
+import { TooltipProvider } from '../components/ui/tooltip'
 
 import appCss from '../styles.css?url'
 
@@ -78,15 +79,17 @@ function RootDocument({ children }: { children: React.ReactNode }) {
         <HeadContent />
       </head>
       <body>
-        <Header />
-        {!isBarePage && (
-          <div className="flex">
-            <Sidebar />
-            <main className="flex-1">{children}</main>
-          </div>
-        )}
-        {isBarePage && children}
-        <TanStackDevTools />
+        <TooltipProvider delayDuration={0}>
+          <Header />
+          {!isBarePage && (
+            <div className="flex">
+              <Sidebar />
+              <main className="flex-1">{children}</main>
+            </div>
+          )}
+          {isBarePage && children}
+          <TanStackDevTools />
+        </TooltipProvider>
         <Scripts />
       </body>
     </html>

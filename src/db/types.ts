@@ -74,6 +74,7 @@ export type ChiefTableRow = {
   chiefRoles: ChiefRole[]
 }
 
+
 export type ClassTypeRow = typeof classType.$inferSelect
 export type ClassType = {
   index: number

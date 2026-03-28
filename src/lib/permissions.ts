@@ -18,6 +18,8 @@ export const routePermissions = {
   '/ratings/$ratingIndex': ['rtgs'],
   '/chiefs': ['db'],
   '/officers': ['db'],
+  '/privileges': ['db'],
+  '/honorary': ['db'],
   '/membership-processing': ['db'],
   '/set-password': [],
   '/email-test': ['db'],

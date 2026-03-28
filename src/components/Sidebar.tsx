@@ -13,6 +13,7 @@ export default function Sidebar() {
     { path: '/ratings' as const, label: 'Ratings' },
     { path: '/officers' as const, label: 'Officers & Positions' },
     { path: '/chiefs' as const, label: 'Chiefs' },
+    { path: '/privileges' as const, label: 'Privileges' },
   ]
 
   const toolsItems = [
