@@ -20,7 +20,7 @@ import {
 } from '@/lib/members-query-options'
 import { useQuery, useSuspenseQuery } from '@tanstack/react-query'
 import { createFileRoute, redirect } from '@tanstack/react-router'
-import { useMemo, useState } from 'react'
+import { Suspense, useMemo, useState } from 'react'
 import { useCurrentUser } from '../lib/auth-query-options'
 import { hasPrivilege } from '../lib/permissions'
 
@@ -50,6 +50,25 @@ function useTwelveMonthsAgo() {
   }, [])
 }
 
+function ShowAllToggle({
+  showAll,
+  onToggle,
+}: {
+  showAll: boolean
+  onToggle: (value: boolean) => void
+}) {
+  return (
+    <Button
+      variant="ghost"
+      size="sm"
+      className="text-sm h-auto py-0.5 px-2"
+      onClick={() => onToggle(!showAll)}
+    >
+      {showAll ? 'Past 12 Months' : 'Show All'}
+    </Button>
+  )
+}
+
 function MemberDetailPage() {
   const { wycNumber } = Route.useParams()
   const { data: member } = useSuspenseQuery(getMemberByIdQueryOptions(Number(wycNumber)))
@@ -57,6 +76,10 @@ function MemberDetailPage() {
   const hasDb = hasPrivilege(privileges, ['db'])
   const since = useTwelveMonthsAgo()
   const [isEditing, setIsEditing] = useState(false)
+  const [showAllRatingsGiven, setShowAllRatingsGiven] = useState(false)
+  const [showAllLessonsTaught, setShowAllLessonsTaught] = useState(false)
+  const [showAllLessonsSignedUp, setShowAllLessonsSignedUp] = useState(false)
+  const [showAllCheckouts, setShowAllCheckouts] = useState(false)
 
   if (!member) {
     return (
@@ -85,16 +108,36 @@ function MemberDetailPage() {
       )}
 
       <MemberRatingsSection wycNumber={member.wycNumber} />
-      <MemberRatingsGivenSection wycNumber={member.wycNumber} since={since} />
-      <MemberLessonsSection
-        title="Lessons Taught (Past 12 Months)"
-        queryOptions={getMemberLessonsTaughtQueryOptions(member.wycNumber, since)}
-      />
-      <MemberLessonsSection
-        title="Lessons Signed Up For (Past 12 Months)"
-        queryOptions={getMemberLessonsSignedUpQueryOptions(member.wycNumber, since)}
-      />
-      <MemberCheckoutsSection wycNumber={member.wycNumber} since={since} />
+      <Suspense fallback={<p className="text-muted-foreground">Loading...</p>}>
+        <MemberRatingsGivenSection
+          wycNumber={member.wycNumber}
+          since={showAllRatingsGiven ? undefined : since}
+          title={`Ratings Given (${showAllRatingsGiven ? 'All Time' : 'Past 12 Months'})`}
+          action={<ShowAllToggle showAll={showAllRatingsGiven} onToggle={setShowAllRatingsGiven} />}
+        />
+      </Suspense>
+      <Suspense fallback={<p className="text-muted-foreground">Loading...</p>}>
+        <MemberLessonsSection
+          title={`Lessons Taught (${showAllLessonsTaught ? 'All Time' : 'Past 12 Months'})`}
+          queryOptions={getMemberLessonsTaughtQueryOptions(member.wycNumber, showAllLessonsTaught ? undefined : since)}
+          action={<ShowAllToggle showAll={showAllLessonsTaught} onToggle={setShowAllLessonsTaught} />}
+        />
+      </Suspense>
+      <Suspense fallback={<p className="text-muted-foreground">Loading...</p>}>
+        <MemberLessonsSection
+          title={`Lessons Signed Up For (${showAllLessonsSignedUp ? 'All Time' : 'Past 12 Months'})`}
+          queryOptions={getMemberLessonsSignedUpQueryOptions(member.wycNumber, showAllLessonsSignedUp ? undefined : since)}
+          action={<ShowAllToggle showAll={showAllLessonsSignedUp} onToggle={setShowAllLessonsSignedUp} />}
+        />
+      </Suspense>
+      <Suspense fallback={<p className="text-muted-foreground">Loading...</p>}>
+        <MemberCheckoutsSection
+          wycNumber={member.wycNumber}
+          since={showAllCheckouts ? undefined : since}
+          title={`Boat Checkouts (${showAllCheckouts ? 'All Time' : 'Past 12 Months'})`}
+          action={<ShowAllToggle showAll={showAllCheckouts} onToggle={setShowAllCheckouts} />}
+        />
+      </Suspense>
       <MemberPositionsSection wycNumber={member.wycNumber} />
     </div>
   )

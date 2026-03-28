@@ -1,3 +1,4 @@
+import type { ReactNode } from 'react'
 import {
   getMemberLessonsSignedUpQueryOptions,
   getMemberLessonsTaughtQueryOptions,
@@ -11,15 +12,20 @@ type LessonQueryOptions =
 export function MemberLessonsSection({
   title,
   queryOptions,
+  action,
 }: {
   title: string
   queryOptions: LessonQueryOptions
+  action?: ReactNode
 }) {
   const { data: lessons } = useSuspenseQuery(queryOptions)
 
   return (
     <div>
-      <h2 className="text-xl font-semibold mb-4">{title}</h2>
+      <div className="flex items-center gap-2 mb-4">
+        <h2 className="text-xl font-semibold">{title}</h2>
+        {action}
+      </div>
       {lessons.length === 0 ? (
         <p className="text-muted-foreground">None found.</p>
       ) : (

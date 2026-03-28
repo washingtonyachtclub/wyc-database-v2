@@ -8,6 +8,7 @@
 - on members/{id} for the past 12 months add button to show all
 
 # Less Important
+- backfill more calendarDates for older lessons
 - add a higher level db permission? For managing who gets permissions
 - membership processing more automation
   - use serverfns instead of raw sql copy

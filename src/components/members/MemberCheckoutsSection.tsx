@@ -1,18 +1,26 @@
+import type { ReactNode } from 'react'
 import { getMemberCheckoutsQueryOptions } from '@/lib/checkouts-query-options'
 import { useSuspenseQuery } from '@tanstack/react-query'
 
 export function MemberCheckoutsSection({
   wycNumber,
   since,
+  title,
+  action,
 }: {
   wycNumber: number
   since?: string
+  title: string
+  action?: ReactNode
 }) {
   const { data: checkouts } = useSuspenseQuery(getMemberCheckoutsQueryOptions(wycNumber, since))
 
   return (
     <div>
-      <h2 className="text-xl font-semibold mb-4">Boat Checkouts (Past 12 Months)</h2>
+      <div className="flex items-center gap-2 mb-4">
+        <h2 className="text-xl font-semibold">{title}</h2>
+        {action}
+      </div>
       {checkouts.length === 0 ? (
         <p className="text-muted-foreground">No checkouts found.</p>
       ) : (

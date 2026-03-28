@@ -1,3 +1,4 @@
+import type { ReactNode } from 'react'
 import { NOVICE_DEGREE, NOVICE_EXPIRY_MONTHS } from '@/db/constants'
 import type { MemberRating } from '@/db/types'
 import { getMemberRatingsGivenQueryOptions } from '@/lib/members-query-options'
@@ -28,9 +29,13 @@ function getExpiryInfo(rating: MemberRating): string | null {
 export function MemberRatingsGivenSection({
   wycNumber,
   since,
+  title,
+  action,
 }: {
   wycNumber: number
   since?: string
+  title: string
+  action?: ReactNode
 }) {
   const { data: ratings } = useSuspenseQuery(
     getMemberRatingsGivenQueryOptions(wycNumber, since),
@@ -38,7 +43,10 @@ export function MemberRatingsGivenSection({
 
   return (
     <div>
-      <h2 className="text-xl font-semibold mb-4">Ratings Given (Past 12 Months)</h2>
+      <div className="flex items-center gap-2 mb-4">
+        <h2 className="text-xl font-semibold">{title}</h2>
+        {action}
+      </div>
       {ratings.length === 0 ? (
         <p className="text-muted-foreground">No ratings given.</p>
       ) : (
