@@ -1,14 +1,14 @@
 # MVP
 - password reset
-  - forgot ID/password on login page
-  - email sending
+  - email sending (waiting on DNS propagation)
 - figure out deployment and url / redirecting for new site
 - support table pages (especially ratings)
 - change icon of the tab text that displays on browser
-- data cleanup from check-membership script 
+- data cleanup from check-membership script
 - add a higher level db permission? For managing who gets permissions
 - lesson signups
   - add unique constraint to lessons table
+- on members/{id} for the past 12 months add button to show all
 
 # Less Important
 - membership processing more automation
@@ -21,9 +21,9 @@
   - automated email reminder for lesson_quarter
 - easily review out_to_sea statuses (or re-think its usage)
 - track memberships more precisely (by every renewal instance rather than overwriting expireQtr)
-- UI design overhaul
 - member combobox sort by frequency / MRU of some kind
 - replace old lesson sign-up flow
   - involves sending the emails, wiring up to main website
 - test UX on mobile
 - fix overall slowness
+- IMA plus one matching

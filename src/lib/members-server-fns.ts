@@ -64,11 +64,9 @@ export const getMembersTable = createServerFn({ method: 'GET' })
         data: members,
         totalCount,
       }
-    } catch (error: any) {
-      console.error('Database query error:', error)
-      const errorMessage = error?.message || error?.toString() || 'Unknown database error'
-      const errorCode = error?.code || 'NO_CODE'
-      throw new Error(`Failed to fetch members: ${errorMessage} (Code: ${errorCode})`)
+    } catch (error) {
+      console.error('Failed to fetch members:', error)
+      throw new Error('Failed to fetch members')
     }
   })
 
@@ -138,19 +136,17 @@ export const createMember = createServerFn({ method: 'POST' })
         .$returningId()
       return { success: true, id: newMember, data }
     } catch (error: any) {
-      let errorMessage = 'Failed to add member'
+      console.error('Failed to create member:', error)
 
       if (error?.code === 'ER_NO_DEFAULT_FOR_FIELD') {
-        errorMessage = `Missing required field: ${error.message}`
+        throw new Error('A required field is missing')
       } else if (error?.code === 'ER_DATA_TOO_LONG') {
-        errorMessage = `Data too long for one or more fields. Please check your input.`
+        throw new Error('Data too long for one or more fields. Please check your input.')
       } else if (error?.code === 'ER_BAD_NULL_ERROR') {
-        errorMessage = `Required field is null: ${error.message}`
-      } else if (error?.message) {
-        errorMessage = `Database error: ${error.message}`
+        throw new Error('A required field is missing')
       }
 
-      throw new Error(errorMessage)
+      throw new Error('Failed to add member')
     }
   })
 
