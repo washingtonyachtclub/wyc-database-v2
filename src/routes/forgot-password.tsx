@@ -24,13 +24,21 @@ function ForgotPasswordPage() {
             <h2 className="mt-4 text-center text-3xl font-bold tracking-tight">
               WYC Database
             </h2>
+            <p className="mt-4 text-center text-sm text-muted-foreground">
+              Password reset is not yet available. Please contact the webmaster for assistance.
+            </p>
           </div>
 
-          <LookupSection />
-
-          <div className="border-t" />
-
-          <ResetSection />
+          <p className="text-center text-sm text-muted-foreground">
+            Forgot which email you used? Email{' '}
+            <a
+              href="mailto:contact@washingtonyachtclub.org"
+              className="text-primary hover:underline"
+            >
+              contact@washingtonyachtclub.org
+            </a>{' '}
+            for help.
+          </p>
 
           <div className="text-center">
             <Link to="/login" className="text-sm text-muted-foreground hover:text-primary">

@@ -107,6 +107,7 @@ function LoginPage() {
               {loginMutation.isPending ? 'Signing in...' : 'Sign in'}
             </Button>
 
+            {/* TODO: restore when email (Resend) is working
             <div className="text-center">
               <Link
                 to="/forgot-password"
@@ -115,6 +116,7 @@ function LoginPage() {
                 Forgot your password or WYC ID?
               </Link>
             </div>
+            */}
           </form>
         </div>
       </div>
