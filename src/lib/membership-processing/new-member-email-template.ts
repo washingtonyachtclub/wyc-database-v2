@@ -1,6 +1,4 @@
-import type { Member } from '@/db/types'
-
-export function newMemberEmail(member: Omit<Member, 'joinDate'>, password: string): string {
+export function newMemberEmail(member: { first: string; last: string; wycNumber: number }, password: string): string {
   return `Hello ${member.first} ${member.last},
 
 Welcome to the WYC!

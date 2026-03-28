@@ -5,7 +5,7 @@ import type { PrivilegeQueryRow } from './privilege-queries'
 import type { LessonQueryRow } from './lesson-queries'
 import type { LessonInsert, RichLesson } from './lesson-schema'
 import type { MemberQueryRow } from './member-queries'
-import type { AddMemberForm } from './member-schema'
+import type { MemberProfileUpdate } from './member-schema'
 import type { OfficerQueryRow } from './officer-queries'
 import type { RatingQueryRow } from './rating-queries'
 import { wycDatabase } from './schema'
@@ -50,7 +50,7 @@ export function toMemberTableRow(row: MemberQueryRow): MemberTableRow {
   }
 }
 
-export function fromMemberInsert(data: AddMemberForm): typeof wycDatabase.$inferInsert {
+export function fromMemberInsert(data: MemberProfileUpdate): typeof wycDatabase.$inferInsert {
   return {
     ...data,
     outToSea: data.outToSea ? 1 : 0,

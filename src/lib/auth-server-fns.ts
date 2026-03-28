@@ -10,7 +10,6 @@ import {
   wycDatabase,
 } from 'src/db/schema'
 import { hashPasswordArgon2, verifyPasswordDual } from './auth'
-import { requirePrivilege } from './auth-middleware'
 import { hasPrivilege, type Privilege } from './permissions'
 import { useAppSession, type SessionData } from './session'
 
@@ -169,13 +168,6 @@ export const loginServerFn = createServerFn({ method: 'POST' })
         message: 'An error occurred during login',
       } satisfies LoginResponse
     }
-  })
-
-export const hashPasswordArgon2ServerFn = createServerFn({ method: 'POST' })
-  .inputValidator((input: string) => input)
-  .handler(async ({ data }) => {
-    await requirePrivilege('db')
-    return hashPasswordArgon2(data)
   })
 
 /**

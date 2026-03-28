@@ -1,12 +1,7 @@
-import { getCurrentQuarterQueryOptions } from '@/lib/lessons-query-options'
 import { useQuery, useSuspenseQuery } from '@tanstack/react-query'
 import { createFileRoute, useNavigate } from '@tanstack/react-router'
 import { getCoreRowModel, getSortedRowModel, useReactTable } from '@tanstack/react-table'
-import { useState } from 'react'
 import { z } from 'zod'
-import { AddMemberModal } from '../components/members/AddMemberModal'
-import { Button } from '../components/ui/button'
-import { Plus } from 'lucide-react'
 import { columns } from '../components/members/columns'
 import { FilterControls } from '../components/members/FilterControls'
 import { PaginationControls } from '../components/members/PaginationControls'
@@ -94,12 +89,9 @@ function App() {
   const { data: categories = [] } = useQuery(getCategoriesQueryOptions())
   const { data: quarters = [] } = useQuery(getQuartersQueryOptions())
 
-  const { data: currentQuarter = 1 } = useQuery(getCurrentQuarterQueryOptions())
   const { data: membersResponse } = useSuspenseQuery(
     getMembersQueryOptions(pageIndex, pageSize, filters, sorting),
   )
-
-  const [isAddMemberModalOpen, setIsAddMemberModalOpen] = useState(false)
 
   const members = membersResponse.data
   const totalCount = membersResponse.totalCount
@@ -186,10 +178,6 @@ function App() {
   return (
     <div className="p-4">
       <h2 className="text-2xl font-bold mb-4">WYC Members</h2>
-      <Button onClick={() => setIsAddMemberModalOpen(true)} className="mb-4">
-        <Plus className="h-4 w-4" />
-        Add Member
-      </Button>
       <FilterControls
         wycId={wycId}
         name={name}
@@ -202,15 +190,6 @@ function App() {
       />
       <PaginationControls table={table} pageCount={pageCount} totalCount={totalCount} />
       <DataTable table={table} />
-      {isAddMemberModalOpen && (
-        <AddMemberModal
-          currentQuarter={currentQuarter}
-          onClose={() => setIsAddMemberModalOpen(false)}
-          onSuccess={() => {
-            alert('Member added successfully!')
-          }}
-        />
-      )}
       <PaginationControls table={table} pageCount={pageCount} totalCount={totalCount} />
     </div>
   )

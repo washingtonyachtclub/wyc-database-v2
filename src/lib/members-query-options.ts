@@ -1,7 +1,6 @@
 import { queryOptions, useMutation, useQueryClient } from '@tanstack/react-query'
 import type { MemberFilters } from '../db/member-filter-types'
 import {
-  createMember,
   getAllMembersLite,
   getCategories,
   getMemberById,
@@ -88,18 +87,6 @@ export const getAllMembersLiteQueryOptions = () =>
     queryFn: getAllMembersLite,
     staleTime: 5 * 60 * 1000,
   })
-
-export const useCreateMemberMutation = (opts: { onSuccess: () => void; onClose: () => void }) => {
-  const queryClient = useQueryClient()
-  return useMutation({
-    mutationFn: createMember,
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['members'] })
-      opts.onSuccess()
-      opts.onClose()
-    },
-  })
-}
 
 export const useUpdateMemberMutation = (opts: { onSuccess: () => void; onClose: () => void }) => {
   const queryClient = useQueryClient()

@@ -10,7 +10,7 @@ import {
 } from 'src/db/mappers'
 import type { MemberFilters } from 'src/db/member-filter-types'
 import { baseMemberQuery, memberSortColumns, withMemberFilters } from 'src/db/member-queries'
-import { AddMemberForm, MemberProfileUpdate } from 'src/db/member-schema'
+import { CreateMember, MemberProfileUpdate } from 'src/db/member-schema'
 import { withPagination, withSorting } from 'src/db/query-helpers'
 import { baseMemberRatingsQuery, baseRatingsGivenQuery } from 'src/db/rating-queries'
 import { memcat, quarters, wycDatabase } from 'src/db/schema'
@@ -21,6 +21,7 @@ import {
   requireSelfOrPrivilege,
   sessionHasPrivilege,
 } from '../lib/auth-middleware'
+import { hashPasswordArgon2, hashPasswordLegacy } from './auth'
 
 export const getMembersTable = createServerFn({ method: 'GET' })
   .inputValidator(
@@ -123,35 +124,38 @@ export const getQuarters = createServerFn({ method: 'GET' }).handler(async () =>
 })
 
 export const createMember = createServerFn({ method: 'POST' })
-  .inputValidator((data: AddMemberForm) => data)
+  .inputValidator((data: CreateMember) => data)
   .handler(async ({ data }) => {
     await requirePrivilege('db')
     try {
-      const newMember = await db
-        .insert(wycDatabase)
-        .values({
-          ...fromMemberInsert(data),
-          wycNumber: await getNextWycNumber(),
-        })
-        .$returningId()
-      return { success: true, id: newMember, data }
+      const { password, ...memberData } = data
+      const wycNumber = await getNextWycNumber()
+      const argon2Hash = await hashPasswordArgon2(password)
+      const legacyHash = hashPasswordLegacy(password)
+      await db.insert(wycDatabase).values({
+        ...fromMemberInsert(memberData),
+        wycNumber,
+        password: legacyHash,
+        passwordArgon2: argon2Hash,
+      })
+      return { success: true as const, wycNumber }
     } catch (error: any) {
       console.error('Failed to create member:', error)
 
       if (error?.code === 'ER_NO_DEFAULT_FOR_FIELD') {
         throw new Error('A required field is missing')
       } else if (error?.code === 'ER_DATA_TOO_LONG') {
-        throw new Error('Data too long for one or more fields. Please check your input.')
+        throw new Error('Data too long for one or more fields')
       } else if (error?.code === 'ER_BAD_NULL_ERROR') {
         throw new Error('A required field is missing')
       }
 
-      throw new Error('Failed to add member')
+      throw new Error('Failed to create member')
     }
   })
 
 export const updateMember = createServerFn({ method: 'POST' })
-  .inputValidator((input: { wycNumber: number } & AddMemberForm) => ({
+  .inputValidator((input: { wycNumber: number } & MemberProfileUpdate) => ({
     ...input,
     wycNumber: Number(input.wycNumber),
   }))
@@ -161,6 +165,25 @@ export const updateMember = createServerFn({ method: 'POST' })
     const row = fromMemberInsert(rest)
     await db.update(wycDatabase).set(row).where(eq(wycDatabase.wycNumber, wycNumber))
     return { success: true, wycNumber }
+  })
+
+export const renewMember = createServerFn({ method: 'POST' })
+  .inputValidator((input: { wycNumber: number; expireQtrIndex: number }) => ({
+    wycNumber: Number(input.wycNumber),
+    expireQtrIndex: Number(input.expireQtrIndex),
+  }))
+  .handler(async ({ data }) => {
+    await requirePrivilege('db')
+    try {
+      await db
+        .update(wycDatabase)
+        .set({ expireQtrIndex: data.expireQtrIndex })
+        .where(eq(wycDatabase.wycNumber, data.wycNumber))
+      return { success: true as const, wycNumber: data.wycNumber }
+    } catch (error: any) {
+      console.error('Failed to renew member:', error)
+      throw new Error('Failed to renew member')
+    }
   })
 
 export const getAllMembersLite = createServerFn({ method: 'GET' }).handler(async () => {

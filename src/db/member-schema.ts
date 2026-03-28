@@ -1,6 +1,6 @@
 import { z } from 'zod'
 
-export const AddMemberFormSchema = z.object({
+const MemberFieldsSchema = z.object({
   last: z.string().min(1, 'Last name is required'),
   first: z.string().min(1, 'First name is required'),
   streetAddress: z.string(),
@@ -16,6 +16,10 @@ export const AddMemberFormSchema = z.object({
   outToSea: z.boolean(),
 })
 
-export type AddMemberForm = z.infer<typeof AddMemberFormSchema>
-export const MemberProfileUpdateSchema = AddMemberFormSchema
+export const CreateMemberSchema = MemberFieldsSchema.extend({
+  password: z.string().min(1, 'Password is required'),
+})
+export type CreateMember = z.infer<typeof CreateMemberSchema>
+
+export const MemberProfileUpdateSchema = MemberFieldsSchema
 export type MemberProfileUpdate = z.infer<typeof MemberProfileUpdateSchema>

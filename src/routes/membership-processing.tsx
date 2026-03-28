@@ -3,21 +3,16 @@ import { CopyBox } from '@/components/ui/CopyBox'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { isMembershipActive } from '@/db/membership-utils'
-import { Member } from '@/db/types'
-import { hashPasswordArgon2ServerFn } from '@/lib/auth-server-fns'
+import type { MemberProfileUpdate } from '@/db/member-schema'
 import { getCurrentQuarterQueryOptions } from '@/lib/lessons-query-options'
 import {
   getAllMembersLiteQueryOptions,
   getQuartersQueryOptions,
 } from '@/lib/members-query-options'
-import { getDatabaseName, getNextWycNumber } from '@/lib/members-server-fns'
+import { createMember, getDatabaseName, renewMember } from '@/lib/members-server-fns'
 import { newMemberEmail } from '@/lib/membership-processing/new-member-email-template'
 import { generatePassphrase } from '@/lib/generate-passphrase'
 import { returningMemberEmail } from '@/lib/membership-processing/returning-member-email-template'
-import {
-  newMemberSQLQuery,
-  returningMemberSQLQuery,
-} from '@/lib/membership-processing/sql-queries'
 import { useQuery } from '@tanstack/react-query'
 import { createFileRoute } from '@tanstack/react-router'
 import { requirePrivilegeForRoute } from '../lib/route-guards'
@@ -31,7 +26,6 @@ export const Route = createFileRoute('/membership-processing')({
   component: MembershipProcessingPage,
 })
 
-type NewMember = Omit<Member, 'joinDate'>
 export type OldMember = {
   wycNumber: number
   newExpireQtr: number
@@ -40,7 +34,7 @@ export type OldMember = {
   email: string
 }
 type ParseResult =
-  | { kind: 'NewMember'; member: NewMember }
+  | { kind: 'NewMember'; member: MemberProfileUpdate }
   | { kind: 'OldMember'; member: OldMember }
   | { kind: 'Error'; error: ParseError }
 
@@ -66,12 +60,18 @@ type PageState =
   | { kind: 'Initial' }
   | {
       kind: 'NewMember'
-      member: NewMember
+      member: MemberProfileUpdate
       password: string
-      argon2Hash: string
       duplicates: DuplicateMatch[]
     }
+  | {
+      kind: 'NewMemberCreated'
+      member: MemberProfileUpdate
+      password: string
+      wycNumber: number
+    }
   | { kind: 'OldMember'; member: OldMember }
+  | { kind: 'OldMemberRenewed'; member: OldMember }
   | { kind: 'Error'; error: ParseError }
 
 const CATEGORY_VALUES = ['Student', 'Employee/Retiree', 'Neither'] as const
@@ -192,7 +192,7 @@ function MembershipProcessingPage() {
     handleProcess(newInput)
   }
 
-  function parseInput(input: string, nextWycNumber: number, quartersData: QuarterRow[]): ParseResult {
+  function parseInput(input: string, quartersData: QuarterRow[]): ParseResult {
     const inputRow = Papa.parse<string[]>(input, { header: false }).data[0]
 
     const get = (key: string) => {
@@ -330,21 +330,20 @@ function MembershipProcessingPage() {
       return {
         kind: 'NewMember',
         member: {
-          last: last,
-          first: first,
+          last,
+          first,
           streetAddress: [addressLine1, addressLine2].filter(Boolean).join(' '),
-          city: city,
-          state: state,
-          zipCode: zipCode,
-          phone1: phone1,
-          phone2: phone2,
-          email: email,
+          city,
+          state,
+          zipCode,
+          phone1,
+          phone2,
+          email,
           categoryId: extractCategoryID(category),
-          expireQtrIndex: expireQtrIndex,
+          expireQtrIndex,
           studentId: null,
           outToSea: false,
-          wycNumber: nextWycNumber,
-        },
+        } satisfies MemberProfileUpdate,
       }
     }
   }
@@ -362,8 +361,7 @@ function MembershipProcessingPage() {
       })
       return
     }
-    const nextWycNumber = await getNextWycNumber()
-    const result = parseInput(overrideInput ?? input, nextWycNumber, quarters ?? [])
+    const result = parseInput(overrideInput ?? input, quarters ?? [])
     if (result.kind === 'NewMember') {
       const duplicates = findDuplicates(
         result.member.first,
@@ -371,10 +369,47 @@ function MembershipProcessingPage() {
         result.member.email,
       )
       const password = generatePassphrase()
-      const argon2Hash = await hashPasswordArgon2ServerFn({ data: password })
-      setMemberState({ ...result, password, argon2Hash, duplicates })
+      setMemberState({ ...result, password, duplicates })
     } else {
       setMemberState(result)
+    }
+  }
+
+  async function handleCreateMember(): Promise<void> {
+    if (memberState.kind !== 'NewMember') return
+    try {
+      const result = await createMember({
+        data: { ...memberState.member, password: memberState.password },
+      })
+      setMemberState({
+        kind: 'NewMemberCreated',
+        member: memberState.member,
+        password: memberState.password,
+        wycNumber: result.wycNumber,
+      })
+    } catch (error: any) {
+      setMemberState({
+        kind: 'Error',
+        error: { code: 'INVALID_FIELD', message: error.message ?? 'Failed to create member' },
+      })
+    }
+  }
+
+  async function handleRenewMember(): Promise<void> {
+    if (memberState.kind !== 'OldMember') return
+    try {
+      await renewMember({
+        data: {
+          wycNumber: memberState.member.wycNumber,
+          expireQtrIndex: memberState.member.newExpireQtr,
+        },
+      })
+      setMemberState({ kind: 'OldMemberRenewed', member: memberState.member })
+    } catch (error: any) {
+      setMemberState({
+        kind: 'Error',
+        error: { code: 'INVALID_FIELD', message: error.message ?? 'Failed to renew member' },
+      })
     }
   }
 
@@ -447,23 +482,29 @@ function MembershipProcessingPage() {
                 <dd>{String(value)}</dd>
               </Fragment>
             ))}
+            <dt className="font-semibold text-right">password:</dt>
+            <dd>{memberState.password}</dd>
           </dl>
+          <Button className="mt-4" onClick={handleCreateMember}>Create Member</Button>
+        </div>
+      )}
+      {memberState.kind === 'NewMemberCreated' && (
+        <div className="mt-4">
+          <p className="text-green-600 font-semibold">
+            Member created — WYC #{memberState.wycNumber}
+          </p>
           <CopyBox text={memberState.member.email} />
           <CopyBox
-            text={newMemberEmail(memberState.member, memberState.password)}
-          />
-          <CopyBox
-            text={newMemberSQLQuery(
-              memberState.member,
+            text={newMemberEmail(
+              { ...memberState.member, wycNumber: memberState.wycNumber },
               memberState.password,
-              memberState.argon2Hash,
             )}
           />
         </div>
       )}
       {memberState.kind === 'OldMember' && (
         <div className="mt-4">
-          <h3 className="font-semibold">Old Member</h3>
+          <h3 className="font-semibold">Returning Member</h3>
           <dl className="grid grid-cols-[auto_1fr] gap-x-4">
             {Object.entries(memberState.member).map(([key, value]) => (
               <Fragment key={key}>
@@ -472,6 +513,14 @@ function MembershipProcessingPage() {
               </Fragment>
             ))}
           </dl>
+          <Button className="mt-4" onClick={handleRenewMember}>Renew Membership</Button>
+        </div>
+      )}
+      {memberState.kind === 'OldMemberRenewed' && (
+        <div className="mt-4">
+          <p className="text-green-600 font-semibold">
+            Membership renewed for WYC #{memberState.member.wycNumber}
+          </p>
           <CopyBox text={memberState.member.email} />
           <CopyBox
             text={returningMemberEmail(
@@ -479,12 +528,6 @@ function MembershipProcessingPage() {
               memberState.member.last,
               memberState.member.wycNumber,
               getSchoolText(memberState.member.newExpireQtr, quarters ?? []),
-            )}
-          />
-          <CopyBox
-            text={returningMemberSQLQuery(
-              memberState.member.wycNumber,
-              memberState.member.newExpireQtr,
             )}
           />
         </div>

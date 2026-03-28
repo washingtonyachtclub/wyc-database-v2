@@ -13,6 +13,7 @@
 - lesson signups
   - add unique constraint to lessons table
 - backfill more calendarDates for older lessons (prompt in scripts folder)
+- add "contact webmaster with message, time, and date of error" on errors
 
 # Less Important
 - better ratings filtering (find all members with *at least* X rating, more complex logic like ANDs and ORs)
