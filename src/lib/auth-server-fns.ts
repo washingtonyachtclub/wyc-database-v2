@@ -11,7 +11,7 @@ import {
 } from 'src/db/schema'
 import { hashPasswordArgon2, verifyPasswordDual } from './auth'
 import { requirePrivilege } from './auth-middleware'
-import type { Privilege } from './permissions'
+import { hasPrivilege, type Privilege } from './permissions'
 import { useAppSession, type SessionData } from './session'
 
 export type AuthUser = {
@@ -36,6 +36,7 @@ export type CurrentUserResponse = {
   isValid: boolean
   user?: AuthUser
   privileges?: Privilege[]
+  realPrivileges?: Privilege[]
 }
 
 /**
@@ -221,6 +222,7 @@ export const getCurrentUserServerFn = createServerFn({ method: 'GET' }).handler(
         isValid: true,
         user: sessionData.user,
         privileges: sessionData.privileges ?? [],
+        realPrivileges: sessionData.realIdentity?.privileges,
       } satisfies CurrentUserResponse
     } catch (error: any) {
       console.error('Get current user error:', error)
@@ -242,7 +244,6 @@ export const setDevPrivilegesServerFn = createServerFn({ method: 'POST' })
     if (!isDevEnv) {
       throw new Error('Dev privilege override is only available in development')
     }
-    await requirePrivilege('db')
 
     const session = await useAppSession()
     const sessionData = session.data
@@ -251,20 +252,33 @@ export const setDevPrivilegesServerFn = createServerFn({ method: 'POST' })
       throw new Error('Not authenticated')
     }
 
+    // Check real privileges (not emulated) to prevent self-lockout
+    const realPrivs = sessionData.realIdentity?.privileges ?? sessionData.privileges ?? []
+    if (!hasPrivilege(realPrivs, ['db'])) {
+      throw new Error('Unauthorized: requires db privilege')
+    }
+
     if (data.privileges === null) {
       // Restore privileges for current identity (may be emulated member)
       const currentUserId = sessionData.userId!
-      const realPrivileges = await loadUserPrivileges(currentUserId)
+      const restoredPrivileges = await loadUserPrivileges(currentUserId)
       await session.update({
         ...sessionData,
-        privileges: realPrivileges,
+        privileges: restoredPrivileges,
+        realIdentity: undefined,
       } satisfies SessionData)
-      return { privileges: realPrivileges }
+      return { privileges: restoredPrivileges }
     }
 
     await session.update({
       ...sessionData,
       privileges: data.privileges,
+      // Save real identity if not already emulating
+      realIdentity: sessionData.realIdentity ?? {
+        userId: sessionData.userId,
+        user: sessionData.user,
+        privileges: sessionData.privileges ?? [],
+      },
     } satisfies SessionData)
     return { privileges: data.privileges }
   })
@@ -281,7 +295,6 @@ export const setDevMemberServerFn = createServerFn({ method: 'POST' })
     if (!isDevEnv) {
       throw new Error('Dev member emulation is only available in development')
     }
-    await requirePrivilege('db')
 
     const session = await useAppSession()
     const sessionData = session.data
@@ -290,20 +303,25 @@ export const setDevMemberServerFn = createServerFn({ method: 'POST' })
       throw new Error('Not authenticated')
     }
 
+    // Check real privileges (not emulated) to prevent self-lockout
+    const realPrivs = sessionData.realIdentity?.privileges ?? sessionData.privileges ?? []
+    if (!hasPrivilege(realPrivs, ['db'])) {
+      throw new Error('Unauthorized: requires db privilege')
+    }
+
     if (data.wycNumber === null) {
       // Restore original identity
-      if (!sessionData.realUserId || !sessionData.realUser) {
+      if (!sessionData.realIdentity) {
         return { user: sessionData.user, privileges: sessionData.privileges ?? [] }
       }
-      const realPrivileges = await loadUserPrivileges(sessionData.realUserId)
+      const realPrivileges = await loadUserPrivileges(sessionData.realIdentity.userId)
       await session.update({
-        userId: sessionData.realUserId,
-        user: sessionData.realUser,
+        userId: sessionData.realIdentity.userId,
+        user: sessionData.realIdentity.user,
         privileges: realPrivileges,
-        realUserId: undefined,
-        realUser: undefined,
+        realIdentity: undefined,
       } satisfies SessionData)
-      return { user: sessionData.realUser, privileges: realPrivileges }
+      return { user: sessionData.realIdentity.user, privileges: realPrivileges }
     }
 
     // Look up target member
@@ -331,15 +349,17 @@ export const setDevMemberServerFn = createServerFn({ method: 'POST' })
     const targetPrivileges = await loadUserPrivileges(targetRow.wycNumber)
 
     // Save real identity if not already emulating
-    const realUserId = sessionData.realUserId ?? sessionData.userId
-    const realUser = sessionData.realUser ?? sessionData.user
+    const realIdentity = sessionData.realIdentity ?? {
+      userId: sessionData.userId,
+      user: sessionData.user,
+      privileges: sessionData.privileges ?? [],
+    }
 
     await session.update({
       userId: targetRow.wycNumber,
       user: targetUser,
       privileges: targetPrivileges,
-      realUserId: realUserId,
-      realUser: realUser,
+      realIdentity,
     } satisfies SessionData)
 
     return { user: targetUser, privileges: targetPrivileges }

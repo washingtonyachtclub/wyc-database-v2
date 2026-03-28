@@ -11,7 +11,7 @@ const isDevApp = import.meta.env.DEV || import.meta.env.VITE_APP_ENV === 'dev'
 export default function Header() {
   const router = useRouter()
   const location = useLocation()
-  const { user, isAuthenticated, privileges } = useCurrentUser()
+  const { user, isAuthenticated, privileges, realPrivileges } = useCurrentUser()
   const logoutMutation = useLogoutMutation()
   const isBarePage = ['/login', '/forgot-password'].includes(location.pathname)
   const { data: dbName } = useQuery({
@@ -51,7 +51,7 @@ export default function Header() {
           <div className="flex items-center gap-4">
             {isAuthenticated && user ? (
               <>
-                {isDevApp && hasPrivilege(privileges, ['db']) && <DevPrivilegeEmulator />}
+                {isDevApp && hasPrivilege(realPrivileges ?? privileges, ['db']) && <DevPrivilegeEmulator />}
                 <span className="text-sm text-muted-foreground">
                   {user.first} {user.last} ({user.wycNumber})
                 </span>

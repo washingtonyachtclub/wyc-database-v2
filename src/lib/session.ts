@@ -2,14 +2,18 @@ import { useSession } from '@tanstack/react-start/server'
 import type { AuthUser } from './auth-server-fns'
 import type { Privilege } from './permissions'
 
+export type SessionIdentity = {
+  userId: number
+  user: AuthUser
+  privileges: Privilege[]
+}
+
 export type SessionData = {
   userId?: number
   user?: AuthUser
   privileges?: Privilege[]
-  /** Set when dev-emulating a different member. Stores the real logged-in user's ID. */
-  realUserId?: number
-  /** Set when dev-emulating a different member. Stores the real logged-in user object. */
-  realUser?: AuthUser
+  /** Saved when dev-emulating. Stores the real logged-in user's identity. */
+  realIdentity?: SessionIdentity
 }
 
 /**
