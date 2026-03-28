@@ -5,14 +5,14 @@
 - support table pages (especially ratings)
 
 # Important
-- lesson signups
-  - add unique constraint to lessons table
-- backfill more calendarDates for older lessons
 - membership processing more automation
   - use serverfns instead of raw sql copy
   - automated email sending
   - automate csv processing
 - update readme for devs
+- lesson signups
+  - add unique constraint to lessons table
+- backfill more calendarDates for older lessons (prompt in scripts folder)
 
 # Less Important
 - add a higher level db permission? For managing who gets permissions

@@ -238,9 +238,11 @@ export const getCurrentUserServerFn = createServerFn({ method: 'GET' }).handler(
 export const setDevPrivilegesServerFn = createServerFn({ method: 'POST' })
   .inputValidator((input: { privileges: Privilege[] | null }) => input)
   .handler(async ({ data }) => {
-    if (process.env.NODE_ENV !== 'development') {
+    const isDevEnv = process.env.NODE_ENV === 'development' || process.env.VITE_APP_ENV === 'dev'
+    if (!isDevEnv) {
       throw new Error('Dev privilege override is only available in development')
     }
+    await requirePrivilege('db')
 
     const session = await useAppSession()
     const sessionData = session.data
@@ -275,9 +277,11 @@ export const setDevPrivilegesServerFn = createServerFn({ method: 'POST' })
 export const setDevMemberServerFn = createServerFn({ method: 'POST' })
   .inputValidator((input: { wycNumber: number | null }) => input)
   .handler(async ({ data }) => {
-    if (process.env.NODE_ENV !== 'development') {
+    const isDevEnv = process.env.NODE_ENV === 'development' || process.env.VITE_APP_ENV === 'dev'
+    if (!isDevEnv) {
       throw new Error('Dev member emulation is only available in development')
     }
+    await requirePrivilege('db')
 
     const session = await useAppSession()
     const sessionData = session.data

@@ -1,14 +1,17 @@
 import { getDatabaseName } from '@/lib/members-server-fns'
+import { hasPrivilege } from '@/lib/permissions'
 import { useQuery } from '@tanstack/react-query'
 import { Link, useLocation, useRouter } from '@tanstack/react-router'
 import { useCurrentUser, useLogoutMutation } from '../lib/auth-query-options'
 import { Button } from './ui/button'
 import { DevPrivilegeEmulator } from './DevPrivilegeEmulator'
 
+const isDevApp = import.meta.env.DEV || import.meta.env.VITE_APP_ENV === 'dev'
+
 export default function Header() {
   const router = useRouter()
   const location = useLocation()
-  const { user, isAuthenticated } = useCurrentUser()
+  const { user, isAuthenticated, privileges } = useCurrentUser()
   const logoutMutation = useLogoutMutation()
   const isBarePage = ['/login', '/forgot-password'].includes(location.pathname)
   const { data: dbName } = useQuery({
@@ -39,16 +42,16 @@ export default function Header() {
               <img src="/favicon.png" alt="WYC" className="h-6 w-6" />
               WYC Database
             </Link>
-            {import.meta.env.DEV && dbName && (
+            {isDevApp && dbName && (
               <span className="ml-3 rounded bg-yellow-200 px-2 py-0.5 text-xs font-semibold text-yellow-900">
-                {dbName}
+                Database: {dbName}
               </span>
             )}
           </div>
           <div className="flex items-center gap-4">
             {isAuthenticated && user ? (
               <>
-                {import.meta.env.DEV && <DevPrivilegeEmulator />}
+                {isDevApp && hasPrivilege(privileges, ['db']) && <DevPrivilegeEmulator />}
                 <span className="text-sm text-muted-foreground">
                   {user.first} {user.last} ({user.wycNumber})
                 </span>
