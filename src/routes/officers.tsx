@@ -1,5 +1,6 @@
 import { AddOfficerModal } from '@/components/officers/AddOfficerModal'
 import { Button } from '@/components/ui/button'
+import { Plus } from 'lucide-react'
 import { OFFICER_PAGE_SECTIONS } from '@/db/constants'
 import type { Officer } from '@/db/types'
 import {
@@ -45,7 +46,10 @@ function OfficersPage() {
     <div className="p-4">
       <div className="flex items-center justify-between mb-6">
         <h2 className="text-2xl font-bold">Officers & Position Holders</h2>
-        <Button onClick={() => setShowAddModal(true)}>Add Record</Button>
+        <Button onClick={() => setShowAddModal(true)}>
+          <Plus className="h-4 w-4" />
+          Add Record
+        </Button>
       </div>
       {showAddModal && (
         <AddOfficerModal

@@ -6,6 +6,7 @@ import { useState } from 'react'
 import { z } from 'zod'
 import { AddMemberModal } from '../components/members/AddMemberModal'
 import { Button } from '../components/ui/button'
+import { Plus } from 'lucide-react'
 import { columns } from '../components/members/columns'
 import { FilterControls } from '../components/members/FilterControls'
 import { PaginationControls } from '../components/members/PaginationControls'
@@ -186,6 +187,7 @@ function App() {
     <div className="p-4">
       <h2 className="text-2xl font-bold mb-4">WYC Members</h2>
       <Button onClick={() => setIsAddMemberModalOpen(true)} className="mb-4">
+        <Plus className="h-4 w-4" />
         Add Member
       </Button>
       <FilterControls

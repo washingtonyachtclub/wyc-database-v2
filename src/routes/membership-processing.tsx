@@ -2,6 +2,7 @@ import { Button } from '@/components/ui/button'
 import { CopyBox } from '@/components/ui/CopyBox'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
+import { isMembershipActive } from '@/db/membership-utils'
 import { Member } from '@/db/types'
 import { hashPasswordArgon2ServerFn } from '@/lib/auth-server-fns'
 import { getCurrentQuarterQueryOptions } from '@/lib/lessons-query-options'
@@ -129,6 +130,12 @@ function MembershipProcessingPage() {
     return quartersData.find((q) => q.index === quarterIndex)?.school ?? `Unknown quarter ${quarterIndex}`
   }
 
+  function cleanPhone(raw: string): string {
+    const digits = raw.replace(/\D/g, '')
+    if (digits.length > 10) return digits.slice(-10)
+    return digits
+  }
+
   function extractCategoryID(text: CategoryText) {
     switch (text) {
       case 'Student':
@@ -170,7 +177,7 @@ function MembershipProcessingPage() {
               : nameMatch
                 ? 'name'
                 : 'email',
-          status: m.expireQtrIndex >= currentQuarter ? 'active' : 'expired',
+          status: isMembershipActive(m.expireQtrIndex, currentQuarter) ? 'active' : 'expired',
         })
       }
     }
@@ -201,8 +208,8 @@ function MembershipProcessingPage() {
     const city = get('Address: City')
     const state = get('Address: State')
     const zipCode = get('Address: Zip/Postal Code')
-    const phone1 = get('Primary Phone Number')
-    const phone2 = get('Alternative Phone Number')
+    const phone1 = cleanPhone(get('Primary Phone Number'))
+    const phone2 = cleanPhone(get('Alternative Phone Number'))
     const email = get('Email')
     const rawCategory = get(
       'What is your UW Status for the duration of your WYC membership?',

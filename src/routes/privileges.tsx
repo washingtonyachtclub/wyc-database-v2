@@ -12,6 +12,7 @@ import {
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog'
 import { Button } from '@/components/ui/button'
+import { Plus } from 'lucide-react'
 import { DataTable } from '@/components/ui/DataTable'
 import { Label } from '@/components/ui/label'
 import {
@@ -94,6 +95,7 @@ function PrivilegesPage() {
       <h2 className="text-2xl font-bold mb-4">Privileges</h2>
 
       <Button onClick={() => setIsAddModalOpen(true)} className="mb-4">
+        <Plus className="h-4 w-4" />
         New Privilege
       </Button>
 

@@ -12,6 +12,7 @@ import {
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog'
 import { Button } from '@/components/ui/button'
+import { Plus } from 'lucide-react'
 import { DataTable } from '@/components/ui/DataTable'
 import { getHonoraryQueryOptions, useDeleteHonoraryMutation } from '@/lib/honorary-query-options'
 import { requirePrivilegeForRoute } from '@/lib/route-guards'
@@ -60,6 +61,7 @@ function HonoraryPage() {
       <h2 className="text-2xl font-bold mb-4">Honorary Members</h2>
 
       <Button onClick={() => setIsAddModalOpen(true)} className="mb-4">
+        <Plus className="h-4 w-4" />
         New Honorary Member
       </Button>
 

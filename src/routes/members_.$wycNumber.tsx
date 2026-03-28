@@ -7,6 +7,9 @@ import { Button } from '@/components/ui/button'
 import { MemberProfileUpdate, MemberProfileUpdateSchema } from '@/db/member-schema'
 import type { Member } from '@/db/types'
 import { useAppForm } from '@/hooks/form'
+import { isMembershipActive } from '@/db/membership-utils'
+import { getCurrentQuarterQueryOptions } from '@/lib/lessons-query-options'
+import { cn } from '@/lib/utils'
 import {
   getCategoriesQueryOptions,
   getMemberByIdQueryOptions,
@@ -65,11 +68,14 @@ function MemberDetailPage() {
 
   return (
     <div className="p-4 space-y-8">
-      <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold">
-          WYC #{member.wycNumber} — {member.first} {member.last}
-        </h1>
-        {!isEditing && <Button onClick={() => setIsEditing(true)}>Edit Info</Button>}
+      <div>
+        <div className="flex items-center justify-between">
+          <h1 className="text-2xl font-bold">
+            WYC #{member.wycNumber} — {member.first} {member.last}
+          </h1>
+          {!isEditing && <Button onClick={() => setIsEditing(true)}>Edit Info</Button>}
+        </div>
+        <MemberExpireQuarter expireQtrIndex={member.expireQtrIndex} />
       </div>
 
       {isEditing ? (
@@ -94,6 +100,28 @@ function MemberDetailPage() {
   )
 }
 
+function MemberExpireQuarter({ expireQtrIndex }: { expireQtrIndex: number }) {
+  const { data: quarters = [] } = useQuery(getQuartersQueryOptions())
+  const { data: currentQuarter } = useQuery(getCurrentQuarterQueryOptions())
+  const quarterLabel =
+    quarters.find((q) => q.index === expireQtrIndex)?.school || `Quarter ${expireQtrIndex}`
+
+  const isActive = currentQuarter != null ? isMembershipActive(expireQtrIndex, currentQuarter) : null
+
+  return (
+    <p
+      className={cn(
+        'text-xl font-semibold mt-1',
+        isActive === true && 'text-green-600 dark:text-green-400',
+        isActive === false && 'text-destructive',
+        isActive === null && 'text-muted-foreground',
+      )}
+    >
+      {isActive === false ? `Membership expired: ${quarterLabel}` : `Membership active through: ${quarterLabel}`}
+    </p>
+  )
+}
+
 function ReadOnlyField({ label, value }: { label: string; value: string }) {
   return (
     <div>
@@ -104,12 +132,8 @@ function ReadOnlyField({ label, value }: { label: string; value: string }) {
 }
 
 function MemberReadOnlyInfo({ member }: { member: Member }) {
-  const { data: quarters = [] } = useQuery(getQuartersQueryOptions())
   const { data: categories = [] } = useQuery(getCategoriesQueryOptions())
 
-  const quarterLabel =
-    quarters.find((q) => q.index === member.expireQtrIndex)?.school ||
-    `Quarter ${member.expireQtrIndex}`
   const categoryLabel = categories.find((c) => c.index === member.categoryId)?.text || 'None'
 
   return (
@@ -126,7 +150,6 @@ function MemberReadOnlyInfo({ member }: { member: Member }) {
         <ReadOnlyField label="Phone 1" value={member.phone1} />
         <ReadOnlyField label="Phone 2" value={member.phone2} />
         <ReadOnlyField label="Category" value={categoryLabel} />
-        <ReadOnlyField label="Expire Quarter" value={quarterLabel} />
         <ReadOnlyField label="Out to Sea" value={member.outToSea ? 'Yes' : 'No'} />
         <ReadOnlyField label="Join Date" value={new Date(member.joinDate).toLocaleDateString()} />
       </div>

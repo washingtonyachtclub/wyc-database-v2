@@ -9,6 +9,7 @@ import { LessonCard } from '../components/lessons/LessonCard'
 import { LessonFormModal } from '../components/lessons/LessonEditorModal'
 import { PaginationControls } from '../components/members/PaginationControls'
 import { Button } from '../components/ui/button'
+import { Plus } from 'lucide-react'
 import { DataTable } from '../components/ui/DataTable'
 import { isLessonUpcoming } from '../lib/date-utils'
 import { requirePrivilegeForRoute } from '../lib/route-guards'
@@ -157,6 +158,7 @@ function LessonsPage() {
     <div className="p-4 space-y-8">
       <div className="flex justify-start">
         <Button onClick={() => setIsLessonModalOpen(true)} className="mb-4">
+          <Plus className="h-4 w-4" />
           New Lesson
         </Button>
       </div>

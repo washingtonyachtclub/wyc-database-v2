@@ -8,6 +8,7 @@ import { columns } from '../components/ratings/columns'
 import { RatingFilterControls } from '../components/ratings/RatingFilterControls'
 import { PaginationControls } from '../components/members/PaginationControls'
 import { Button } from '../components/ui/button'
+import { Plus } from 'lucide-react'
 import { DataTable } from '../components/ui/DataTable'
 import type { RatingFilters } from '../db/rating-filter-types'
 import { useCurrentUser } from '../lib/auth-query-options'
@@ -148,6 +149,7 @@ function RatingsPage() {
     <div className="p-4">
       <h2 className="text-2xl font-bold mb-4">Ratings</h2>
       <Button onClick={() => setIsAddModalOpen(true)} className="mb-4">
+        <Plus className="h-4 w-4" />
         New Rating
       </Button>
       <RatingFilterControls
