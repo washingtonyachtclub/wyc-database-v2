@@ -1,11 +1,9 @@
-import { createFileRoute } from '@tanstack/react-router'
-import { useMutation } from '@tanstack/react-query'
-import { useState } from 'react'
-import { requirePrivilegeForRoute } from '../lib/route-guards'
-import { sendTestEmailServerFn } from '../lib/email-server-fns'
 import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
-import { Label } from '@/components/ui/label'
+import { useMutation } from '@tanstack/react-query'
+import { createFileRoute } from '@tanstack/react-router'
+import { useState } from 'react'
+import { sendTestEmailServerFn } from '../lib/email-server-fns'
+import { requirePrivilegeForRoute } from '../lib/route-guards'
 
 export const Route = createFileRoute('/email-test')({
   beforeLoad: ({ context }) => {
@@ -45,14 +43,14 @@ function EmailTestPage() {
 
       <div className="space-y-4">
         <div className="space-y-2">
-          <Label htmlFor="to-email">Recipient Email</Label>
+          {/* <Label htmlFor="to-email">Recipient Email</Label>
           <Input
             id="to-email"
             type="email"
             value={to}
             onChange={(e) => setTo(e.target.value)}
             placeholder="e.g. earora24@uw.edu"
-          />
+          /> */}
         </div>
 
         <div className="flex gap-2">

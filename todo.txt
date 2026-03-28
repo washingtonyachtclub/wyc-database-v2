@@ -3,17 +3,19 @@
   - email sending (waiting on DNS propagation)
 - figure out deployment and url / redirecting for new site
 - support table pages (especially ratings)
+
+# Important
 - lesson signups
   - add unique constraint to lessons table
-- on members/{id} for the past 12 months add button to show all
-
-# Less Important
 - backfill more calendarDates for older lessons
-- add a higher level db permission? For managing who gets permissions
 - membership processing more automation
   - use serverfns instead of raw sql copy
   - automated email sending
   - automate csv processing
+- update readme for devs
+
+# Less Important
+- add a higher level db permission? For managing who gets permissions
 - dev tool: indicator for last prod -> db sync
 - automate the stuff in maintenance.md
   - quarters table
