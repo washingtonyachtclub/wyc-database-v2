@@ -143,25 +143,27 @@ export const createMember = createServerFn({ method: 'POST' })
       })
 
       let emailSent = false
+      let emailSimulated = false
       if (shouldSendEmail) {
         try {
           const emailText = newMemberEmail(
             { first: member.first, last: member.last, wycNumber },
             password,
           )
-          await sendEmail({
+          const result = await sendEmail({
             to: member.email,
             subject: 'Welcome to the Washington Yacht Club!',
             text: emailText,
             idempotencyKey: `new-member/${wycNumber}`,
           })
           emailSent = true
+          emailSimulated = result.simulated
         } catch (emailError) {
           console.error('Failed to send welcome email:', emailError)
         }
       }
 
-      return { success: true as const, wycNumber, emailSent }
+      return { success: true as const, wycNumber, emailSent, emailSimulated }
     } catch (error: any) {
       console.error('Failed to create member:', error)
 
@@ -205,6 +207,7 @@ export const renewMember = createServerFn({ method: 'POST' })
         .where(eq(wycDatabase.wycNumber, data.wycNumber))
 
       let emailSent = false
+      let emailSimulated = false
       if (data.sendEmail) {
         try {
           const [member] = await db
@@ -228,20 +231,21 @@ export const renewMember = createServerFn({ method: 'POST' })
               data.wycNumber,
               quarter?.school ?? `quarter ${data.expireQtrIndex}`,
             )
-            await sendEmail({
+            const result = await sendEmail({
               to: member.email,
               subject: 'WYC Membership Renewed',
               text: emailText,
               idempotencyKey: `renewal/${data.wycNumber}/${data.expireQtrIndex}`,
             })
             emailSent = true
+            emailSimulated = result.simulated
           }
         } catch (emailError) {
           console.error('Failed to send renewal email:', emailError)
         }
       }
 
-      return { success: true as const, wycNumber: data.wycNumber, emailSent }
+      return { success: true as const, wycNumber: data.wycNumber, emailSent, emailSimulated }
     } catch (error: any) {
       console.error('Failed to renew member:', error)
       throw new Error('Failed to renew member')

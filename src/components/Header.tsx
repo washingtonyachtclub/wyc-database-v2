@@ -1,3 +1,4 @@
+import { isDevEnvironment } from '@/lib/env'
 import { getDatabaseName } from '@/lib/members-server-fns'
 import { hasPrivilege } from '@/lib/permissions'
 import { useQuery } from '@tanstack/react-query'
@@ -6,7 +7,7 @@ import { useCurrentUser, useLogoutMutation } from '../lib/auth-query-options'
 import { Button } from './ui/button'
 import { DevPrivilegeEmulator } from './DevPrivilegeEmulator'
 
-const isDevApp = import.meta.env.DEV || import.meta.env.VITE_APP_ENV === 'dev'
+const isDevApp = isDevEnvironment()
 
 export default function Header() {
   const router = useRouter()

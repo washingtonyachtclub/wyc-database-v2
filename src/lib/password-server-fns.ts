@@ -66,20 +66,22 @@ export const lookupWycNumberServerFn = createServerFn({ method: 'POST' })
       }))
 
       let emailSent = false
+      let emailSimulated = false
       try {
         const emailText = wycNumberLookupEmail(data.email, members)
-        await sendEmail({
+        const result = await sendEmail({
           to: data.email,
           subject: 'WYC Database - Your WYC Number',
           text: emailText,
           idempotencyKey: `wyc-lookup/${data.email}/${Date.now()}`,
         })
         emailSent = true
+        emailSimulated = result.simulated
       } catch (emailError) {
         console.error('Failed to send WYC number lookup email:', emailError)
       }
 
-      return { success: true as const, emailSent }
+      return { success: true as const, emailSent, emailSimulated }
     } catch (error: any) {
       console.error('WYC number lookup error:', error)
       return { success: false as const, message: 'Failed to look up WYC number' }
@@ -129,19 +131,21 @@ export const resetPasswordServerFn = createServerFn({ method: 'POST' })
       const emailText = passwordResetEmail(name, user.wycNumber, passphrase)
 
       let emailSent = false
+      let emailSimulated = false
       try {
-        await sendEmail({
+        const result = await sendEmail({
           to: user.email,
           subject: 'WYC Database - Password Reset',
           text: emailText,
           idempotencyKey: `password-reset/${user.wycNumber}/${Date.now()}`,
         })
         emailSent = true
+        emailSimulated = result.simulated
       } catch (emailError) {
         console.error('Failed to send password reset email:', emailError)
       }
 
-      return { success: true as const, emailSent }
+      return { success: true as const, emailSent, emailSimulated }
     } catch (error: any) {
       console.error('Reset password error:', error)
       return { success: false as const, message: 'Failed to reset password' }

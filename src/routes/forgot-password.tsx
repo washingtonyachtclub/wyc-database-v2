@@ -1,4 +1,5 @@
 import { Button } from '@/components/ui/button'
+import { EmailSimulatedNotice } from '@/components/ui/EmailSimulatedNotice'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { lookupWycNumberServerFn, resetPasswordServerFn } from '@/lib/password-server-fns'
@@ -91,9 +92,12 @@ function LookupSection() {
       )}
 
       {lookupMutation.data?.success && lookupMutation.data.emailSent && (
-        <div className="rounded-md bg-green-50 border border-green-200 p-3 text-sm text-green-800">
-          Your WYC number has been sent to <span className="font-semibold">{email}</span>.
-        </div>
+        <>
+          <div className="rounded-md bg-green-50 border border-green-200 p-3 text-sm text-green-800">
+            Your WYC number has been sent to <span className="font-semibold">{email}</span>.
+          </div>
+          {lookupMutation.data.emailSimulated && <EmailSimulatedNotice />}
+        </>
       )}
 
       {lookupMutation.data?.success && !lookupMutation.data.emailSent && (
@@ -165,9 +169,12 @@ function ResetSection() {
       )}
 
       {resetMutation.data?.success && resetMutation.data.emailSent && (
-        <div className="rounded-md bg-green-50 border border-green-200 p-3 text-sm text-green-800">
-          Your new password has been sent to your email address. Please check your inbox.
-        </div>
+        <>
+          <div className="rounded-md bg-green-50 border border-green-200 p-3 text-sm text-green-800">
+            Your new password has been sent to your email address. Please check your inbox.
+          </div>
+          {resetMutation.data.emailSimulated && <EmailSimulatedNotice />}
+        </>
       )}
 
       {resetMutation.data?.success && !resetMutation.data.emailSent && (

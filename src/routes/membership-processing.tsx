@@ -1,4 +1,5 @@
 import { Button } from '@/components/ui/button'
+import { EmailSimulatedNotice } from '@/components/ui/EmailSimulatedNotice'
 import { CopyBox } from '@/components/ui/CopyBox'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -85,9 +86,10 @@ type PageState =
       member: MemberProfileUpdate
       wycNumber: number
       emailSent: boolean
+      emailSimulated: boolean
     }
   | { kind: 'OldMember'; member: OldMember }
-  | { kind: 'OldMemberRenewed'; member: OldMember; emailSent: boolean }
+  | { kind: 'OldMemberRenewed'; member: OldMember; emailSent: boolean; emailSimulated: boolean }
   | { kind: 'Error'; error: ParseError }
 
 const CATEGORY_VALUES = [
@@ -470,6 +472,7 @@ function MembershipProcessingPage() {
         member: memberState.member,
         wycNumber: result.wycNumber,
         emailSent: result.emailSent,
+        emailSimulated: result.emailSimulated,
       })
     } catch (error: any) {
       setMemberState({
@@ -499,6 +502,7 @@ function MembershipProcessingPage() {
         kind: 'OldMemberRenewed',
         member: memberState.member,
         emailSent: result.emailSent,
+        emailSimulated: result.emailSimulated,
       })
     } catch (error: any) {
       setMemberState({
@@ -653,7 +657,10 @@ function MembershipProcessingPage() {
             Member created — WYC #{memberState.wycNumber}
           </p>
           {memberState.emailSent ? (
-            <p className="text-green-600">Welcome email sent to {memberState.member.email}</p>
+            <>
+              <p className="text-green-600">Welcome email sent to {memberState.member.email}</p>
+              {memberState.emailSimulated && <EmailSimulatedNotice />}
+            </>
           ) : (
             <>
               <p className="text-destructive font-semibold">
@@ -697,7 +704,10 @@ function MembershipProcessingPage() {
             Membership renewed for WYC #{memberState.member.wycNumber}
           </p>
           {memberState.emailSent ? (
-            <p className="text-green-600">Renewal email sent to {memberState.member.email}</p>
+            <>
+              <p className="text-green-600">Renewal email sent to {memberState.member.email}</p>
+              {memberState.emailSimulated && <EmailSimulatedNotice />}
+            </>
           ) : (
             <>
               <p className="text-destructive font-semibold">

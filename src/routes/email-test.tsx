@@ -1,4 +1,5 @@
 import { Button } from '@/components/ui/button'
+import { EmailSimulatedNotice } from '@/components/ui/EmailSimulatedNotice'
 import { useMutation } from '@tanstack/react-query'
 import { createFileRoute } from '@tanstack/react-router'
 import { useState } from 'react'
@@ -24,9 +25,12 @@ function EmailTestPage() {
       <h1 className="text-2xl font-bold mb-6">Email Test</h1>
 
       {mutation.data?.success && (
-        <div className="mb-4 rounded-md bg-green-50 border border-green-200 p-3 text-sm text-green-800">
-          Email sent! ID: {mutation.data.emailId}
-        </div>
+        <>
+          <div className="mb-4 rounded-md bg-green-50 border border-green-200 p-3 text-sm text-green-800">
+            Email sent! ID: {mutation.data.emailId}
+          </div>
+          {mutation.data.emailSimulated && <EmailSimulatedNotice />}
+        </>
       )}
 
       {mutation.data && !mutation.data.success && (

@@ -19,7 +19,7 @@ export const sendTestEmailServerFn = createServerFn({ method: 'POST' })
         text: 'This is a test email from the WYC Database system.\n\nIf you received this, email sending is working correctly.\n\nEshan Arora\nWebmaster',
         idempotencyKey: `test-email/${data.to}/${Date.now()}`,
       })
-      return { success: true as const, emailId: result?.id }
+      return { success: true as const, emailId: result.id, emailSimulated: result.simulated }
     } catch (error) {
       console.error('Test email error:', error)
       return { success: false as const, message: 'Failed to send test email' }
