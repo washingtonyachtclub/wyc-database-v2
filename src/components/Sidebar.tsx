@@ -11,11 +11,15 @@ export default function Sidebar() {
     { path: '/members' as const, label: 'Members' },
     { path: '/lessons' as const, label: 'Lessons' },
     { path: '/ratings' as const, label: 'Ratings' },
-    { path: '/rating-types' as const, label: 'Rating Types' },
     { path: '/officers' as const, label: 'Officers & Positions' },
     { path: '/chiefs' as const, label: 'Chiefs' },
     { path: '/privileges' as const, label: 'Privileges' },
     { path: '/honorary' as const, label: 'Honorary' },
+  ]
+
+  const supportTableItems = [
+    { path: '/rating-types' as const, label: 'Rating Types' },
+    { path: '/boat-types' as const, label: 'Boat Types' },
   ]
 
   const toolsItems = [
@@ -23,13 +27,14 @@ export default function Sidebar() {
     { path: '/email-test' as const, label: 'Email Test' },
   ]
 
-  const filterVisible = (items: typeof adminItems) =>
+  const filterVisible = (items: { path: ProtectedRoute; label: string }[]) =>
     items.filter((item) => {
-      const required = routePermissions[item.path as ProtectedRoute]
+      const required = routePermissions[item.path]
       return hasPrivilege(privileges, required)
     })
 
   const visibleAdminItems = filterVisible(adminItems)
+  const visibleSupportTableItems = filterVisible(supportTableItems)
   const visibleToolsItems = filterVisible(toolsItems)
 
   const myProfilePath = user ? `/members/${user.wycNumber}` : null
@@ -39,7 +44,7 @@ export default function Sidebar() {
       <nav className="space-y-1">
         {myProfilePath && (
           <>
-            <h3 className="px-4 py-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+            <h3 className="px-4 py-2 text-sm font-bold uppercase tracking-wider text-muted-foreground">
               General
             </h3>
             <Link
@@ -76,7 +81,7 @@ export default function Sidebar() {
           </>
         )}
         {visibleAdminItems.length > 0 && (
-          <h3 className="px-4 pt-4 pb-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+          <h3 className="px-4 pt-4 pb-2 text-sm font-bold uppercase tracking-wider text-muted-foreground">
             Admin
           </h3>
         )}
@@ -96,8 +101,29 @@ export default function Sidebar() {
             </Link>
           )
         })}
+        {visibleSupportTableItems.length > 0 && (
+          <h3 className="px-4 pt-4 pb-2 text-sm font-bold uppercase tracking-wider text-muted-foreground">
+            Support Tables
+          </h3>
+        )}
+        {visibleSupportTableItems.map((item) => {
+          const isActive = location.pathname === item.path
+          return (
+            <Link
+              key={item.path}
+              to={item.path}
+              className={`block px-4 py-2 rounded-md transition-colors ${
+                isActive
+                  ? 'bg-primary/10 text-primary font-semibold'
+                  : 'hover:bg-primary/5 text-foreground'
+              }`}
+            >
+              {item.label}
+            </Link>
+          )
+        })}
         {visibleToolsItems.length > 0 && (
-          <h3 className="px-4 pt-4 pb-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+          <h3 className="px-4 pt-4 pb-2 text-sm font-bold uppercase tracking-wider text-muted-foreground">
             Tools
           </h3>
         )}

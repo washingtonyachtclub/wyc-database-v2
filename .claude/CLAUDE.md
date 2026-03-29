@@ -100,6 +100,22 @@ Form fields are in `src/components/ui/app-form-fields.tsx` and are registered wi
 
 The project has a zod v3/v4 peer dep conflict (`.npmrc` has `legacy-peer-deps=true`). If `npx shadcn@latest add <component>` fails on network or dep issues, create the component file manually in `src/components/ui/` following the shadcn source patterns. Required deps: `@radix-ui/react-*` (install with `npm install --legacy-peer-deps`).
 
+## Environment detection
+
+- `VITE_APP_ENV` is set to `"dev"` in `.env.dev`. It is **not set** in production Vercel env files — absence means production.
+- Two Vercel projects: a **main** (production) project and a **dev** project for testing/messing around.
+- Use `isDevEnvironment()` from `src/lib/env.ts` for all dev-vs-prod checks. Never inline `import.meta.env.DEV || import.meta.env.VITE_APP_ENV === 'dev'` — use the helper.
+- The helper checks both `import.meta.env.DEV` (Vite compile-time, true during `vite dev`) and `import.meta.env.VITE_APP_ENV === 'dev'` (runtime, true on the deployed dev Vercel project).
+- Works in both client components and server functions (Vite processes both bundles).
+
+### Dev email simulation (`src/lib/email.ts`)
+
+- In dev, `sendEmail()` redirects all recipients to `delivered@resend.dev` (Resend's test address — API succeeds, no real delivery).
+- Full email details (original recipient, subject, body, idempotency key) are logged to the server console.
+- `sendEmail()` returns `{ id, simulated }`. Callers pass `emailSimulated` to the UI alongside `emailSent`.
+- UI shows `<EmailSimulatedNotice />` (`src/components/ui/EmailSimulatedNotice.tsx`) when `emailSimulated` is true.
+- `emailSent` stays `true` when simulated (the API call succeeded). The red "email failed" fallback only appears on genuine API errors.
+
 ## Route data flow pattern
 
 - Use `Route.useLoaderDeps()` in components to consume derived state (filters, sorting, pagination) rather than re-deriving it from `Route.useSearch()`. `loaderDeps` is the single source of truth for any transformations on raw search params. The component should only use `useSearch()` for values it passes through directly (e.g., to UI controls).

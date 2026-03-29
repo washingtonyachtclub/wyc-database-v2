@@ -82,6 +82,13 @@ export type RatingType = {
   degree: number
 }
 
+export type BoatType = {
+  index: number
+  type: string
+  description: string
+  fleet: string
+}
+
 export type ClassTypeRow = typeof classType.$inferSelect
 export type ClassType = {
   index: number

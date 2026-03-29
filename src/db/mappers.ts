@@ -8,9 +8,9 @@ import type { MemberQueryRow } from './member-queries'
 import type { MemberProfileUpdate } from './member-schema'
 import type { OfficerQueryRow } from './officer-queries'
 import type { RatingQueryRow } from './rating-queries'
-import { wycDatabase } from './schema'
+import { boatTypes, wycDatabase } from './schema'
 import { ratings } from './schema'
-import type { Checkout, Member, MemberRating, MemberTableRow, Officer, RatingType } from './types'
+import type { BoatType, Checkout, Member, MemberRating, MemberTableRow, Officer, RatingType } from './types'
 
 const num = (value: number | null | undefined): number => value ?? 0
 const str = (value: string | null | undefined): string => value ?? ''
@@ -153,6 +153,15 @@ export function toRatingType(row: typeof ratings.$inferSelect): RatingType {
     text: str(row.text),
     type: row.type,
     degree: row.degree,
+  }
+}
+
+export function toBoatType(row: typeof boatTypes.$inferSelect): BoatType {
+  return {
+    index: row.index,
+    type: str(row.type),
+    description: row.description,
+    fleet: row.fleet,
   }
 }
 

@@ -16,6 +16,8 @@
   - separate mappers.ts
 - change lesson_quarter
 - membership statistics
+  - use expireQtr only
+  - incude number/list of honoraries not marked out to sea that are not up to date
 
 # Less Important
 - better ratings filtering (find all members with *at least* X rating, more complex logic like ANDs and ORs)
