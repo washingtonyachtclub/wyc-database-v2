@@ -1,14 +1,10 @@
-import { createFileRoute, Link } from '@tanstack/react-router'
-import { useMutation } from '@tanstack/react-query'
-import { useState } from 'react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import { CopyBox } from '@/components/ui/CopyBox'
-import {
-  lookupWycNumberServerFn,
-  resetPasswordServerFn,
-} from '@/lib/password-server-fns'
+import { lookupWycNumberServerFn, resetPasswordServerFn } from '@/lib/password-server-fns'
+import { useMutation } from '@tanstack/react-query'
+import { createFileRoute, Link } from '@tanstack/react-router'
+import { useState } from 'react'
 
 export const Route = createFileRoute('/forgot-password')({
   component: ForgotPasswordPage,
@@ -21,13 +17,14 @@ function ForgotPasswordPage() {
         <div className="rounded-xl bg-card p-8 shadow-lg space-y-8">
           <div className="flex flex-col items-center">
             <img src="/favicon.png" alt="WYC" className="h-12 w-12" />
-            <h2 className="mt-4 text-center text-3xl font-bold tracking-tight">
-              WYC Database
-            </h2>
-            <p className="mt-4 text-center text-sm text-muted-foreground">
-              Password reset is not yet available. Please contact the webmaster for assistance.
-            </p>
+            <h2 className="mt-4 text-center text-3xl font-bold tracking-tight">WYC Database</h2>
           </div>
+
+          <LookupSection />
+
+          <hr className="border-border" />
+
+          <ResetSection />
 
           <p className="text-center text-sm text-muted-foreground">
             Forgot which email you used? Email{' '}
@@ -65,7 +62,7 @@ function LookupSection() {
 
   return (
     <div className="space-y-4">
-      <h3 className="text-lg font-semibold">Forgot your WYC Number?</h3>
+      <h3 className="text-lg font-semibold">Forgot your WYC ID Number?</h3>
       <form onSubmit={handleSubmit} className="space-y-3">
         <div>
           <Label htmlFor="lookup-email">Email Address</Label>
@@ -78,7 +75,11 @@ function LookupSection() {
             disabled={lookupMutation.isPending}
           />
         </div>
-        <Button type="submit" disabled={!email.trim() || lookupMutation.isPending} className="w-full">
+        <Button
+          type="submit"
+          disabled={!email.trim() || lookupMutation.isPending}
+          className="w-full"
+        >
           {lookupMutation.isPending ? 'Looking up...' : 'Look Up'}
         </Button>
       </form>
@@ -89,13 +90,19 @@ function LookupSection() {
         </div>
       )}
 
-      {lookupMutation.data?.success && lookupMutation.data.members && (
-        <div className="rounded-md bg-green-50 border border-green-200 p-3 text-sm text-green-800 space-y-1">
-          {lookupMutation.data.members.map((m) => (
-            <div key={m.wycNumber}>
-              <span className="font-semibold">{m.name}</span> — WYC #{m.wycNumber}
-            </div>
-          ))}
+      {lookupMutation.data?.success && lookupMutation.data.emailSent && (
+        <div className="rounded-md bg-green-50 border border-green-200 p-3 text-sm text-green-800">
+          Your WYC number has been sent to <span className="font-semibold">{email}</span>.
+        </div>
+      )}
+
+      {lookupMutation.data?.success && !lookupMutation.data.emailSent && (
+        <div className="rounded-md bg-destructive/10 p-3 text-sm text-destructive">
+          Email could not be sent. Please contact{' '}
+          <a href="mailto:contact@washingtonyachtclub.org" className="underline">
+            contact@washingtonyachtclub.org
+          </a>{' '}
+          for assistance.
         </div>
       )}
     </div>
@@ -107,8 +114,7 @@ function ResetSection() {
   const [email, setEmail] = useState('')
 
   const resetMutation = useMutation({
-    mutationFn: () =>
-      resetPasswordServerFn({ data: { wycNumber: Number(wycNumber), email } }),
+    mutationFn: () => resetPasswordServerFn({ data: { wycNumber: Number(wycNumber), email } }),
   })
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -158,13 +164,19 @@ function ResetSection() {
         </div>
       )}
 
-      {resetMutation.data?.success && resetMutation.data.emailText && (
-        <div className="space-y-2">
-          <div className="rounded-md bg-green-50 border border-green-200 p-3 text-sm text-green-800">
-            Password reset successfully. Send the following to{' '}
-            <span className="font-semibold">{resetMutation.data.memberEmail}</span>:
-          </div>
-          <CopyBox text={resetMutation.data.emailText} />
+      {resetMutation.data?.success && resetMutation.data.emailSent && (
+        <div className="rounded-md bg-green-50 border border-green-200 p-3 text-sm text-green-800">
+          Your new password has been sent to your email address. Please check your inbox.
+        </div>
+      )}
+
+      {resetMutation.data?.success && !resetMutation.data.emailSent && (
+        <div className="rounded-md bg-destructive/10 p-3 text-sm text-destructive">
+          Password was reset but the email could not be sent. Please contact{' '}
+          <a href="mailto:contact@washingtonyachtclub.org" className="underline">
+            contact@washingtonyachtclub.org
+          </a>{' '}
+          for your new password.
         </div>
       )}
     </div>

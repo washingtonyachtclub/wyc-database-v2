@@ -4,6 +4,8 @@ import db from 'src/db/index'
 import { wycDatabase } from 'src/db/schema'
 import { hashPasswordArgon2, hashPasswordLegacy } from './auth'
 import { requireAuth } from './auth-middleware'
+import { sendEmail } from './email'
+import { passwordResetEmail, wycNumberLookupEmail } from './email-templates'
 import { generatePassphrase } from './generate-passphrase'
 
 export const setPasswordServerFn = createServerFn({ method: 'POST' })
@@ -58,13 +60,26 @@ export const lookupWycNumberServerFn = createServerFn({ method: 'POST' })
         }
       }
 
-      return {
-        success: true as const,
-        members: rows.map((r) => ({
-          wycNumber: r.wycNumber,
-          name: `${r.first ?? ''} ${r.last ?? ''}`.trim(),
-        })),
+      const members = rows.map((r) => ({
+        wycNumber: r.wycNumber,
+        name: `${r.first ?? ''} ${r.last ?? ''}`.trim(),
+      }))
+
+      let emailSent = false
+      try {
+        const emailText = wycNumberLookupEmail(data.email, members)
+        await sendEmail({
+          to: data.email,
+          subject: 'WYC Database - Your WYC Number',
+          text: emailText,
+          idempotencyKey: `wyc-lookup/${data.email}/${Date.now()}`,
+        })
+        emailSent = true
+      } catch (emailError) {
+        console.error('Failed to send WYC number lookup email:', emailError)
       }
+
+      return { success: true as const, emailSent }
     } catch (error: any) {
       console.error('WYC number lookup error:', error)
       return { success: false as const, message: 'Failed to look up WYC number' }
@@ -111,22 +126,22 @@ export const resetPasswordServerFn = createServerFn({ method: 'POST' })
         .where(eq(wycDatabase.wycNumber, user.wycNumber))
 
       const name = `${user.first ?? ''} ${user.last ?? ''}`.trim()
-      const emailText = `Hello ${name},
+      const emailText = passwordResetEmail(name, user.wycNumber, passphrase)
 
-Your password has been reset.
-
-Your WYC Number is: ${user.wycNumber}
-Your New Password is: ${passphrase}
-
-Please log in and set a new password at your earliest convenience.
-
-Log in at: database.washingtonyachtclub.org`
-
-      return {
-        success: true as const,
-        emailText,
-        memberEmail: user.email,
+      let emailSent = false
+      try {
+        await sendEmail({
+          to: user.email,
+          subject: 'WYC Database - Password Reset',
+          text: emailText,
+          idempotencyKey: `password-reset/${user.wycNumber}/${Date.now()}`,
+        })
+        emailSent = true
+      } catch (emailError) {
+        console.error('Failed to send password reset email:', emailError)
       }
+
+      return { success: true as const, emailSent }
     } catch (error: any) {
       console.error('Reset password error:', error)
       return { success: false as const, message: 'Failed to reset password' }

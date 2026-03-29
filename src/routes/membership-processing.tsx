@@ -17,8 +17,7 @@ import {
   markEntryProcessed,
   renewMember,
 } from '@/lib/members-server-fns'
-import { newMemberEmailFallback } from '@/lib/membership-processing/new-member-email-template'
-import { returningMemberEmail } from '@/lib/membership-processing/returning-member-email-template'
+import { newMemberEmailFallback, returningMemberEmail } from '@/lib/email-templates'
 import { cn } from '@/lib/utils'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { createFileRoute } from '@tanstack/react-router'

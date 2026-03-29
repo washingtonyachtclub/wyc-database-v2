@@ -24,8 +24,7 @@ import {
 import { hashPasswordArgon2, hashPasswordLegacy } from './auth'
 import { sendEmail } from './email'
 import { generatePassphrase } from './generate-passphrase'
-import { newMemberEmail } from './membership-processing/new-member-email-template'
-import { returningMemberEmail } from './membership-processing/returning-member-email-template'
+import { newMemberEmail, returningMemberEmail } from './email-templates'
 
 export const getMembersTable = createServerFn({ method: 'GET' })
   .inputValidator(
