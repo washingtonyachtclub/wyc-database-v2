@@ -13,7 +13,7 @@ import { baseMemberQuery, memberSortColumns, withMemberFilters } from 'src/db/me
 import { CreateMember, MemberProfileUpdate } from 'src/db/member-schema'
 import { withPagination, withSorting } from 'src/db/query-helpers'
 import { baseMemberRatingsQuery, baseRatingsGivenQuery } from 'src/db/rating-queries'
-import { memcat, quarters, wycDatabase } from 'src/db/schema'
+import { memcat, processedFormEntries, quarters, wycDatabase } from 'src/db/schema'
 import db from '../db/index'
 import {
   requireAuth,
@@ -286,3 +286,18 @@ export const getDatabaseName = createServerFn({ method: 'GET' }).handler(async (
   const url = process.env.DATABASE_URL ?? ''
   return url.split('/').pop() ?? 'unknown'
 })
+
+export const getProcessedEntryIds = createServerFn({ method: 'GET' }).handler(async () => {
+  await requirePrivilege('db', 'rtgs')
+  const rows = await db
+    .select({ entryId: processedFormEntries.entryId })
+    .from(processedFormEntries)
+  return rows.map((r) => r.entryId)
+})
+
+export const markEntryProcessed = createServerFn({ method: 'POST' })
+  .inputValidator((input: { entryId: number; wycNumber: number | null }) => input)
+  .handler(async ({ data: { entryId, wycNumber } }) => {
+    await requirePrivilege('db')
+    await db.insert(processedFormEntries).values({ entryId, wycNumber })
+  })

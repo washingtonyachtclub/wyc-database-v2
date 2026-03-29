@@ -2,22 +2,25 @@ import { Button } from '@/components/ui/button'
 import { CopyBox } from '@/components/ui/CopyBox'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
+import { Textarea } from '@/components/ui/textarea'
 import { isMembershipActive } from '@/db/membership-utils'
 import type { MemberProfileUpdate } from '@/db/member-schema'
 import { getCurrentQuarterQueryOptions } from '@/lib/lessons-query-options'
 import {
   getAllMembersLiteQueryOptions,
+  getProcessedEntryIdsQueryOptions,
   getQuartersQueryOptions,
 } from '@/lib/members-query-options'
-import { createMember, getDatabaseName, renewMember } from '@/lib/members-server-fns'
+import { createMember, getDatabaseName, markEntryProcessed, renewMember } from '@/lib/members-server-fns'
 import { newMemberEmail } from '@/lib/membership-processing/new-member-email-template'
 import { generatePassphrase } from '@/lib/generate-passphrase'
 import { returningMemberEmail } from '@/lib/membership-processing/returning-member-email-template'
-import { useQuery } from '@tanstack/react-query'
+import { cn } from '@/lib/utils'
+import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { createFileRoute } from '@tanstack/react-router'
 import { requirePrivilegeForRoute } from '../lib/route-guards'
 import Papa from 'papaparse'
-import { Fragment, useState } from 'react'
+import { Fragment, useMemo, useState } from 'react'
 
 export const Route = createFileRoute('/membership-processing')({
   beforeLoad: ({ context }) => {
@@ -56,6 +59,17 @@ type DuplicateMatch = {
   status: 'active' | 'expired'
 }
 
+type BatchItemStatus = 'pending' | 'filtered'
+
+type BatchItem = {
+  csvLine: string
+  first: string
+  last: string
+  email: string
+  entryId: number
+  status: BatchItemStatus
+}
+
 type PageState =
   | { kind: 'Initial' }
   | {
@@ -88,10 +102,18 @@ function MembershipProcessingPage() {
   const { data: currentQuarter } = useQuery(getCurrentQuarterQueryOptions())
   const { data: quarters } = useQuery(getQuartersQueryOptions())
   const [memberState, setMemberState] = useState<PageState>({ kind: 'Initial' })
-  const [input, setInput] = useState<string>('')
+  const [batchInput, setBatchInput] = useState<string>('')
+  const [activeLineInput, setActiveLineInput] = useState<string>('')
   const [wycNumberEntry, setWycNumberEntry] = useState<string>('')
+  const [batchItems, setBatchItems] = useState<BatchItem[]>([])
+  const [activeBatchIndex, setActiveBatchIndex] = useState<number | null>(null)
+  const [skipWycNumber, setSkipWycNumber] = useState<string>('')
+  const [skippingIndex, setSkippingIndex] = useState<number | null>(null)
+  const queryClient = useQueryClient()
+  const { data: processedEntryIds } = useQuery(getProcessedEntryIdsQueryOptions())
+  const processedSet = useMemo(() => new Set(processedEntryIds ?? []), [processedEntryIds])
 
-  const headerString = `"Name: First","Name: Last",Email,"Quarterly or Annual Membership","What is your UW Status for the duration of your WYC membership?","What best describes your WYC membership status?","What is your WYC number?","Address: Address Line 1","Address: Address Line 2","Address: City","Address: State","Address: Zip/Postal Code","Address: Country","Primary Phone Number","Alternative Phone Number"`
+  const headerString = `"Name: First","Name: Last",Email,"Quarterly or Annual Membership","What is your UW Status for the duration of your WYC membership?","What best describes your WYC membership status?","What is your WYC number?","Address: Address Line 1","Address: Address Line 2","Address: City","Address: State","Address: Zip/Postal Code","Address: Country","Primary Phone Number","Alternative Phone Number","Entry ID"`
   const headerRow = Papa.parse<string[]>(headerString, { header: false })
     .data[0]
   const wycNumberIndex = headerRow.indexOf('What is your WYC number?')
@@ -185,10 +207,10 @@ function MembershipProcessingPage() {
   }
 
   function reprocessWithWycNumber(wycNumberEntry: string): void {
-    const cells = Papa.parse<string[]>(input, { header: false }).data[0]
+    const cells = Papa.parse<string[]>(activeLineInput, { header: false }).data[0]
     cells[wycNumberIndex] = wycNumberEntry
     const newInput = Papa.unparse([cells], { header: false })
-    setInput(newInput)
+    setActiveLineInput(newInput)
     handleProcess(newInput)
   }
 
@@ -348,7 +370,73 @@ function MembershipProcessingPage() {
     }
   }
 
+  const classifiedBatch = useMemo(() => {
+    return batchItems.map((item) => ({
+      ...item,
+      status: processedSet.has(item.entryId) ? ('filtered' as const) : ('pending' as const),
+    }))
+  }, [batchItems, processedSet])
+
+  const visibleBatch = classifiedBatch.filter((item) => item.status !== 'filtered')
+  const filteredCount = classifiedBatch.length - visibleBatch.length
+
+  function handleBatchProcess(): void {
+    const parsed = Papa.parse<string[]>(batchInput, { header: false })
+    const rows = parsed.data.filter((row) => row.length === headerRow.length)
+
+    const firstIdx = headerRow.indexOf('Name: First')
+    const lastIdx = headerRow.indexOf('Name: Last')
+    const emailIdx = headerRow.indexOf('Email')
+    const entryIdIdx = headerRow.indexOf('Entry ID')
+
+    const items: BatchItem[] = rows
+      .map((row) => {
+        const entryIdStr = (row[entryIdIdx] ?? '').trim()
+        const entryId = entryIdStr && !isNaN(Number(entryIdStr)) ? Number(entryIdStr) : null
+        if (entryId == null) return null
+        return {
+          csvLine: Papa.unparse([row], { header: false }),
+          first: (row[firstIdx] ?? '').trim(),
+          last: (row[lastIdx] ?? '').trim(),
+          email: (row[emailIdx] ?? '').trim(),
+          entryId,
+          status: 'pending' as BatchItemStatus,
+        }
+      })
+      .filter((item): item is BatchItem => item != null)
+
+    setBatchItems(items)
+    setActiveBatchIndex(null)
+    setSkippingIndex(null)
+    setMemberState({ kind: 'Initial' })
+  }
+
+  function handleSelectBatchItem(index: number): void {
+    const item = classifiedBatch[index]
+    setActiveBatchIndex(index)
+    setActiveLineInput(item.csvLine)
+    handleProcess(item.csvLine)
+  }
+
+  async function handleDone(): Promise<void> {
+    await queryClient.invalidateQueries({ queryKey: ['members', 'lite'] })
+    await queryClient.invalidateQueries({ queryKey: ['processedEntryIds'] })
+    setMemberState({ kind: 'Initial' })
+    setActiveBatchIndex(null)
+  }
+
+  async function handleSkip(index: number): Promise<void> {
+    const item = classifiedBatch[index]
+    const wycNum = skipWycNumber.trim()
+    const wycNumber = wycNum && !isNaN(Number(wycNum)) ? Number(wycNum) : null
+    await markEntryProcessed({ data: { entryId: item.entryId, wycNumber } })
+    await queryClient.invalidateQueries({ queryKey: ['processedEntryIds'] })
+    setSkippingIndex(null)
+    setSkipWycNumber('')
+  }
+
   async function handleProcess(overrideInput?: string): Promise<void> {
+    const lineInput = overrideInput ?? activeLineInput
     const dbName = await getDatabaseName()
     if (dbName !== 'production') {
       setMemberState({
@@ -356,12 +444,12 @@ function MembershipProcessingPage() {
         error: {
           code: 'DATABASE_NOT_PROD',
           message: `Connected to "${dbName}" — switch to prod before processing`,
-          rawInput: overrideInput ?? input,
+          rawInput: lineInput,
         },
       })
       return
     }
-    const result = parseInput(overrideInput ?? input, quarters ?? [])
+    const result = parseInput(lineInput, quarters ?? [])
     if (result.kind === 'NewMember') {
       const duplicates = findDuplicates(
         result.member.first,
@@ -381,6 +469,10 @@ function MembershipProcessingPage() {
       const result = await createMember({
         data: { ...memberState.member, password: memberState.password },
       })
+      const activeBatchItem = activeBatchIndex != null ? classifiedBatch[activeBatchIndex] : null
+      if (activeBatchItem) {
+        await markEntryProcessed({ data: { entryId: activeBatchItem.entryId, wycNumber: result.wycNumber } })
+      }
       setMemberState({
         kind: 'NewMemberCreated',
         member: memberState.member,
@@ -404,6 +496,10 @@ function MembershipProcessingPage() {
           expireQtrIndex: memberState.member.newExpireQtr,
         },
       })
+      const activeBatchItem = activeBatchIndex != null ? classifiedBatch[activeBatchIndex] : null
+      if (activeBatchItem) {
+        await markEntryProcessed({ data: { entryId: activeBatchItem.entryId, wycNumber: memberState.member.wycNumber } })
+      }
       setMemberState({ kind: 'OldMemberRenewed', member: memberState.member })
     } catch (error: any) {
       setMemberState({
@@ -421,7 +517,8 @@ function MembershipProcessingPage() {
         <Button
           variant="secondary"
           onClick={() => {
-            setInput(newMemberExampleInput)
+            setBatchInput(newMemberExampleInput)
+            setActiveLineInput(newMemberExampleInput)
             handleProcess(newMemberExampleInput)
           }}
         >
@@ -430,22 +527,85 @@ function MembershipProcessingPage() {
         <Button
           variant="secondary"
           onClick={() => {
-            setInput(oldMemberExampleInput)
+            setBatchInput(oldMemberExampleInput)
+            setActiveLineInput(oldMemberExampleInput)
             handleProcess(oldMemberExampleInput)
           }}
         >
           Set old member example
         </Button>
       </div>
-      <Label>Enter one comma delimited line of the form</Label>
-      <Input
-        type="text"
-        value={input}
-        onChange={(e) => setInput(e.target.value)}
+      <Label>Paste CSV lines (no header)</Label>
+      <Textarea
+        value={batchInput}
+        onChange={(e) => setBatchInput(e.target.value)}
+        rows={6}
+        className="font-mono text-xs"
       />
-      <Button className="mt-4" onClick={() => handleProcess()}>
+      <Button className="mt-4" onClick={handleBatchProcess}>
         Process
       </Button>
+
+      {classifiedBatch.length > 0 && (
+        <div className="mt-4">
+          <p className="text-sm text-muted-foreground mb-2">
+            {filteredCount} already processed · {visibleBatch.length} remaining
+          </p>
+          <ul className="space-y-1">
+            {classifiedBatch.map((item, i) => {
+              if (item.status === 'filtered') return null
+              return (
+                <li key={i}>
+                  <div className="flex items-center gap-2">
+                    <button
+                      type="button"
+                      onClick={() => handleSelectBatchItem(i)}
+                      className={cn(
+                        'flex-1 text-left px-3 py-2 rounded text-sm',
+                        activeBatchIndex === i ? 'bg-accent' : 'hover:bg-muted',
+                      )}
+                    >
+                      {item.first} {item.last} — {item.email}
+                      <span className="text-muted-foreground ml-2">Entry#{item.entryId}</span>
+                    </button>
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      onClick={(e) => {
+                        e.stopPropagation()
+                        setSkippingIndex(skippingIndex === i ? null : i)
+                        setSkipWycNumber('')
+                      }}
+                    >
+                      Skip
+                    </Button>
+                  </div>
+                  {skippingIndex === i && (
+                    <div className="flex items-center gap-2 ml-3 mt-1">
+                      <Input
+                        type="text"
+                        value={skipWycNumber}
+                        onChange={(e) => setSkipWycNumber(e.target.value)}
+                        placeholder="WYC # (optional)"
+                        className="w-40 h-8 text-sm"
+                      />
+                      <Button size="sm" onClick={() => handleSkip(i)}>
+                        Confirm Skip
+                      </Button>
+                    </div>
+                  )}
+                </li>
+              )
+            })}
+          </ul>
+        </div>
+      )}
+
+      {activeBatchIndex != null && memberState.kind !== 'Initial' && (
+        <pre className="mt-4 p-3 rounded bg-muted text-xs font-mono whitespace-pre-wrap break-all">
+          {classifiedBatch[activeBatchIndex]?.csvLine}
+        </pre>
+      )}
 
       {memberState.kind === 'NewMember' && (
         <div className="mt-4">
@@ -500,6 +660,9 @@ function MembershipProcessingPage() {
               memberState.password,
             )}
           />
+          {batchItems.length > 0 && (
+            <Button className="mt-4" onClick={handleDone}>Done</Button>
+          )}
         </div>
       )}
       {memberState.kind === 'OldMember' && (
@@ -530,6 +693,9 @@ function MembershipProcessingPage() {
               getSchoolText(memberState.member.newExpireQtr, quarters ?? []),
             )}
           />
+          {batchItems.length > 0 && (
+            <Button className="mt-4" onClick={handleDone}>Done</Button>
+          )}
         </div>
       )}
       {memberState.kind === 'Error' && (

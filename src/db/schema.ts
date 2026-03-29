@@ -429,6 +429,12 @@ export const wycRatings = mysqlTable(
   (table) => [primaryKey({ columns: [table.index] })],
 )
 
+export const processedFormEntries = mysqlTable('processed_form_entries', {
+  entryId: int('entry_id').primaryKey(),
+  wycNumber: int('wyc_number'),
+  processedAt: timestamp('processed_at').defaultNow().notNull(),
+})
+
 export const wycWind = mysqlTable(
   'wyc_wind',
   {

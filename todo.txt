@@ -16,6 +16,7 @@
 - add "contact webmaster with message, time, and date of error" on errors
 
 # Less Important
+- organize types.ts into respective schema folders
 - better ratings filtering (find all members with *at least* X rating, more complex logic like ANDs and ORs)
 - LLM prompt -> filter parameters / direct read query on DB
 - add a higher level db permission? For managing who gets permissions
