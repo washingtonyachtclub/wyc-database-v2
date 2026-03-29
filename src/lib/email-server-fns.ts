@@ -17,6 +17,7 @@ export const sendTestEmailServerFn = createServerFn({ method: 'POST' })
         to: data.to,
         subject: 'WYC Database - Test Email',
         text: 'This is a test email from the WYC Database system.\n\nIf you received this, email sending is working correctly.\n\nEshan Arora\nWebmaster',
+        idempotencyKey: `test-email/${data.to}/${Date.now()}`,
       })
       return { success: true as const, emailId: result?.id }
     } catch (error) {

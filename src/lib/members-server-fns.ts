@@ -22,6 +22,10 @@ import {
   sessionHasPrivilege,
 } from '../lib/auth-middleware'
 import { hashPasswordArgon2, hashPasswordLegacy } from './auth'
+import { sendEmail } from './email'
+import { generatePassphrase } from './generate-passphrase'
+import { newMemberEmail } from './membership-processing/new-member-email-template'
+import { returningMemberEmail } from './membership-processing/returning-member-email-template'
 
 export const getMembersTable = createServerFn({ method: 'GET' })
   .inputValidator(
@@ -124,21 +128,41 @@ export const getQuarters = createServerFn({ method: 'GET' }).handler(async () =>
 })
 
 export const createMember = createServerFn({ method: 'POST' })
-  .inputValidator((data: CreateMember) => data)
-  .handler(async ({ data }) => {
+  .inputValidator((data: { member: CreateMember; sendEmail: boolean }) => data)
+  .handler(async ({ data: { member, sendEmail: shouldSendEmail } }) => {
     await requirePrivilege('db')
     try {
-      const { password, ...memberData } = data
+      const password = generatePassphrase()
       const wycNumber = await getNextWycNumber()
       const argon2Hash = await hashPasswordArgon2(password)
       const legacyHash = hashPasswordLegacy(password)
       await db.insert(wycDatabase).values({
-        ...fromMemberInsert(memberData),
+        ...fromMemberInsert(member),
         wycNumber,
         password: legacyHash,
         passwordArgon2: argon2Hash,
       })
-      return { success: true as const, wycNumber }
+
+      let emailSent = false
+      if (shouldSendEmail) {
+        try {
+          const emailText = newMemberEmail(
+            { first: member.first, last: member.last, wycNumber },
+            password,
+          )
+          await sendEmail({
+            to: member.email,
+            subject: 'Welcome to the Washington Yacht Club!',
+            text: emailText,
+            idempotencyKey: `new-member/${wycNumber}`,
+          })
+          emailSent = true
+        } catch (emailError) {
+          console.error('Failed to send welcome email:', emailError)
+        }
+      }
+
+      return { success: true as const, wycNumber, emailSent }
     } catch (error: any) {
       console.error('Failed to create member:', error)
 
@@ -168,9 +192,10 @@ export const updateMember = createServerFn({ method: 'POST' })
   })
 
 export const renewMember = createServerFn({ method: 'POST' })
-  .inputValidator((input: { wycNumber: number; expireQtrIndex: number }) => ({
+  .inputValidator((input: { wycNumber: number; expireQtrIndex: number; sendEmail: boolean }) => ({
     wycNumber: Number(input.wycNumber),
     expireQtrIndex: Number(input.expireQtrIndex),
+    sendEmail: input.sendEmail,
   }))
   .handler(async ({ data }) => {
     await requirePrivilege('db')
@@ -179,7 +204,45 @@ export const renewMember = createServerFn({ method: 'POST' })
         .update(wycDatabase)
         .set({ expireQtrIndex: data.expireQtrIndex })
         .where(eq(wycDatabase.wycNumber, data.wycNumber))
-      return { success: true as const, wycNumber: data.wycNumber }
+
+      let emailSent = false
+      if (data.sendEmail) {
+        try {
+          const [member] = await db
+            .select({
+              first: wycDatabase.first,
+              last: wycDatabase.last,
+              email: wycDatabase.email,
+            })
+            .from(wycDatabase)
+            .where(eq(wycDatabase.wycNumber, data.wycNumber))
+
+          const [quarter] = await db
+            .select({ school: quarters.school })
+            .from(quarters)
+            .where(eq(quarters.index, data.expireQtrIndex))
+
+          if (member && member.email) {
+            const emailText = returningMemberEmail(
+              member.first ?? '',
+              member.last ?? '',
+              data.wycNumber,
+              quarter?.school ?? `quarter ${data.expireQtrIndex}`,
+            )
+            await sendEmail({
+              to: member.email,
+              subject: 'WYC Membership Renewed',
+              text: emailText,
+              idempotencyKey: `renewal/${data.wycNumber}/${data.expireQtrIndex}`,
+            })
+            emailSent = true
+          }
+        } catch (emailError) {
+          console.error('Failed to send renewal email:', emailError)
+        }
+      }
+
+      return { success: true as const, wycNumber: data.wycNumber, emailSent }
     } catch (error: any) {
       console.error('Failed to renew member:', error)
       throw new Error('Failed to renew member')

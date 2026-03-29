@@ -16,9 +16,7 @@ const MemberFieldsSchema = z.object({
   outToSea: z.boolean(),
 })
 
-export const CreateMemberSchema = MemberFieldsSchema.extend({
-  password: z.string().min(1, 'Password is required'),
-})
+export const CreateMemberSchema = MemberFieldsSchema
 export type CreateMember = z.infer<typeof CreateMemberSchema>
 
 export const MemberProfileUpdateSchema = MemberFieldsSchema

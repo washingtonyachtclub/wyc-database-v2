@@ -3,24 +3,28 @@ import { CopyBox } from '@/components/ui/CopyBox'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
-import { isMembershipActive } from '@/db/membership-utils'
 import type { MemberProfileUpdate } from '@/db/member-schema'
+import { isMembershipActive } from '@/db/membership-utils'
 import { getCurrentQuarterQueryOptions } from '@/lib/lessons-query-options'
 import {
   getAllMembersLiteQueryOptions,
   getProcessedEntryIdsQueryOptions,
   getQuartersQueryOptions,
 } from '@/lib/members-query-options'
-import { createMember, getDatabaseName, markEntryProcessed, renewMember } from '@/lib/members-server-fns'
-import { newMemberEmail } from '@/lib/membership-processing/new-member-email-template'
-import { generatePassphrase } from '@/lib/generate-passphrase'
+import {
+  createMember,
+  getDatabaseName,
+  markEntryProcessed,
+  renewMember,
+} from '@/lib/members-server-fns'
+import { newMemberEmailFallback } from '@/lib/membership-processing/new-member-email-template'
 import { returningMemberEmail } from '@/lib/membership-processing/returning-member-email-template'
 import { cn } from '@/lib/utils'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { createFileRoute } from '@tanstack/react-router'
-import { requirePrivilegeForRoute } from '../lib/route-guards'
 import Papa from 'papaparse'
 import { Fragment, useMemo, useState } from 'react'
+import { requirePrivilegeForRoute } from '../lib/route-guards'
 
 export const Route = createFileRoute('/membership-processing')({
   beforeLoad: ({ context }) => {
@@ -75,20 +79,24 @@ type PageState =
   | {
       kind: 'NewMember'
       member: MemberProfileUpdate
-      password: string
       duplicates: DuplicateMatch[]
     }
   | {
       kind: 'NewMemberCreated'
       member: MemberProfileUpdate
-      password: string
       wycNumber: number
+      emailSent: boolean
     }
   | { kind: 'OldMember'; member: OldMember }
-  | { kind: 'OldMemberRenewed'; member: OldMember }
+  | { kind: 'OldMemberRenewed'; member: OldMember; emailSent: boolean }
   | { kind: 'Error'; error: ParseError }
 
-const CATEGORY_VALUES = ['Student', 'Employee/Retiree', 'Neither'] as const
+const CATEGORY_VALUES = [
+  'Student',
+  'Student, but graduating, taking quarter off, etc.',
+  'Employee/Retiree',
+  'Neither',
+] as const
 type CategoryText = (typeof CATEGORY_VALUES)[number]
 
 const MEMBERSHIP_STATUS_VALUES = [
@@ -114,8 +122,7 @@ function MembershipProcessingPage() {
   const processedSet = useMemo(() => new Set(processedEntryIds ?? []), [processedEntryIds])
 
   const headerString = `"Name: First","Name: Last",Email,"Quarterly or Annual Membership","What is your UW Status for the duration of your WYC membership?","What best describes your WYC membership status?","What is your WYC number?","Address: Address Line 1","Address: Address Line 2","Address: City","Address: State","Address: Zip/Postal Code","Address: Country","Primary Phone Number","Alternative Phone Number","Entry ID"`
-  const headerRow = Papa.parse<string[]>(headerString, { header: false })
-    .data[0]
+  const headerRow = Papa.parse<string[]>(headerString, { header: false }).data[0]
   const wycNumberIndex = headerRow.indexOf('What is your WYC number?')
 
   type Ok<T> = { ok: true; value: T }
@@ -131,7 +138,6 @@ function MembershipProcessingPage() {
     }
     return { ok: false, error: `Invalid ${fieldName}: "${value}"` }
   }
-
 
   type QuarterRow = { index: number; school: string | null }
 
@@ -149,7 +155,10 @@ function MembershipProcessingPage() {
   }
 
   function getSchoolText(quarterIndex: number, quartersData: QuarterRow[]): string {
-    return quartersData.find((q) => q.index === quarterIndex)?.school ?? `Unknown quarter ${quarterIndex}`
+    return (
+      quartersData.find((q) => q.index === quarterIndex)?.school ??
+      `Unknown quarter ${quarterIndex}`
+    )
   }
 
   function cleanPhone(raw: string): string {
@@ -162,6 +171,8 @@ function MembershipProcessingPage() {
     switch (text) {
       case 'Student':
         return 1
+      case 'Student, but graduating, taking quarter off, etc.':
+        return 1
       case 'Employee/Retiree':
         return 2
       case 'Neither':
@@ -169,11 +180,7 @@ function MembershipProcessingPage() {
     }
   }
 
-  function findDuplicates(
-    first: string,
-    last: string,
-    email: string,
-  ): DuplicateMatch[] {
+  function findDuplicates(first: string, last: string, email: string): DuplicateMatch[] {
     if (!allMembers || currentQuarter == null) return []
     const normFirst = first.toLowerCase().trim()
     const normLast = last.toLowerCase().trim()
@@ -181,24 +188,16 @@ function MembershipProcessingPage() {
     const matches: DuplicateMatch[] = []
     for (const m of allMembers) {
       const nameMatch =
-        m.first?.toLowerCase().trim() === normFirst &&
-        m.last?.toLowerCase().trim() === normLast
+        m.first?.toLowerCase().trim() === normFirst && m.last?.toLowerCase().trim() === normLast
       const emailMatch =
-        normEmail !== '' &&
-        m.email != null &&
-        m.email.toLowerCase().trim() === normEmail
+        normEmail !== '' && m.email != null && m.email.toLowerCase().trim() === normEmail
       if (nameMatch || emailMatch) {
         matches.push({
           wycNumber: m.wycNumber,
           first: m.first,
           last: m.last,
           email: m.email,
-          matchMethod:
-            nameMatch && emailMatch
-              ? 'name+email'
-              : nameMatch
-                ? 'name'
-                : 'email',
+          matchMethod: nameMatch && emailMatch ? 'name+email' : nameMatch ? 'name' : 'email',
           status: isMembershipActive(m.expireQtrIndex, currentQuarter) ? 'active' : 'expired',
         })
       }
@@ -233,14 +232,10 @@ function MembershipProcessingPage() {
     const phone1 = cleanPhone(get('Primary Phone Number'))
     const phone2 = cleanPhone(get('Alternative Phone Number'))
     const email = get('Email')
-    const rawCategory = get(
-      'What is your UW Status for the duration of your WYC membership?',
-    )
+    const rawCategory = get('What is your UW Status for the duration of your WYC membership?')
     const rawQuartersText = get('Quarterly or Annual Membership')
     const wycNumber = get('What is your WYC number?')
-    const rawMembershipStatus = get(
-      'What best describes your WYC membership status?',
-    )
+    const rawMembershipStatus = get('What best describes your WYC membership status?')
 
     const categoryResult = parseOneOf(rawCategory, CATEGORY_VALUES, 'category')
     if (!categoryResult.ok)
@@ -276,8 +271,7 @@ function MembershipProcessingPage() {
         kind: 'Error',
         error: {
           code: 'COLUMN_COUNT_MISMATCH',
-          message:
-            'Expected ' + headerRow.length + ' cells, got ' + inputRow.length,
+          message: 'Expected ' + headerRow.length + ' cells, got ' + inputRow.length,
         },
       }
     } else if (membershipStatus !== 'New member' && !wycNumber) {
@@ -314,9 +308,7 @@ function MembershipProcessingPage() {
       }
 
     if (wycNumber) {
-      const dbMember = allMembers?.find(
-        (m) => m.wycNumber === Number(wycNumber),
-      )
+      const dbMember = allMembers?.find((m) => m.wycNumber === Number(wycNumber))
       if (!dbMember) {
         return {
           kind: 'Error',
@@ -456,8 +448,7 @@ function MembershipProcessingPage() {
         result.member.last,
         result.member.email,
       )
-      const password = generatePassphrase()
-      setMemberState({ ...result, password, duplicates })
+      setMemberState({ ...result, duplicates })
     } else {
       setMemberState(result)
     }
@@ -467,17 +458,19 @@ function MembershipProcessingPage() {
     if (memberState.kind !== 'NewMember') return
     try {
       const result = await createMember({
-        data: { ...memberState.member, password: memberState.password },
+        data: { member: memberState.member, sendEmail: true },
       })
       const activeBatchItem = activeBatchIndex != null ? classifiedBatch[activeBatchIndex] : null
       if (activeBatchItem) {
-        await markEntryProcessed({ data: { entryId: activeBatchItem.entryId, wycNumber: result.wycNumber } })
+        await markEntryProcessed({
+          data: { entryId: activeBatchItem.entryId, wycNumber: result.wycNumber },
+        })
       }
       setMemberState({
         kind: 'NewMemberCreated',
         member: memberState.member,
-        password: memberState.password,
         wycNumber: result.wycNumber,
+        emailSent: result.emailSent,
       })
     } catch (error: any) {
       setMemberState({
@@ -490,17 +483,24 @@ function MembershipProcessingPage() {
   async function handleRenewMember(): Promise<void> {
     if (memberState.kind !== 'OldMember') return
     try {
-      await renewMember({
+      const result = await renewMember({
         data: {
           wycNumber: memberState.member.wycNumber,
           expireQtrIndex: memberState.member.newExpireQtr,
+          sendEmail: true,
         },
       })
       const activeBatchItem = activeBatchIndex != null ? classifiedBatch[activeBatchIndex] : null
       if (activeBatchItem) {
-        await markEntryProcessed({ data: { entryId: activeBatchItem.entryId, wycNumber: memberState.member.wycNumber } })
+        await markEntryProcessed({
+          data: { entryId: activeBatchItem.entryId, wycNumber: memberState.member.wycNumber },
+        })
       }
-      setMemberState({ kind: 'OldMemberRenewed', member: memberState.member })
+      setMemberState({
+        kind: 'OldMemberRenewed',
+        member: memberState.member,
+        emailSent: result.emailSent,
+      })
     } catch (error: any) {
       setMemberState({
         kind: 'Error',
@@ -642,10 +642,10 @@ function MembershipProcessingPage() {
                 <dd>{String(value)}</dd>
               </Fragment>
             ))}
-            <dt className="font-semibold text-right">password:</dt>
-            <dd>{memberState.password}</dd>
           </dl>
-          <Button className="mt-4" onClick={handleCreateMember}>Create Member</Button>
+          <Button className="mt-4" onClick={handleCreateMember}>
+            Create Member
+          </Button>
         </div>
       )}
       {memberState.kind === 'NewMemberCreated' && (
@@ -653,15 +653,26 @@ function MembershipProcessingPage() {
           <p className="text-green-600 font-semibold">
             Member created — WYC #{memberState.wycNumber}
           </p>
-          <CopyBox text={memberState.member.email} />
-          <CopyBox
-            text={newMemberEmail(
-              { ...memberState.member, wycNumber: memberState.wycNumber },
-              memberState.password,
-            )}
-          />
+          {memberState.emailSent ? (
+            <p className="text-green-600">Welcome email sent to {memberState.member.email}</p>
+          ) : (
+            <>
+              <p className="text-destructive font-semibold">
+                Email failed to send. Copy and send manually:
+              </p>
+              <CopyBox text={memberState.member.email} />
+              <CopyBox
+                text={newMemberEmailFallback({
+                  ...memberState.member,
+                  wycNumber: memberState.wycNumber,
+                })}
+              />
+            </>
+          )}
           {batchItems.length > 0 && (
-            <Button className="mt-4" onClick={handleDone}>Done</Button>
+            <Button className="mt-4" onClick={handleDone}>
+              Done
+            </Button>
           )}
         </div>
       )}
@@ -676,7 +687,9 @@ function MembershipProcessingPage() {
               </Fragment>
             ))}
           </dl>
-          <Button className="mt-4" onClick={handleRenewMember}>Renew Membership</Button>
+          <Button className="mt-4" onClick={handleRenewMember}>
+            Renew Membership
+          </Button>
         </div>
       )}
       {memberState.kind === 'OldMemberRenewed' && (
@@ -684,17 +697,28 @@ function MembershipProcessingPage() {
           <p className="text-green-600 font-semibold">
             Membership renewed for WYC #{memberState.member.wycNumber}
           </p>
-          <CopyBox text={memberState.member.email} />
-          <CopyBox
-            text={returningMemberEmail(
-              memberState.member.first,
-              memberState.member.last,
-              memberState.member.wycNumber,
-              getSchoolText(memberState.member.newExpireQtr, quarters ?? []),
-            )}
-          />
+          {memberState.emailSent ? (
+            <p className="text-green-600">Renewal email sent to {memberState.member.email}</p>
+          ) : (
+            <>
+              <p className="text-destructive font-semibold">
+                Email failed to send. Copy and send manually:
+              </p>
+              <CopyBox text={memberState.member.email} />
+              <CopyBox
+                text={returningMemberEmail(
+                  memberState.member.first,
+                  memberState.member.last,
+                  memberState.member.wycNumber,
+                  getSchoolText(memberState.member.newExpireQtr, quarters ?? []),
+                )}
+              />
+            </>
+          )}
           {batchItems.length > 0 && (
-            <Button className="mt-4" onClick={handleDone}>Done</Button>
+            <Button className="mt-4" onClick={handleDone}>
+              Done
+            </Button>
           )}
         </div>
       )}
@@ -715,11 +739,21 @@ function MembershipProcessingPage() {
                           {' — matched by '}
                           <span className="font-medium">{d.matchMethod}</span>
                           {' — '}
-                          <span className={d.status === 'active' ? 'text-green-700 font-medium' : 'text-red-700 font-medium'}>
+                          <span
+                            className={
+                              d.status === 'active'
+                                ? 'text-green-700 font-medium'
+                                : 'text-red-700 font-medium'
+                            }
+                          >
                             {d.status}
                           </span>
                         </span>
-                        <Button size="sm" variant="outline" onClick={() => reprocessWithWycNumber(String(d.wycNumber))}>
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => reprocessWithWycNumber(String(d.wycNumber))}
+                        >
                           Use #{d.wycNumber}
                         </Button>
                       </li>
