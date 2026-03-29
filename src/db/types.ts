@@ -75,6 +75,13 @@ export type ChiefTableRow = {
 }
 
 
+export type RatingType = {
+  index: number
+  text: string
+  type: string
+  degree: number
+}
+
 export type ClassTypeRow = typeof classType.$inferSelect
 export type ClassType = {
   index: number

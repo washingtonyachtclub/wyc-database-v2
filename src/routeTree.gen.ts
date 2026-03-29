@@ -11,6 +11,7 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as SetPasswordRouteImport } from './routes/set-password'
 import { Route as RatingsRouteImport } from './routes/ratings'
+import { Route as RatingTypesRouteImport } from './routes/rating-types'
 import { Route as PrivilegesRouteImport } from './routes/privileges'
 import { Route as OfficersRouteImport } from './routes/officers'
 import { Route as MyLessonsRouteImport } from './routes/my-lessons'
@@ -36,6 +37,11 @@ const SetPasswordRoute = SetPasswordRouteImport.update({
 const RatingsRoute = RatingsRouteImport.update({
   id: '/ratings',
   path: '/ratings',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const RatingTypesRoute = RatingTypesRouteImport.update({
+  id: '/rating-types',
+  path: '/rating-types',
   getParentRoute: () => rootRouteImport,
 } as any)
 const PrivilegesRoute = PrivilegesRouteImport.update({
@@ -133,6 +139,7 @@ export interface FileRoutesByFullPath {
   '/my-lessons': typeof MyLessonsRoute
   '/officers': typeof OfficersRoute
   '/privileges': typeof PrivilegesRoute
+  '/rating-types': typeof RatingTypesRoute
   '/ratings': typeof RatingsRoute
   '/set-password': typeof SetPasswordRoute
   '/lessons/$lessonIndex': typeof LessonsLessonIndexRoute
@@ -153,6 +160,7 @@ export interface FileRoutesByTo {
   '/my-lessons': typeof MyLessonsRoute
   '/officers': typeof OfficersRoute
   '/privileges': typeof PrivilegesRoute
+  '/rating-types': typeof RatingTypesRoute
   '/ratings': typeof RatingsRoute
   '/set-password': typeof SetPasswordRoute
   '/lessons/$lessonIndex': typeof LessonsLessonIndexRoute
@@ -174,6 +182,7 @@ export interface FileRoutesById {
   '/my-lessons': typeof MyLessonsRoute
   '/officers': typeof OfficersRoute
   '/privileges': typeof PrivilegesRoute
+  '/rating-types': typeof RatingTypesRoute
   '/ratings': typeof RatingsRoute
   '/set-password': typeof SetPasswordRoute
   '/lessons_/$lessonIndex': typeof LessonsLessonIndexRoute
@@ -196,6 +205,7 @@ export interface FileRouteTypes {
     | '/my-lessons'
     | '/officers'
     | '/privileges'
+    | '/rating-types'
     | '/ratings'
     | '/set-password'
     | '/lessons/$lessonIndex'
@@ -216,6 +226,7 @@ export interface FileRouteTypes {
     | '/my-lessons'
     | '/officers'
     | '/privileges'
+    | '/rating-types'
     | '/ratings'
     | '/set-password'
     | '/lessons/$lessonIndex'
@@ -236,6 +247,7 @@ export interface FileRouteTypes {
     | '/my-lessons'
     | '/officers'
     | '/privileges'
+    | '/rating-types'
     | '/ratings'
     | '/set-password'
     | '/lessons_/$lessonIndex'
@@ -257,6 +269,7 @@ export interface RootRouteChildren {
   MyLessonsRoute: typeof MyLessonsRoute
   OfficersRoute: typeof OfficersRoute
   PrivilegesRoute: typeof PrivilegesRoute
+  RatingTypesRoute: typeof RatingTypesRoute
   RatingsRoute: typeof RatingsRoute
   SetPasswordRoute: typeof SetPasswordRoute
   LessonsLessonIndexRoute: typeof LessonsLessonIndexRoute
@@ -278,6 +291,13 @@ declare module '@tanstack/react-router' {
       path: '/ratings'
       fullPath: '/ratings'
       preLoaderRoute: typeof RatingsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/rating-types': {
+      id: '/rating-types'
+      path: '/rating-types'
+      fullPath: '/rating-types'
+      preLoaderRoute: typeof RatingTypesRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/privileges': {
@@ -409,6 +429,7 @@ const rootRouteChildren: RootRouteChildren = {
   MyLessonsRoute: MyLessonsRoute,
   OfficersRoute: OfficersRoute,
   PrivilegesRoute: PrivilegesRoute,
+  RatingTypesRoute: RatingTypesRoute,
   RatingsRoute: RatingsRoute,
   SetPasswordRoute: SetPasswordRoute,
   LessonsLessonIndexRoute: LessonsLessonIndexRoute,

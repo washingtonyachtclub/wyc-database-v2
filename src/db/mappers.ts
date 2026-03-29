@@ -9,7 +9,8 @@ import type { MemberProfileUpdate } from './member-schema'
 import type { OfficerQueryRow } from './officer-queries'
 import type { RatingQueryRow } from './rating-queries'
 import { wycDatabase } from './schema'
-import type { Checkout, Member, MemberRating, MemberTableRow, Officer } from './types'
+import { ratings } from './schema'
+import type { Checkout, Member, MemberRating, MemberTableRow, Officer, RatingType } from './types'
 
 const num = (value: number | null | undefined): number => value ?? 0
 const str = (value: string | null | undefined): string => value ?? ''
@@ -143,6 +144,15 @@ export function toOfficer(row: OfficerQueryRow): Officer {
     positionType: row.positionType ?? '<Unknown>',
     isDuesExempt: (row.isDuesExempt ?? 0) !== 0,
     active: row.active !== 0,
+  }
+}
+
+export function toRatingType(row: typeof ratings.$inferSelect): RatingType {
+  return {
+    index: row.index,
+    text: str(row.text),
+    type: row.type,
+    degree: row.degree,
   }
 }
 

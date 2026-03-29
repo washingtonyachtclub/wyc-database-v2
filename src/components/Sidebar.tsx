@@ -11,6 +11,7 @@ export default function Sidebar() {
     { path: '/members' as const, label: 'Members' },
     { path: '/lessons' as const, label: 'Lessons' },
     { path: '/ratings' as const, label: 'Ratings' },
+    { path: '/rating-types' as const, label: 'Rating Types' },
     { path: '/officers' as const, label: 'Officers & Positions' },
     { path: '/chiefs' as const, label: 'Chiefs' },
     { path: '/privileges' as const, label: 'Privileges' },

@@ -16,6 +16,7 @@ export const routePermissions = {
   '/my-lessons': [],
   '/ratings': ['rtgs'],
   '/ratings/$ratingIndex': ['rtgs'],
+  '/rating-types': ['db', 'rtgs'],
   '/chiefs': ['db'],
   '/officers': ['db'],
   '/privileges': ['db'],
