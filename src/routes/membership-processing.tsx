@@ -509,8 +509,8 @@ function MembershipProcessingPage() {
     }
   }
 
-  const newMemberExampleInput = `Sahil,Chowdhury,sahilch@uw.edu,"Spring 2026",Student,"New member",,"217 245th pl ne",,Sammamish,WA,98074,US,'+14255892521,`
-  const oldMemberExampleInput = `Luka,Ukrainczyk,lukrainczyk@gmail.com,"Spring 2026",Neither,"Current member looking to renew",17323,,,,,,,,`
+  const newMemberExampleInput = `Sahil,Chowdhury,sahilch@uw.edu,"Spring 2026",Student,"New member",,"217 245th pl ne",,Sammamish,WA,98074,US,'+14255892521,,9999`
+  const oldMemberExampleInput = `Luka,Ukrainczyk,lukrainczyk@gmail.com,"Spring 2026",Neither,"Current member looking to renew",17323,,,,,,,,,9998`
   return (
     <div className="p-8">
       <div className="flex gap-2 mb-4">
