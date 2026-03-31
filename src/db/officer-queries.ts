@@ -1,4 +1,4 @@
-import { desc, eq, inArray } from 'drizzle-orm'
+import { and, desc, eq, inArray } from 'drizzle-orm'
 import { OFFICER_PAGE_POSITIONS } from './constants'
 import db from './index'
 import { officers, posType, positions, wycDatabase } from './schema'
@@ -46,6 +46,22 @@ export function getOfficerPagePositions() {
     .from(positions)
     .where(inArray(positions.index, [...OFFICER_PAGE_POSITIONS]))
     .orderBy(positions.sortorder)
+}
+
+/** Look up the active officer holding a given position (e.g. Webmaster) */
+export async function getActiveOfficerByPosition(positionId: number) {
+  const rows = await db
+    .select({
+      first: wycDatabase.first,
+      last: wycDatabase.last,
+      email: wycDatabase.email,
+    })
+    .from(officers)
+    .leftJoin(wycDatabase, eq(officers.member, wycDatabase.wycNumber))
+    .leftJoin(positions, eq(officers.position, positions.index))
+    .where(and(eq(positions.index, positionId), eq(officers.active, 1)))
+    .limit(1)
+  return rows[0] ?? null
 }
 
 export function baseMemberPositionsQuery(wycNumber: number) {

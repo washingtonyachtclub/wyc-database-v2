@@ -54,3 +54,9 @@ export const OFFICER_PAGE_SECTIONS = [
 
 /** Flat list of all position IDs on the officer page (for queries) */
 export const OFFICER_PAGE_POSITIONS = OFFICER_PAGE_SECTIONS.flatMap((s) => s.positions)
+
+/** Position ID for the Webmaster (database administrator) */
+export const DATABASE_ADMIN_POSITION_ID = 2260
+
+/** Club webmaster email address */
+export const WEBMASTER_EMAIL = 'webmaster@washingtonyachtclub.org'

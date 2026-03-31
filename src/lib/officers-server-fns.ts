@@ -1,16 +1,32 @@
 import { eq } from 'drizzle-orm'
 import { createServerFn } from '@tanstack/react-start'
 import db from 'src/db/index'
+import { DATABASE_ADMIN_POSITION_ID } from 'src/db/constants'
 import { toOfficer } from 'src/db/mappers'
 import type { OfficerInsert } from 'src/db/officer-schema'
 import {
   baseMemberPositionsQuery,
   baseOfficersQuery,
+  getActiveOfficerByPosition,
   getOfficerPagePositions,
   officerPageQuery,
 } from 'src/db/officer-queries'
 import { officers } from 'src/db/schema'
 import { requirePrivilege, requireSelfOrPrivilege } from '../lib/auth-middleware'
+
+export const getDatabaseAdmin = createServerFn({ method: 'GET' }).handler(async () => {
+  try {
+    const row = await getActiveOfficerByPosition(DATABASE_ADMIN_POSITION_ID)
+    if (!row) return null
+    return {
+      name: `${row.first ?? ''} ${row.last ?? ''}`.trim() || 'Database Admin',
+      email: row.email ?? '',
+    }
+  } catch (error) {
+    console.error('Failed to fetch database admin:', error)
+    return null
+  }
+})
 
 export const getAllOfficers = createServerFn({ method: 'GET' }).handler(async () => {
   await requirePrivilege('db')

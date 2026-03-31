@@ -1,11 +1,14 @@
 import { isDevEnvironment } from '@/lib/env'
 import { getDatabaseName } from '@/lib/members-server-fns'
+import { getDatabaseAdmin } from '@/lib/officers-server-fns'
 import { hasPrivilege } from '@/lib/permissions'
 import { useQuery } from '@tanstack/react-query'
 import { Link, useLocation, useRouter } from '@tanstack/react-router'
+import { useState } from 'react'
 import { useCurrentUser, useLogoutMutation } from '../lib/auth-query-options'
-import { Button } from './ui/button'
+import { AdminContactModal } from './AdminContactModal'
 import { DevPrivilegeEmulator } from './DevPrivilegeEmulator'
+import { Button } from './ui/button'
 
 const isDevApp = isDevEnvironment()
 
@@ -14,10 +17,16 @@ export default function Header() {
   const location = useLocation()
   const { user, isAuthenticated, privileges, realPrivileges } = useCurrentUser()
   const logoutMutation = useLogoutMutation()
+  const [showAdminModal, setShowAdminModal] = useState(false)
   const isBarePage = ['/login', '/forgot-password'].includes(location.pathname)
   const { data: dbName } = useQuery({
     queryKey: ['databaseName'],
     queryFn: () => getDatabaseName(),
+    staleTime: Infinity,
+  })
+  const { data: adminData } = useQuery({
+    queryKey: ['databaseAdmin'],
+    queryFn: () => getDatabaseAdmin(),
     staleTime: Infinity,
   })
 
@@ -52,13 +61,25 @@ export default function Header() {
           <div className="flex items-center gap-4">
             {isAuthenticated && user ? (
               <>
-                {isDevApp && hasPrivilege(realPrivileges ?? privileges, ['db']) && <DevPrivilegeEmulator />}
-                <span className="text-sm text-muted-foreground">
+                {isDevApp && hasPrivilege(realPrivileges ?? privileges, ['db']) && (
+                  <DevPrivilegeEmulator />
+                )}
+                <span className="text-sm font-semibold text-muted-foreground">
                   {user.first} {user.last} ({user.wycNumber})
                 </span>
                 <Button onClick={handleLogout} disabled={logoutMutation.isPending} size="sm">
                   {logoutMutation.isPending ? 'Logging out...' : 'Logout'}
                 </Button>
+                {adminData && (
+                  <Button
+                    variant="ghost"
+                    className="text-sm text-muted-foreground font-normal"
+                    onClick={() => setShowAdminModal(true)}
+                  >
+                    Contact DB Admin: <br />
+                    {adminData.name}
+                  </Button>
+                )}
               </>
             ) : (
               !isBarePage && (
@@ -72,6 +93,13 @@ export default function Header() {
           </div>
         </div>
       </div>
+      {showAdminModal && adminData && (
+        <AdminContactModal
+          onClose={() => setShowAdminModal(false)}
+          adminName={adminData.name}
+          adminEmail={adminData.email}
+        />
+      )}
     </header>
   )
 }
