@@ -14,10 +14,10 @@ import {
 } from '@/lib/members-query-options'
 import {
   createMember,
-  getDatabaseName,
   markEntryProcessed,
   renewMember,
 } from '@/lib/members-server-fns'
+import { isDevEnvironment } from '@/lib/env'
 import { newMemberEmailFallback, returningMemberEmail } from '@/lib/email-templates'
 import { cn } from '@/lib/utils'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
@@ -46,7 +46,6 @@ type ParseResult =
   | { kind: 'Error'; error: ParseError }
 
 type ParseError =
-  | { code: 'DATABASE_NOT_PROD'; message: string; rawInput: string }
   | { code: 'MISSING_WYC_NUMBER'; message: string; rawInput: string; duplicates: DuplicateMatch[] }
   | { code: 'COLUMN_COUNT_MISMATCH'; message: string }
   | { code: 'WYC_NOT_FOUND'; message: string }
@@ -89,7 +88,7 @@ type PageState =
       emailSimulated: boolean
     }
   | { kind: 'OldMember'; member: OldMember }
-  | { kind: 'OldMemberRenewed'; member: OldMember; emailSent: boolean; emailSimulated: boolean }
+  | { kind: 'OldMemberRenewed'; member: OldMember; emailSent: boolean; emailSimulated: boolean; emailAddress: string | null }
   | { kind: 'Error'; error: ParseError }
 
 const CATEGORY_VALUES = [
@@ -430,18 +429,6 @@ function MembershipProcessingPage() {
 
   async function handleProcess(overrideInput?: string): Promise<void> {
     const lineInput = overrideInput ?? activeLineInput
-    const dbName = await getDatabaseName()
-    if (dbName !== 'production') {
-      setMemberState({
-        kind: 'Error',
-        error: {
-          code: 'DATABASE_NOT_PROD',
-          message: `Connected to "${dbName}" — switch to prod before processing`,
-          rawInput: lineInput,
-        },
-      })
-      return
-    }
     const result = parseInput(lineInput, quarters ?? [])
     if (result.kind === 'NewMember') {
       const duplicates = findDuplicates(
@@ -490,6 +477,7 @@ function MembershipProcessingPage() {
           wycNumber: memberState.member.wycNumber,
           expireQtrIndex: memberState.member.newExpireQtr,
           sendEmail: true,
+          formEmail: memberState.member.email,
         },
       })
       const activeBatchItem = activeBatchIndex != null ? classifiedBatch[activeBatchIndex] : null
@@ -503,6 +491,7 @@ function MembershipProcessingPage() {
         member: memberState.member,
         emailSent: result.emailSent,
         emailSimulated: result.emailSimulated,
+        emailAddress: result.emailAddress,
       })
     } catch (error: any) {
       setMemberState({
@@ -516,6 +505,11 @@ function MembershipProcessingPage() {
   const oldMemberExampleInput = `Luka,Ukrainczyk,lukrainczyk@gmail.com,"Spring 2026",Neither,"Current member looking to renew",17323,,,,,,,,,9998`
   return (
     <div className="p-8">
+      {isDevEnvironment() && (
+        <div className="mb-4 rounded border border-yellow-400 bg-yellow-50 p-4 text-yellow-900 font-semibold">
+          Development database — testing only
+        </div>
+      )}
       <div className="flex gap-2 mb-4">
         <Button
           variant="secondary"
@@ -703,27 +697,52 @@ function MembershipProcessingPage() {
           <p className="text-green-600 font-semibold">
             Membership renewed for WYC #{memberState.member.wycNumber}
           </p>
-          {memberState.emailSent ? (
-            <>
-              <p className="text-green-600">Renewal email sent to {memberState.member.email}</p>
-              {memberState.emailSimulated && <EmailSimulatedNotice />}
-            </>
-          ) : (
-            <>
-              <p className="text-destructive font-semibold">
-                Email failed to send. Copy and send manually:
-              </p>
-              <CopyBox text={memberState.member.email} />
-              <CopyBox
-                text={returningMemberEmail(
-                  memberState.member.first,
-                  memberState.member.last,
-                  memberState.member.wycNumber,
-                  getSchoolText(memberState.member.newExpireQtr, quarters ?? []),
-                )}
-              />
-            </>
-          )}
+          {(() => {
+            const formEmailDiffers =
+              memberState.emailAddress != null &&
+              memberState.member.email.toLowerCase().trim() !==
+                memberState.emailAddress.toLowerCase().trim()
+            if (memberState.emailSent) {
+              return (
+                <>
+                  {formEmailDiffers ? (
+                    <p className="text-green-600">
+                      Renewal email sent to {memberState.emailAddress} (on file) and{' '}
+                      {memberState.member.email} (form)
+                    </p>
+                  ) : (
+                    <p className="text-green-600">
+                      Renewal email sent to {memberState.emailAddress}
+                    </p>
+                  )}
+                  {memberState.emailSimulated && <EmailSimulatedNotice />}
+                </>
+              )
+            }
+            return (
+              <>
+                <p className="text-destructive font-semibold">
+                  Email failed to send. Copy and send manually:
+                </p>
+                <CopyBox text={memberState.emailAddress ?? memberState.member.email} />
+                {formEmailDiffers && <CopyBox text={memberState.member.email} />}
+                <CopyBox
+                  text={returningMemberEmail(
+                    memberState.member.first,
+                    memberState.member.last,
+                    memberState.member.wycNumber,
+                    getSchoolText(memberState.member.newExpireQtr, quarters ?? []),
+                    formEmailDiffers
+                      ? {
+                          formEmail: memberState.member.email,
+                          onFileEmail: memberState.emailAddress!,
+                        }
+                      : undefined,
+                  )}
+                />
+              </>
+            )
+          })()}
           {batchItems.length > 0 && (
             <Button className="mt-4" onClick={handleDone}>
               Done

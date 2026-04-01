@@ -65,7 +65,12 @@ export function returningMemberEmail(
   last: string,
   wycNumber: number,
   newExpireQtrSchoolText: string,
+  emailMismatch?: { formEmail: string; onFileEmail: string },
 ): string {
+  const mismatchNote = emailMismatch
+    ? `\nNote: You renewed with the email ${emailMismatch.formEmail}, but we have ${emailMismatch.onFileEmail} on file. You can update your email at database.washingtonyachtclub.org.\n`
+    : ''
+
   return `Hello ${first} ${last},
 
 Your WYC membership has been renewed!
@@ -73,7 +78,7 @@ Your WYC membership has been renewed!
 Your WYC Number is: ${wycNumber}
 Your membership is now active through ${newExpireQtrSchoolText}.
 You can review your ratings and information at database.washingtonyachtclub.org.
-
+${mismatchNote}
 ${SIGNATURE_NAME}
 ${SIGNATURE_POSITION}`
 }

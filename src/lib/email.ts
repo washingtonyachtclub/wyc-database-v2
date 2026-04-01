@@ -27,6 +27,7 @@ export type SendEmailResult = {
 export async function sendEmail({ to, subject, text, idempotencyKey }: SendEmailParams): Promise<SendEmailResult> {
   const simulated = isDevEnvironment()
   const actualTo = simulated ? DEV_RECIPIENT : to
+  const actualKey = simulated ? `dev/${idempotencyKey}` : idempotencyKey
 
   if (simulated) {
     console.log('[DEV] Email simulated:', {
@@ -35,7 +36,7 @@ export async function sendEmail({ to, subject, text, idempotencyKey }: SendEmail
       replyTo: REPLY_TO,
       subject,
       text,
-      idempotencyKey,
+      idempotencyKey: actualKey,
     })
   }
 
@@ -47,7 +48,7 @@ export async function sendEmail({ to, subject, text, idempotencyKey }: SendEmail
       subject,
       text,
     },
-    { idempotencyKey },
+    { idempotencyKey: actualKey },
   )
 
   if (error) {
