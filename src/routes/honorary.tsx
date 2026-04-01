@@ -12,21 +12,34 @@ import {
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog'
 import { Button } from '@/components/ui/button'
+import { Checkbox } from '@/components/ui/checkbox'
 import { Plus } from 'lucide-react'
 import { DataTable } from '@/components/ui/DataTable'
+import { Label } from '@/components/ui/label'
+import type { HonoraryFilters } from '@/db/honorary-queries'
 import { getHonoraryQueryOptions, useDeleteHonoraryMutation } from '@/lib/honorary-query-options'
 import { requirePrivilegeForRoute } from '@/lib/route-guards'
 import { useSuspenseQuery } from '@tanstack/react-query'
-import { createFileRoute } from '@tanstack/react-router'
+import { createFileRoute, useNavigate } from '@tanstack/react-router'
 import { getCoreRowModel, useReactTable } from '@tanstack/react-table'
 import { useState } from 'react'
+import { z } from 'zod'
+
+const honorarySearchSchema = z.object({
+  showOutToSea: z.boolean().catch(false),
+})
 
 export const Route = createFileRoute('/honorary')({
+  validateSearch: honorarySearchSchema,
   beforeLoad: ({ context }) => {
     requirePrivilegeForRoute(context, '/honorary')
   },
-  loader: ({ context }) => {
-    return context.queryClient.ensureQueryData(getHonoraryQueryOptions())
+  loaderDeps: ({ search: { showOutToSea } }) => {
+    const filters: HonoraryFilters = { showOutToSea }
+    return { filters }
+  },
+  loader: ({ context, deps: { filters } }) => {
+    return context.queryClient.ensureQueryData(getHonoraryQueryOptions(filters))
   },
   component: HonoraryPage,
 })
@@ -37,7 +50,11 @@ type DeleteTarget = {
 }
 
 function HonoraryPage() {
-  const { data: members } = useSuspenseQuery(getHonoraryQueryOptions())
+  const navigate = useNavigate({ from: '/honorary' })
+  const { showOutToSea } = Route.useSearch()
+  const { filters } = Route.useLoaderDeps()
+
+  const { data: members } = useSuspenseQuery(getHonoraryQueryOptions(filters))
 
   const [isAddModalOpen, setIsAddModalOpen] = useState(false)
   const [deleteTarget, setDeleteTarget] = useState<DeleteTarget | null>(null)
@@ -64,6 +81,44 @@ function HonoraryPage() {
         <Plus className="h-4 w-4" />
         New Honorary Member
       </Button>
+
+      <div className="mb-4 p-4 border-2 rounded-lg bg-muted/50">
+        <div className="flex flex-wrap items-end gap-4">
+          <div className="flex items-center gap-2 pb-1">
+            <Checkbox
+              id="show-out-to-sea"
+              checked={showOutToSea}
+              onCheckedChange={(checked) =>
+                navigate({
+                  search: (prev) => ({
+                    ...prev,
+                    showOutToSea: checked === true,
+                  }),
+                  replace: true,
+                })
+              }
+            />
+            <Label htmlFor="show-out-to-sea">Show Out to Sea</Label>
+          </div>
+
+          {showOutToSea && (
+            <Button
+              variant="destructive"
+              onClick={() =>
+                navigate({
+                  search: (prev) => ({
+                    ...prev,
+                    showOutToSea: false,
+                  }),
+                  replace: true,
+                })
+              }
+            >
+              Clear Filters
+            </Button>
+          )}
+        </div>
+      </div>
 
       <p className="text-sm text-muted-foreground mb-2">{members.length} members</p>
       <DataTable table={table} />

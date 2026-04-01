@@ -1,4 +1,5 @@
 import { and, eq } from 'drizzle-orm'
+import type { MySqlSelect } from 'drizzle-orm/mysql-core'
 import db from './index'
 import { officers, positions, quarters, wycDatabase } from './schema'
 
@@ -9,6 +10,7 @@ export const honorarySelectFields = {
   memberLast: wycDatabase.last,
   expireQtrIndex: wycDatabase.expireQtrIndex,
   expireQtrSchoolText: quarters.school,
+  outToSea: wycDatabase.outToSea,
 }
 
 export type HonoraryQueryRow = Awaited<ReturnType<typeof baseHonoraryQuery>>[number]
@@ -20,10 +22,25 @@ export function baseHonoraryQuery() {
     .leftJoin(wycDatabase, eq(officers.member, wycDatabase.wycNumber))
     .leftJoin(positions, eq(officers.position, positions.index))
     .leftJoin(quarters, eq(quarters.index, wycDatabase.expireQtrIndex))
-    .where(
-      and(
-        eq(positions.index, 1030),
-        eq(officers.active, 1),
-      ),
-    )
+}
+
+export type HonoraryFilters = {
+  showOutToSea?: boolean
+}
+
+export function withHonoraryFilters<T extends MySqlSelect>(
+  qb: T,
+  filters: HonoraryFilters | undefined,
+) {
+  const conditions = [
+    eq(positions.index, 1030),
+    eq(officers.active, 1),
+  ]
+
+  if (!filters?.showOutToSea) {
+    conditions.push(eq(wycDatabase.outToSea, 0))
+  }
+
+  qb.where(and(...conditions))
+  return qb
 }

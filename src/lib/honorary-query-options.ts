@@ -1,13 +1,14 @@
 import { queryOptions, useMutation, useQueryClient } from '@tanstack/react-query'
+import type { HonoraryFilters } from 'src/db/honorary-queries'
 import { createOfficer } from './officers-server-fns'
 import { deleteHonorary, getHonoraryTable } from './honorary-server-fns'
 
 const HONORARY_POSITION = 1030
 
-export const getHonoraryQueryOptions = () =>
+export const getHonoraryQueryOptions = (filters?: HonoraryFilters) =>
   queryOptions({
-    queryKey: ['honorary'],
-    queryFn: getHonoraryTable,
+    queryKey: ['honorary', filters],
+    queryFn: () => getHonoraryTable({ data: { filters } }),
   })
 
 export function useCreateHonoraryMutation(opts: { onSuccess: () => void; onClose: () => void }) {
