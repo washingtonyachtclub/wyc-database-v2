@@ -24,7 +24,6 @@ export const routePermissions = {
   '/boat-types': ['db'],
   '/membership-processing': ['db'],
   '/set-password': [],
-  '/email-test': ['db'],
   '/forbidden': [],
 } as const satisfies Record<string, readonly Privilege[]>
 

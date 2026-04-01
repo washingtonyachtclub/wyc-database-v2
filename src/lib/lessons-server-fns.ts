@@ -1,7 +1,7 @@
 import { createServerFn } from '@tanstack/react-start'
 import { and, asc, count, eq, gte, inArray, or } from 'drizzle-orm'
 import { baseLessonQuery, baseSignedUpWithDetailsQuery, lessonSortColumns } from 'src/db/lesson-queries'
-import type { LessonInsert, SignedUpLesson } from 'src/db/lesson-schema'
+import type { LessonInsert, LessonStudent, SignedUpLesson } from 'src/db/lesson-schema'
 import { fromLessonInsert, toRichLesson } from 'src/db/mappers'
 import { enrollmentStatus, splitEnrollment } from 'src/db/signup-utils'
 import { withPagination, withSorting } from 'src/db/query-helpers'
@@ -77,14 +77,12 @@ export const getLessonById = createServerFn({ method: 'GET' })
       .where(eq(signups.class, id))
       .orderBy(asc(signups.index))
 
-    const lessonStudents = students.map((s) => {
-      return {
-        wycNumber: s.wycNumber,
-        first: s.first || '<Unknown>',
-        last: s.last || '<Unknown>',
-        email: s.email || '<Unknown>',
-      }
-    })
+    const lessonStudents: LessonStudent[] = students.map((s) => ({
+      wycNumber: s.wycNumber,
+      first: s.first || '<Unknown>',
+      last: s.last || '<Unknown>',
+      email: s.email || '<Unknown>',
+    }))
 
     const { enrolled: enrolledStudents, waitlisted: waitlistedStudents } =
       splitEnrollment(lessonStudents, lesson.size)

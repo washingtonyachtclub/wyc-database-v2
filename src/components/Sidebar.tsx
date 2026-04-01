@@ -27,7 +27,6 @@ export default function Sidebar() {
 
   const toolsItems = [
     { path: '/membership-processing' as const, label: 'Membership Processing' },
-    { path: '/email-test' as const, label: 'Email Test' },
   ]
 
   const filterVisible = (items: { path: ProtectedRoute; label: string }[]) =>

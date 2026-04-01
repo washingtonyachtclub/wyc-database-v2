@@ -1,5 +1,5 @@
 import { TBD_WYC_NUMBER } from '@/db/constants'
-import type { LessonInsert, RichLesson } from '@/db/lesson-schema'
+import type { LessonInsert, LessonStudent, RichLesson } from '@/db/lesson-schema'
 import { lessonInsertSchema } from '@/db/lesson-schema'
 import { useAppForm } from '@/hooks/form'
 import {
@@ -180,8 +180,8 @@ function StudentList({
   onRemove,
   emptyMessage,
 }: {
-  students: { wycNumber: number; first: string; last: string; email: string }[]
-  onRemove: (student: { wycNumber: number; first: string; last: string }) => void
+  students: LessonStudent[]
+  onRemove: (student: LessonStudent) => void
   emptyMessage: string
 }) {
   if (students.length === 0) {

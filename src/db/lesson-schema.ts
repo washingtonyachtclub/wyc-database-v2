@@ -57,7 +57,7 @@ export type SignedUpLesson = RichLesson & {
   instructor2Email: string
 }
 
-type LessonStudent = {
+export type LessonStudent = {
   wycNumber: number
   first: string
   last: string

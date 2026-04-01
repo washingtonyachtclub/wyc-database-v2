@@ -22,7 +22,6 @@ import { Route as LessonsRouteImport } from './routes/lessons'
 import { Route as HonoraryRouteImport } from './routes/honorary'
 import { Route as ForgotPasswordRouteImport } from './routes/forgot-password'
 import { Route as ForbiddenRouteImport } from './routes/forbidden'
-import { Route as EmailTestRouteImport } from './routes/email-test'
 import { Route as ChiefsRouteImport } from './routes/chiefs'
 import { Route as BoatTypesRouteImport } from './routes/boat-types'
 import { Route as IndexRouteImport } from './routes/index'
@@ -95,11 +94,6 @@ const ForbiddenRoute = ForbiddenRouteImport.update({
   path: '/forbidden',
   getParentRoute: () => rootRouteImport,
 } as any)
-const EmailTestRoute = EmailTestRouteImport.update({
-  id: '/email-test',
-  path: '/email-test',
-  getParentRoute: () => rootRouteImport,
-} as any)
 const ChiefsRoute = ChiefsRouteImport.update({
   id: '/chiefs',
   path: '/chiefs',
@@ -135,7 +129,6 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/boat-types': typeof BoatTypesRoute
   '/chiefs': typeof ChiefsRoute
-  '/email-test': typeof EmailTestRoute
   '/forbidden': typeof ForbiddenRoute
   '/forgot-password': typeof ForgotPasswordRoute
   '/honorary': typeof HonoraryRoute
@@ -157,7 +150,6 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/boat-types': typeof BoatTypesRoute
   '/chiefs': typeof ChiefsRoute
-  '/email-test': typeof EmailTestRoute
   '/forbidden': typeof ForbiddenRoute
   '/forgot-password': typeof ForgotPasswordRoute
   '/honorary': typeof HonoraryRoute
@@ -180,7 +172,6 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/boat-types': typeof BoatTypesRoute
   '/chiefs': typeof ChiefsRoute
-  '/email-test': typeof EmailTestRoute
   '/forbidden': typeof ForbiddenRoute
   '/forgot-password': typeof ForgotPasswordRoute
   '/honorary': typeof HonoraryRoute
@@ -204,7 +195,6 @@ export interface FileRouteTypes {
     | '/'
     | '/boat-types'
     | '/chiefs'
-    | '/email-test'
     | '/forbidden'
     | '/forgot-password'
     | '/honorary'
@@ -226,7 +216,6 @@ export interface FileRouteTypes {
     | '/'
     | '/boat-types'
     | '/chiefs'
-    | '/email-test'
     | '/forbidden'
     | '/forgot-password'
     | '/honorary'
@@ -248,7 +237,6 @@ export interface FileRouteTypes {
     | '/'
     | '/boat-types'
     | '/chiefs'
-    | '/email-test'
     | '/forbidden'
     | '/forgot-password'
     | '/honorary'
@@ -271,7 +259,6 @@ export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   BoatTypesRoute: typeof BoatTypesRoute
   ChiefsRoute: typeof ChiefsRoute
-  EmailTestRoute: typeof EmailTestRoute
   ForbiddenRoute: typeof ForbiddenRoute
   ForgotPasswordRoute: typeof ForgotPasswordRoute
   HonoraryRoute: typeof HonoraryRoute
@@ -383,13 +370,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ForbiddenRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/email-test': {
-      id: '/email-test'
-      path: '/email-test'
-      fullPath: '/email-test'
-      preLoaderRoute: typeof EmailTestRouteImport
-      parentRoute: typeof rootRouteImport
-    }
     '/chiefs': {
       id: '/chiefs'
       path: '/chiefs'
@@ -439,7 +419,6 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   BoatTypesRoute: BoatTypesRoute,
   ChiefsRoute: ChiefsRoute,
-  EmailTestRoute: EmailTestRoute,
   ForbiddenRoute: ForbiddenRoute,
   ForgotPasswordRoute: ForgotPasswordRoute,
   HonoraryRoute: HonoraryRoute,
