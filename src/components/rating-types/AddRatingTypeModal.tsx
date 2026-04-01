@@ -1,6 +1,7 @@
 import { Check, ChevronsUpDown } from 'lucide-react'
 import { useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
+import { ErrorAlert } from '../ui/ErrorAlert'
 import { ratingTypeInsertSchema } from '../../db/rating-type-schema'
 import { useAppForm } from '../../hooks/form'
 import {
@@ -45,11 +46,7 @@ export function AddRatingTypeModal({ onClose, onSuccess }: AddRatingTypeModalPro
         }}
         className="p-6 space-y-4"
       >
-        {mutationError && (
-          <div className="rounded-md bg-destructive/10 p-4 border border-destructive">
-            <div className="text-sm text-destructive">{mutationError}</div>
-          </div>
-        )}
+        <ErrorAlert error={mutationError} action="Adding rating type" />
 
         <form.AppField
           name="text"

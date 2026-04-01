@@ -1,5 +1,6 @@
 import { useQuery } from '@tanstack/react-query'
 import { TBD_WYC_NUMBER } from '../../db/constants'
+import { ErrorAlert } from '../ui/ErrorAlert'
 import type { LessonInsert } from '../../db/lesson-schema'
 import { lessonInsertSchema } from '../../db/lesson-schema'
 import { useAppForm } from '../../hooks/form'
@@ -76,11 +77,7 @@ export function LessonFormModal({
         }}
         className="p-6 space-y-4"
       >
-        {mutationError && (
-          <div className="rounded-md bg-destructive/10 p-4 border border-destructive">
-            <div className="text-sm text-destructive">{mutationError}</div>
-          </div>
-        )}
+        <ErrorAlert error={mutationError} action="Saving lesson" />
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <form.AppField

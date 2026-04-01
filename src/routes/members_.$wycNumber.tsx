@@ -1,3 +1,4 @@
+import { ErrorAlert } from '@/components/ui/ErrorAlert'
 import { MemberCheckoutsSection } from '@/components/members/MemberCheckoutsSection'
 import { MemberLessonsSection } from '@/components/members/MemberLessonsSection'
 import { MemberPositionsSection } from '@/components/members/MemberPositionsSection'
@@ -245,11 +246,7 @@ function MemberEditForm({
       }}
       className="space-y-4"
     >
-      {mutationError && (
-        <div className="rounded-md bg-destructive/10 p-4 border border-destructive">
-          <div className="text-sm text-destructive">{mutationError}</div>
-        </div>
-      )}
+      <ErrorAlert error={mutationError} action="Updating member" />
 
       <ReadOnlyField label="Join Date" value={new Date(member.joinDate).toLocaleDateString()} />
 

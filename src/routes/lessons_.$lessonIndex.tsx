@@ -1,3 +1,4 @@
+import { ErrorAlert } from '@/components/ui/ErrorAlert'
 import { TBD_WYC_NUMBER } from '@/db/constants'
 import type { LessonInsert, LessonStudent, RichLesson } from '@/db/lesson-schema'
 import { lessonInsertSchema } from '@/db/lesson-schema'
@@ -268,11 +269,7 @@ function LessonEditForm({ lesson }: { lesson: RichLesson }) {
       }}
       className="space-y-4"
     >
-      {mutationError && (
-        <div className="rounded-md bg-destructive/10 p-4 border border-destructive">
-          <div className="text-sm text-destructive">{mutationError}</div>
-        </div>
-      )}
+      <ErrorAlert error={mutationError} action="Updating lesson" />
 
       {saveMessage && (
         <div className="rounded-md bg-green-500/10 p-4 border border-green-500">

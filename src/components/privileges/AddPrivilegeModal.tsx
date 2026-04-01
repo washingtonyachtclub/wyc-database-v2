@@ -1,5 +1,6 @@
 import { useQuery } from '@tanstack/react-query'
 import { privilegeInsertSchema } from '../../db/privilege-schema'
+import { ErrorAlert } from '../ui/ErrorAlert'
 import type { PrivilegeInsertData } from '../../db/privilege-schema'
 import { useAppForm } from '../../hooks/form'
 import {
@@ -51,11 +52,7 @@ export function AddPrivilegeModal({ onClose, onSuccess }: AddPrivilegeModalProps
         }}
         className="p-6 space-y-4"
       >
-        {mutationError && (
-          <div className="rounded-md bg-destructive/10 p-4 border border-destructive">
-            <div className="text-sm text-destructive">{mutationError}</div>
-          </div>
-        )}
+        <ErrorAlert error={mutationError} action="Adding privilege" />
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <form.AppField

@@ -263,7 +263,7 @@ export const getAllMembersLite = createServerFn({ method: 'GET' }).handler(async
       expireQtrIndex: wycDatabase.expireQtrIndex,
     })
     .from(wycDatabase)
-    .orderBy(asc(wycDatabase.first), asc(wycDatabase.last))
+    .orderBy(desc(wycDatabase.expireQtrIndex), asc(wycDatabase.first), asc(wycDatabase.last))
   return result
 })
 

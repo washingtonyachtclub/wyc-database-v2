@@ -1,3 +1,5 @@
+import { ErrorAlert } from '@/components/ui/ErrorAlert'
+import { isDevEnvironment } from '@/lib/env'
 import type { Lesson, RichLesson } from '@/db/lesson-schema'
 import { useQuery, useSuspenseQuery } from '@tanstack/react-query'
 import { createFileRoute, useNavigate } from '@tanstack/react-router'
@@ -52,6 +54,8 @@ function LessonsPage() {
   const navigate = useNavigate({ from: '/lessons' })
   const { pageIndex, pageSize, sortColumn, sortDesc } = Route.useSearch()
   const [isLessonModalOpen, setIsLessonModalOpen] = useState(false)
+  const [testError, setTestError] = useState<string | null>(null)
+  const [testBoom, setTestBoom] = useState(false)
 
   const sorting =
     sortColumn && sortColumn === 'calendarDate' ? { id: sortColumn, desc: sortDesc } : undefined
@@ -154,8 +158,43 @@ function LessonsPage() {
     navigate({ to: '/lessons/$lessonIndex', params: { lessonIndex: String(lessonIndex) } })
   }
 
+  // TODO: Remove after verifying ErrorAlert and error boundary
+  function Boom() {
+    throw new Error('Test error boundary')
+    return null
+  }
+
   return (
     <div className="p-4 space-y-8">
+      {isDevEnvironment() && (
+        <div className="border border-dashed border-yellow-500 rounded p-4 space-y-3">
+          <p className="text-sm font-medium text-yellow-600">Dev: Error display tests</p>
+          <div className="flex gap-2">
+            <Button
+              variant="destructive"
+              size="sm"
+              onClick={() => setTestError('Failed to create lesson')}
+            >
+              Test ErrorAlert
+            </Button>
+            <Button
+              variant="destructive"
+              size="sm"
+              onClick={() => setTestBoom(true)}
+            >
+              Test Error Boundary
+            </Button>
+            {testError && (
+              <Button variant="outline" size="sm" onClick={() => setTestError(null)}>
+                Clear
+              </Button>
+            )}
+          </div>
+          <ErrorAlert error={testError} action="Creating a lesson" />
+          {testBoom && <Boom />}
+        </div>
+      )}
+
       <div className="flex justify-start">
         <Button onClick={() => setIsLessonModalOpen(true)} className="mb-4">
           <Plus className="h-4 w-4" />

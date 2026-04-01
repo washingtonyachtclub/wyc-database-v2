@@ -1,6 +1,3 @@
-# MVP
-- figure out deployment and url / redirecting for new site
-
 # Important
 - update readme for devs
 - lesson signups
@@ -15,6 +12,7 @@
 - membership statistics
   - use expireQtr only
   - incude number/list of honoraries not marked out to sea that are not up to date
+- replace website redirect with cname change?
 
 # Less Important
 - better ratings filtering (find all members with *at least* X rating, more complex logic like ANDs and ORs)
@@ -26,7 +24,6 @@
   - automated email reminder for lesson_quarter
 - easily review out_to_sea statuses (or re-think its usage)
 - track memberships more precisely (by every renewal instance rather than overwriting expireQtr)
-- member combobox sort by frequency / MRU of some kind
 - replace old lesson sign-up flow
   - involves sending the emails, wiring up to main website
 - test UX on mobile

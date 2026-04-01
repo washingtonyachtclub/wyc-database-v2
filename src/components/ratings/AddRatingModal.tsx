@@ -1,5 +1,6 @@
 import { useQuery } from '@tanstack/react-query'
 import type { RatingInsertData } from '../../db/rating-schema'
+import { ErrorAlert } from '../ui/ErrorAlert'
 import { ratingInsertSchema } from '../../db/rating-schema'
 import { useAppForm } from '../../hooks/form'
 import {
@@ -64,11 +65,7 @@ export function AddRatingModal({
         }}
         className="p-6 space-y-4"
       >
-        {mutationError && (
-          <div className="rounded-md bg-destructive/10 p-4 border border-destructive">
-            <div className="text-sm text-destructive">{mutationError}</div>
-          </div>
-        )}
+        <ErrorAlert error={mutationError} action="Adding rating" />
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <form.AppField

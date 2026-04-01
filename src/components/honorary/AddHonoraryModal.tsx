@@ -1,4 +1,5 @@
 import { honoraryInsertSchema } from '../../db/honorary-schema'
+import { ErrorAlert } from '../ui/ErrorAlert'
 import type { HonoraryInsertData } from '../../db/honorary-schema'
 import { useAppForm } from '../../hooks/form'
 import { useCreateHonoraryMutation } from '../../lib/honorary-query-options'
@@ -39,11 +40,7 @@ export function AddHonoraryModal({ onClose, onSuccess }: AddHonoraryModalProps) 
         }}
         className="p-6 space-y-4"
       >
-        {mutationError && (
-          <div className="rounded-md bg-destructive/10 p-4 border border-destructive">
-            <div className="text-sm text-destructive">{mutationError}</div>
-          </div>
-        )}
+        <ErrorAlert error={mutationError} action="Adding honorary record" />
 
         <form.AppField
           name="member"

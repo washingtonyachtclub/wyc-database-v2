@@ -1,3 +1,4 @@
+import { ErrorAlert } from '@/components/ui/ErrorAlert'
 import { ratingUpdateSchema } from '@/db/rating-schema'
 import { useAppForm } from '@/hooks/form'
 import { getExpiryInfo } from '@/lib/rating-expiry'
@@ -180,11 +181,7 @@ function RatingEditForm({
       }}
       className="space-y-4"
     >
-      {mutationError && (
-        <div className="rounded-md bg-destructive/10 p-4 border border-destructive">
-          <div className="text-sm text-destructive">{mutationError}</div>
-        </div>
-      )}
+      <ErrorAlert error={mutationError} action="Updating rating" />
 
       {saveMessage && (
         <div className="rounded-md bg-green-500/10 p-4 border border-green-500">
