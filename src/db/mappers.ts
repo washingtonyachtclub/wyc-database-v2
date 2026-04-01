@@ -153,6 +153,7 @@ export function toRatingType(row: typeof ratings.$inferSelect): RatingType {
     text: str(row.text),
     type: row.type,
     degree: row.degree,
+    expires: row.expires !== 0,
   }
 }
 
@@ -173,6 +174,7 @@ export function toMemberRating(row: RatingQueryRow): MemberRating {
     examiner: num(row.examiner),
     ratingText: str(row.ratingText),
     ratingDegree: num(row.ratingDegree),
+    ratingExpires: (row.ratingExpires ?? 0) !== 0,
     date: str(row.date),
     memberName: fullName(row.memberFirst, row.memberLast),
     examinerName: fullName(row.examinerFirst, row.examinerLast),

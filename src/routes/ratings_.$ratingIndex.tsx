@@ -1,5 +1,6 @@
 import { ratingUpdateSchema } from '@/db/rating-schema'
 import { useAppForm } from '@/hooks/form'
+import { getExpiryInfo } from '@/lib/rating-expiry'
 import {
   getRatingByIdQueryOptions,
   useDeleteRatingMutation,
@@ -81,6 +82,21 @@ function RatingDetailPage() {
           </dd>
         </div>
       </div>
+
+      {(() => {
+        const expiryInfo = getExpiryInfo(rating)
+        if (!expiryInfo) return null
+        return (
+          <div>
+            <dt className="text-sm font-medium text-muted-foreground">Expiry Status</dt>
+            <dd
+              className={`text-sm ${expiryInfo.startsWith('Expired') ? 'text-destructive' : 'text-muted-foreground'}`}
+            >
+              {expiryInfo}
+            </dd>
+          </div>
+        )
+      })()}
 
       <RatingEditForm ratingIndex={rating.index} defaultComments={rating.comments} />
 

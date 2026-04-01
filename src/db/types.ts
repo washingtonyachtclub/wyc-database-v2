@@ -34,6 +34,7 @@ export type MemberRating = {
   examiner: number
   ratingText: string
   ratingDegree: number
+  ratingExpires: boolean
   date: string
   memberName: string
   examinerName: string
@@ -80,6 +81,7 @@ export type RatingType = {
   text: string
   type: string
   degree: number
+  expires: boolean
 }
 
 export type BoatType = {

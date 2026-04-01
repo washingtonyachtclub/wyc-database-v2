@@ -1,6 +1,8 @@
 import { Link } from '@tanstack/react-router'
 import { createColumnHelper } from '@tanstack/react-table'
+import { AlertTriangle } from 'lucide-react'
 import type { MemberRating } from 'src/db/types'
+import { getExpiryInfo } from 'src/lib/rating-expiry'
 
 const columnHelper = createColumnHelper<MemberRating>()
 
@@ -60,5 +62,19 @@ export const columns = [
         {info.getValue()}
       </span>
     ),
+  }),
+  columnHelper.display({
+    id: 'expiry',
+    header: '',
+    cell: ({ row }) => {
+      const expiryInfo = getExpiryInfo(row.original)
+      if (!expiryInfo || !expiryInfo.startsWith('Expired')) return null
+      return (
+        <span title={expiryInfo}>
+          <AlertTriangle className="h-4 w-4 text-yellow-500" />
+        </span>
+      )
+    },
+    size: 32,
   }),
 ]

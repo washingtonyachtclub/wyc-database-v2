@@ -25,7 +25,7 @@ export function AddRatingTypeModal({ onClose, onSuccess }: AddRatingTypeModalPro
   const createMutation = useCreateRatingTypeMutation({ onSuccess, onClose })
 
   const form = useAppForm({
-    defaultValues: { text: '', type: '', degree: 0 },
+    defaultValues: { text: '', type: '', degree: 0, expires: false },
     validators: {
       onSubmit: ratingTypeInsertSchema,
     },
@@ -59,6 +59,11 @@ export function AddRatingTypeModal({ onClose, onSuccess }: AddRatingTypeModalPro
         <form.AppField
           name="degree"
           children={(field) => <field.NumberField label="Degree" required />}
+        />
+
+        <form.AppField
+          name="expires"
+          children={(field) => <field.BooleanSelectField label="Expires" />}
         />
 
         <form.AppField

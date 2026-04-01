@@ -16,6 +16,12 @@ import { requirePrivilegeForRoute } from '@/lib/route-guards'
 import type { RatingType } from '@/db/types'
 import { useSuspenseQuery } from '@tanstack/react-query'
 import { createFileRoute } from '@tanstack/react-router'
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from '@/components/ui/tooltip'
 import { Plus } from 'lucide-react'
 import { useMemo, useState } from 'react'
 
@@ -67,12 +73,26 @@ function RatingTypesPage() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {items.map((item) => (
-                  <TableRow key={item.index}>
-                    <TableCell className="py-1.5 px-2 text-sm">{item.text}</TableCell>
-                    <TableCell className="py-1.5 px-2 text-sm">{item.degree}</TableCell>
-                  </TableRow>
-                ))}
+                {items.map((item) =>
+                  item.expires ? (
+                    <TooltipProvider key={item.index} delayDuration={200}>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <TableRow className="bg-yellow-50 dark:bg-yellow-950/30">
+                            <TableCell className="py-1.5 px-2 text-sm">{item.text}</TableCell>
+                            <TableCell className="py-1.5 px-2 text-sm">{item.degree}</TableCell>
+                          </TableRow>
+                        </TooltipTrigger>
+                        <TooltipContent>Expires</TooltipContent>
+                      </Tooltip>
+                    </TooltipProvider>
+                  ) : (
+                    <TableRow key={item.index}>
+                      <TableCell className="py-1.5 px-2 text-sm">{item.text}</TableCell>
+                      <TableCell className="py-1.5 px-2 text-sm">{item.degree}</TableCell>
+                    </TableRow>
+                  ),
+                )}
               </TableBody>
             </Table>
           </div>

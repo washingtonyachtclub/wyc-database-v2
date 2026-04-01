@@ -15,6 +15,7 @@ export const ratingSelectFields = {
   examiner: wycRatings.examiner,
   ratingText: ratings.text,
   ratingDegree: ratings.degree,
+  ratingExpires: ratings.expires,
   date: wycRatings.date,
   memberFirst: memberTable.first,
   memberLast: memberTable.last,

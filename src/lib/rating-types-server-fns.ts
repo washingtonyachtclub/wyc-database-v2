@@ -32,7 +32,10 @@ export const createRatingType = createServerFn({ method: 'POST' })
   .handler(async ({ data }) => {
     await requirePrivilege('rtgs')
     try {
-      await db.insert(ratings).values(data)
+      await db.insert(ratings).values({
+        ...data,
+        expires: data.expires ? 1 : 0,
+      })
       return { success: true }
     } catch (error) {
       console.error('Failed to create rating type:', error)

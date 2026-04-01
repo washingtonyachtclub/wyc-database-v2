@@ -318,6 +318,7 @@ export const ratings = mysqlTable(
     text: char({ length: 50 }),
     type: varchar({ length: 10 }).notNull(),
     degree: int().notNull(),
+    expires: tinyint('expires').default(0).notNull(),
   },
   (table) => [primaryKey({ columns: [table.index] })],
 )
