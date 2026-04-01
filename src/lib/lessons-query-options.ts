@@ -2,10 +2,12 @@ import { queryOptions, useMutation, useQueryClient } from '@tanstack/react-query
 import {
   createLesson,
   deleteLesson,
+  enrollInLesson,
   getAllLessons,
   getClassTypes,
   getCurrentQuarter,
   getLessonById,
+  getLessonForSignup,
   getMyLessonsTaught,
   getMySignedUpLessons,
   getQuarterLessons,
@@ -110,3 +112,22 @@ export const getAllLessonsQueryOptions = (
       })
     },
   })
+
+export const getLessonForSignupQueryOptions = (id: number) =>
+  queryOptions({
+    queryKey: ['lessons', 'signup', id],
+    queryFn: async () => {
+      return await getLessonForSignup({ data: { id } })
+    },
+  })
+
+export function useEnrollInLessonMutation() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: enrollInLesson,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['lessons', 'signup'] })
+      queryClient.invalidateQueries({ queryKey: ['lessons', 'mySignedUp'] })
+    },
+  })
+}

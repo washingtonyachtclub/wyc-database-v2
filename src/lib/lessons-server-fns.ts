@@ -3,6 +3,7 @@ import { and, asc, count, eq, gte, inArray, or } from 'drizzle-orm'
 import { baseLessonQuery, baseSignedUpWithDetailsQuery, lessonSortColumns } from 'src/db/lesson-queries'
 import type { LessonInsert, LessonStudent, SignedUpLesson } from 'src/db/lesson-schema'
 import { fromLessonInsert, toRichLesson } from 'src/db/mappers'
+import { isMembershipActive } from 'src/db/membership-utils'
 import { enrollmentStatus, splitEnrollment } from 'src/db/signup-utils'
 import { withPagination, withSorting } from 'src/db/query-helpers'
 import { classType, lessonQuarter, lessons, signups, wycDatabase } from 'src/db/schema'
@@ -193,3 +194,103 @@ export const getMySignedUpLessons = createServerFn({ method: 'GET' }).handler(as
     }
   })
 })
+
+export const getLessonForSignup = createServerFn({ method: 'GET' })
+  .inputValidator((input: { id: number }) => ({ id: input.id }))
+  .handler(async ({ data: { id } }) => {
+    const userId = await requireAuth()
+
+    const [lessonRow] = await baseLessonQuery().where(eq(lessons.index, id))
+    if (!lessonRow) return null
+
+    const lesson = toRichLesson(lessonRow)
+
+    // Block signup for non-displayed lessons
+    if (!lesson.display) return null
+
+    // Get all signups to compute enrollment counts
+    const lessonSignups = await db
+      .select({ index: signups.index, student: signups.student })
+      .from(signups)
+      .where(eq(signups.class, id))
+      .orderBy(asc(signups.index))
+
+    const { enrolled, waitlisted } = splitEnrollment(lessonSignups, lesson.size)
+
+    return {
+      lesson,
+      enrolledCount: enrolled.length,
+      waitlistedCount: waitlisted.length,
+      isAlreadySignedUp: lessonSignups.some((s) => s.student === userId),
+    }
+  })
+
+export const enrollInLesson = createServerFn({ method: 'POST' })
+  .inputValidator((input: { lessonIndex: number }) => ({ lessonIndex: input.lessonIndex }))
+  .handler(async ({ data: { lessonIndex } }) => {
+    const userId = await requireAuth()
+
+    try {
+      // Fetch lesson
+      const [lessonRow] = await db
+        .select({ index: lessons.index, size: lessons.size })
+        .from(lessons)
+        .where(eq(lessons.index, lessonIndex))
+        .limit(1)
+
+      if (!lessonRow) throw new Error('Lesson not found')
+
+      // Membership expiration check
+      const currentQuarter = await getCurrentQuarter()
+      const [member] = await db
+        .select({ expireQtrIndex: wycDatabase.expireQtrIndex })
+        .from(wycDatabase)
+        .where(eq(wycDatabase.wycNumber, userId))
+        .limit(1)
+
+      if (!member) throw new Error('Member not found')
+      if (!isMembershipActive(member.expireQtrIndex, currentQuarter)) {
+        throw new Error(
+          'Your membership has expired. Please renew your membership before signing up for lessons.',
+        )
+      }
+
+      // Duplicate check
+      const [existing] = await db
+        .select({ index: signups.index })
+        .from(signups)
+        .where(and(eq(signups.class, lessonIndex), eq(signups.student, userId)))
+        .limit(1)
+
+      if (existing) throw new Error('You are already signed up for this lesson.')
+
+      // Insert signup
+      await db.insert(signups).values({ class: lessonIndex, student: userId })
+
+      // Compute enrollment status
+      const allSignups = await db
+        .select({ index: signups.index, student: signups.student })
+        .from(signups)
+        .where(eq(signups.class, lessonIndex))
+        .orderBy(asc(signups.index))
+
+      const position = allSignups.findIndex((s) => s.student === userId)
+      const status = enrollmentStatus(position, lessonRow.size ?? 0)
+
+      // TODO: Send confirmation email (enrolled vs waitlisted)
+
+      return { success: true as const, status }
+    } catch (error: any) {
+      // Re-throw known user-facing errors
+      if (
+        error.message === 'Lesson not found' ||
+        error.message === 'Member not found' ||
+        error.message === 'You are already signed up for this lesson.' ||
+        error.message?.startsWith('Your membership has expired')
+      ) {
+        throw error
+      }
+      console.error('Failed to enroll in lesson:', error)
+      throw new Error('Failed to sign up for lesson')
+    }
+  })

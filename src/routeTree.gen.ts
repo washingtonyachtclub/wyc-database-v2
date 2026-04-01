@@ -25,6 +25,7 @@ import { Route as ForbiddenRouteImport } from './routes/forbidden'
 import { Route as ChiefsRouteImport } from './routes/chiefs'
 import { Route as BoatTypesRouteImport } from './routes/boat-types'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as SignupLessonIndexRouteImport } from './routes/signup.$lessonIndex'
 import { Route as RatingsRatingIndexRouteImport } from './routes/ratings_.$ratingIndex'
 import { Route as MembersWycNumberRouteImport } from './routes/members_.$wycNumber'
 import { Route as LessonsLessonIndexRouteImport } from './routes/lessons_.$lessonIndex'
@@ -109,6 +110,11 @@ const IndexRoute = IndexRouteImport.update({
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const SignupLessonIndexRoute = SignupLessonIndexRouteImport.update({
+  id: '/signup/$lessonIndex',
+  path: '/signup/$lessonIndex',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const RatingsRatingIndexRoute = RatingsRatingIndexRouteImport.update({
   id: '/ratings_/$ratingIndex',
   path: '/ratings/$ratingIndex',
@@ -145,6 +151,7 @@ export interface FileRoutesByFullPath {
   '/lessons/$lessonIndex': typeof LessonsLessonIndexRoute
   '/members/$wycNumber': typeof MembersWycNumberRoute
   '/ratings/$ratingIndex': typeof RatingsRatingIndexRoute
+  '/signup/$lessonIndex': typeof SignupLessonIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -166,6 +173,7 @@ export interface FileRoutesByTo {
   '/lessons/$lessonIndex': typeof LessonsLessonIndexRoute
   '/members/$wycNumber': typeof MembersWycNumberRoute
   '/ratings/$ratingIndex': typeof RatingsRatingIndexRoute
+  '/signup/$lessonIndex': typeof SignupLessonIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -188,6 +196,7 @@ export interface FileRoutesById {
   '/lessons_/$lessonIndex': typeof LessonsLessonIndexRoute
   '/members_/$wycNumber': typeof MembersWycNumberRoute
   '/ratings_/$ratingIndex': typeof RatingsRatingIndexRoute
+  '/signup/$lessonIndex': typeof SignupLessonIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -211,6 +220,7 @@ export interface FileRouteTypes {
     | '/lessons/$lessonIndex'
     | '/members/$wycNumber'
     | '/ratings/$ratingIndex'
+    | '/signup/$lessonIndex'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -232,6 +242,7 @@ export interface FileRouteTypes {
     | '/lessons/$lessonIndex'
     | '/members/$wycNumber'
     | '/ratings/$ratingIndex'
+    | '/signup/$lessonIndex'
   id:
     | '__root__'
     | '/'
@@ -253,6 +264,7 @@ export interface FileRouteTypes {
     | '/lessons_/$lessonIndex'
     | '/members_/$wycNumber'
     | '/ratings_/$ratingIndex'
+    | '/signup/$lessonIndex'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -275,6 +287,7 @@ export interface RootRouteChildren {
   LessonsLessonIndexRoute: typeof LessonsLessonIndexRoute
   MembersWycNumberRoute: typeof MembersWycNumberRoute
   RatingsRatingIndexRoute: typeof RatingsRatingIndexRoute
+  SignupLessonIndexRoute: typeof SignupLessonIndexRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -391,6 +404,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/signup/$lessonIndex': {
+      id: '/signup/$lessonIndex'
+      path: '/signup/$lessonIndex'
+      fullPath: '/signup/$lessonIndex'
+      preLoaderRoute: typeof SignupLessonIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/ratings_/$ratingIndex': {
       id: '/ratings_/$ratingIndex'
       path: '/ratings/$ratingIndex'
@@ -435,6 +455,7 @@ const rootRouteChildren: RootRouteChildren = {
   LessonsLessonIndexRoute: LessonsLessonIndexRoute,
   MembersWycNumberRoute: MembersWycNumberRoute,
   RatingsRatingIndexRoute: RatingsRatingIndexRoute,
+  SignupLessonIndexRoute: SignupLessonIndexRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

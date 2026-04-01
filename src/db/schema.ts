@@ -358,6 +358,7 @@ export const signups = mysqlTable(
   (table) => [
     index('class').on(table.class),
     primaryKey({ columns: [table.index] }),
+    unique('uq_class_student').on(table.class, table.student),
   ],
 )
 

@@ -76,7 +76,9 @@ function NotFound() {
 
 function RootDocument({ children }: { children: React.ReactNode }) {
   const location = useLocation()
-  const isBarePage = ['/login', '/forgot-password'].includes(location.pathname)
+  const isBarePage =
+    ['/login', '/forgot-password'].includes(location.pathname) ||
+    location.pathname.startsWith('/signup')
 
   return (
     <html lang="en">
