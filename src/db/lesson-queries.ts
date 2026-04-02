@@ -1,6 +1,7 @@
 import { and, asc, desc, eq, gte, or } from 'drizzle-orm'
-import { alias, type MySqlColumn } from 'drizzle-orm/mysql-core'
+import { alias, type MySqlColumn, type MySqlSelect } from 'drizzle-orm/mysql-core'
 import db from './index'
+import type { LessonFilters } from './lesson-filter-types'
 import { classType, lessons, signups, wycDatabase } from './schema'
 
 const instructor1Table = alias(wycDatabase, 'i1')
@@ -41,6 +42,42 @@ export function baseLessonQuery() {
     .leftJoin(classType, eq(classType.index, lessons.type))
     .leftJoin(instructor1Table, eq(lessons.instructor1, instructor1Table.wycNumber))
     .leftJoin(instructor2Table, eq(lessons.instructor2, instructor2Table.wycNumber))
+}
+
+export function withLessonFilters<T extends MySqlSelect>(
+  qb: T,
+  filters: LessonFilters | undefined,
+) {
+  const conditions = []
+
+  if (filters?.classTypeId !== undefined) {
+    conditions.push(eq(lessons.type, filters.classTypeId))
+  }
+
+  if (filters?.instructor !== undefined) {
+    conditions.push(
+      or(eq(lessons.instructor1, filters.instructor), eq(lessons.instructor2, filters.instructor)),
+    )
+  }
+
+  if (filters?.expireQtrFilter) {
+    const { quarter, mode } = filters.expireQtrFilter
+    if (mode === 'atLeast') {
+      conditions.push(gte(lessons.expire, quarter))
+    } else {
+      conditions.push(eq(lessons.expire, quarter))
+    }
+  }
+
+  if (filters?.display === true) {
+    conditions.push(eq(lessons.display, 1))
+  }
+
+  if (conditions.length > 0) {
+    qb.where(and(...conditions))
+  }
+
+  return qb
 }
 
 export function baseLessonsTaughtQuery(wycNumber: number, since?: string) {

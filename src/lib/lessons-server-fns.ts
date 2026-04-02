@@ -1,6 +1,7 @@
 import { createServerFn } from '@tanstack/react-start'
 import { and, asc, count, eq, gte, inArray, or } from 'drizzle-orm'
-import { baseLessonQuery, baseSignedUpWithDetailsQuery, lessonSortColumns } from 'src/db/lesson-queries'
+import { baseLessonQuery, baseSignedUpWithDetailsQuery, lessonSortColumns, withLessonFilters } from 'src/db/lesson-queries'
+import type { LessonFilters } from 'src/db/lesson-filter-types'
 import type { LessonInsert, LessonStudent, SignedUpLesson } from 'src/db/lesson-schema'
 import { fromLessonInsert, toRichLesson } from 'src/db/mappers'
 import { isMembershipActive } from 'src/db/membership-utils'
@@ -68,24 +69,33 @@ export const getCurrentQuarter = createServerFn({ method: 'GET' }).handler(async
 
 export const getAllLessons = createServerFn({ method: 'GET' })
   .inputValidator(
-    (input: { pageIndex: number; pageSize: number; sorting?: { id: string; desc: boolean } }) => ({
+    (input: {
+      pageIndex: number
+      pageSize: number
+      filters?: LessonFilters
+      sorting?: { id: string; desc: boolean }
+    }) => ({
       pageIndex: input.pageIndex,
       pageSize: input.pageSize,
+      filters: input.filters,
       sorting: input.sorting,
     }),
   )
-  .handler(async ({ data: { pageIndex, pageSize, sorting } }) => {
+  .handler(async ({ data: { pageIndex, pageSize, filters, sorting } }) => {
     await requirePrivilege('db')
 
     const query = baseLessonQuery().$dynamic()
 
+    withLessonFilters(query, filters)
     withSorting(query, sorting, lessonSortColumns, lessons.index)
     withPagination(query, pageIndex, pageSize)
 
     const raw = await query
     const data = raw.map(toRichLesson)
 
-    const [totalCountResult] = await db.select({ count: count() }).from(lessons)
+    const countQuery = db.select({ count: count() }).from(lessons).$dynamic()
+    withLessonFilters(countQuery, filters)
+    const [totalCountResult] = await countQuery
 
     return { data, totalCount: totalCountResult.count }
   })

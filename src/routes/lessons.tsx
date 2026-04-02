@@ -1,6 +1,7 @@
 import { ErrorAlert } from '@/components/ui/ErrorAlert'
 import { isDevEnvironment } from '@/lib/env'
 import type { Lesson, RichLesson } from '@/db/lesson-schema'
+import type { LessonFilters } from '@/db/lesson-filter-types'
 import { useQuery, useSuspenseQuery } from '@tanstack/react-query'
 import { createFileRoute, useNavigate } from '@tanstack/react-router'
 import { getCoreRowModel, getSortedRowModel, useReactTable } from '@tanstack/react-table'
@@ -8,6 +9,7 @@ import { useMemo, useState } from 'react'
 import { z } from 'zod'
 import { columns } from '../components/lessons/columns'
 import { LessonCard } from '../components/lessons/LessonCard'
+import { LessonFilterControls } from '../components/lessons/LessonFilterControls'
 import { LessonFormModal } from '../components/lessons/LessonEditorModal'
 import { PaginationControls } from '../components/members/PaginationControls'
 import { Button } from '../components/ui/button'
@@ -17,12 +19,19 @@ import { isLessonUpcoming } from '../lib/date-utils'
 import { requirePrivilegeForRoute } from '../lib/route-guards'
 import {
   getAllLessonsQueryOptions,
+  getClassTypesQueryOptions,
   getQuarterLessonsQueryOptions,
 } from '../lib/lessons-query-options'
+import { getQuartersQueryOptions } from '../lib/members-query-options'
 
 const lessonSearchSchema = z.object({
   pageIndex: z.number().catch(0),
   pageSize: z.number().catch(10),
+  classTypeId: z.number().optional(),
+  instructor: z.number().optional(),
+  expireQtr: z.number().optional(),
+  expireQtrMode: z.enum(['exactly', 'atLeast']).catch('exactly'),
+  display: z.boolean().optional(),
   sortColumn: z.string().optional(),
   sortDesc: z.boolean().catch(false),
 })
@@ -32,15 +41,35 @@ export const Route = createFileRoute('/lessons')({
   beforeLoad: ({ context }) => {
     requirePrivilegeForRoute(context, '/lessons')
   },
-  loaderDeps: ({ search: { pageIndex, pageSize, sortColumn, sortDesc } }) => {
+  loaderDeps: ({
+    search: {
+      pageIndex,
+      pageSize,
+      classTypeId,
+      instructor,
+      expireQtr,
+      expireQtrMode,
+      display,
+      sortColumn,
+      sortDesc,
+    },
+  }) => {
+    const expireQtrFilter = expireQtr ? { quarter: expireQtr, mode: expireQtrMode } : undefined
+
+    const filters: LessonFilters | undefined =
+      classTypeId !== undefined || instructor !== undefined || expireQtrFilter || display === true
+        ? { classTypeId, instructor, expireQtrFilter, display }
+        : undefined
+
     const sorting =
       sortColumn && sortColumn === 'calendarDate' ? { id: sortColumn, desc: sortDesc } : undefined
-    return { pageIndex, pageSize, sorting }
+
+    return { pageIndex, pageSize, filters, sorting }
   },
-  loader: ({ context, deps: { pageIndex, pageSize, sorting } }) => {
+  loader: ({ context, deps: { pageIndex, pageSize, filters, sorting } }) => {
     context.queryClient.ensureQueryData(getQuarterLessonsQueryOptions())
     return context.queryClient.ensureQueryData(
-      getAllLessonsQueryOptions(pageIndex, pageSize, sorting),
+      getAllLessonsQueryOptions(pageIndex, pageSize, filters, sorting),
     )
   },
   component: LessonsPage,
@@ -52,17 +81,18 @@ function isMyLesson(lesson: Lesson, userId: number) {
 
 function LessonsPage() {
   const navigate = useNavigate({ from: '/lessons' })
-  const { pageIndex, pageSize, sortColumn, sortDesc } = Route.useSearch()
+  const { classTypeId, instructor, display } = Route.useSearch()
+  const { pageIndex, pageSize, filters, sorting } = Route.useLoaderDeps()
+  const expireQtrFilter = filters?.expireQtrFilter
   const [isLessonModalOpen, setIsLessonModalOpen] = useState(false)
   const [testError, setTestError] = useState<string | null>(null)
   const [testBoom, setTestBoom] = useState(false)
 
-  const sorting =
-    sortColumn && sortColumn === 'calendarDate' ? { id: sortColumn, desc: sortDesc } : undefined
-
+  const { data: classTypes = [] } = useQuery(getClassTypesQueryOptions())
+  const { data: quarters = [] } = useQuery(getQuartersQueryOptions())
   const { data: quarterData } = useQuery(getQuarterLessonsQueryOptions())
   const { data: allLessonsResponse } = useSuspenseQuery(
-    getAllLessonsQueryOptions(pageIndex, pageSize, sorting),
+    getAllLessonsQueryOptions(pageIndex, pageSize, filters, sorting),
   )
 
   const quarterLessons = quarterData?.data ?? []
@@ -127,12 +157,11 @@ function LessonsPage() {
       const newPagination =
         typeof updater === 'function' ? updater({ pageIndex, pageSize }) : updater
       navigate({
-        search: {
+        search: (prev) => ({
+          ...prev,
           pageIndex: newPagination.pageIndex,
           pageSize: newPagination.pageSize,
-          sortColumn,
-          sortDesc,
-        },
+        }),
         replace: true,
       })
     },
@@ -143,16 +172,47 @@ function LessonsPage() {
           : updater
       const sort = newSorting[0]
       navigate({
-        search: {
+        search: (prev) => ({
+          ...prev,
           pageIndex: 0,
-          pageSize,
           sortColumn: sort?.id,
           sortDesc: sort?.desc || false,
-        },
+        }),
         replace: true,
       })
     },
   })
+
+  const handleFilterChange = (changes: Partial<LessonFilters>) => {
+    navigate({
+      search: (prev) => ({
+        ...prev,
+        pageIndex: 0,
+        ...('classTypeId' in changes && { classTypeId: changes.classTypeId }),
+        ...('instructor' in changes && { instructor: changes.instructor }),
+        ...('expireQtrFilter' in changes && {
+          expireQtr: changes.expireQtrFilter?.quarter,
+          expireQtrMode: changes.expireQtrFilter?.mode,
+        }),
+        ...('display' in changes && { display: changes.display }),
+      }),
+      replace: true,
+    })
+  }
+
+  const handleClearFilters = () => {
+    navigate({
+      search: (prev) => ({
+        ...prev,
+        pageIndex: 0,
+        classTypeId: undefined,
+        instructor: undefined,
+        expireQtr: undefined,
+        display: undefined,
+      }),
+      replace: true,
+    })
+  }
 
   function goToLesson(lessonIndex: number) {
     navigate({ to: '/lessons/$lessonIndex', params: { lessonIndex: String(lessonIndex) } })
@@ -266,6 +326,16 @@ function LessonsPage() {
       {/* All Lessons (paginated table) */}
       <section>
         <h2 className="text-2xl font-bold mb-4">All Lessons</h2>
+        <LessonFilterControls
+          classTypeId={classTypeId}
+          instructor={instructor}
+          expireQtrFilter={expireQtrFilter}
+          display={display}
+          classTypes={classTypes}
+          quarters={quarters}
+          onFilterChange={handleFilterChange}
+          onClearFilters={handleClearFilters}
+        />
         <PaginationControls
           table={table}
           pageCount={pageCount}

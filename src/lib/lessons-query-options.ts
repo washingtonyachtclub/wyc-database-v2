@@ -1,3 +1,4 @@
+import type { LessonFilters } from 'src/db/lesson-filter-types'
 import { queryOptions, useMutation, useQueryClient } from '@tanstack/react-query'
 import {
   createLesson,
@@ -102,13 +103,14 @@ export const getMySignedUpLessonsQueryOptions = () =>
 export const getAllLessonsQueryOptions = (
   pageIndex: number,
   pageSize: number,
+  filters?: LessonFilters,
   sorting?: { id: string; desc: boolean },
 ) =>
   queryOptions({
-    queryKey: ['lessons', 'all', pageIndex, pageSize, sorting],
+    queryKey: ['lessons', 'all', pageIndex, pageSize, filters, sorting],
     queryFn: async () => {
       return await getAllLessons({
-        data: { pageIndex, pageSize, sorting },
+        data: { pageIndex, pageSize, filters, sorting },
       })
     },
   })

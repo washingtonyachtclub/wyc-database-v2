@@ -13,7 +13,6 @@ type PublicLesson = {
   enrolledCount: number
 }
 
-/** Section descriptions matching the old Perl page */
 const SECTION_DESCRIPTIONS: Record<string, string> = {
   'Novice Dinghy':
     'A novice lesson teaches novice skills for our Beginner boats. Please read through the Sailing Guide on the website and finish Novice Written Test before class begins (though it is not required).',
@@ -22,6 +21,7 @@ const SECTION_DESCRIPTIONS: Record<string, string> = {
   Keelboat: 'Keelboat clinics and classes for learning to sail our keelboat fleet.',
   Specialty:
     'These lessons focus on miscellaneous sailing skills. Pay attention to the class requirements and prerequisites.',
+  Windsurfing: 'Windsurfing lessons at Sail Sand Point in Magnuson Park',
   'Dinghy Sailing': 'Sign up for all of our Dinghy Sailing events.',
   'Work Parties': 'Work parties help maintain our fleet and facilities.',
   'Social Events': 'Events and gatherings for WYC members.',

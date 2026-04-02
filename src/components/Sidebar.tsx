@@ -146,11 +146,9 @@ export default function Sidebar() {
             </Link>
           )
         })}
-        {visibleToolsItems.length > 0 && (
-          <h3 className="px-4 pt-4 pb-2 text-sm font-bold uppercase tracking-wider text-muted-foreground">
-            Tools
-          </h3>
-        )}
+        <h3 className="px-4 pt-4 pb-2 text-sm font-bold uppercase tracking-wider text-muted-foreground">
+          Tools
+        </h3>
         {visibleToolsItems.map((item) => {
           const isActive = location.pathname === item.path
           return (
@@ -167,6 +165,14 @@ export default function Sidebar() {
             </Link>
           )
         })}
+        <a
+          href="/lesson-list"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="block px-4 py-2 rounded-md transition-colors hover:bg-primary/5 text-foreground"
+        >
+          View Public Lesson List
+        </a>
       </nav>
     </aside>
   )
