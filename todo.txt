@@ -3,10 +3,6 @@
   - get old-database working on https
 
 # Important
-- dev:
-  - update readme for devs
-  - file organization cleanup
-
 - backfill more calendarDates for older lessons (prompt in scripts folder)
 - boat checkouts viewing page (+ checking out a boat, replace legacy checkout tool)
 - self-unenrollment from lessons
