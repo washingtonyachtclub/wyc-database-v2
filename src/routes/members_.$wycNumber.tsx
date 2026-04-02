@@ -6,7 +6,7 @@ import { MemberRatingsGivenSection } from '@/components/members/MemberRatingsGiv
 import { MemberRatingsSection } from '@/components/members/MemberRatingsSection'
 import { Button } from '@/components/ui/button'
 import { MemberProfileUpdate, MemberProfileUpdateSchema } from '@/db/member-schema'
-import type { Member } from '@/db/types'
+import type { Member } from '@/db/member-schema'
 import { useAppForm } from '@/hooks/form'
 import { isMembershipActive } from '@/db/membership-utils'
 import { getCurrentQuarterQueryOptions } from '@/lib/lessons-query-options'

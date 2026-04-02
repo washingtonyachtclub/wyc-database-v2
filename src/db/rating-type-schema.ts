@@ -1,4 +1,8 @@
 import { z } from 'zod'
+import { str } from './mapper-utils'
+import { ratings } from './schema'
+
+// --- Zod schemas ---
 
 export const ratingTypeInsertSchema = z.object({
   text: z.string().min(1, 'Text is required'),
@@ -8,3 +12,25 @@ export const ratingTypeInsertSchema = z.object({
 })
 
 export type RatingTypeInsertData = z.infer<typeof ratingTypeInsertSchema>
+
+// --- Core types ---
+
+export type RatingType = {
+  index: number
+  text: string
+  type: string
+  degree: number
+  expires: boolean
+}
+
+// --- Mappers ---
+
+export function toRatingType(row: typeof ratings.$inferSelect): RatingType {
+  return {
+    index: row.index,
+    text: str(row.text),
+    type: row.type,
+    degree: row.degree,
+    expires: row.expires !== 0,
+  }
+}

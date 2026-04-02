@@ -2,7 +2,7 @@ import { eq } from 'drizzle-orm'
 import { createServerFn } from '@tanstack/react-start'
 import db from 'src/db'
 import { baseHonoraryQuery, type HonoraryFilters, withHonoraryFilters } from 'src/db/honorary-queries'
-import { toHonoraryRow } from 'src/db/mappers'
+import { toHonoraryRow } from 'src/db/honorary-schema'
 import { officers } from 'src/db/schema'
 import { requirePrivilege } from '../lib/auth-middleware'
 

@@ -2,7 +2,7 @@ import { AddOfficerModal } from '@/components/officers/AddOfficerModal'
 import { Button } from '@/components/ui/button'
 import { Plus } from 'lucide-react'
 import { OFFICER_PAGE_SECTIONS } from '@/db/constants'
-import type { Officer } from '@/db/types'
+import type { Officer } from '@/db/officer-schema'
 import {
   getOfficerPagePositionsQueryOptions,
   getOfficerPageQueryOptions,

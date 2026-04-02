@@ -2,7 +2,7 @@ import { eq } from 'drizzle-orm'
 import { createServerFn } from '@tanstack/react-start'
 import db from 'src/db/index'
 import { DATABASE_ADMIN_POSITION_ID } from 'src/db/constants'
-import { toOfficer } from 'src/db/mappers'
+import { toOfficer } from 'src/db/officer-schema'
 import type { OfficerInsert } from 'src/db/officer-schema'
 import {
   baseMemberPositionsQuery,

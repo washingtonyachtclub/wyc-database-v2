@@ -1,6 +1,6 @@
 import { Link } from '@tanstack/react-router'
 import { createColumnHelper } from '@tanstack/react-table'
-import type { ChiefTableRow } from 'src/db/types'
+import type { ChiefTableRow } from 'src/db/chiefs-schema'
 
 export type ChiefTableMeta = {
   onDeleteClick: (officerIndex: number, roleName: string, memberName: string) => void

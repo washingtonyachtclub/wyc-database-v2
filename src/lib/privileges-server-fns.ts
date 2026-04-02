@@ -7,7 +7,7 @@ import {
   withPrivilegeFilters,
 } from 'src/db/privilege-queries'
 import db from 'src/db'
-import { toPrivilegeRow } from 'src/db/mappers'
+import { toPrivilegeRow } from 'src/db/privilege-schema'
 import type { PrivilegeTableRow } from 'src/db/privilege-schema'
 import { officers } from 'src/db/schema'
 import { requirePrivilege } from '../lib/auth-middleware'

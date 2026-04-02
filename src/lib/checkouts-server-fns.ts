@@ -1,6 +1,6 @@
 import { createServerFn } from '@tanstack/react-start'
 import { baseCheckoutsQuery } from 'src/db/checkout-queries'
-import { toCheckout } from 'src/db/mappers'
+import { toCheckout } from 'src/db/checkout-schema'
 import { requireSelfOrPrivilege } from '../lib/auth-middleware'
 
 export const getCheckouts = createServerFn({ method: 'GET' })

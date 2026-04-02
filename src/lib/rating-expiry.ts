@@ -1,5 +1,5 @@
 import { RATING_EXPIRY_MONTHS } from '@/db/constants'
-import type { MemberRating } from '@/db/types'
+import type { MemberRating } from '@/db/member-schema'
 
 export function getExpiryDate(ratingDate: string): string {
   const date = new Date(ratingDate + 'T00:00:00')

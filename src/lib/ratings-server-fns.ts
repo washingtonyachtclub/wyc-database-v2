@@ -1,6 +1,6 @@
 import { createServerFn } from '@tanstack/react-start'
 import { eq } from 'drizzle-orm'
-import { toMemberRating } from 'src/db/mappers'
+import { toMemberRating } from 'src/db/member-schema'
 import type { RatingFilters } from 'src/db/rating-filter-types'
 import type { RatingInsertData } from 'src/db/rating-schema'
 import {

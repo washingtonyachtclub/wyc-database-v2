@@ -13,7 +13,7 @@ import {
   getRatingTypesAllQueryOptions,
 } from '@/lib/rating-types-query-options'
 import { requirePrivilegeForRoute } from '@/lib/route-guards'
-import type { RatingType } from '@/db/types'
+import type { RatingType } from '@/db/rating-type-schema'
 import { useSuspenseQuery } from '@tanstack/react-query'
 import { createFileRoute } from '@tanstack/react-router'
 import {

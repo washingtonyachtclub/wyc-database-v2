@@ -1,13 +1,13 @@
 import { createServerFn } from '@tanstack/react-start'
 import { and, asc, count, desc, eq, gte, lte } from 'drizzle-orm'
 import { baseLessonsSignedUpQuery, baseLessonsTaughtQuery } from 'src/db/lesson-queries'
+import { toRichLesson } from 'src/db/lesson-schema'
 import {
   fromMemberInsert,
   toMember,
   toMemberRating,
   toMemberTableRow,
-  toRichLesson,
-} from 'src/db/mappers'
+} from 'src/db/member-schema'
 import type { MemberFilters } from 'src/db/member-filter-types'
 import { baseMemberQuery, memberSortColumns, withMemberFilters } from 'src/db/member-queries'
 import { CreateMember, MemberProfileUpdate } from 'src/db/member-schema'

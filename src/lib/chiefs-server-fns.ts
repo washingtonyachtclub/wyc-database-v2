@@ -6,9 +6,8 @@ import {
   getChiefPositions,
   withChiefFilters,
 } from 'src/db/chief-queries'
-import { toChiefRow } from 'src/db/mappers'
+import { toChiefRow, type ChiefTableRow } from 'src/db/chiefs-schema'
 import { officers } from 'src/db/schema'
-import type { ChiefTableRow } from 'src/db/types'
 import db from 'src/db'
 import { requirePrivilege } from '../lib/auth-middleware'
 

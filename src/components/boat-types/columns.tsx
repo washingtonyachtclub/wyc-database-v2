@@ -1,6 +1,6 @@
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
 import { createColumnHelper } from '@tanstack/react-table'
-import type { BoatType } from 'src/db/types'
+import type { BoatType } from 'src/db/boat-type-schema'
 
 const columnHelper = createColumnHelper<BoatType>()
 

@@ -1,4 +1,9 @@
 import { z } from 'zod'
+import type { LessonQueryRow } from './lesson-queries'
+import { num, str, fullName } from './mapper-utils'
+import type { classType } from './schema'
+
+// --- Zod schemas ---
 
 export const lessonInsertSchema = z.object({
   classTypeId: z.number({ error: 'Type is required' }).min(1, 'Type is required'),
@@ -16,6 +21,8 @@ export const lessonInsertSchema = z.object({
 })
 
 export type LessonInsert = z.infer<typeof lessonInsertSchema>
+
+// --- Core & display types ---
 
 export type Lesson = {
   index: number
@@ -62,4 +69,42 @@ export type LessonStudent = {
   first: string
   last: string
   email: string
+}
+
+export type ClassTypeRow = typeof classType.$inferSelect
+export type ClassType = {
+  index: number
+  text: string
+}
+
+// --- Mappers ---
+
+export function toRichLesson(row: LessonQueryRow): RichLesson {
+  return {
+    index: row.index,
+    classTypeId: num(row.typeId),
+    instructor1: num(row.instructor1),
+    instructor2: num(row.instructor2),
+    expire: num(row.expire),
+    type: row.type ?? '<Unknown>',
+    subtype: str(row.subtype),
+    day: str(row.day),
+    time: str(row.time),
+    dates: str(row.dates),
+    calendarDate: row.calendarDate,
+    instructor1Name: fullName(row.instructor1First, row.instructor1Last) || '<Unknown>',
+    instructor2Name: fullName(row.instructor2First, row.instructor2Last),
+    comments: str(row.comments),
+    size: num(row.size),
+    display: row.display !== 0,
+  }
+}
+
+export function fromLessonInsert(data: LessonInsert) {
+  const { classTypeId, ...rest } = data
+  return {
+    ...rest,
+    type: classTypeId,
+    display: data.display ? 1 : 0,
+  }
 }

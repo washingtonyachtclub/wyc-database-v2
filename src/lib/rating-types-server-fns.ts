@@ -1,5 +1,5 @@
 import { createServerFn } from '@tanstack/react-start'
-import { toRatingType } from 'src/db/mappers'
+import { toRatingType } from 'src/db/rating-type-schema'
 import type { RatingTypeInsertData } from 'src/db/rating-type-schema'
 import { ratings } from 'src/db/schema'
 import db from '../db/index'
