@@ -76,6 +76,7 @@ function NotFound() {
 
 function RootDocument({ children }: { children: React.ReactNode }) {
   const location = useLocation()
+  const isEmbedPage = location.pathname === '/lesson-list'
   const isBarePage =
     ['/login', '/forgot-password'].includes(location.pathname) ||
     location.pathname.startsWith('/signup')
@@ -86,17 +87,21 @@ function RootDocument({ children }: { children: React.ReactNode }) {
         <HeadContent />
       </head>
       <body>
-        <TooltipProvider delayDuration={0}>
-          <Header />
-          {!isBarePage && (
-            <div className="flex">
-              <Sidebar />
-              <main className="flex-1">{children}</main>
-            </div>
-          )}
-          {isBarePage && children}
-          <TanStackDevTools />
-        </TooltipProvider>
+        {isEmbedPage ? (
+          children
+        ) : (
+          <TooltipProvider delayDuration={0}>
+            <Header />
+            {!isBarePage && (
+              <div className="flex">
+                <Sidebar />
+                <main className="flex-1">{children}</main>
+              </div>
+            )}
+            {isBarePage && children}
+            <TanStackDevTools />
+          </TooltipProvider>
+        )}
         <Scripts />
       </body>
     </html>

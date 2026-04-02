@@ -49,6 +49,46 @@ export const OFFICER_PAGE_SECTIONS = [
   },
 ] as const
 
+/**
+ * Class type IDs grouped into display categories for the public lesson list
+ * and the class type dropdown in lesson create/edit forms.
+ * IDs are PKs from the `class_type` table.
+ */
+export const LESSON_CATEGORIES = [
+  {
+    label: 'Novice Dinghy',
+    typeIds: [1, 2], // NOV Dinghy Weekday, NOV Dinghy Weekend
+  },
+  {
+    label: 'Advanced',
+    typeIds: [3, 6, 7], // Catamaran, INT Dinghy Weekday, INT Dinghy Weekend
+  },
+  {
+    label: 'Keelboat',
+    typeIds: [4],
+  },
+  {
+    label: 'Social Events',
+    typeIds: [13],
+  },
+  {
+    label: 'Work Parties',
+    typeIds: [9],
+  },
+  {
+    label: 'Specialty',
+    typeIds: [5],
+  },
+  {
+    label: 'Dinghy Sailing',
+    typeIds: [10],
+  },
+  {
+    label: 'Windsurfing',
+    typeIds: [12],
+  },
+] as const
+
 /** Flat list of all position IDs on the officer page (for queries) */
 export const OFFICER_PAGE_POSITIONS = OFFICER_PAGE_SECTIONS.flatMap((s) => s.positions)
 

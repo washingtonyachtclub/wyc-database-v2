@@ -1,18 +1,23 @@
+# MVP
+- deploy to main URL
+  - get old-database working on https
+
 # Important
+- verify branch protection / github flow
+- lesson signups frontend flow
+  - see plan md
+- lessons table filtering + sorting
 - update readme for devs
-- lesson signups
-  - add unique constraint to lessons table
 - backfill more calendarDates for older lessons (prompt in scripts folder)
-- add "contact webmaster with message, time, and date of error" on errors
-- boat checkouts viewing page (+ checking out a boat? replace legacy checkout tool?)
+- boat checkouts viewing page (+ checking out a boat, replace legacy checkout tool)
 - file organization cleanup
   - organize types.ts into respective schema folders
   - separate mappers.ts
-- change lesson_quarter tool
+- create lesson_quarter tool
 - membership statistics
   - use expireQtr only
   - incude number/list of honoraries not marked out to sea that are not up to date
-- replace website redirect with cname change?
+- self-unenrollment from lessons + auto waitlist handling with email notifications?
 
 # Less Important
 - better ratings filtering (find all members with *at least* X rating, more complex logic like ANDs and ORs)

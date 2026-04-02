@@ -1,5 +1,5 @@
 import { ErrorAlert } from '@/components/ui/ErrorAlert'
-import { TBD_WYC_NUMBER } from '@/db/constants'
+import { LESSON_CATEGORIES, TBD_WYC_NUMBER } from '@/db/constants'
 import type { LessonInsert, LessonStudent, RichLesson } from '@/db/lesson-schema'
 import { lessonInsertSchema } from '@/db/lesson-schema'
 import { useAppForm } from '@/hooks/form'
@@ -251,10 +251,13 @@ function LessonEditForm({ lesson }: { lesson: RichLesson }) {
 
   const mutationError = updateMutation.error?.message
 
-  const classTypeOptions = classTypes.map((ct) => ({
-    value: ct.index,
-    label: ct.text ?? `Type ${ct.index}`,
-  }))
+  const classTypeMap = new Map(classTypes.map((ct) => [ct.index, ct.text ?? `Type ${ct.index}`]))
+  const classTypeGroups = LESSON_CATEGORIES.map((cat) => ({
+    label: cat.label,
+    options: cat.typeIds
+      .filter((id) => classTypeMap.has(id))
+      .map((id) => ({ value: id, label: classTypeMap.get(id)! })),
+  })).filter((g) => g.options.length > 0)
 
   const quarterOptions = quarters.map((q) => ({
     value: q.index,
@@ -281,7 +284,7 @@ function LessonEditForm({ lesson }: { lesson: RichLesson }) {
         <form.AppField
           name="classTypeId"
           children={(field) => (
-            <field.SelectField label="Type" placeholder="Select type" options={classTypeOptions} />
+            <field.GroupedSelectField label="Type" placeholder="Select type" groups={classTypeGroups} tooltip="Group headers match sections on the public lesson list" />
           )}
         />
 
