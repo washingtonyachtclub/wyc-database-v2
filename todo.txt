@@ -1,6 +1,5 @@
 # MVP
 - deploy to main URL
-  - get old-database working on https
 
 # Important
 - backfill more calendarDates for older lessons (prompt in scripts folder)
@@ -13,7 +12,6 @@
 - support tables:
   - positions (need to show only active positions, either hard coded or add active column to schema.)
 - tools
-  - change lesson_quarter (include big warning on this page)
   - membership statistics
     - use expireQtr only
     - incude number/list of honoraries not marked out to sea that are not up to date

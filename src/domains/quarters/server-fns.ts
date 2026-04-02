@@ -1,8 +1,8 @@
 import { createServerFn } from '@tanstack/react-start'
-import { desc, eq } from 'drizzle-orm'
+import { and, count, desc, eq, gte, lt } from 'drizzle-orm'
 import type { QuarterInsertData } from '@/domains/quarters/schema'
 import { toQuarter } from '@/domains/quarters/schema'
-import { quarters } from 'src/db/schema'
+import { lessonQuarter, lessons, quarters, wycDatabase } from 'src/db/schema'
 import db from '@/db/index'
 import { requireAuth, requirePrivilege } from '@/lib/auth/auth-middleware'
 
@@ -26,6 +26,69 @@ export const createQuarter = createServerFn({ method: 'POST' })
     } catch (error) {
       console.error('Failed to create quarter:', error)
       throw new Error('Failed to create quarter')
+    }
+  })
+
+export const getQuarterChangeImpact = createServerFn({ method: 'GET' })
+  .inputValidator((input: { newQuarter: number }) => input)
+  .handler(async ({ data: { newQuarter } }) => {
+    await requirePrivilege('db')
+
+    const quarterRow = await db
+      .select({ quarter: lessonQuarter.quarter })
+      .from(lessonQuarter)
+      .where(eq(lessonQuarter.index, 1))
+      .limit(1)
+    const currentQuarter = quarterRow[0].quarter
+
+    if (newQuarter === currentQuarter) {
+      return { currentQuarter, membersAffected: 0, lessonsAffected: 0, direction: 'same' as const }
+    }
+
+    const forward = newQuarter > currentQuarter
+    const [low, high] = forward
+      ? [currentQuarter, newQuarter]
+      : [newQuarter, currentQuarter]
+
+    const [memberResult] = await db
+      .select({ count: count() })
+      .from(wycDatabase)
+      .where(and(gte(wycDatabase.expireQtrIndex, low), lt(wycDatabase.expireQtrIndex, high)))
+
+    const [lessonResult] = await db
+      .select({ count: count() })
+      .from(lessons)
+      .where(and(gte(lessons.expire, low), lt(lessons.expire, high), eq(lessons.display, 1)))
+
+    return {
+      currentQuarter,
+      membersAffected: memberResult.count,
+      lessonsAffected: lessonResult.count,
+      direction: forward ? ('forward' as const) : ('backward' as const),
+    }
+  })
+
+export const updateCurrentQuarter = createServerFn({ method: 'POST' })
+  .inputValidator((input: { newQuarter: number }) => input)
+  .handler(async ({ data: { newQuarter } }) => {
+    await requirePrivilege('db')
+
+    const quarterRow = await db
+      .select({ quarter: lessonQuarter.quarter })
+      .from(lessonQuarter)
+      .where(eq(lessonQuarter.index, 1))
+      .limit(1)
+    const previousQuarter = quarterRow[0].quarter
+
+    try {
+      await db
+        .update(lessonQuarter)
+        .set({ quarter: newQuarter })
+        .where(eq(lessonQuarter.index, 1))
+      return { previousQuarter, newQuarter }
+    } catch (error) {
+      console.error('Failed to update current quarter:', error)
+      throw new Error('Failed to update current quarter')
     }
   })
 

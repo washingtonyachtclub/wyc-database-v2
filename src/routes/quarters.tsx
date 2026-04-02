@@ -1,7 +1,7 @@
 import { AddQuarterModal } from '@/components/quarters/AddQuarterModal'
 import { columns } from '@/components/quarters/columns'
 import type { QuarterTableMeta } from '@/components/quarters/columns'
-import { DeleteConfirmDialog } from '@/components/ui/DeleteConfirmDialog'
+import { ConfirmDialog } from '@/components/ui/ConfirmDialog'
 import { Button } from '@/components/ui/button'
 import { DataTable } from '@/components/ui/DataTable'
 import {
@@ -68,7 +68,7 @@ function QuartersPage() {
         />
       )}
 
-      <DeleteConfirmDialog
+      <ConfirmDialog
         open={deleteTarget !== null}
         onClose={() => setDeleteTarget(null)}
         onConfirm={() => {

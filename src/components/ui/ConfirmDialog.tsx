@@ -12,21 +12,23 @@ import {
 import { Checkbox } from '@/components/ui/checkbox'
 import { Label } from '@/components/ui/label'
 
-type DeleteConfirmDialogProps = {
+type ConfirmDialogProps = {
   open: boolean
   onClose: () => void
   onConfirm: () => void
   title: string
   description: React.ReactNode
+  confirmLabel?: string
 }
 
-export function DeleteConfirmDialog({
+export function ConfirmDialog({
   open,
   onClose,
   onConfirm,
   title,
   description,
-}: DeleteConfirmDialogProps) {
+  confirmLabel = 'Delete',
+}: ConfirmDialogProps) {
   const [confirmed, setConfirmed] = useState(false)
 
   useEffect(() => {
@@ -44,11 +46,11 @@ export function DeleteConfirmDialog({
         </AlertDialogHeader>
         <div className="flex items-center gap-2 pt-2">
           <Checkbox
-            id="delete-confirm"
+            id="confirm-checkbox"
             checked={confirmed}
             onCheckedChange={(checked) => setConfirmed(checked === true)}
           />
-          <Label htmlFor="delete-confirm" className="cursor-pointer">
+          <Label htmlFor="confirm-checkbox" className="cursor-pointer">
             I understand
           </Label>
         </div>
@@ -59,7 +61,7 @@ export function DeleteConfirmDialog({
               className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
               onClick={onConfirm}
             >
-              Delete
+              {confirmLabel}
             </AlertDialogAction>
           )}
         </AlertDialogFooter>

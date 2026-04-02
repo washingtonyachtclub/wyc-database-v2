@@ -10,6 +10,7 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as SetPasswordRouteImport } from './routes/set-password'
+import { Route as SetCurrentQuarterRouteImport } from './routes/set-current-quarter'
 import { Route as RatingsRouteImport } from './routes/ratings'
 import { Route as RatingTypesRouteImport } from './routes/rating-types'
 import { Route as QuartersRouteImport } from './routes/quarters'
@@ -36,6 +37,11 @@ import { Route as LessonsLessonIndexRouteImport } from './routes/lessons_.$lesso
 const SetPasswordRoute = SetPasswordRouteImport.update({
   id: '/set-password',
   path: '/set-password',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const SetCurrentQuarterRoute = SetCurrentQuarterRouteImport.update({
+  id: '/set-current-quarter',
+  path: '/set-current-quarter',
   getParentRoute: () => rootRouteImport,
 } as any)
 const RatingsRoute = RatingsRouteImport.update({
@@ -168,6 +174,7 @@ export interface FileRoutesByFullPath {
   '/quarters': typeof QuartersRoute
   '/rating-types': typeof RatingTypesRoute
   '/ratings': typeof RatingsRoute
+  '/set-current-quarter': typeof SetCurrentQuarterRoute
   '/set-password': typeof SetPasswordRoute
   '/lessons/$lessonIndex': typeof LessonsLessonIndexRoute
   '/members/$wycNumber': typeof MembersWycNumberRoute
@@ -193,6 +200,7 @@ export interface FileRoutesByTo {
   '/quarters': typeof QuartersRoute
   '/rating-types': typeof RatingTypesRoute
   '/ratings': typeof RatingsRoute
+  '/set-current-quarter': typeof SetCurrentQuarterRoute
   '/set-password': typeof SetPasswordRoute
   '/lessons/$lessonIndex': typeof LessonsLessonIndexRoute
   '/members/$wycNumber': typeof MembersWycNumberRoute
@@ -219,6 +227,7 @@ export interface FileRoutesById {
   '/quarters': typeof QuartersRoute
   '/rating-types': typeof RatingTypesRoute
   '/ratings': typeof RatingsRoute
+  '/set-current-quarter': typeof SetCurrentQuarterRoute
   '/set-password': typeof SetPasswordRoute
   '/lessons_/$lessonIndex': typeof LessonsLessonIndexRoute
   '/members_/$wycNumber': typeof MembersWycNumberRoute
@@ -246,6 +255,7 @@ export interface FileRouteTypes {
     | '/quarters'
     | '/rating-types'
     | '/ratings'
+    | '/set-current-quarter'
     | '/set-password'
     | '/lessons/$lessonIndex'
     | '/members/$wycNumber'
@@ -271,6 +281,7 @@ export interface FileRouteTypes {
     | '/quarters'
     | '/rating-types'
     | '/ratings'
+    | '/set-current-quarter'
     | '/set-password'
     | '/lessons/$lessonIndex'
     | '/members/$wycNumber'
@@ -296,6 +307,7 @@ export interface FileRouteTypes {
     | '/quarters'
     | '/rating-types'
     | '/ratings'
+    | '/set-current-quarter'
     | '/set-password'
     | '/lessons_/$lessonIndex'
     | '/members_/$wycNumber'
@@ -322,6 +334,7 @@ export interface RootRouteChildren {
   QuartersRoute: typeof QuartersRoute
   RatingTypesRoute: typeof RatingTypesRoute
   RatingsRoute: typeof RatingsRoute
+  SetCurrentQuarterRoute: typeof SetCurrentQuarterRoute
   SetPasswordRoute: typeof SetPasswordRoute
   LessonsLessonIndexRoute: typeof LessonsLessonIndexRoute
   MembersWycNumberRoute: typeof MembersWycNumberRoute
@@ -336,6 +349,13 @@ declare module '@tanstack/react-router' {
       path: '/set-password'
       fullPath: '/set-password'
       preLoaderRoute: typeof SetPasswordRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/set-current-quarter': {
+      id: '/set-current-quarter'
+      path: '/set-current-quarter'
+      fullPath: '/set-current-quarter'
+      preLoaderRoute: typeof SetCurrentQuarterRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/ratings': {
@@ -514,6 +534,7 @@ const rootRouteChildren: RootRouteChildren = {
   QuartersRoute: QuartersRoute,
   RatingTypesRoute: RatingTypesRoute,
   RatingsRoute: RatingsRoute,
+  SetCurrentQuarterRoute: SetCurrentQuarterRoute,
   SetPasswordRoute: SetPasswordRoute,
   LessonsLessonIndexRoute: LessonsLessonIndexRoute,
   MembersWycNumberRoute: MembersWycNumberRoute,

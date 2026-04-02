@@ -1,7 +1,7 @@
 import { AddBoatTypeModal } from '@/components/boat-types/AddBoatTypeModal'
 import { columns } from '@/components/boat-types/columns'
 import type { BoatTypeTableMeta } from '@/components/boat-types/columns'
-import { DeleteConfirmDialog } from '@/components/ui/DeleteConfirmDialog'
+import { ConfirmDialog } from '@/components/ui/ConfirmDialog'
 import { Button } from '@/components/ui/button'
 import { DataTable } from '@/components/ui/DataTable'
 import {
@@ -70,7 +70,7 @@ function BoatTypesPage() {
         />
       )}
 
-      <DeleteConfirmDialog
+      <ConfirmDialog
         open={deleteTarget !== null}
         onClose={() => setDeleteTarget(null)}
         onConfirm={() => {

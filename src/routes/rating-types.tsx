@@ -1,5 +1,5 @@
 import { AddRatingTypeModal } from '@/components/rating-types/AddRatingTypeModal'
-import { DeleteConfirmDialog } from '@/components/ui/DeleteConfirmDialog'
+import { ConfirmDialog } from '@/components/ui/ConfirmDialog'
 import { Button } from '@/components/ui/button'
 import {
   Table,
@@ -132,7 +132,7 @@ function RatingTypesPage() {
         />
       )}
 
-      <DeleteConfirmDialog
+      <ConfirmDialog
         open={deleteTarget !== null}
         onClose={() => setDeleteTarget(null)}
         onConfirm={() => {

@@ -1,5 +1,5 @@
 import { queryOptions, useMutation, useQueryClient } from '@tanstack/react-query'
-import { createQuarter, deleteQuarter, getAllQuarters } from './server-fns'
+import { createQuarter, deleteQuarter, getAllQuarters, getQuarterChangeImpact, updateCurrentQuarter } from './server-fns'
 
 export const getQuartersQueryOptions = () =>
   queryOptions({
@@ -25,6 +25,25 @@ export function useDeleteQuarterMutation() {
     mutationFn: deleteQuarter,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['quarters'] })
+    },
+  })
+}
+
+export const getQuarterChangeImpactQueryOptions = (newQuarter: number) =>
+  queryOptions({
+    queryKey: ['quarters', 'impact', newQuarter],
+    queryFn: () => getQuarterChangeImpact({ data: { newQuarter } }),
+    enabled: newQuarter > 0,
+  })
+
+export function useUpdateCurrentQuarterMutation() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: updateCurrentQuarter,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['quarters'] })
+      queryClient.invalidateQueries({ queryKey: ['lessons'] })
+      queryClient.invalidateQueries({ queryKey: ['members'] })
     },
   })
 }

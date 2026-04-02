@@ -1,7 +1,7 @@
 import { AddClassTypeModal } from '@/components/class-types/AddClassTypeModal'
 import { columns } from '@/components/class-types/columns'
 import type { ClassTypeTableMeta } from '@/components/class-types/columns'
-import { DeleteConfirmDialog } from '@/components/ui/DeleteConfirmDialog'
+import { ConfirmDialog } from '@/components/ui/ConfirmDialog'
 import { Button } from '@/components/ui/button'
 import { DataTable } from '@/components/ui/DataTable'
 import {
@@ -68,7 +68,7 @@ function ClassTypesPage() {
         />
       )}
 
-      <DeleteConfirmDialog
+      <ConfirmDialog
         open={deleteTarget !== null}
         onClose={() => setDeleteTarget(null)}
         onConfirm={() => {
