@@ -10,6 +10,38 @@ import { classType, lessonQuarter, lessons, signups, wycDatabase } from 'src/db/
 import db from '../db/index'
 import { requireAuth, requireInstructorOrPrivilege, requirePrivilege } from '../lib/auth-middleware'
 
+export const getPublicLessons = createServerFn({ method: 'GET' }).handler(async () => {
+  // No auth required — this is the public lesson list for the WordPress iframe
+  const quarterRow = await db
+    .select({ quarter: lessonQuarter.quarter })
+    .from(lessonQuarter)
+    .where(eq(lessonQuarter.index, 1))
+    .limit(1)
+  const currentQuarter = quarterRow[0].quarter
+
+  const raw = await baseLessonQuery()
+    .where(and(eq(lessons.expire, currentQuarter), eq(lessons.display, 1)))
+    .orderBy(asc(lessons.calendarDate), asc(lessons.time))
+
+  const lessonIds = raw.map((r) => r.index)
+
+  // Batch enrollment counts
+  let enrollmentCounts = new Map<number, number>()
+  if (lessonIds.length > 0) {
+    const counts = await db
+      .select({ class: signups.class, count: count() })
+      .from(signups)
+      .where(inArray(signups.class, lessonIds))
+      .groupBy(signups.class)
+    enrollmentCounts = new Map(counts.map((c) => [c.class, c.count]))
+  }
+
+  return raw.map((row) => ({
+    lesson: toRichLesson(row),
+    enrolledCount: enrollmentCounts.get(row.index) ?? 0,
+  }))
+})
+
 export const getQuarterLessons = createServerFn({ method: 'GET' }).handler(async () => {
   const userId = await requirePrivilege('db')
   const currentQuarter = await getCurrentQuarter()

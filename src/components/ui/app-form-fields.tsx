@@ -1,10 +1,20 @@
+import { CircleHelp } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { useFieldContext, useFormContext } from '../../hooks/form-context'
 import { Button } from './button'
 import { Checkbox } from './checkbox'
 import { Input } from './input'
 import { Label } from './label'
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './select'
+import { Tooltip, TooltipContent, TooltipTrigger } from './tooltip'
+import {
+  Select,
+  SelectContent,
+  SelectGroup,
+  SelectItem,
+  SelectLabel,
+  SelectTrigger,
+  SelectValue,
+} from './select'
 import { Textarea } from './textarea'
 
 // --- Shared helpers ---
@@ -141,6 +151,61 @@ export function SelectField({
             <SelectItem key={opt.value} value={String(opt.value)}>
               {opt.label}
             </SelectItem>
+          ))}
+        </SelectContent>
+      </Select>
+      <FieldError errors={field.state.meta.errors} />
+    </div>
+  )
+}
+
+export function GroupedSelectField({
+  label,
+  required,
+  placeholder,
+  groups,
+  tooltip,
+  className,
+}: {
+  label: string
+  required?: boolean
+  placeholder?: string
+  groups: { label: string; options: { value: number; label: string }[] }[]
+  tooltip?: string
+  className?: string
+}) {
+  const field = useFieldContext<number | null>()
+  return (
+    <div className={className}>
+      <Label className="mb-1 flex items-center gap-1">
+        {label}
+        {required && ' *'}
+        {tooltip && (
+          <Tooltip>
+            <TooltipTrigger type="button" tabIndex={-1}>
+              <CircleHelp className="h-3.5 w-3.5 text-muted-foreground" />
+            </TooltipTrigger>
+            <TooltipContent>{tooltip}</TooltipContent>
+          </Tooltip>
+        )}
+      </Label>
+      <Select
+        value={field.state.value != null ? String(field.state.value) : ''}
+        onValueChange={(value) => field.handleChange(value === '' ? null : Number(value))}
+      >
+        <SelectTrigger onBlur={field.handleBlur}>
+          <SelectValue placeholder={placeholder} />
+        </SelectTrigger>
+        <SelectContent>
+          {groups.map((group) => (
+            <SelectGroup key={group.label}>
+              <SelectLabel>{group.label}</SelectLabel>
+              {group.options.map((opt) => (
+                <SelectItem key={opt.value} value={String(opt.value)} className="pl-6">
+                  {opt.label}
+                </SelectItem>
+              ))}
+            </SelectGroup>
           ))}
         </SelectContent>
       </Select>

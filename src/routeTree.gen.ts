@@ -19,6 +19,7 @@ import { Route as MembershipProcessingRouteImport } from './routes/membership-pr
 import { Route as MembersRouteImport } from './routes/members'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as LessonsRouteImport } from './routes/lessons'
+import { Route as LessonListRouteImport } from './routes/lesson-list'
 import { Route as HonoraryRouteImport } from './routes/honorary'
 import { Route as ForgotPasswordRouteImport } from './routes/forgot-password'
 import { Route as ForbiddenRouteImport } from './routes/forbidden'
@@ -80,6 +81,11 @@ const LessonsRoute = LessonsRouteImport.update({
   path: '/lessons',
   getParentRoute: () => rootRouteImport,
 } as any)
+const LessonListRoute = LessonListRouteImport.update({
+  id: '/lesson-list',
+  path: '/lesson-list',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const HonoraryRoute = HonoraryRouteImport.update({
   id: '/honorary',
   path: '/honorary',
@@ -138,6 +144,7 @@ export interface FileRoutesByFullPath {
   '/forbidden': typeof ForbiddenRoute
   '/forgot-password': typeof ForgotPasswordRoute
   '/honorary': typeof HonoraryRoute
+  '/lesson-list': typeof LessonListRoute
   '/lessons': typeof LessonsRoute
   '/login': typeof LoginRoute
   '/members': typeof MembersRoute
@@ -160,6 +167,7 @@ export interface FileRoutesByTo {
   '/forbidden': typeof ForbiddenRoute
   '/forgot-password': typeof ForgotPasswordRoute
   '/honorary': typeof HonoraryRoute
+  '/lesson-list': typeof LessonListRoute
   '/lessons': typeof LessonsRoute
   '/login': typeof LoginRoute
   '/members': typeof MembersRoute
@@ -183,6 +191,7 @@ export interface FileRoutesById {
   '/forbidden': typeof ForbiddenRoute
   '/forgot-password': typeof ForgotPasswordRoute
   '/honorary': typeof HonoraryRoute
+  '/lesson-list': typeof LessonListRoute
   '/lessons': typeof LessonsRoute
   '/login': typeof LoginRoute
   '/members': typeof MembersRoute
@@ -207,6 +216,7 @@ export interface FileRouteTypes {
     | '/forbidden'
     | '/forgot-password'
     | '/honorary'
+    | '/lesson-list'
     | '/lessons'
     | '/login'
     | '/members'
@@ -229,6 +239,7 @@ export interface FileRouteTypes {
     | '/forbidden'
     | '/forgot-password'
     | '/honorary'
+    | '/lesson-list'
     | '/lessons'
     | '/login'
     | '/members'
@@ -251,6 +262,7 @@ export interface FileRouteTypes {
     | '/forbidden'
     | '/forgot-password'
     | '/honorary'
+    | '/lesson-list'
     | '/lessons'
     | '/login'
     | '/members'
@@ -274,6 +286,7 @@ export interface RootRouteChildren {
   ForbiddenRoute: typeof ForbiddenRoute
   ForgotPasswordRoute: typeof ForgotPasswordRoute
   HonoraryRoute: typeof HonoraryRoute
+  LessonListRoute: typeof LessonListRoute
   LessonsRoute: typeof LessonsRoute
   LoginRoute: typeof LoginRoute
   MembersRoute: typeof MembersRoute
@@ -362,6 +375,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof LessonsRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/lesson-list': {
+      id: '/lesson-list'
+      path: '/lesson-list'
+      fullPath: '/lesson-list'
+      preLoaderRoute: typeof LessonListRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/honorary': {
       id: '/honorary'
       path: '/honorary'
@@ -442,6 +462,7 @@ const rootRouteChildren: RootRouteChildren = {
   ForbiddenRoute: ForbiddenRoute,
   ForgotPasswordRoute: ForgotPasswordRoute,
   HonoraryRoute: HonoraryRoute,
+  LessonListRoute: LessonListRoute,
   LessonsRoute: LessonsRoute,
   LoginRoute: LoginRoute,
   MembersRoute: MembersRoute,
