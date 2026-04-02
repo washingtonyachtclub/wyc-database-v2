@@ -1,60 +1,24 @@
 # Getting Started
 
-## Database Connection Setup
+## Environment Setup
 
-This project connects to a MySQL database on DreamHost. To connect locally, you need to set up an SSH tunnel.
+Copy `.env.example` to `.env.local` and fill in your values:
 
-### Setting Up the SSH Tunnel
-
-**For WSL/Linux/macOS:**
-
-1. Copy the example script:
-
-   ```bash
-   cp tunnel.sh.example tunnel.sh
-   ```
-
-2. Edit `tunnel.sh` and update the SSH command with your DreamHost details (if different from the defaults)
-
-3. Make it executable:
-
-   ```bash
-   chmod +x tunnel.sh
-   ```
-
-4. Run the tunnel:
-   ```bash
-   ./tunnel.sh
-   ```
-
-**Important:** Keep the tunnel terminal/window open while developing.
-
-### Environment Configuration
-
-Update the `DATABASE_URL` in your `.env.local` file to point to the tunneled port:
-
-```
-DATABASE_URL=mysql://username:password@127.0.0.1:3307/database_name
+```bash
+cp .env.example .env.local
 ```
 
-Make sure:
-
-- The port (`3307`) matches the local port in your tunnel script
-- The host is `127.0.0.1` (localhost) to use the SSH tunnel
-- Your MySQL username, password, and database name are correct
-
-The project automatically loads `.env.local` via `dotenv/config`.
+- `DATABASE_URL` — MySQL connection string
+- `SESSION_SECRET` — Secret for session cookies
+- `RESEND_API_KEY` — [Resend](https://resend.com) API key for sending emails
+- `VITE_APP_ENV` — Set to `"dev"` for development (omit in production)
 
 ## Running the Application
-
-To run this application:
 
 ```bash
 npm install
 npm run dev
 ```
-
-**Important:** Make sure the SSH tunnel is running before starting the dev server!
 
 # Building For Production
 
@@ -63,18 +27,6 @@ To build this application for production:
 ```bash
 npm run build
 ```
-
-## Testing
-
-This project uses [Vitest](https://vitest.dev/) for testing. You can run the tests with:
-
-```bash
-npm run test
-```
-
-## Styling
-
-This project uses [Tailwind CSS](https://tailwindcss.com/) for styling.
 
 ## Linting & Formatting
 

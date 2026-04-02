@@ -3,21 +3,26 @@
   - get old-database working on https
 
 # Important
-- verify branch protection / github flow
-- lesson signups frontend flow
-  - see plan md
-- lessons table filtering + sorting
-- update readme for devs
+- dev:
+  - update readme for devs
+  - file organization cleanup
+
 - backfill more calendarDates for older lessons (prompt in scripts folder)
 - boat checkouts viewing page (+ checking out a boat, replace legacy checkout tool)
-- file organization cleanup
-  - organize types.ts into respective schema folders
-  - separate mappers.ts
-- create lesson_quarter tool
-- membership statistics
-  - use expireQtr only
-  - incude number/list of honoraries not marked out to sea that are not up to date
-- self-unenrollment from lessons + auto waitlist handling with email notifications?
+- self-unenrollment from lessons
+  - auto waitlist handling with email notifications?
+
+- data tables:
+  - boat checkouts
+- support tables:
+  - lesson types
+  - quarters
+  - positions? (need to show only active positions, either hard coded or add active column to schema.)
+- tools
+  - change lesson_quarter (include big warning on this page)
+  - membership statistics
+    - use expireQtr only
+    - incude number/list of honoraries not marked out to sea that are not up to date
 
 # Less Important
 - better ratings filtering (find all members with *at least* X rating, more complex logic like ANDs and ORs)

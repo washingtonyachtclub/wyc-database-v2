@@ -5,6 +5,7 @@ dist-ssr
 *.local
 count.txt
 .env*
+!.env.example
 .nitro
 .tanstack
 .wrangler
@@ -13,6 +14,3 @@ count.txt
 todos.json
 
 .vercel
-
-# Tunnel script (contain server details - use .example file instead)
-tunnel.sh
