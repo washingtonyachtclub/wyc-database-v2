@@ -1,6 +1,7 @@
 import { queryOptions, useMutation, useQueryClient } from '@tanstack/react-query'
 import {
   createRatingType,
+  deleteRatingType,
   getAllRatingTypes,
   getDistinctRatingTypeNames,
 } from './server-fns'
@@ -16,6 +17,17 @@ export const getDistinctTypeNamesQueryOptions = () =>
     queryKey: ['rating-types', 'distinct-names'],
     queryFn: getDistinctRatingTypeNames,
   })
+
+export function useDeleteRatingTypeMutation() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: deleteRatingType,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['rating-types'] })
+      queryClient.invalidateQueries({ queryKey: ['ratings', 'types'] })
+    },
+  })
+}
 
 export function useCreateRatingTypeMutation(opts: { onSuccess: () => void; onClose: () => void }) {
   const queryClient = useQueryClient()

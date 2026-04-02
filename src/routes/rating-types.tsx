@@ -1,4 +1,5 @@
 import { AddRatingTypeModal } from '@/components/rating-types/AddRatingTypeModal'
+import { DeleteConfirmDialog } from '@/components/ui/DeleteConfirmDialog'
 import { Button } from '@/components/ui/button'
 import {
   Table,
@@ -11,6 +12,7 @@ import {
 import {
   getDistinctTypeNamesQueryOptions,
   getRatingTypesAllQueryOptions,
+  useDeleteRatingTypeMutation,
 } from '@/domains/rating-types/query-options'
 import { requirePrivilegeForRoute } from '@/lib/route-guards'
 import type { RatingType } from '@/domains/rating-types/schema'
@@ -22,7 +24,7 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from '@/components/ui/tooltip'
-import { Plus } from 'lucide-react'
+import { Plus, X } from 'lucide-react'
 import { useMemo, useState } from 'react'
 
 export const Route = createFileRoute('/rating-types')({
@@ -36,9 +38,16 @@ export const Route = createFileRoute('/rating-types')({
   component: RatingTypesPage,
 })
 
+type DeleteTarget = {
+  index: number
+  text: string
+}
+
 function RatingTypesPage() {
   const { data: ratingTypes } = useSuspenseQuery(getRatingTypesAllQueryOptions())
   const [isAddModalOpen, setIsAddModalOpen] = useState(false)
+  const [deleteTarget, setDeleteTarget] = useState<DeleteTarget | null>(null)
+  const deleteMutation = useDeleteRatingTypeMutation()
 
   const grouped = useMemo(() => {
     const map = new Map<string, RatingType[]>()
@@ -70,6 +79,7 @@ function RatingTypesPage() {
                 <TableRow>
                   <TableHead className="h-8 px-2 text-xs">Rating</TableHead>
                   <TableHead className="h-8 px-2 text-xs w-16">Degree</TableHead>
+                  <TableHead className="h-8 px-2 text-xs w-8" />
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -81,6 +91,14 @@ function RatingTypesPage() {
                           <TableRow className="bg-yellow-50 dark:bg-yellow-950/30">
                             <TableCell className="py-1.5 px-2 text-sm">{item.text}</TableCell>
                             <TableCell className="py-1.5 px-2 text-sm">{item.degree}</TableCell>
+                            <TableCell className="py-1.5 px-2 text-sm">
+                              <button
+                                className="text-muted-foreground hover:text-destructive"
+                                onClick={() => setDeleteTarget({ index: item.index, text: item.text })}
+                              >
+                                <X className="h-4 w-4" />
+                              </button>
+                            </TableCell>
                           </TableRow>
                         </TooltipTrigger>
                         <TooltipContent>Expires</TooltipContent>
@@ -90,6 +108,14 @@ function RatingTypesPage() {
                     <TableRow key={item.index}>
                       <TableCell className="py-1.5 px-2 text-sm">{item.text}</TableCell>
                       <TableCell className="py-1.5 px-2 text-sm">{item.degree}</TableCell>
+                      <TableCell className="py-1.5 px-2 text-sm">
+                        <button
+                          className="text-muted-foreground hover:text-destructive"
+                          onClick={() => setDeleteTarget({ index: item.index, text: item.text })}
+                        >
+                          <X className="h-4 w-4" />
+                        </button>
+                      </TableCell>
                     </TableRow>
                   ),
                 )}
@@ -105,6 +131,33 @@ function RatingTypesPage() {
           onSuccess={() => {}}
         />
       )}
+
+      <DeleteConfirmDialog
+        open={deleteTarget !== null}
+        onClose={() => setDeleteTarget(null)}
+        onConfirm={() => {
+          if (!deleteTarget) return
+          deleteMutation.mutate(
+            { data: { index: deleteTarget.index } },
+            { onSettled: () => setDeleteTarget(null) },
+          )
+        }}
+        title="ARE YOU SURE?"
+        description={
+          <>
+            <p className="mb-2">
+              Deleting rating type <strong>{deleteTarget?.text}</strong> from the database is almost always the wrong thing to do.
+            </p>
+            <p className="mb-2">
+              If any members have this rating, those rating records will lose their type reference.
+              This could affect member ratings, historical data, and rating reports.
+            </p>
+            <p className="font-semibold">
+              You should probably only do this if you just created it by mistake.
+            </p>
+          </>
+        }
+      />
     </div>
   )
 }

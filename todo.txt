@@ -11,9 +11,7 @@
 - data tables:
   - boat checkouts
 - support tables:
-  - lesson types
-  - quarters
-  - positions? (need to show only active positions, either hard coded or add active column to schema.)
+  - positions (need to show only active positions, either hard coded or add active column to schema.)
 - tools
   - change lesson_quarter (include big warning on this page)
   - membership statistics

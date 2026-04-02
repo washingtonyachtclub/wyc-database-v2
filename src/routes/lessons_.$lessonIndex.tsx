@@ -3,14 +3,14 @@ import { LESSON_CATEGORIES, TBD_WYC_NUMBER } from '@/db/constants'
 import type { LessonInsert, LessonStudent, RichLesson } from '@/domains/lessons/schema'
 import { lessonInsertSchema } from '@/domains/lessons/schema'
 import { useAppForm } from '@/hooks/form'
+import { getClassTypesQueryOptions } from '@/domains/class-types/query-options'
 import {
-  getClassTypesQueryOptions,
   getLessonByIdQueryOptions,
   useDeleteLessonMutation,
   useRemoveStudentMutation,
   useUpdateLessonMutation,
 } from '@/domains/lessons/query-options'
-import { getQuartersQueryOptions } from '@/domains/members/query-options'
+import { getQuartersQueryOptions } from '@/domains/quarters/query-options'
 import { useQuery, useSuspenseQuery } from '@tanstack/react-query'
 import { createFileRoute, redirect, useNavigate } from '@tanstack/react-router'
 import { useCurrentUser } from '@/lib/auth/auth-query-options'

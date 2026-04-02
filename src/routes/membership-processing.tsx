@@ -10,8 +10,8 @@ import { getCurrentQuarterQueryOptions } from '@/domains/lessons/query-options'
 import {
   getAllMembersLiteQueryOptions,
   getProcessedEntryIdsQueryOptions,
-  getQuartersQueryOptions,
 } from '@/domains/members/query-options'
+import { getQuartersQueryOptions } from '@/domains/quarters/query-options'
 import {
   createMember,
   markEntryProcessed,

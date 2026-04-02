@@ -1,5 +1,5 @@
 import { createServerFn } from '@tanstack/react-start'
-import { desc } from 'drizzle-orm'
+import { desc, eq } from 'drizzle-orm'
 import type { BoatTypeInsertData } from '@/domains/boat-types/schema'
 import { toBoatType } from '@/domains/boat-types/schema'
 import { boatTypes } from 'src/db/schema'
@@ -27,6 +27,19 @@ export const getDistinctBoatFleetNames = createServerFn({ method: 'GET' }).handl
     throw new Error('Failed to fetch distinct fleet names')
   }
 })
+
+export const deleteBoatType = createServerFn({ method: 'POST' })
+  .inputValidator((input: { index: number }) => input)
+  .handler(async ({ data: { index } }) => {
+    await requirePrivilege('db')
+    try {
+      await db.delete(boatTypes).where(eq(boatTypes.index, index))
+      return { success: true }
+    } catch (error) {
+      console.error('Failed to delete boat type:', error)
+      throw new Error('Failed to delete boat type')
+    }
+  })
 
 export const createBoatType = createServerFn({ method: 'POST' })
   .inputValidator((input: BoatTypeInsertData) => input)

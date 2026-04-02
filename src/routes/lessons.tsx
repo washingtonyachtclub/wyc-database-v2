@@ -17,12 +17,12 @@ import { Plus } from 'lucide-react'
 import { DataTable } from '../components/ui/DataTable'
 import { isLessonUpcoming } from '../lib/date-utils'
 import { requirePrivilegeForRoute } from '../lib/route-guards'
+import { getClassTypesQueryOptions } from '@/domains/class-types/query-options'
 import {
   getAllLessonsQueryOptions,
-  getClassTypesQueryOptions,
   getQuarterLessonsQueryOptions,
 } from '@/domains/lessons/query-options'
-import { getQuartersQueryOptions } from '@/domains/members/query-options'
+import { getQuartersQueryOptions } from '@/domains/quarters/query-options'
 
 const lessonSearchSchema = z.object({
   pageIndex: z.number().catch(0),

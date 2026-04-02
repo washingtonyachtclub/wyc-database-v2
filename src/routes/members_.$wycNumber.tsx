@@ -16,9 +16,9 @@ import {
   getMemberByIdQueryOptions,
   getMemberLessonsSignedUpQueryOptions,
   getMemberLessonsTaughtQueryOptions,
-  getQuartersQueryOptions,
   useUpdateMemberProfileMutation,
 } from '@/domains/members/query-options'
+import { getQuartersQueryOptions } from '@/domains/quarters/query-options'
 import { useQuery, useSuspenseQuery } from '@tanstack/react-query'
 import { createFileRoute, redirect } from '@tanstack/react-router'
 import { Suspense, useMemo, useState } from 'react'

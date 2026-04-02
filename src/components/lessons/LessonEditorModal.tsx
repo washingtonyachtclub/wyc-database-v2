@@ -4,11 +4,9 @@ import { ErrorAlert } from '../ui/ErrorAlert'
 import type { LessonInsert } from '@/domains/lessons/schema'
 import { lessonInsertSchema } from '@/domains/lessons/schema'
 import { useAppForm } from '../../hooks/form'
-import {
-  getClassTypesQueryOptions,
-  useCreateLessonMutation,
-} from '@/domains/lessons/query-options'
-import { getQuartersQueryOptions } from '@/domains/members/query-options'
+import { getClassTypesQueryOptions } from '@/domains/class-types/query-options'
+import { useCreateLessonMutation } from '@/domains/lessons/query-options'
+import { getQuartersQueryOptions } from '@/domains/quarters/query-options'
 import { Button } from '../ui/button'
 import { MemberCombobox } from '../ui/MemberCombobox'
 import { Modal } from '../ui/Modal'

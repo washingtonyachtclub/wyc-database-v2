@@ -120,12 +120,6 @@ export const getCategories = createServerFn({ method: 'GET' }).handler(async () 
   return result
 })
 
-export const getQuarters = createServerFn({ method: 'GET' }).handler(async () => {
-  await requireAuth()
-  const result = await db.select().from(quarters).orderBy(desc(quarters.index))
-  return result
-})
-
 export const createMember = createServerFn({ method: 'POST' })
   .inputValidator((data: { member: CreateMember; sendEmail: boolean }) => data)
   .handler(async ({ data: { member, sendEmail: shouldSendEmail } }) => {

@@ -5,7 +5,6 @@ import {
   deleteLesson,
   enrollInLesson,
   getAllLessons,
-  getClassTypes,
   getCurrentQuarter,
   getLessonById,
   getLessonForSignup,
@@ -29,12 +28,6 @@ export const getLessonByIdQueryOptions = (id: number) =>
       const result = await getLessonById({ data: { id } })
       return result
     },
-  })
-
-export const getClassTypesQueryOptions = () =>
-  queryOptions({
-    queryKey: ['lessonClassTypes'],
-    queryFn: getClassTypes,
   })
 
 export function useCreateLessonMutation(opts: { onSuccess: () => void; onClose: () => void }) {

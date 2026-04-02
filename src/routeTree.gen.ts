@@ -12,6 +12,7 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as SetPasswordRouteImport } from './routes/set-password'
 import { Route as RatingsRouteImport } from './routes/ratings'
 import { Route as RatingTypesRouteImport } from './routes/rating-types'
+import { Route as QuartersRouteImport } from './routes/quarters'
 import { Route as PrivilegesRouteImport } from './routes/privileges'
 import { Route as OfficersRouteImport } from './routes/officers'
 import { Route as MyLessonsRouteImport } from './routes/my-lessons'
@@ -23,6 +24,7 @@ import { Route as LessonListRouteImport } from './routes/lesson-list'
 import { Route as HonoraryRouteImport } from './routes/honorary'
 import { Route as ForgotPasswordRouteImport } from './routes/forgot-password'
 import { Route as ForbiddenRouteImport } from './routes/forbidden'
+import { Route as ClassTypesRouteImport } from './routes/class-types'
 import { Route as ChiefsRouteImport } from './routes/chiefs'
 import { Route as BoatTypesRouteImport } from './routes/boat-types'
 import { Route as IndexRouteImport } from './routes/index'
@@ -44,6 +46,11 @@ const RatingsRoute = RatingsRouteImport.update({
 const RatingTypesRoute = RatingTypesRouteImport.update({
   id: '/rating-types',
   path: '/rating-types',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const QuartersRoute = QuartersRouteImport.update({
+  id: '/quarters',
+  path: '/quarters',
   getParentRoute: () => rootRouteImport,
 } as any)
 const PrivilegesRoute = PrivilegesRouteImport.update({
@@ -101,6 +108,11 @@ const ForbiddenRoute = ForbiddenRouteImport.update({
   path: '/forbidden',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ClassTypesRoute = ClassTypesRouteImport.update({
+  id: '/class-types',
+  path: '/class-types',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ChiefsRoute = ChiefsRouteImport.update({
   id: '/chiefs',
   path: '/chiefs',
@@ -141,6 +153,7 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/boat-types': typeof BoatTypesRoute
   '/chiefs': typeof ChiefsRoute
+  '/class-types': typeof ClassTypesRoute
   '/forbidden': typeof ForbiddenRoute
   '/forgot-password': typeof ForgotPasswordRoute
   '/honorary': typeof HonoraryRoute
@@ -152,6 +165,7 @@ export interface FileRoutesByFullPath {
   '/my-lessons': typeof MyLessonsRoute
   '/officers': typeof OfficersRoute
   '/privileges': typeof PrivilegesRoute
+  '/quarters': typeof QuartersRoute
   '/rating-types': typeof RatingTypesRoute
   '/ratings': typeof RatingsRoute
   '/set-password': typeof SetPasswordRoute
@@ -164,6 +178,7 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/boat-types': typeof BoatTypesRoute
   '/chiefs': typeof ChiefsRoute
+  '/class-types': typeof ClassTypesRoute
   '/forbidden': typeof ForbiddenRoute
   '/forgot-password': typeof ForgotPasswordRoute
   '/honorary': typeof HonoraryRoute
@@ -175,6 +190,7 @@ export interface FileRoutesByTo {
   '/my-lessons': typeof MyLessonsRoute
   '/officers': typeof OfficersRoute
   '/privileges': typeof PrivilegesRoute
+  '/quarters': typeof QuartersRoute
   '/rating-types': typeof RatingTypesRoute
   '/ratings': typeof RatingsRoute
   '/set-password': typeof SetPasswordRoute
@@ -188,6 +204,7 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/boat-types': typeof BoatTypesRoute
   '/chiefs': typeof ChiefsRoute
+  '/class-types': typeof ClassTypesRoute
   '/forbidden': typeof ForbiddenRoute
   '/forgot-password': typeof ForgotPasswordRoute
   '/honorary': typeof HonoraryRoute
@@ -199,6 +216,7 @@ export interface FileRoutesById {
   '/my-lessons': typeof MyLessonsRoute
   '/officers': typeof OfficersRoute
   '/privileges': typeof PrivilegesRoute
+  '/quarters': typeof QuartersRoute
   '/rating-types': typeof RatingTypesRoute
   '/ratings': typeof RatingsRoute
   '/set-password': typeof SetPasswordRoute
@@ -213,6 +231,7 @@ export interface FileRouteTypes {
     | '/'
     | '/boat-types'
     | '/chiefs'
+    | '/class-types'
     | '/forbidden'
     | '/forgot-password'
     | '/honorary'
@@ -224,6 +243,7 @@ export interface FileRouteTypes {
     | '/my-lessons'
     | '/officers'
     | '/privileges'
+    | '/quarters'
     | '/rating-types'
     | '/ratings'
     | '/set-password'
@@ -236,6 +256,7 @@ export interface FileRouteTypes {
     | '/'
     | '/boat-types'
     | '/chiefs'
+    | '/class-types'
     | '/forbidden'
     | '/forgot-password'
     | '/honorary'
@@ -247,6 +268,7 @@ export interface FileRouteTypes {
     | '/my-lessons'
     | '/officers'
     | '/privileges'
+    | '/quarters'
     | '/rating-types'
     | '/ratings'
     | '/set-password'
@@ -259,6 +281,7 @@ export interface FileRouteTypes {
     | '/'
     | '/boat-types'
     | '/chiefs'
+    | '/class-types'
     | '/forbidden'
     | '/forgot-password'
     | '/honorary'
@@ -270,6 +293,7 @@ export interface FileRouteTypes {
     | '/my-lessons'
     | '/officers'
     | '/privileges'
+    | '/quarters'
     | '/rating-types'
     | '/ratings'
     | '/set-password'
@@ -283,6 +307,7 @@ export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   BoatTypesRoute: typeof BoatTypesRoute
   ChiefsRoute: typeof ChiefsRoute
+  ClassTypesRoute: typeof ClassTypesRoute
   ForbiddenRoute: typeof ForbiddenRoute
   ForgotPasswordRoute: typeof ForgotPasswordRoute
   HonoraryRoute: typeof HonoraryRoute
@@ -294,6 +319,7 @@ export interface RootRouteChildren {
   MyLessonsRoute: typeof MyLessonsRoute
   OfficersRoute: typeof OfficersRoute
   PrivilegesRoute: typeof PrivilegesRoute
+  QuartersRoute: typeof QuartersRoute
   RatingTypesRoute: typeof RatingTypesRoute
   RatingsRoute: typeof RatingsRoute
   SetPasswordRoute: typeof SetPasswordRoute
@@ -324,6 +350,13 @@ declare module '@tanstack/react-router' {
       path: '/rating-types'
       fullPath: '/rating-types'
       preLoaderRoute: typeof RatingTypesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/quarters': {
+      id: '/quarters'
+      path: '/quarters'
+      fullPath: '/quarters'
+      preLoaderRoute: typeof QuartersRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/privileges': {
@@ -403,6 +436,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ForbiddenRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/class-types': {
+      id: '/class-types'
+      path: '/class-types'
+      fullPath: '/class-types'
+      preLoaderRoute: typeof ClassTypesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/chiefs': {
       id: '/chiefs'
       path: '/chiefs'
@@ -459,6 +499,7 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   BoatTypesRoute: BoatTypesRoute,
   ChiefsRoute: ChiefsRoute,
+  ClassTypesRoute: ClassTypesRoute,
   ForbiddenRoute: ForbiddenRoute,
   ForgotPasswordRoute: ForgotPasswordRoute,
   HonoraryRoute: HonoraryRoute,
@@ -470,6 +511,7 @@ const rootRouteChildren: RootRouteChildren = {
   MyLessonsRoute: MyLessonsRoute,
   OfficersRoute: OfficersRoute,
   PrivilegesRoute: PrivilegesRoute,
+  QuartersRoute: QuartersRoute,
   RatingTypesRoute: RatingTypesRoute,
   RatingsRoute: RatingsRoute,
   SetPasswordRoute: SetPasswordRoute,

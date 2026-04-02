@@ -7,7 +7,7 @@ import { fromLessonInsert, toRichLesson } from '@/domains/lessons/schema'
 import { isMembershipActive } from 'src/db/membership-utils'
 import { enrollmentStatus, splitEnrollment } from 'src/db/signup-utils'
 import { withPagination, withSorting } from 'src/db/query-helpers'
-import { classType, lessonQuarter, lessons, signups, wycDatabase } from 'src/db/schema'
+import { lessonQuarter, lessons, signups, wycDatabase } from 'src/db/schema'
 import db from '@/db/index'
 import { requireAuth, requireInstructorOrPrivilege, requirePrivilege } from '@/lib/auth/auth-middleware'
 
@@ -132,12 +132,6 @@ export const getLessonById = createServerFn({ method: 'GET' })
 
     return { lesson, enrolledStudents, waitlistedStudents }
   })
-
-export const getClassTypes = createServerFn({ method: 'GET' }).handler(async () => {
-  await requireAuth()
-  const rows = await db.select().from(classType).orderBy(asc(classType.text))
-  return rows
-})
 
 export const createLesson = createServerFn({ method: 'POST' })
   .inputValidator((data: LessonInsert) => data)

@@ -11,7 +11,6 @@ import {
   getMembersTable,
   getNextWycNumber,
   getProcessedEntryIds,
-  getQuarters,
   updateMember,
   updateMemberProfile,
 } from './server-fns'
@@ -42,12 +41,6 @@ export const getCategoriesQueryOptions = () =>
   queryOptions({
     queryKey: ['categories'],
     queryFn: getCategories,
-  })
-
-export const getQuartersQueryOptions = () =>
-  queryOptions({
-    queryKey: ['quarters'],
-    queryFn: getQuarters,
   })
 
 export const getMemberByIdQueryOptions = (wycNumber: number) =>

@@ -23,6 +23,8 @@ export default function Sidebar() {
   const supportTableItems = [
     { path: '/rating-types' as const, label: 'Rating Types' },
     { path: '/boat-types' as const, label: 'Boat Types' },
+    { path: '/class-types' as const, label: 'Lesson Types' },
+    { path: '/quarters' as const, label: 'Quarters' },
   ]
 
   const toolsItems = [

@@ -11,8 +11,8 @@ import { requirePrivilegeForRoute } from '../lib/route-guards'
 import {
   getCategoriesQueryOptions,
   getMembersQueryOptions,
-  getQuartersQueryOptions,
 } from '@/domains/members/query-options'
+import { getQuartersQueryOptions } from '@/domains/quarters/query-options'
 
 // ===== ROUTE DEFINITION =====
 

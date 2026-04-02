@@ -1,6 +1,7 @@
 import { queryOptions, useMutation, useQueryClient } from '@tanstack/react-query'
 import {
   createBoatType,
+  deleteBoatType,
   getAllBoatTypes,
   getDistinctBoatFleetNames,
 } from './server-fns'
@@ -16,6 +17,16 @@ export const getDistinctFleetNamesQueryOptions = () =>
     queryKey: ['boat-types', 'distinct-fleets'],
     queryFn: getDistinctBoatFleetNames,
   })
+
+export function useDeleteBoatTypeMutation() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: deleteBoatType,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['boat-types'] })
+    },
+  })
+}
 
 export function useCreateBoatTypeMutation(opts: { onSuccess: () => void; onClose: () => void }) {
   const queryClient = useQueryClient()

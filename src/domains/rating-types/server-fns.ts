@@ -1,4 +1,5 @@
 import { createServerFn } from '@tanstack/react-start'
+import { eq } from 'drizzle-orm'
 import { toRatingType } from '@/domains/rating-types/schema'
 import type { RatingTypeInsertData } from '@/domains/rating-types/schema'
 import { ratings } from 'src/db/schema'
@@ -26,6 +27,19 @@ export const getDistinctRatingTypeNames = createServerFn({ method: 'GET' }).hand
     throw new Error('Failed to fetch distinct rating type names')
   }
 })
+
+export const deleteRatingType = createServerFn({ method: 'POST' })
+  .inputValidator((input: { index: number }) => input)
+  .handler(async ({ data: { index } }) => {
+    await requirePrivilege('rtgs')
+    try {
+      await db.delete(ratings).where(eq(ratings.index, index))
+      return { success: true }
+    } catch (error) {
+      console.error('Failed to delete rating type:', error)
+      throw new Error('Failed to delete rating type')
+    }
+  })
 
 export const createRatingType = createServerFn({ method: 'POST' })
   .inputValidator((input: RatingTypeInsertData) => input)
