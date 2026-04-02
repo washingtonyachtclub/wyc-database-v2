@@ -4,19 +4,19 @@ import { CopyBox } from '@/components/ui/CopyBox'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
-import type { MemberProfileUpdate } from '@/db/member-schema'
+import type { MemberProfileUpdate } from '@/domains/members/schema'
 import { isMembershipActive } from '@/db/membership-utils'
-import { getCurrentQuarterQueryOptions } from '@/lib/lessons-query-options'
+import { getCurrentQuarterQueryOptions } from '@/domains/lessons/query-options'
 import {
   getAllMembersLiteQueryOptions,
   getProcessedEntryIdsQueryOptions,
   getQuartersQueryOptions,
-} from '@/lib/members-query-options'
+} from '@/domains/members/query-options'
 import {
   createMember,
   markEntryProcessed,
   renewMember,
-} from '@/lib/members-server-fns'
+} from '@/domains/members/server-fns'
 import { isDevEnvironment } from '@/lib/env'
 import { newMemberEmailFallback, returningMemberEmail } from '@/lib/email-templates'
 import { cn } from '@/lib/utils'

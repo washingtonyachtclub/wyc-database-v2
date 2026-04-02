@@ -1,5 +1,5 @@
 import { queryOptions, useMutation, useQueryClient } from '@tanstack/react-query'
-import type { MemberFilters } from '../db/member-filter-types'
+import type { MemberFilters } from '@/domains/members/filter-types'
 import {
   getAllMembersLite,
   getCategories,
@@ -14,7 +14,7 @@ import {
   getQuarters,
   updateMember,
   updateMemberProfile,
-} from './members-server-fns'
+} from './server-fns'
 
 export const getMembersQueryOptions = (
   pageIndex: number,

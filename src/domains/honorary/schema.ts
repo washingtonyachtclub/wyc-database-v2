@@ -1,6 +1,6 @@
 import { z } from 'zod'
-import type { HonoraryQueryRow } from './honorary-queries'
-import { num, str, fullName } from './mapper-utils'
+import type { HonoraryQueryRow } from './queries'
+import { num, str, fullName } from '@/db/mapper-utils'
 
 // --- Zod schemas ---
 

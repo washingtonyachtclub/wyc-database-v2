@@ -1,7 +1,7 @@
 import { and, desc, eq, gte } from 'drizzle-orm'
 import { alias } from 'drizzle-orm/mysql-core'
-import db from './index'
-import { boatTypes, checkouts, wycDatabase } from './schema'
+import db from '@/db/index'
+import { boatTypes, checkouts, wycDatabase } from '@/db/schema'
 
 const skipperTable = alias(wycDatabase, 'skipper')
 

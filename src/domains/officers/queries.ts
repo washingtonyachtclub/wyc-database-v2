@@ -1,7 +1,7 @@
 import { and, desc, eq, inArray } from 'drizzle-orm'
-import { OFFICER_PAGE_POSITIONS } from './constants'
-import db from './index'
-import { officers, posType, positions, wycDatabase } from './schema'
+import { OFFICER_PAGE_POSITIONS } from '@/db/constants'
+import db from '@/db/index'
+import { officers, posType, positions, wycDatabase } from '@/db/schema'
 
 export const officerSelectFields = {
   index: officers.index,

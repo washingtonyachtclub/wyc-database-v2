@@ -1,6 +1,6 @@
 import { z } from 'zod'
-import { str } from './mapper-utils'
-import { ratings } from './schema'
+import { str } from '@/db/mapper-utils'
+import { ratings } from '@/db/schema'
 
 // --- Zod schemas ---
 

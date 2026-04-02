@@ -6,7 +6,7 @@ import {
   getOfficerPageOfficers,
   getPositionsForOfficerPage,
   setOfficerActive,
-} from './officers-server-fns'
+} from './server-fns'
 
 export const getAllOfficersQueryOptions = () =>
   queryOptions({

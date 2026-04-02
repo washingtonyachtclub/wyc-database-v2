@@ -1,7 +1,7 @@
 import { createFileRoute } from '@tanstack/react-router'
 import { LESSON_CATEGORIES } from '../db/constants'
-import type { RichLesson } from '../db/lesson-schema'
-import { getPublicLessons } from '../lib/lessons-server-fns'
+import type { RichLesson } from '@/domains/lessons/schema'
+import { getPublicLessons } from '@/domains/lessons/server-fns'
 
 export const Route = createFileRoute('/lesson-list')({
   loader: () => getPublicLessons(),

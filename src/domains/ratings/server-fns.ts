@@ -1,18 +1,18 @@
 import { createServerFn } from '@tanstack/react-start'
 import { eq } from 'drizzle-orm'
-import { toMemberRating } from 'src/db/member-schema'
-import type { RatingFilters } from 'src/db/rating-filter-types'
-import type { RatingInsertData } from 'src/db/rating-schema'
+import { toMemberRating } from '@/domains/members/schema'
+import type { RatingFilters } from '@/domains/ratings/filter-types'
+import type { RatingInsertData } from '@/domains/ratings/schema'
 import {
   baseAllRatingsCountQuery,
   baseAllRatingsQuery,
   ratingSortColumns,
   withRatingFilters,
-} from 'src/db/rating-queries'
+} from '@/domains/ratings/queries'
 import { withPagination, withSorting } from 'src/db/query-helpers'
 import { ratings, wycRatings } from 'src/db/schema'
-import db from '../db/index'
-import { requirePrivilege } from './auth-middleware'
+import db from '@/db/index'
+import { requirePrivilege } from '@/lib/auth/auth-middleware'
 
 export const getAllRatings = createServerFn({ method: 'GET' })
   .inputValidator(

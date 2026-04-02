@@ -1,4 +1,4 @@
-import type { LessonFilters } from 'src/db/lesson-filter-types'
+import type { LessonFilters } from '@/domains/lessons/filter-types'
 import { queryOptions, useMutation, useQueryClient } from '@tanstack/react-query'
 import {
   createLesson,
@@ -14,7 +14,7 @@ import {
   getQuarterLessons,
   removeStudentFromLesson,
   updateLesson,
-} from './lessons-server-fns'
+} from './server-fns'
 
 export const getQuarterLessonsQueryOptions = () =>
   queryOptions({

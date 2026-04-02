@@ -10,13 +10,13 @@ import { PaginationControls } from '../components/members/PaginationControls'
 import { Button } from '../components/ui/button'
 import { Plus } from 'lucide-react'
 import { DataTable } from '../components/ui/DataTable'
-import type { RatingFilters } from '../db/rating-filter-types'
-import { useCurrentUser } from '../lib/auth-query-options'
+import type { RatingFilters } from '@/domains/ratings/filter-types'
+import { useCurrentUser } from '@/lib/auth/auth-query-options'
 import { requirePrivilegeForRoute } from '../lib/route-guards'
 import {
   getAllRatingsQueryOptions,
   getRatingTypesQueryOptions,
-} from '../lib/ratings-query-options'
+} from '@/domains/ratings/query-options'
 
 const ratingSearchSchema = z.object({
   pageIndex: z.number().catch(0),

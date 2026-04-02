@@ -5,7 +5,7 @@ import { DataTable } from '@/components/ui/DataTable'
 import {
   getBoatTypesAllQueryOptions,
   getDistinctFleetNamesQueryOptions,
-} from '@/lib/boat-types-query-options'
+} from '@/domains/boat-types/query-options'
 import { requirePrivilegeForRoute } from '@/lib/route-guards'
 import { useSuspenseQuery } from '@tanstack/react-query'
 import { createFileRoute } from '@tanstack/react-router'

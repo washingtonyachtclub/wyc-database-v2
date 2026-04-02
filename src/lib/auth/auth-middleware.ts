@@ -1,8 +1,8 @@
 import { eq } from 'drizzle-orm'
 import { lessons } from 'src/db/schema'
-import db from '../db/index'
-import { hasPrivilege } from './permissions'
-import type { Privilege } from './permissions'
+import db from '@/db/index'
+import { hasPrivilege } from '../permissions'
+import type { Privilege } from '../permissions'
 import { useAppSession } from './session'
 
 /**

@@ -1,30 +1,30 @@
 import { createServerFn } from '@tanstack/react-start'
 import { and, asc, count, desc, eq, gte, lte } from 'drizzle-orm'
-import { baseLessonsSignedUpQuery, baseLessonsTaughtQuery } from 'src/db/lesson-queries'
-import { toRichLesson } from 'src/db/lesson-schema'
+import { baseLessonsSignedUpQuery, baseLessonsTaughtQuery } from '@/domains/lessons/queries'
+import { toRichLesson } from '@/domains/lessons/schema'
 import {
   fromMemberInsert,
   toMember,
   toMemberRating,
   toMemberTableRow,
-} from 'src/db/member-schema'
-import type { MemberFilters } from 'src/db/member-filter-types'
-import { baseMemberQuery, memberSortColumns, withMemberFilters } from 'src/db/member-queries'
-import { CreateMember, MemberProfileUpdate } from 'src/db/member-schema'
+} from '@/domains/members/schema'
+import type { MemberFilters } from '@/domains/members/filter-types'
+import { baseMemberQuery, memberSortColumns, withMemberFilters } from '@/domains/members/queries'
+import { CreateMember, MemberProfileUpdate } from '@/domains/members/schema'
 import { withPagination, withSorting } from 'src/db/query-helpers'
-import { baseMemberRatingsQuery, baseRatingsGivenQuery } from 'src/db/rating-queries'
+import { baseMemberRatingsQuery, baseRatingsGivenQuery } from '@/domains/ratings/queries'
 import { memcat, processedFormEntries, quarters, wycDatabase } from 'src/db/schema'
-import db from '../db/index'
+import db from '@/db/index'
 import {
   requireAuth,
   requirePrivilege,
   requireSelfOrPrivilege,
   sessionHasPrivilege,
-} from '../lib/auth-middleware'
-import { hashPasswordArgon2, hashPasswordLegacy } from './auth'
-import { sendEmail } from './email'
-import { generatePassphrase } from './generate-passphrase'
-import { newMemberEmail, returningMemberEmail } from './email-templates'
+} from '@/lib/auth/auth-middleware'
+import { hashPasswordArgon2, hashPasswordLegacy } from '@/lib/auth/auth'
+import { sendEmail } from '@/lib/email'
+import { generatePassphrase } from '@/lib/generate-passphrase'
+import { newMemberEmail, returningMemberEmail } from '@/lib/email-templates'
 
 export const getMembersTable = createServerFn({ method: 'GET' })
   .inputValidator(

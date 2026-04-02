@@ -1,10 +1,10 @@
 import { createServerFn } from '@tanstack/react-start'
 import { desc } from 'drizzle-orm'
-import type { BoatTypeInsertData } from 'src/db/boat-type-schema'
-import { toBoatType } from 'src/db/boat-type-schema'
+import type { BoatTypeInsertData } from '@/domains/boat-types/schema'
+import { toBoatType } from '@/domains/boat-types/schema'
 import { boatTypes } from 'src/db/schema'
-import db from '../db/index'
-import { requirePrivilege } from './auth-middleware'
+import db from '@/db/index'
+import { requirePrivilege } from '@/lib/auth/auth-middleware'
 
 export const getAllBoatTypes = createServerFn({ method: 'GET' }).handler(async () => {
   await requirePrivilege('db')

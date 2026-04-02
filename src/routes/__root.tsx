@@ -12,8 +12,8 @@ import { TooltipProvider } from '../components/ui/tooltip'
 
 import appCss from '../styles.css?url'
 
-import { getCurrentUserServerFn } from '../lib/auth-server-fns'
-import type { AuthUser } from '../lib/auth-server-fns'
+import { getCurrentUserServerFn } from '@/lib/auth/auth-server-fns'
+import type { AuthUser } from '@/lib/auth/auth-server-fns'
 import type { QueryClient } from '@tanstack/react-query'
 import type { Privilege } from '../lib/permissions'
 

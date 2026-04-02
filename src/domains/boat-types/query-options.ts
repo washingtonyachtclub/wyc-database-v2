@@ -3,7 +3,7 @@ import {
   createBoatType,
   getAllBoatTypes,
   getDistinctBoatFleetNames,
-} from './boat-types-server-fns'
+} from './server-fns'
 
 export const getBoatTypesAllQueryOptions = () =>
   queryOptions({

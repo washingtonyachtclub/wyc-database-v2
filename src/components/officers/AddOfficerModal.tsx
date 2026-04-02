@@ -1,12 +1,12 @@
 import { useQuery } from '@tanstack/react-query'
 import { ErrorAlert } from '../ui/ErrorAlert'
-import type { OfficerInsert } from '../../db/officer-schema'
-import { officerInsertSchema } from '../../db/officer-schema'
+import type { OfficerInsert } from '@/domains/officers/schema'
+import { officerInsertSchema } from '@/domains/officers/schema'
 import { useAppForm } from '../../hooks/form'
 import {
   getOfficerPagePositionsQueryOptions,
   useCreateOfficerMutation,
-} from '../../lib/officers-query-options'
+} from '@/domains/officers/query-options'
 import { Button } from '../ui/button'
 import { MemberCombobox } from '../ui/MemberCombobox'
 import { Modal } from '../ui/Modal'

@@ -1,7 +1,7 @@
 import { createServerFn } from '@tanstack/react-start'
-import { baseCheckoutsQuery } from 'src/db/checkout-queries'
-import { toCheckout } from 'src/db/checkout-schema'
-import { requireSelfOrPrivilege } from '../lib/auth-middleware'
+import { baseCheckoutsQuery } from '@/domains/checkouts/queries'
+import { toCheckout } from '@/domains/checkouts/schema'
+import { requireSelfOrPrivilege } from '@/lib/auth/auth-middleware'
 
 export const getCheckouts = createServerFn({ method: 'GET' })
   .inputValidator((input: { wycNumber?: number; since?: string }) => ({

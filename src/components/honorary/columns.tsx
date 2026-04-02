@@ -1,7 +1,7 @@
 import { Link } from '@tanstack/react-router'
 import { createColumnHelper } from '@tanstack/react-table'
 import { X } from 'lucide-react'
-import type { HonoraryTableRow } from 'src/db/honorary-schema'
+import type { HonoraryTableRow } from '@/domains/honorary/schema'
 
 export type HonoraryTableMeta = {
   onDeleteClick: (officerIndex: number, memberName: string) => void

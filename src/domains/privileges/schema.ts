@@ -1,6 +1,6 @@
 import { z } from 'zod'
-import type { PrivilegeQueryRow } from './privilege-queries'
-import { num, str, fullName } from './mapper-utils'
+import type { PrivilegeQueryRow } from './queries'
+import { num, str, fullName } from '@/db/mapper-utils'
 
 // --- Zod schemas ---
 

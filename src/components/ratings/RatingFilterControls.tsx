@@ -1,4 +1,4 @@
-import type { RatingFilters } from '../../db/rating-filter-types'
+import type { RatingFilters } from '@/domains/ratings/filter-types'
 import { Button } from '../ui/button'
 import { Label } from '../ui/label'
 import { MemberCombobox } from '../ui/MemberCombobox'

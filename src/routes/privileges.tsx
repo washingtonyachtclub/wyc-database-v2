@@ -22,8 +22,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
-import type { PrivilegeFilters } from '@/db/privilege-queries'
-import { getPrivilegesQueryOptions, getPrivilegeTypesQueryOptions, useDeletePrivilegeMutation } from '@/lib/privileges-query-options'
+import type { PrivilegeFilters } from '@/domains/privileges/queries'
+import { getPrivilegesQueryOptions, getPrivilegeTypesQueryOptions, useDeletePrivilegeMutation } from '@/domains/privileges/query-options'
 import { requirePrivilegeForRoute } from '@/lib/route-guards'
 import { cn } from '@/lib/utils'
 import { useQuery, useSuspenseQuery } from '@tanstack/react-query'

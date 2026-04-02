@@ -5,7 +5,7 @@ import { setupRouterSsrQueryIntegration } from '@tanstack/react-router-ssr-query
 import * as TanstackQuery from './integrations/tanstack-query/root-provider'
 import { AdminContactModal } from './components/AdminContactModal'
 import { CopyRow } from './components/ui/CopyRow'
-import { getDatabaseAdmin } from './lib/officers-server-fns'
+import { getDatabaseAdmin } from '@/domains/officers/server-fns'
 
 // Import the generated route tree
 import { routeTree } from './routeTree.gen'

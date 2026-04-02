@@ -1,6 +1,6 @@
 import { z } from 'zod'
-import type { ChiefQueryRow } from './chief-queries'
-import { num, str, fullName } from './mapper-utils'
+import type { ChiefQueryRow } from './queries'
+import { num, str, fullName } from '@/db/mapper-utils'
 
 // --- Zod schemas ---
 

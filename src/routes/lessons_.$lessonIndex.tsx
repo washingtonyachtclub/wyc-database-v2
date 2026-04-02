@@ -1,7 +1,7 @@
 import { ErrorAlert } from '@/components/ui/ErrorAlert'
 import { LESSON_CATEGORIES, TBD_WYC_NUMBER } from '@/db/constants'
-import type { LessonInsert, LessonStudent, RichLesson } from '@/db/lesson-schema'
-import { lessonInsertSchema } from '@/db/lesson-schema'
+import type { LessonInsert, LessonStudent, RichLesson } from '@/domains/lessons/schema'
+import { lessonInsertSchema } from '@/domains/lessons/schema'
 import { useAppForm } from '@/hooks/form'
 import {
   getClassTypesQueryOptions,
@@ -9,11 +9,11 @@ import {
   useDeleteLessonMutation,
   useRemoveStudentMutation,
   useUpdateLessonMutation,
-} from '@/lib/lessons-query-options'
-import { getQuartersQueryOptions } from '@/lib/members-query-options'
+} from '@/domains/lessons/query-options'
+import { getQuartersQueryOptions } from '@/domains/members/query-options'
 import { useQuery, useSuspenseQuery } from '@tanstack/react-query'
 import { createFileRoute, redirect, useNavigate } from '@tanstack/react-router'
-import { useCurrentUser } from '../lib/auth-query-options'
+import { useCurrentUser } from '@/lib/auth/auth-query-options'
 import { hasPrivilege } from '../lib/permissions'
 import { useState } from 'react'
 import {

@@ -1,4 +1,4 @@
-import type { ExpireQtrFilter } from './member-filter-types'
+import type { ExpireQtrFilter } from '@/domains/members/filter-types'
 
 export type LessonFilters = {
   classTypeId?: number

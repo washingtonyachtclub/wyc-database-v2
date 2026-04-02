@@ -3,7 +3,7 @@ import { useState } from 'react'
 import { Button } from '../components/ui/button'
 import { Input } from '../components/ui/input'
 import { Label } from '../components/ui/label'
-import { useLoginMutation } from '../lib/auth-query-options'
+import { useLoginMutation } from '@/lib/auth/auth-query-options'
 
 export const Route = createFileRoute('/login')({
   validateSearch: (search: Record<string, unknown>) => {

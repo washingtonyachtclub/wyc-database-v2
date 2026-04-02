@@ -1,7 +1,7 @@
 import { queryOptions, useMutation, useQueryClient } from '@tanstack/react-query'
-import type { HonoraryFilters } from 'src/db/honorary-queries'
-import { createOfficer } from './officers-server-fns'
-import { deleteHonorary, getHonoraryTable } from './honorary-server-fns'
+import type { HonoraryFilters } from '@/domains/honorary/queries'
+import { createOfficer } from '@/domains/officers/server-fns'
+import { deleteHonorary, getHonoraryTable } from './server-fns'
 
 const HONORARY_POSITION = 1030
 

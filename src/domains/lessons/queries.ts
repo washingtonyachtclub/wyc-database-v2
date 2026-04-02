@@ -1,8 +1,8 @@
 import { and, asc, desc, eq, gte, or } from 'drizzle-orm'
 import { alias, type MySqlColumn, type MySqlSelect } from 'drizzle-orm/mysql-core'
-import db from './index'
-import type { LessonFilters } from './lesson-filter-types'
-import { classType, lessons, signups, wycDatabase } from './schema'
+import db from '@/db/index'
+import type { LessonFilters } from './filter-types'
+import { classType, lessons, signups, wycDatabase } from '@/db/schema'
 
 const instructor1Table = alias(wycDatabase, 'i1')
 const instructor2Table = alias(wycDatabase, 'i2')

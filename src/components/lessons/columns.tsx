@@ -1,6 +1,6 @@
 import { Link } from '@tanstack/react-router'
 import { createColumnHelper } from '@tanstack/react-table'
-import type { RichLesson } from '../../db/lesson-schema'
+import type { RichLesson } from '@/domains/lessons/schema'
 
 const columnHelper = createColumnHelper<RichLesson>()
 

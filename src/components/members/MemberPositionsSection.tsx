@@ -1,4 +1,4 @@
-import { getMemberPositionsQueryOptions } from '@/lib/officers-query-options'
+import { getMemberPositionsQueryOptions } from '@/domains/officers/query-options'
 import { useSuspenseQuery } from '@tanstack/react-query'
 
 export function MemberPositionsSection({ wycNumber }: { wycNumber: number }) {

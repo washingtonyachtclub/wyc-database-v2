@@ -1,8 +1,8 @@
 import { z } from 'zod'
-import type { MemberQueryRow } from './member-queries'
-import { num, str, fullName } from './mapper-utils'
-import type { RatingQueryRow } from './rating-queries'
-import { wycDatabase } from './schema'
+import type { MemberQueryRow } from './queries'
+import { num, str, fullName } from '@/db/mapper-utils'
+import type { RatingQueryRow } from '@/domains/ratings/queries'
+import { wycDatabase } from '@/db/schema'
 
 // --- Zod schemas ---
 

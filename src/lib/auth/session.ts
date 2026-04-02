@@ -1,6 +1,6 @@
 import { useSession } from '@tanstack/react-start/server'
 import type { AuthUser } from './auth-server-fns'
-import type { Privilege } from './permissions'
+import type { Privilege } from '../permissions'
 
 export type SessionIdentity = {
   userId: number

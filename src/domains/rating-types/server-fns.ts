@@ -1,9 +1,9 @@
 import { createServerFn } from '@tanstack/react-start'
-import { toRatingType } from 'src/db/rating-type-schema'
-import type { RatingTypeInsertData } from 'src/db/rating-type-schema'
+import { toRatingType } from '@/domains/rating-types/schema'
+import type { RatingTypeInsertData } from '@/domains/rating-types/schema'
 import { ratings } from 'src/db/schema'
-import db from '../db/index'
-import { requirePrivilege } from './auth-middleware'
+import db from '@/db/index'
+import { requirePrivilege } from '@/lib/auth/auth-middleware'
 
 export const getAllRatingTypes = createServerFn({ method: 'GET' }).handler(async () => {
   await requirePrivilege('rtgs')

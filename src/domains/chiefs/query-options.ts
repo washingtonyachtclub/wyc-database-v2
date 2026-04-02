@@ -1,7 +1,7 @@
 import { queryOptions, useMutation, useQueryClient } from '@tanstack/react-query'
-import type { ChiefFilters } from 'src/db/chief-queries'
-import { deleteChief, getChiefsTable, getChiefTypes } from './chiefs-server-fns'
-import { createOfficer } from './officers-server-fns'
+import type { ChiefFilters } from '@/domains/chiefs/queries'
+import { deleteChief, getChiefsTable, getChiefTypes } from './server-fns'
+import { createOfficer } from '@/domains/officers/server-fns'
 
 export const getChiefsQueryOptions = (filters?: ChiefFilters) =>
   queryOptions({

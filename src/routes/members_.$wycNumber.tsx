@@ -5,11 +5,11 @@ import { MemberPositionsSection } from '@/components/members/MemberPositionsSect
 import { MemberRatingsGivenSection } from '@/components/members/MemberRatingsGivenSection'
 import { MemberRatingsSection } from '@/components/members/MemberRatingsSection'
 import { Button } from '@/components/ui/button'
-import { MemberProfileUpdate, MemberProfileUpdateSchema } from '@/db/member-schema'
-import type { Member } from '@/db/member-schema'
+import { MemberProfileUpdate, MemberProfileUpdateSchema } from '@/domains/members/schema'
+import type { Member } from '@/domains/members/schema'
 import { useAppForm } from '@/hooks/form'
 import { isMembershipActive } from '@/db/membership-utils'
-import { getCurrentQuarterQueryOptions } from '@/lib/lessons-query-options'
+import { getCurrentQuarterQueryOptions } from '@/domains/lessons/query-options'
 import { cn } from '@/lib/utils'
 import {
   getCategoriesQueryOptions,
@@ -18,11 +18,11 @@ import {
   getMemberLessonsTaughtQueryOptions,
   getQuartersQueryOptions,
   useUpdateMemberProfileMutation,
-} from '@/lib/members-query-options'
+} from '@/domains/members/query-options'
 import { useQuery, useSuspenseQuery } from '@tanstack/react-query'
 import { createFileRoute, redirect } from '@tanstack/react-router'
 import { Suspense, useMemo, useState } from 'react'
-import { useCurrentUser } from '../lib/auth-query-options'
+import { useCurrentUser } from '@/lib/auth/auth-query-options'
 import { hasPrivilege } from '../lib/permissions'
 
 export const Route = createFileRoute('/members_/$wycNumber')({

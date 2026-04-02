@@ -1,7 +1,7 @@
 import { and, eq } from 'drizzle-orm'
 import type { MySqlSelect } from 'drizzle-orm/mysql-core'
-import db from './index'
-import { officers, positions, posType, wycDatabase } from './schema'
+import db from '@/db/index'
+import { officers, positions, posType, wycDatabase } from '@/db/schema'
 
 export const privilegeSelectFields = {
   index: officers.index,

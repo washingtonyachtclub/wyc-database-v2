@@ -1,6 +1,6 @@
 import { createServerFn } from '@tanstack/react-start'
 import { sendEmail } from './email'
-import { requirePrivilege } from './auth-middleware'
+import { requirePrivilege } from '@/lib/auth/auth-middleware'
 
 export const sendTestEmailServerFn = createServerFn({ method: 'POST' })
   .inputValidator((input: { to: string }) => {

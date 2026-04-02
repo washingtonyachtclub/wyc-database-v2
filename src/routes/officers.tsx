@@ -2,12 +2,12 @@ import { AddOfficerModal } from '@/components/officers/AddOfficerModal'
 import { Button } from '@/components/ui/button'
 import { Plus } from 'lucide-react'
 import { OFFICER_PAGE_SECTIONS } from '@/db/constants'
-import type { Officer } from '@/db/officer-schema'
+import type { Officer } from '@/domains/officers/schema'
 import {
   getOfficerPagePositionsQueryOptions,
   getOfficerPageQueryOptions,
   useSetOfficerActiveMutation,
-} from '@/lib/officers-query-options'
+} from '@/domains/officers/query-options'
 import { requirePrivilegeForRoute } from '@/lib/route-guards'
 import { cn } from '@/lib/utils'
 import { useSuspenseQuery } from '@tanstack/react-query'

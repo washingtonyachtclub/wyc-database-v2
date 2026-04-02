@@ -23,8 +23,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
-import type { ChiefFilters } from '@/db/chief-queries'
-import { getChiefsQueryOptions, getChiefTypesQueryOptions, useDeleteChiefMutation } from '@/lib/chiefs-query-options'
+import type { ChiefFilters } from '@/domains/chiefs/queries'
+import { getChiefsQueryOptions, getChiefTypesQueryOptions, useDeleteChiefMutation } from '@/domains/chiefs/query-options'
 import { requirePrivilegeForRoute } from '@/lib/route-guards'
 import { cn } from '@/lib/utils'
 import { useQuery, useSuspenseQuery } from '@tanstack/react-query'

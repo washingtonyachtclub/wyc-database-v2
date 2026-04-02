@@ -1,7 +1,7 @@
 import { ErrorAlert } from '@/components/ui/ErrorAlert'
 import { isDevEnvironment } from '@/lib/env'
-import type { Lesson, RichLesson } from '@/db/lesson-schema'
-import type { LessonFilters } from '@/db/lesson-filter-types'
+import type { Lesson, RichLesson } from '@/domains/lessons/schema'
+import type { LessonFilters } from '@/domains/lessons/filter-types'
 import { useQuery, useSuspenseQuery } from '@tanstack/react-query'
 import { createFileRoute, useNavigate } from '@tanstack/react-router'
 import { getCoreRowModel, getSortedRowModel, useReactTable } from '@tanstack/react-table'
@@ -21,8 +21,8 @@ import {
   getAllLessonsQueryOptions,
   getClassTypesQueryOptions,
   getQuarterLessonsQueryOptions,
-} from '../lib/lessons-query-options'
-import { getQuartersQueryOptions } from '../lib/members-query-options'
+} from '@/domains/lessons/query-options'
+import { getQuartersQueryOptions } from '@/domains/members/query-options'
 
 const lessonSearchSchema = z.object({
   pageIndex: z.number().catch(0),

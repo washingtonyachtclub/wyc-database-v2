@@ -1,7 +1,7 @@
 import { queryOptions, useMutation, useQueryClient } from '@tanstack/react-query'
-import type { PrivilegeFilters } from 'src/db/privilege-queries'
-import { createOfficer } from './officers-server-fns'
-import { deletePrivilege, getPrivilegesTable, getPrivilegeTypes } from './privileges-server-fns'
+import type { PrivilegeFilters } from '@/domains/privileges/queries'
+import { createOfficer } from '@/domains/officers/server-fns'
+import { deletePrivilege, getPrivilegesTable, getPrivilegeTypes } from './server-fns'
 
 export const getPrivilegesQueryOptions = (filters?: PrivilegeFilters) =>
   queryOptions({

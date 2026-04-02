@@ -5,11 +5,11 @@ import {
   type ChiefFilters,
   getChiefPositions,
   withChiefFilters,
-} from 'src/db/chief-queries'
-import { toChiefRow, type ChiefTableRow } from 'src/db/chiefs-schema'
+} from '@/domains/chiefs/queries'
+import { toChiefRow, type ChiefTableRow } from '@/domains/chiefs/schema'
 import { officers } from 'src/db/schema'
 import db from 'src/db'
-import { requirePrivilege } from '../lib/auth-middleware'
+import { requirePrivilege } from '@/lib/auth/auth-middleware'
 
 function formatChiefType(positionName: string, positionId: number): string {
   if (positionId === 3000) return 'Chief'

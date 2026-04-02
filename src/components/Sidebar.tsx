@@ -1,5 +1,5 @@
 import { Link, useLocation } from '@tanstack/react-router'
-import { useCurrentUser } from '../lib/auth-query-options'
+import { useCurrentUser } from '@/lib/auth/auth-query-options'
 import type { ProtectedRoute } from '../lib/permissions'
 import { hasPrivilege, routePermissions } from '../lib/permissions'
 

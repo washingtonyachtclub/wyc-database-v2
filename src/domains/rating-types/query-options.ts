@@ -3,7 +3,7 @@ import {
   createRatingType,
   getAllRatingTypes,
   getDistinctRatingTypeNames,
-} from './rating-types-server-fns'
+} from './server-fns'
 
 export const getRatingTypesAllQueryOptions = () =>
   queryOptions({

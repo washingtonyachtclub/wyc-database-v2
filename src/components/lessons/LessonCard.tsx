@@ -1,4 +1,4 @@
-import type { RichLesson } from '@/db/lesson-schema'
+import type { RichLesson } from '@/domains/lessons/schema'
 import { AlertTriangle } from 'lucide-react'
 import { isLessonUpcoming } from '../../lib/date-utils'
 

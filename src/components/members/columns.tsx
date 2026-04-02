@@ -1,6 +1,6 @@
 import { Link } from '@tanstack/react-router'
 import { createColumnHelper } from '@tanstack/react-table'
-import type { MemberTableRow } from 'src/db/member-schema'
+import type { MemberTableRow } from '@/domains/members/schema'
 
 const columnHelper = createColumnHelper<MemberTableRow>()
 

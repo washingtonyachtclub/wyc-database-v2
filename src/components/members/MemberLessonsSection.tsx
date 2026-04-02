@@ -2,7 +2,7 @@ import type { ReactNode } from 'react'
 import {
   getMemberLessonsSignedUpQueryOptions,
   getMemberLessonsTaughtQueryOptions,
-} from '@/lib/members-query-options'
+} from '@/domains/members/query-options'
 import { useSuspenseQuery } from '@tanstack/react-query'
 
 type LessonQueryOptions =

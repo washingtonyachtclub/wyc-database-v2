@@ -1,12 +1,12 @@
 import { ErrorAlert } from '@/components/ui/ErrorAlert'
-import { ratingUpdateSchema } from '@/db/rating-schema'
+import { ratingUpdateSchema } from '@/domains/ratings/schema'
 import { useAppForm } from '@/hooks/form'
 import { getExpiryInfo } from '@/lib/rating-expiry'
 import {
   getRatingByIdQueryOptions,
   useDeleteRatingMutation,
   useUpdateRatingMutation,
-} from '@/lib/ratings-query-options'
+} from '@/domains/ratings/query-options'
 import { useSuspenseQuery } from '@tanstack/react-query'
 import { createFileRoute, Link, useNavigate } from '@tanstack/react-router'
 import { requirePrivilegeForRoute } from '../lib/route-guards'

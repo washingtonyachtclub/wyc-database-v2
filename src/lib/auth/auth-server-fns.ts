@@ -9,9 +9,9 @@ import {
   privs,
   wycDatabase,
 } from 'src/db/schema'
-import { hashPasswordArgon2, verifyPasswordDual } from './auth'
-import { isDevEnvironment } from './env'
-import { hasPrivilege, type Privilege } from './permissions'
+import { hashPasswordArgon2, verifyPasswordDual } from '@/lib/auth/auth'
+import { isDevEnvironment } from '../env'
+import { hasPrivilege, type Privilege } from '../permissions'
 import { useAppSession, type SessionData } from './session'
 
 export type AuthUser = {

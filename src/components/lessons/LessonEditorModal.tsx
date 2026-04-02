@@ -1,14 +1,14 @@
 import { useQuery } from '@tanstack/react-query'
 import { LESSON_CATEGORIES, TBD_WYC_NUMBER } from '../../db/constants'
 import { ErrorAlert } from '../ui/ErrorAlert'
-import type { LessonInsert } from '../../db/lesson-schema'
-import { lessonInsertSchema } from '../../db/lesson-schema'
+import type { LessonInsert } from '@/domains/lessons/schema'
+import { lessonInsertSchema } from '@/domains/lessons/schema'
 import { useAppForm } from '../../hooks/form'
 import {
   getClassTypesQueryOptions,
   useCreateLessonMutation,
-} from '../../lib/lessons-query-options'
-import { getQuartersQueryOptions } from '../../lib/members-query-options'
+} from '@/domains/lessons/query-options'
+import { getQuartersQueryOptions } from '@/domains/members/query-options'
 import { Button } from '../ui/button'
 import { MemberCombobox } from '../ui/MemberCombobox'
 import { Modal } from '../ui/Modal'

@@ -1,6 +1,6 @@
 import type { ReactNode } from 'react'
 import { getExpiryInfo } from '@/lib/rating-expiry'
-import { getMemberRatingsGivenQueryOptions } from '@/lib/members-query-options'
+import { getMemberRatingsGivenQueryOptions } from '@/domains/members/query-options'
 import { useSuspenseQuery } from '@tanstack/react-query'
 
 export function MemberRatingsGivenSection({

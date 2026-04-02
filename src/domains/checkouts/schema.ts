@@ -1,5 +1,5 @@
-import type { CheckoutQueryRow } from './checkout-queries'
-import { num, str, fullName } from './mapper-utils'
+import type { CheckoutQueryRow } from './queries'
+import { num, str, fullName } from '@/db/mapper-utils'
 
 // --- Core types ---
 

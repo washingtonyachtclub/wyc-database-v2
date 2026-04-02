@@ -4,8 +4,8 @@ import {
   EXPIRE_QTR_MODES,
   parseExpireQtrMode,
   type ExpireQtrFilter,
-} from '../../db/member-filter-types'
-import type { LessonFilters } from '../../db/lesson-filter-types'
+} from '@/domains/members/filter-types'
+import type { LessonFilters } from '@/domains/lessons/filter-types'
 import { Button } from '../ui/button'
 import { Command, CommandItem, CommandList } from '../ui/command'
 import { Label } from '../ui/label'

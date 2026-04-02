@@ -6,13 +6,13 @@ import { columns } from '../components/members/columns'
 import { FilterControls } from '../components/members/FilterControls'
 import { PaginationControls } from '../components/members/PaginationControls'
 import { DataTable } from '../components/ui/DataTable'
-import type { MemberFilters } from '../db/member-filter-types'
+import type { MemberFilters } from '@/domains/members/filter-types'
 import { requirePrivilegeForRoute } from '../lib/route-guards'
 import {
   getCategoriesQueryOptions,
   getMembersQueryOptions,
   getQuartersQueryOptions,
-} from '../lib/members-query-options'
+} from '@/domains/members/query-options'
 
 // ===== ROUTE DEFINITION =====
 

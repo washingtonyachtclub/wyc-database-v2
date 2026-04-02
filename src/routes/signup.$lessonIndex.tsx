@@ -2,7 +2,7 @@ import { Button } from '@/components/ui/button'
 import {
   getLessonForSignupQueryOptions,
   useEnrollInLessonMutation,
-} from '@/lib/lessons-query-options'
+} from '@/domains/lessons/query-options'
 import { useSuspenseQuery } from '@tanstack/react-query'
 import { createFileRoute, Link, redirect } from '@tanstack/react-router'
 

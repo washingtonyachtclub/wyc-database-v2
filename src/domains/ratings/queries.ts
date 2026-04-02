@@ -1,9 +1,9 @@
 import { and, count, desc, eq, gte } from 'drizzle-orm'
 import type { MySqlColumn, MySqlSelect } from 'drizzle-orm/mysql-core'
 import { alias } from 'drizzle-orm/mysql-core'
-import db from './index'
-import type { RatingFilters } from './rating-filter-types'
-import { ratings, wycDatabase, wycRatings } from './schema'
+import db from '@/db/index'
+import type { RatingFilters } from './filter-types'
+import { ratings, wycDatabase, wycRatings } from '@/db/schema'
 
 const memberTable = alias(wycDatabase, 'member')
 const examinerTable = alias(wycDatabase, 'examiner')

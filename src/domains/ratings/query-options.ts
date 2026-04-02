@@ -1,5 +1,5 @@
 import { queryOptions, useMutation, useQueryClient } from '@tanstack/react-query'
-import type { RatingFilters } from 'src/db/rating-filter-types'
+import type { RatingFilters } from '@/domains/ratings/filter-types'
 import {
   createRating,
   deleteRating,
@@ -7,7 +7,7 @@ import {
   getRatingById,
   getRatingTypes,
   updateRatingComments,
-} from './ratings-server-fns'
+} from './server-fns'
 
 export const getAllRatingsQueryOptions = (
   pageIndex: number,

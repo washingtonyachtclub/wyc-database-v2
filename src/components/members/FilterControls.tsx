@@ -5,7 +5,7 @@ import {
   parseExpireQtrMode,
   type ExpireQtrFilter,
   type MemberFilters,
-} from '../../db/member-filter-types'
+} from '@/domains/members/filter-types'
 import { Button } from '../ui/button'
 import { Command, CommandItem, CommandList } from '../ui/command'
 import { Input } from '../ui/input'

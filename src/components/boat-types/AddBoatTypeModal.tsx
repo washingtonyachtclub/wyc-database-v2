@@ -2,12 +2,12 @@ import { Check, ChevronsUpDown } from 'lucide-react'
 import { useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { ErrorAlert } from '../ui/ErrorAlert'
-import { boatTypeInsertSchema } from '../../db/boat-type-schema'
+import { boatTypeInsertSchema } from '@/domains/boat-types/schema'
 import { useAppForm } from '../../hooks/form'
 import {
   getDistinctFleetNamesQueryOptions,
   useCreateBoatTypeMutation,
-} from '../../lib/boat-types-query-options'
+} from '@/domains/boat-types/query-options'
 import { cn } from '../../lib/utils'
 import { Button } from '../ui/button'
 import { Command, CommandEmpty, CommandInput, CommandItem, CommandList } from '../ui/command'

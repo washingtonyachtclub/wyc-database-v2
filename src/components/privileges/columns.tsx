@@ -2,7 +2,7 @@ import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip
 import { Link } from '@tanstack/react-router'
 import { createColumnHelper } from '@tanstack/react-table'
 import { AlertTriangle } from 'lucide-react'
-import type { PrivilegeTableRow } from 'src/db/privilege-schema'
+import type { PrivilegeTableRow } from '@/domains/privileges/schema'
 
 export type PrivilegeTableMeta = {
   onDeleteClick: (officerIndex: number, roleName: string, memberName: string) => void

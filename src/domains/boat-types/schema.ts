@@ -1,6 +1,6 @@
 import { z } from 'zod'
-import { str } from './mapper-utils'
-import { boatTypes } from './schema'
+import { str } from '@/db/mapper-utils'
+import { boatTypes } from '@/db/schema'
 
 // --- Zod schemas ---
 

@@ -1,9 +1,9 @@
-import type { SignedUpLesson } from '@/db/lesson-schema'
+import type { SignedUpLesson } from '@/domains/lessons/schema'
 import { LessonCard } from '@/components/lessons/LessonCard'
 import {
   getMyLessonsTaughtQueryOptions,
   getMySignedUpLessonsQueryOptions,
-} from '@/lib/lessons-query-options'
+} from '@/domains/lessons/query-options'
 import { useQuery, useSuspenseQuery } from '@tanstack/react-query'
 import { createFileRoute, redirect, useNavigate } from '@tanstack/react-router'
 

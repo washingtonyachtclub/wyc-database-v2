@@ -1,6 +1,6 @@
 import { z } from 'zod'
-import type { OfficerQueryRow } from './officer-queries'
-import { num, str, fullName } from './mapper-utils'
+import type { OfficerQueryRow } from './queries'
+import { num, str, fullName } from '@/db/mapper-utils'
 
 // --- Zod schemas ---
 

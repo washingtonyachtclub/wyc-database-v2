@@ -2,12 +2,12 @@ import { Check, ChevronsUpDown } from 'lucide-react'
 import { useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { ErrorAlert } from '../ui/ErrorAlert'
-import { ratingTypeInsertSchema } from '../../db/rating-type-schema'
+import { ratingTypeInsertSchema } from '@/domains/rating-types/schema'
 import { useAppForm } from '../../hooks/form'
 import {
   getDistinctTypeNamesQueryOptions,
   useCreateRatingTypeMutation,
-} from '../../lib/rating-types-query-options'
+} from '@/domains/rating-types/query-options'
 import { cn } from '../../lib/utils'
 import { Button } from '../ui/button'
 import { Command, CommandEmpty, CommandInput, CommandItem, CommandList } from '../ui/command'

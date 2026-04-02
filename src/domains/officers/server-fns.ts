@@ -2,17 +2,17 @@ import { eq } from 'drizzle-orm'
 import { createServerFn } from '@tanstack/react-start'
 import db from 'src/db/index'
 import { DATABASE_ADMIN_POSITION_ID } from 'src/db/constants'
-import { toOfficer } from 'src/db/officer-schema'
-import type { OfficerInsert } from 'src/db/officer-schema'
+import { toOfficer } from '@/domains/officers/schema'
+import type { OfficerInsert } from '@/domains/officers/schema'
 import {
   baseMemberPositionsQuery,
   baseOfficersQuery,
   getActiveOfficerByPosition,
   getOfficerPagePositions,
   officerPageQuery,
-} from 'src/db/officer-queries'
+} from '@/domains/officers/queries'
 import { officers } from 'src/db/schema'
-import { requirePrivilege, requireSelfOrPrivilege } from '../lib/auth-middleware'
+import { requirePrivilege, requireSelfOrPrivilege } from '@/lib/auth/auth-middleware'
 
 export const getDatabaseAdmin = createServerFn({ method: 'GET' }).handler(async () => {
   try {

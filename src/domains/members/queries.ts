@@ -1,9 +1,9 @@
 import { and, eq, gte } from 'drizzle-orm'
 import type { MySqlColumn, MySqlSelect } from 'drizzle-orm/mysql-core'
-import db from './index'
-import type { MemberFilters } from './member-filter-types'
-import { nameSearchCondition } from './query-helpers'
-import { memcat, quarters, wycDatabase } from './schema'
+import db from '@/db/index'
+import type { MemberFilters } from './filter-types'
+import { nameSearchCondition } from '@/db/query-helpers'
+import { memcat, quarters, wycDatabase } from '@/db/schema'
 
 export const memberTableSelectFields = {
   wycNumber: wycDatabase.wycNumber,

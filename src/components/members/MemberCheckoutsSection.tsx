@@ -1,5 +1,5 @@
 import type { ReactNode } from 'react'
-import { getMemberCheckoutsQueryOptions } from '@/lib/checkouts-query-options'
+import { getMemberCheckoutsQueryOptions } from '@/domains/checkouts/query-options'
 import { useSuspenseQuery } from '@tanstack/react-query'
 
 export function MemberCheckoutsSection({

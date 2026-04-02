@@ -3,7 +3,7 @@
 import { Check, ChevronsUpDown } from 'lucide-react'
 import { useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
-import { getAllMembersLiteQueryOptions } from '../../lib/members-query-options'
+import { getAllMembersLiteQueryOptions } from '@/domains/members/query-options'
 import { cn } from '../../lib/utils'
 import { Button } from './button'
 import { Command, CommandEmpty, CommandInput, CommandItem, CommandList } from './command'

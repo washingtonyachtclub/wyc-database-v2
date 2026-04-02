@@ -1,12 +1,12 @@
 import { useQuery } from '@tanstack/react-query'
-import { privilegeInsertSchema } from '../../db/privilege-schema'
+import { privilegeInsertSchema } from '@/domains/privileges/schema'
 import { ErrorAlert } from '../ui/ErrorAlert'
-import type { PrivilegeInsertData } from '../../db/privilege-schema'
+import type { PrivilegeInsertData } from '@/domains/privileges/schema'
 import { useAppForm } from '../../hooks/form'
 import {
   getPrivilegeTypesQueryOptions,
   useCreatePrivilegeMutation,
-} from '../../lib/privileges-query-options'
+} from '@/domains/privileges/query-options'
 import { Button } from '../ui/button'
 import { MemberCombobox } from '../ui/MemberCombobox'
 import { Modal } from '../ui/Modal'

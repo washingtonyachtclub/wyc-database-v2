@@ -1,7 +1,7 @@
 import { z } from 'zod'
-import type { LessonQueryRow } from './lesson-queries'
-import { num, str, fullName } from './mapper-utils'
-import type { classType } from './schema'
+import type { LessonQueryRow } from './queries'
+import { num, str, fullName } from '@/db/mapper-utils'
+import type { classType } from '@/db/schema'
 
 // --- Zod schemas ---
 

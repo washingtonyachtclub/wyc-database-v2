@@ -1,7 +1,7 @@
 import { Link } from '@tanstack/react-router'
 import { createColumnHelper } from '@tanstack/react-table'
 import { AlertTriangle } from 'lucide-react'
-import type { MemberRating } from 'src/db/member-schema'
+import type { MemberRating } from '@/domains/members/schema'
 import { getExpiryInfo } from 'src/lib/rating-expiry'
 
 const columnHelper = createColumnHelper<MemberRating>()

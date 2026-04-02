@@ -1,15 +1,15 @@
 import { createServerFn } from '@tanstack/react-start'
 import { and, asc, count, eq, gte, inArray, or } from 'drizzle-orm'
-import { baseLessonQuery, baseSignedUpWithDetailsQuery, lessonSortColumns, withLessonFilters } from 'src/db/lesson-queries'
-import type { LessonFilters } from 'src/db/lesson-filter-types'
-import type { LessonInsert, LessonStudent, SignedUpLesson } from 'src/db/lesson-schema'
-import { fromLessonInsert, toRichLesson } from 'src/db/lesson-schema'
+import { baseLessonQuery, baseSignedUpWithDetailsQuery, lessonSortColumns, withLessonFilters } from '@/domains/lessons/queries'
+import type { LessonFilters } from '@/domains/lessons/filter-types'
+import type { LessonInsert, LessonStudent, SignedUpLesson } from '@/domains/lessons/schema'
+import { fromLessonInsert, toRichLesson } from '@/domains/lessons/schema'
 import { isMembershipActive } from 'src/db/membership-utils'
 import { enrollmentStatus, splitEnrollment } from 'src/db/signup-utils'
 import { withPagination, withSorting } from 'src/db/query-helpers'
 import { classType, lessonQuarter, lessons, signups, wycDatabase } from 'src/db/schema'
-import db from '../db/index'
-import { requireAuth, requireInstructorOrPrivilege, requirePrivilege } from '../lib/auth-middleware'
+import db from '@/db/index'
+import { requireAuth, requireInstructorOrPrivilege, requirePrivilege } from '@/lib/auth/auth-middleware'
 
 export const getPublicLessons = createServerFn({ method: 'GET' }).handler(async () => {
   // No auth required — this is the public lesson list for the WordPress iframe

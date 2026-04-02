@@ -1,5 +1,5 @@
 import { queryOptions } from '@tanstack/react-query'
-import { getCheckouts } from './checkouts-server-fns'
+import { getCheckouts } from './server-fns'
 
 export const getCheckoutsQueryOptions = (wycNumber?: number, since?: string) =>
   queryOptions({

@@ -1,12 +1,12 @@
 import { useQuery } from '@tanstack/react-query'
-import type { RatingInsertData } from '../../db/rating-schema'
+import type { RatingInsertData } from '@/domains/ratings/schema'
 import { ErrorAlert } from '../ui/ErrorAlert'
-import { ratingInsertSchema } from '../../db/rating-schema'
+import { ratingInsertSchema } from '@/domains/ratings/schema'
 import { useAppForm } from '../../hooks/form'
 import {
   getRatingTypesQueryOptions,
   useCreateRatingMutation,
-} from '../../lib/ratings-query-options'
+} from '@/domains/ratings/query-options'
 import { Button } from '../ui/button'
 import { MemberCombobox } from '../ui/MemberCombobox'
 import { Modal } from '../ui/Modal'

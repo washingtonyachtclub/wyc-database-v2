@@ -1,5 +1,5 @@
 import { getExpiryInfo } from '@/lib/rating-expiry'
-import { getMemberRatingsQueryOptions } from '@/lib/members-query-options'
+import { getMemberRatingsQueryOptions } from '@/domains/members/query-options'
 import { useSuspenseQuery } from '@tanstack/react-query'
 
 export function MemberRatingsSection({ wycNumber }: { wycNumber: number }) {

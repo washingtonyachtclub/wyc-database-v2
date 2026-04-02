@@ -1,12 +1,12 @@
 import { useQuery } from '@tanstack/react-query'
-import { chiefInsertSchema } from '../../db/chiefs-schema'
+import { chiefInsertSchema } from '@/domains/chiefs/schema'
 import { ErrorAlert } from '../ui/ErrorAlert'
-import type { ChiefInsertData } from '../../db/chiefs-schema'
+import type { ChiefInsertData } from '@/domains/chiefs/schema'
 import { useAppForm } from '../../hooks/form'
 import {
   getChiefTypesQueryOptions,
   useCreateChiefMutation,
-} from '../../lib/chiefs-query-options'
+} from '@/domains/chiefs/query-options'
 import { Button } from '../ui/button'
 import { MemberCombobox } from '../ui/MemberCombobox'
 import { Modal } from '../ui/Modal'
