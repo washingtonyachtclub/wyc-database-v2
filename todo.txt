@@ -3,7 +3,6 @@
    - edit frontend lesson signups link
 
 # Important
-- fix: sidebar highlight doesn't update if moving from lessons to members by clicking name link
 - backfill more calendarDates for older lessons (prompt in scripts folder)
 - boat checkouts viewing page (+ checking out a boat, replace legacy checkout tool)
   - good mobile UX

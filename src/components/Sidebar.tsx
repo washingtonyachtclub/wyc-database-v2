@@ -93,7 +93,7 @@ export default function Sidebar() {
           </h3>
         )}
         {visibleAdminItems.map((item) => {
-          const isActive = location.pathname === item.path
+          const isActive = (location.pathname === item.path || location.pathname.startsWith(item.path + '/')) && location.pathname !== myProfilePath
           return (
             <Link
               key={item.path}
@@ -114,7 +114,7 @@ export default function Sidebar() {
           </h3>
         )}
         {visiblePeopleManagementItems.map((item) => {
-          const isActive = location.pathname === item.path
+          const isActive = location.pathname === item.path || location.pathname.startsWith(item.path + '/')
           return (
             <Link
               key={item.path}
@@ -135,7 +135,7 @@ export default function Sidebar() {
           </h3>
         )}
         {visibleSupportTableItems.map((item) => {
-          const isActive = location.pathname === item.path
+          const isActive = location.pathname === item.path || location.pathname.startsWith(item.path + '/')
           return (
             <Link
               key={item.path}
@@ -154,7 +154,7 @@ export default function Sidebar() {
           Tools
         </h3>
         {visibleToolsItems.map((item) => {
-          const isActive = location.pathname === item.path
+          const isActive = location.pathname === item.path || location.pathname.startsWith(item.path + '/')
           return (
             <Link
               key={item.path}
