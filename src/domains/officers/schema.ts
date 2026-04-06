@@ -19,6 +19,7 @@ export type Officer = {
   memberName: string
   positionId: number
   positionName: string
+  positionTypeId: number
   positionType: string
   isDuesExempt: boolean
   active: boolean
@@ -33,6 +34,7 @@ export function toOfficer(row: OfficerQueryRow): Officer {
     memberName: fullName(row.memberFirst, row.memberLast),
     positionId: num(row.positionId),
     positionName: str(row.positionName),
+    positionTypeId: num(row.positionTypeId),
     positionType: row.positionType ?? '<Unknown>',
     isDuesExempt: (row.isDuesExempt ?? 0) !== 0,
     active: row.active !== 0,

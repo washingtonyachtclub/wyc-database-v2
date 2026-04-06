@@ -25,6 +25,7 @@ export default function Sidebar() {
     { path: '/boat-types' as const, label: 'Boat Types' },
     { path: '/class-types' as const, label: 'Lesson Types' },
     { path: '/quarters' as const, label: 'Quarters' },
+    { path: '/positions' as const, label: 'Positions' },
   ]
 
   const toolsItems = [

@@ -61,7 +61,7 @@ function LoginPage() {
               Sign in with your WYC ID and password
             </p>
           </div>
-          <form method="POST" className="space-y-6" onSubmit={handleSubmit}>
+          <form action="/login" method="POST" className="space-y-6" onSubmit={handleSubmit}>
             {error && (
               <div className="rounded-md bg-destructive/10 p-4">
                 <div className="text-sm text-destructive">{error}</div>

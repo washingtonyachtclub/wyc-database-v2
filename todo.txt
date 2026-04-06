@@ -9,15 +9,17 @@
   - good mobile UX
 - self-unenrollment from lessons
   - auto waitlist handling with email notifications?
+- make changing lesson quarter harder (more clicks)
 
 - data tables:
   - boat checkouts
-- support tables:
-  - positions (need to show only active positions, either hard coded or add active column to schema.)
 - tools
   - membership statistics
     - use expireQtr only
     - incude number/list of honoraries not marked out to sea that are not up to date
+- membership renewal through database
+  - automated dues exemption using positions table? (requires data cleanup)
+  - switch to stripe?
 
 # Less Important
 - better ratings filtering (find all members with *at least* X rating, more complex logic like ANDs and ORs)

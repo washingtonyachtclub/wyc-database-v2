@@ -277,6 +277,7 @@ export const positions = mysqlTable(
     type: int(),
     bookmark: varchar({ length: 50 }),
     jobDesc: varchar('job_desc', { length: 50 }),
+    active: tinyint().default(0).notNull(),
   },
   (table) => [primaryKey({ columns: [table.index] })],
 )

@@ -1,7 +1,7 @@
 import { AddOfficerModal } from '@/components/officers/AddOfficerModal'
 import { Button } from '@/components/ui/button'
 import { Plus } from 'lucide-react'
-import { OFFICER_PAGE_SECTIONS } from '@/db/constants'
+import { OFFICER_PAGE_TYPES } from '@/db/constants'
 import type { Officer } from '@/domains/officers/schema'
 import {
   getOfficerPagePositionsQueryOptions,
@@ -27,8 +27,20 @@ function OfficersPage() {
   const { data: positions } = useSuspenseQuery(getOfficerPagePositionsQueryOptions())
   const mutation = useSetOfficerActiveMutation()
 
-  const positionNameMap = new Map(positions.map((p) => [p.index, p.name]))
+  // Group positions by type for section rendering
+  const positionsByType = new Map<number, typeof positions>()
+  const typeLabelMap = new Map<number, string>()
+  for (const pos of positions) {
+    const typeId = pos.type ?? 0
+    const list = positionsByType.get(typeId) ?? []
+    list.push(pos)
+    positionsByType.set(typeId, list)
+    if (pos.typeName && !typeLabelMap.has(typeId)) {
+      typeLabelMap.set(typeId, pos.typeName)
+    }
+  }
 
+  // Group officers by position, separate inactive
   const activeByPosition = new Map<number, Officer[]>()
   const inactive: Officer[] = []
 
@@ -58,74 +70,81 @@ function OfficersPage() {
         />
       )}
 
-      {OFFICER_PAGE_SECTIONS.map((section) => (
-        <div key={section.label} className="mb-8">
-          <h3 className="text-lg font-semibold mb-3">{section.label}</h3>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">
-            {section.positions.map((posId) => {
-              const holders = activeByPosition.get(posId) ?? []
-              return (
-                <div
-                  key={posId}
-                  className={cn(
-                    'rounded-lg border p-4',
-                    holders.length > 0
-                      ? 'bg-card text-card-foreground'
-                      : 'bg-muted/50 text-muted-foreground',
-                  )}
-                >
-                  <div className="text-sm font-medium mb-2">
-                    {positionNameMap.get(posId) ?? `Position ${posId}`}
-                  </div>
-                  {holders.length === 0 ? (
-                    <div className="text-xs italic">Vacant</div>
-                  ) : (
-                    <ul className="space-y-1">
-                      {holders.map((officer) => (
-                        <li key={officer.index} className="flex items-center justify-between gap-2">
-                          <Link
-                            to="/members/$wycNumber"
-                            params={{ wycNumber: String(officer.wycNumber) }}
-                            className="text-sm"
+      {OFFICER_PAGE_TYPES.map((typeId) => {
+        const sectionPositions = positionsByType.get(typeId)
+        if (!sectionPositions?.length) return null
+        return (
+          <div key={typeId} className="mb-8">
+            <h3 className="text-lg font-semibold mb-3">
+              {typeLabelMap.get(typeId) ?? `Type ${typeId}`}
+            </h3>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">
+              {sectionPositions.map((pos) => {
+                const holders = activeByPosition.get(pos.index) ?? []
+                return (
+                  <div
+                    key={pos.index}
+                    className={cn(
+                      'rounded-lg border p-4',
+                      holders.length > 0
+                        ? 'bg-card text-card-foreground'
+                        : 'bg-muted/50 text-muted-foreground',
+                    )}
+                  >
+                    <div className="text-sm font-medium mb-2">{pos.name}</div>
+                    {holders.length === 0 ? (
+                      <div className="text-xs italic">Vacant</div>
+                    ) : (
+                      <ul className="space-y-1">
+                        {holders.map((officer) => (
+                          <li
+                            key={officer.index}
+                            className="flex items-center justify-between gap-2"
                           >
-                            {officer.memberName}
-                          </Link>
-                          <Button
-                            type="button"
-                            variant="ghost"
-                            size="sm"
-                            className="h-6 w-6 p-0 text-muted-foreground hover:text-destructive"
-                            disabled={mutation.isPending}
-                            onClick={() =>
-                              mutation.mutate({
-                                data: { index: officer.index, active: false },
-                              })
-                            }
-                          >
-                            <svg
-                              xmlns="http://www.w3.org/2000/svg"
-                              viewBox="0 0 24 24"
-                              fill="none"
-                              stroke="currentColor"
-                              strokeWidth="2"
-                              strokeLinecap="round"
-                              strokeLinejoin="round"
-                              className="h-3.5 w-3.5"
+                            <Link
+                              to="/members/$wycNumber"
+                              params={{ wycNumber: String(officer.wycNumber) }}
+                              className="text-sm"
                             >
-                              <line x1="18" y1="6" x2="6" y2="18" />
-                              <line x1="6" y1="6" x2="18" y2="18" />
-                            </svg>
-                          </Button>
-                        </li>
-                      ))}
-                    </ul>
-                  )}
-                </div>
-              )
-            })}
+                              {officer.memberName}
+                            </Link>
+                            <Button
+                              type="button"
+                              variant="ghost"
+                              size="sm"
+                              className="h-6 w-6 p-0 text-muted-foreground hover:text-destructive"
+                              disabled={mutation.isPending}
+                              onClick={() =>
+                                mutation.mutate({
+                                  data: { index: officer.index, active: false },
+                                })
+                              }
+                            >
+                              <svg
+                                xmlns="http://www.w3.org/2000/svg"
+                                viewBox="0 0 24 24"
+                                fill="none"
+                                stroke="currentColor"
+                                strokeWidth="2"
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                className="h-3.5 w-3.5"
+                              >
+                                <line x1="18" y1="6" x2="6" y2="18" />
+                                <line x1="6" y1="6" x2="18" y2="18" />
+                              </svg>
+                            </Button>
+                          </li>
+                        ))}
+                      </ul>
+                    )}
+                  </div>
+                )
+              })}
+            </div>
           </div>
-        </div>
-      ))}
+        )
+      })}
 
       {inactive.length > 0 && (
         <div className="mt-8">

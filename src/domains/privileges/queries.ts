@@ -51,6 +51,6 @@ export function getPrivilegePositions() {
   return db
     .select({ index: positions.index, name: positions.name })
     .from(positions)
-    .where(eq(positions.type, 4))
+    .where(and(eq(positions.type, 4), eq(positions.active, 1)))
     .orderBy(positions.sortorder)
 }

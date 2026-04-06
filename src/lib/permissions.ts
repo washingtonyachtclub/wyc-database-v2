@@ -24,6 +24,7 @@ export const routePermissions = {
   '/boat-types': ['db'],
   '/class-types': ['db'],
   '/quarters': ['db'],
+  '/positions': ['db'],
   '/membership-processing': ['db'],
   '/set-current-quarter': ['db'],
   '/set-password': [],

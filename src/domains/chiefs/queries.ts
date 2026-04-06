@@ -56,6 +56,6 @@ export function getChiefPositions() {
   return db
     .select({ index: positions.index, name: positions.name })
     .from(positions)
-    .where(eq(positions.type, 3))
+    .where(and(eq(positions.type, 3), eq(positions.active, 1)))
     .orderBy(positions.sortorder)
 }

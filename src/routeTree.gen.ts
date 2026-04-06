@@ -15,6 +15,7 @@ import { Route as RatingsRouteImport } from './routes/ratings'
 import { Route as RatingTypesRouteImport } from './routes/rating-types'
 import { Route as QuartersRouteImport } from './routes/quarters'
 import { Route as PrivilegesRouteImport } from './routes/privileges'
+import { Route as PositionsRouteImport } from './routes/positions'
 import { Route as OfficersRouteImport } from './routes/officers'
 import { Route as MyLessonsRouteImport } from './routes/my-lessons'
 import { Route as MembershipProcessingRouteImport } from './routes/membership-processing'
@@ -62,6 +63,11 @@ const QuartersRoute = QuartersRouteImport.update({
 const PrivilegesRoute = PrivilegesRouteImport.update({
   id: '/privileges',
   path: '/privileges',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const PositionsRoute = PositionsRouteImport.update({
+  id: '/positions',
+  path: '/positions',
   getParentRoute: () => rootRouteImport,
 } as any)
 const OfficersRoute = OfficersRouteImport.update({
@@ -170,6 +176,7 @@ export interface FileRoutesByFullPath {
   '/membership-processing': typeof MembershipProcessingRoute
   '/my-lessons': typeof MyLessonsRoute
   '/officers': typeof OfficersRoute
+  '/positions': typeof PositionsRoute
   '/privileges': typeof PrivilegesRoute
   '/quarters': typeof QuartersRoute
   '/rating-types': typeof RatingTypesRoute
@@ -196,6 +203,7 @@ export interface FileRoutesByTo {
   '/membership-processing': typeof MembershipProcessingRoute
   '/my-lessons': typeof MyLessonsRoute
   '/officers': typeof OfficersRoute
+  '/positions': typeof PositionsRoute
   '/privileges': typeof PrivilegesRoute
   '/quarters': typeof QuartersRoute
   '/rating-types': typeof RatingTypesRoute
@@ -223,6 +231,7 @@ export interface FileRoutesById {
   '/membership-processing': typeof MembershipProcessingRoute
   '/my-lessons': typeof MyLessonsRoute
   '/officers': typeof OfficersRoute
+  '/positions': typeof PositionsRoute
   '/privileges': typeof PrivilegesRoute
   '/quarters': typeof QuartersRoute
   '/rating-types': typeof RatingTypesRoute
@@ -251,6 +260,7 @@ export interface FileRouteTypes {
     | '/membership-processing'
     | '/my-lessons'
     | '/officers'
+    | '/positions'
     | '/privileges'
     | '/quarters'
     | '/rating-types'
@@ -277,6 +287,7 @@ export interface FileRouteTypes {
     | '/membership-processing'
     | '/my-lessons'
     | '/officers'
+    | '/positions'
     | '/privileges'
     | '/quarters'
     | '/rating-types'
@@ -303,6 +314,7 @@ export interface FileRouteTypes {
     | '/membership-processing'
     | '/my-lessons'
     | '/officers'
+    | '/positions'
     | '/privileges'
     | '/quarters'
     | '/rating-types'
@@ -330,6 +342,7 @@ export interface RootRouteChildren {
   MembershipProcessingRoute: typeof MembershipProcessingRoute
   MyLessonsRoute: typeof MyLessonsRoute
   OfficersRoute: typeof OfficersRoute
+  PositionsRoute: typeof PositionsRoute
   PrivilegesRoute: typeof PrivilegesRoute
   QuartersRoute: typeof QuartersRoute
   RatingTypesRoute: typeof RatingTypesRoute
@@ -384,6 +397,13 @@ declare module '@tanstack/react-router' {
       path: '/privileges'
       fullPath: '/privileges'
       preLoaderRoute: typeof PrivilegesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/positions': {
+      id: '/positions'
+      path: '/positions'
+      fullPath: '/positions'
+      preLoaderRoute: typeof PositionsRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/officers': {
@@ -530,6 +550,7 @@ const rootRouteChildren: RootRouteChildren = {
   MembershipProcessingRoute: MembershipProcessingRoute,
   MyLessonsRoute: MyLessonsRoute,
   OfficersRoute: OfficersRoute,
+  PositionsRoute: PositionsRoute,
   PrivilegesRoute: PrivilegesRoute,
   QuartersRoute: QuartersRoute,
   RatingTypesRoute: RatingTypesRoute,
