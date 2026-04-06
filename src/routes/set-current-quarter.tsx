@@ -14,6 +14,8 @@ import {
   useUpdateCurrentQuarterMutation,
 } from '@/domains/quarters/query-options'
 import { cn } from '@/lib/utils'
+import { Checkbox } from '@/components/ui/checkbox'
+import { Label } from '@/components/ui/label'
 import { useQuery } from '@tanstack/react-query'
 import { createFileRoute } from '@tanstack/react-router'
 import { useMemo, useState } from 'react'
@@ -30,6 +32,7 @@ function SetCurrentQuarterPage() {
   const { data: currentQuarterIndex } = useQuery(getCurrentQuarterQueryOptions())
   const { data: allQuarters } = useQuery(getQuartersQueryOptions())
 
+  const [readAbove, setReadAbove] = useState(false)
   const [selectedQuarter, setSelectedQuarter] = useState<number | null>(null)
   const [confirmOpen, setConfirmOpen] = useState(false)
   const [successMessage, setSuccessMessage] = useState<string | null>(null)
@@ -115,78 +118,94 @@ function SetCurrentQuarterPage() {
         </p>
       </div>
 
-      {/* Quarter selection */}
-      <div className="space-y-2">
-        <label className="text-sm font-medium">Select new quarter</label>
-        <Select
-          value={String(effectiveSelection)}
-          onValueChange={(value) => {
-            setSelectedQuarter(Number(value))
-            setSuccessMessage(null)
-          }}
-        >
-          <SelectTrigger className="w-64">
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent>
-            {selectableQuarters.map((q) => (
-              <SelectItem key={q.index} value={String(q.index)}>
-                {q.school || q.text || `Quarter ${q.index}`}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
+      {/* Gate: must acknowledge before proceeding */}
+      <div className="flex items-center gap-2">
+        <Checkbox
+          id="read-above"
+          checked={readAbove}
+          onCheckedChange={(checked) => setReadAbove(checked === true)}
+        />
+        <Label htmlFor="read-above" className="cursor-pointer">
+          I have read the above
+        </Label>
       </div>
 
-      {/* Impact preview */}
-      {hasChange && impact && (
-        <div
-          className={cn(
-            'rounded-lg border p-4 space-y-1 text-sm',
-            impact.direction === 'backward'
-              ? 'border-orange-400 bg-orange-50 text-orange-900'
-              : 'border-blue-400 bg-blue-50 text-blue-900',
+      {readAbove && (
+        <>
+          {/* Quarter selection */}
+          <div className="space-y-2">
+            <label className="text-sm font-medium">Select new quarter</label>
+            <Select
+              value={String(effectiveSelection)}
+              onValueChange={(value) => {
+                setSelectedQuarter(Number(value))
+                setSuccessMessage(null)
+              }}
+            >
+              <SelectTrigger className="w-64">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {selectableQuarters.map((q) => (
+                  <SelectItem key={q.index} value={String(q.index)}>
+                    {q.school || q.text || `Quarter ${q.index}`}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+
+          {/* Impact preview */}
+          {hasChange && impact && (
+            <div
+              className={cn(
+                'rounded-lg border p-4 space-y-1 text-sm',
+                impact.direction === 'backward'
+                  ? 'border-orange-400 bg-orange-50 text-orange-900'
+                  : 'border-blue-400 bg-blue-50 text-blue-900',
+              )}
+            >
+              {impact.direction === 'forward' ? (
+                <>
+                  <p className="font-semibold">Impact of advancing to {selectedQuarterObj?.school}:</p>
+                  <p>{impact.membersAffected} member{impact.membersAffected !== 1 ? 's' : ''} will become expired.</p>
+                  <p>{impact.lessonsAffected} lesson{impact.lessonsAffected !== 1 ? 's' : ''} will be hidden from the public page.</p>
+                </>
+              ) : (
+                <>
+                  <p className="font-semibold">Going backward is unusual.</p>
+                  <p>{impact.membersAffected} member{impact.membersAffected !== 1 ? 's' : ''} will become re-activated.</p>
+                  <p>{impact.lessonsAffected} lesson{impact.lessonsAffected !== 1 ? 's' : ''} will become visible again.</p>
+                </>
+              )}
+            </div>
           )}
-        >
-          {impact.direction === 'forward' ? (
-            <>
-              <p className="font-semibold">Impact of advancing to {selectedQuarterObj?.school}:</p>
-              <p>{impact.membersAffected} member{impact.membersAffected !== 1 ? 's' : ''} will become expired.</p>
-              <p>{impact.lessonsAffected} lesson{impact.lessonsAffected !== 1 ? 's' : ''} will be hidden from the public page.</p>
-            </>
-          ) : (
-            <>
-              <p className="font-semibold">Going backward is unusual.</p>
-              <p>{impact.membersAffected} member{impact.membersAffected !== 1 ? 's' : ''} will become re-activated.</p>
-              <p>{impact.lessonsAffected} lesson{impact.lessonsAffected !== 1 ? 's' : ''} will become visible again.</p>
-            </>
+
+          {/* Change button */}
+          {hasChange && (
+            <Button
+              variant="destructive"
+              onClick={() => setConfirmOpen(true)}
+              disabled={mutation.isPending}
+            >
+              {mutation.isPending ? 'Changing...' : 'Change Quarter'}
+            </Button>
           )}
-        </div>
-      )}
 
-      {/* Change button */}
-      {hasChange && (
-        <Button
-          variant="destructive"
-          onClick={() => setConfirmOpen(true)}
-          disabled={mutation.isPending}
-        >
-          {mutation.isPending ? 'Changing...' : 'Change Quarter'}
-        </Button>
-      )}
+          {/* Success message */}
+          {successMessage && (
+            <div className="rounded-lg border border-green-400 bg-green-50 p-4 text-sm text-green-900">
+              {successMessage}
+            </div>
+          )}
 
-      {/* Success message */}
-      {successMessage && (
-        <div className="rounded-lg border border-green-400 bg-green-50 p-4 text-sm text-green-900">
-          {successMessage}
-        </div>
-      )}
-
-      {/* Error message */}
-      {mutation.isError && (
-        <div className="rounded-lg border border-red-400 bg-red-50 p-4 text-sm text-red-900">
-          Failed to update the current quarter. Please try again.
-        </div>
+          {/* Error message */}
+          {mutation.isError && (
+            <div className="rounded-lg border border-red-400 bg-red-50 p-4 text-sm text-red-900">
+              Failed to update the current quarter. Please try again.
+            </div>
+          )}
+        </>
       )}
 
       {/* Confirmation dialog */}
@@ -196,6 +215,7 @@ function SetCurrentQuarterPage() {
         onConfirm={handleConfirm}
         title="Confirm Quarter Change"
         confirmLabel="Change Quarter"
+        confirmLabels={['I understand', 'I actually really definitely understand']}
         description={
           <div className="space-y-2">
             <p>

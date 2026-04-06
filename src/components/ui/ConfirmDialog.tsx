@@ -19,6 +19,7 @@ type ConfirmDialogProps = {
   title: string
   description: React.ReactNode
   confirmLabel?: string
+  confirmLabels?: string[]
 }
 
 export function ConfirmDialog({
@@ -28,12 +29,16 @@ export function ConfirmDialog({
   title,
   description,
   confirmLabel = 'Delete',
+  confirmLabels,
 }: ConfirmDialogProps) {
-  const [confirmed, setConfirmed] = useState(false)
+  const labels = confirmLabels ?? ['I understand']
+  const [checked, setChecked] = useState<boolean[]>(() => labels.map(() => false))
 
   useEffect(() => {
-    if (!open) setConfirmed(false)
+    if (!open) setChecked(labels.map(() => false))
   }, [open])
+
+  const allChecked = checked.every(Boolean)
 
   return (
     <AlertDialog open={open} onOpenChange={(open) => { if (!open) onClose() }}>
@@ -44,19 +49,25 @@ export function ConfirmDialog({
             <div>{description}</div>
           </AlertDialogDescription>
         </AlertDialogHeader>
-        <div className="flex items-center gap-2 pt-2">
-          <Checkbox
-            id="confirm-checkbox"
-            checked={confirmed}
-            onCheckedChange={(checked) => setConfirmed(checked === true)}
-          />
-          <Label htmlFor="confirm-checkbox" className="cursor-pointer">
-            I understand
-          </Label>
+        <div className="space-y-2 pt-2">
+          {labels.map((label, i) => (
+            <div key={i} className="flex items-center gap-2">
+              <Checkbox
+                id={`confirm-checkbox-${i}`}
+                checked={checked[i]}
+                onCheckedChange={(val) =>
+                  setChecked((prev) => prev.map((v, j) => (j === i ? val === true : v)))
+                }
+              />
+              <Label htmlFor={`confirm-checkbox-${i}`} className="cursor-pointer">
+                {label}
+              </Label>
+            </div>
+          ))}
         </div>
         <AlertDialogFooter>
           <AlertDialogCancel>Cancel</AlertDialogCancel>
-          {confirmed && (
+          {allChecked && (
             <AlertDialogAction
               className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
               onClick={onConfirm}
