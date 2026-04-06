@@ -49,7 +49,7 @@ type ParseError =
   | { code: 'MISSING_WYC_NUMBER'; message: string; rawInput: string; duplicates: DuplicateMatch[] }
   | { code: 'COLUMN_COUNT_MISMATCH'; message: string }
   | { code: 'WYC_NOT_FOUND'; message: string }
-  | { code: 'NAME_MISMATCH'; message: string }
+  | { code: 'NAME_MISMATCH'; message: string; member: OldMember }
   | { code: 'INVALID_FIELD'; message: string }
   | { code: 'DATA_LOADING'; message: string }
 
@@ -327,6 +327,13 @@ function MembershipProcessingPage() {
           error: {
             code: 'NAME_MISMATCH',
             message: `Name mismatch for WYC #${wycNumber}:\n  Form: "${first} ${last}"\n  Database: "${dbMember.first} ${dbMember.last}"`,
+            member: {
+              wycNumber: Number(wycNumber),
+              newExpireQtr: expireQtrIndex,
+              first: dbMember.first ?? first,
+              last: dbMember.last ?? last,
+              email: email,
+            },
           },
         }
       }
@@ -753,6 +760,17 @@ function MembershipProcessingPage() {
       {memberState.kind === 'Error' && (
         <>
           <p className="mt-4 text-red-600">{memberState.error.message}</p>
+          {memberState.error.code === 'NAME_MISMATCH' && (
+            <div className="mt-2">
+              <Button
+                onClick={() =>
+                  setMemberState({ kind: 'OldMember', member: memberState.error.member })
+                }
+              >
+                Acknowledged
+              </Button>
+            </div>
+          )}
           {memberState.error.code === 'MISSING_WYC_NUMBER' && (
             <div className="mt-4">
               {memberState.error.duplicates.length > 0 && (
