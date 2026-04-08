@@ -31,6 +31,7 @@ export default function Sidebar() {
   const toolsItems = [
     { path: '/membership-processing' as const, label: 'Membership Processing' },
     { path: '/set-current-quarter' as const, label: 'Set Current Quarter' },
+    { path: '/tests' as const, label: 'Tests' },
   ]
 
   const filterVisible = (items: { path: ProtectedRoute; label: string }[]) =>
