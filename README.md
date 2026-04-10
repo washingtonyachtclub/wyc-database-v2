@@ -1,6 +1,6 @@
 # WYC Database v2
 
-Database interface tool for The [Washington Yacht Club](washingtonyachtclub.org), a student-run recreational sailing club at the University of Washington in Seattle. Manages member records, lesson scheduling, ratings, and various club operations.
+Database interface tool for The [Washington Yacht Club](https://washingtonyachtclub.org), a student-run recreational sailing club at the University of Washington in Seattle. Manages member records, lesson scheduling, ratings, and various club operations.
 
 This is a ground-up rewrite replacing the legacy Perl/PHP system that was in use from approximately 2007 to 2025. The new stack is React, TypeScript, and Drizzle ORM on the TanStack ecosystem (Start, Router, Query, Table). It runs against the same MySQL database and schema as the original system.
 
