@@ -141,11 +141,19 @@ function formatLessonInfo(lesson: LessonEmailInfo): string {
   return lines.join('\n')
 }
 
-// TODO: Review sailing-specific instructions for accuracy and prune if needed
-export function lessonEnrolledEmail(studentName: string, lesson: LessonEmailInfo): string {
+// TODO: Subject lines should live alongside templates, not in server functions
+export function lessonEnrolledEmail(
+  studentName: string,
+  lesson: LessonEmailInfo,
+  fromWaitlist?: boolean,
+): string {
+  const intro = fromWaitlist
+    ? 'A spot has opened up — you are now enrolled in the following class:'
+    : 'You have been enrolled in the following class:'
+
   return `Hello ${studentName},
 
-You have been enrolled in the following class:
+${intro}
 
 ${formatLessonInfo(lesson)}
 

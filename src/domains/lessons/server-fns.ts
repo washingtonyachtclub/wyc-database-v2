@@ -1,27 +1,27 @@
-import { createServerFn } from '@tanstack/react-start'
-import { and, asc, count, eq, gte, inArray, or } from 'drizzle-orm'
+import db from '@/db/index'
+import type { LessonFilters } from '@/domains/lessons/filter-types'
 import {
   baseLessonQuery,
   baseSignedUpWithDetailsQuery,
   lessonSortColumns,
   withLessonFilters,
 } from '@/domains/lessons/queries'
-import type { LessonFilters } from '@/domains/lessons/filter-types'
 import type { LessonInsert, LessonStudent, SignedUpLesson } from '@/domains/lessons/schema'
 import { fromLessonInsert, toRichLesson } from '@/domains/lessons/schema'
-import { isMembershipActive } from 'src/db/membership-utils'
-import { enrollmentStatus, splitEnrollment } from 'src/db/signup-utils'
-import { withPagination, withSorting } from 'src/db/query-helpers'
-import { lessonQuarter, lessons, signups, wycDatabase } from 'src/db/schema'
-import db from '@/db/index'
 import {
   requireAuth,
   requireInstructorOrPrivilege,
   requirePrivilege,
 } from '@/lib/auth/auth-middleware'
 import { sendEmail } from '@/lib/email'
-import { lessonEnrolledEmail, lessonWaitlistedEmail } from '@/lib/email-templates'
 import type { LessonEmailInfo } from '@/lib/email-templates'
+import { lessonEnrolledEmail, lessonWaitlistedEmail } from '@/lib/email-templates'
+import { createServerFn } from '@tanstack/react-start'
+import { and, asc, count, eq, gte, inArray, or } from 'drizzle-orm'
+import { isMembershipActive } from 'src/db/membership-utils'
+import { withPagination, withSorting } from 'src/db/query-helpers'
+import { lessonQuarter, lessons, signups, wycDatabase } from 'src/db/schema'
+import { enrollmentStatus, splitEnrollment } from 'src/db/signup-utils'
 
 export const getPublicLessons = createServerFn({ method: 'GET' }).handler(async () => {
   // No auth required — this is the public lesson list for the WordPress iframe
@@ -185,9 +185,65 @@ export const removeStudentFromLesson = createServerFn({ method: 'POST' })
   }))
   .handler(async ({ data: { lessonId, studentWycNumber } }) => {
     await requireInstructorOrPrivilege(lessonId, 'db')
+
+    // Get lesson + enrollment lists to detect waitlist promotion
+    const lessonData = await getLessonById({ data: { id: lessonId } })
+    if (!lessonData) throw new Error('Lesson not found')
+    const { lesson, enrolledStudents, waitlistedStudents } = lessonData
+
+    // Student is promoted if: removed student is enrolled AND there's a waitlisted student
+    const isEnrolled = enrolledStudents.some((s) => s.wycNumber === studentWycNumber)
+    const promotedStudent =
+      isEnrolled && waitlistedStudents.length > 0 ? waitlistedStudents[0] : null
+
+    // Delete the signup
     await db
       .delete(signups)
       .where(and(eq(signups.class, lessonId), eq(signups.student, studentWycNumber)))
+
+    // Send promotion email (fire-and-forget)
+    if (promotedStudent) {
+      try {
+        const instructorIds = [lesson.instructor1, lesson.instructor2].filter(
+          (id): id is number => id != null && id !== 0,
+        )
+        const instructorEmails =
+          instructorIds.length > 0
+            ? await db
+                .select({ wycNumber: wycDatabase.wycNumber, email: wycDatabase.email })
+                .from(wycDatabase)
+                .where(inArray(wycDatabase.wycNumber, instructorIds))
+            : []
+        const instructorEmailMap = new Map(
+          instructorEmails.map((i) => [i.wycNumber, i.email ?? '']),
+        )
+
+        const studentName = `${promotedStudent.first} ${promotedStudent.last}`.trim() || 'Member'
+        const lessonEmailInfo: LessonEmailInfo = {
+          type: lesson.type,
+          subtype: lesson.subtype,
+          day: lesson.day,
+          time: lesson.time,
+          dates: lesson.dates,
+          instructor1Name: lesson.instructor1Name,
+          instructor1Email: instructorEmailMap.get(lesson.instructor1) ?? '',
+          instructor2Name: lesson.instructor2Name,
+          instructor2Email: lesson.instructor2
+            ? (instructorEmailMap.get(lesson.instructor2) ?? '')
+            : '',
+        }
+
+        await sendEmail({
+          to: promotedStudent.email,
+          subject: "WYC - You're off the waitlist!",
+          text: lessonEnrolledEmail(studentName, lessonEmailInfo, true),
+          idempotencyKey: `promote/${lessonId}/${promotedStudent.wycNumber}/${Date.now()}`,
+        })
+      } catch (emailError) {
+        console.error('Failed to send promotion email:', emailError)
+      }
+    }
+
     return { success: true }
   })
 

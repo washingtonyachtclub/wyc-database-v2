@@ -20,6 +20,7 @@
   - switch to stripe?
 - lessons page: collapse lessons with same name (Intro to Keelboats cluttering lesson cards)
   - generally better UI for current quarter lessons (display by date, row view instead of cards?)
+  - show how many signed up for each lesson
 
 # Less Important
 - better ratings filtering (find all members with *at least* X rating, more complex logic like ANDs and ORs)
