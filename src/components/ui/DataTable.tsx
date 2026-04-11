@@ -1,12 +1,13 @@
-import { flexRender, type Table as TanStackTable } from '@tanstack/react-table'
+import { flexRender, type Row, type Table as TanStackTable } from '@tanstack/react-table'
 import { ArrowDown, ArrowUp } from 'lucide-react'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from './table'
 
 type DataTableProps<T> = {
   table: TanStackTable<T>
+  rowClassName?: (row: Row<T>) => string | undefined
 }
 
-export function DataTable<T>({ table }: DataTableProps<T>) {
+export function DataTable<T>({ table, rowClassName }: DataTableProps<T>) {
   return (
     <div className="border rounded-lg">
       <Table>
@@ -49,7 +50,7 @@ export function DataTable<T>({ table }: DataTableProps<T>) {
         </TableHeader>
         <TableBody>
           {table.getRowModel().rows.map((row) => (
-            <TableRow key={row.id}>
+            <TableRow key={row.id} className={rowClassName?.(row)}>
               {row.getVisibleCells().map((cell) => (
                 <TableCell key={cell.id} className="text-sm">
                   {flexRender(cell.column.columnDef.cell, cell.getContext())}

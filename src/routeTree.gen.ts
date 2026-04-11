@@ -29,6 +29,7 @@ import { Route as ForgotPasswordRouteImport } from './routes/forgot-password'
 import { Route as ForbiddenRouteImport } from './routes/forbidden'
 import { Route as ClassTypesRouteImport } from './routes/class-types'
 import { Route as ChiefsRouteImport } from './routes/chiefs'
+import { Route as CheckoutsRouteImport } from './routes/checkouts'
 import { Route as BoatTypesRouteImport } from './routes/boat-types'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as SignupLessonIndexRouteImport } from './routes/signup.$lessonIndex'
@@ -136,6 +137,11 @@ const ChiefsRoute = ChiefsRouteImport.update({
   path: '/chiefs',
   getParentRoute: () => rootRouteImport,
 } as any)
+const CheckoutsRoute = CheckoutsRouteImport.update({
+  id: '/checkouts',
+  path: '/checkouts',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const BoatTypesRoute = BoatTypesRouteImport.update({
   id: '/boat-types',
   path: '/boat-types',
@@ -170,6 +176,7 @@ const LessonsLessonIndexRoute = LessonsLessonIndexRouteImport.update({
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/boat-types': typeof BoatTypesRoute
+  '/checkouts': typeof CheckoutsRoute
   '/chiefs': typeof ChiefsRoute
   '/class-types': typeof ClassTypesRoute
   '/forbidden': typeof ForbiddenRoute
@@ -198,6 +205,7 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/boat-types': typeof BoatTypesRoute
+  '/checkouts': typeof CheckoutsRoute
   '/chiefs': typeof ChiefsRoute
   '/class-types': typeof ClassTypesRoute
   '/forbidden': typeof ForbiddenRoute
@@ -227,6 +235,7 @@ export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/boat-types': typeof BoatTypesRoute
+  '/checkouts': typeof CheckoutsRoute
   '/chiefs': typeof ChiefsRoute
   '/class-types': typeof ClassTypesRoute
   '/forbidden': typeof ForbiddenRoute
@@ -257,6 +266,7 @@ export interface FileRouteTypes {
   fullPaths:
     | '/'
     | '/boat-types'
+    | '/checkouts'
     | '/chiefs'
     | '/class-types'
     | '/forbidden'
@@ -285,6 +295,7 @@ export interface FileRouteTypes {
   to:
     | '/'
     | '/boat-types'
+    | '/checkouts'
     | '/chiefs'
     | '/class-types'
     | '/forbidden'
@@ -313,6 +324,7 @@ export interface FileRouteTypes {
     | '__root__'
     | '/'
     | '/boat-types'
+    | '/checkouts'
     | '/chiefs'
     | '/class-types'
     | '/forbidden'
@@ -342,6 +354,7 @@ export interface FileRouteTypes {
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   BoatTypesRoute: typeof BoatTypesRoute
+  CheckoutsRoute: typeof CheckoutsRoute
   ChiefsRoute: typeof ChiefsRoute
   ClassTypesRoute: typeof ClassTypesRoute
   ForbiddenRoute: typeof ForbiddenRoute
@@ -510,6 +523,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ChiefsRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/checkouts': {
+      id: '/checkouts'
+      path: '/checkouts'
+      fullPath: '/checkouts'
+      preLoaderRoute: typeof CheckoutsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/boat-types': {
       id: '/boat-types'
       path: '/boat-types'
@@ -558,6 +578,7 @@ declare module '@tanstack/react-router' {
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   BoatTypesRoute: BoatTypesRoute,
+  CheckoutsRoute: CheckoutsRoute,
   ChiefsRoute: ChiefsRoute,
   ClassTypesRoute: ClassTypesRoute,
   ForbiddenRoute: ForbiddenRoute,

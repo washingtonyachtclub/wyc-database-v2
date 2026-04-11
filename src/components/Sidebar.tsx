@@ -11,6 +11,7 @@ export default function Sidebar() {
     { path: '/members' as const, label: 'Members' },
     { path: '/lessons' as const, label: 'Lessons' },
     { path: '/ratings' as const, label: 'Ratings' },
+    { path: '/checkouts' as const, label: 'Checkouts' },
   ]
 
   const peopleManagementItems = [
