@@ -1,5 +1,11 @@
 import { queryOptions, useMutation, useQueryClient } from '@tanstack/react-query'
-import { createQuarter, deleteQuarter, getAllQuarters, getQuarterChangeImpact, updateCurrentQuarter } from './server-fns'
+import {
+  createQuarter,
+  deleteQuarter,
+  getAllQuarters,
+  getQuarterChangeImpact,
+  updateCurrentQuarter,
+} from './server-fns'
 
 export const getQuartersQueryOptions = () =>
   queryOptions({

@@ -38,9 +38,7 @@ export function AddQuarterModal({ onClose, onSuccess }: AddQuarterModalProps) {
 
         <form.AppField
           name="text"
-          children={(field) => (
-            <field.TextField label="Text" required placeholder="Jun 2026" />
-          )}
+          children={(field) => <field.TextField label="Text" required placeholder="Jun 2026" />}
         />
 
         <form.AppField

@@ -25,9 +25,7 @@ export function DevPrivilegeEmulator() {
   const [open, setOpen] = useState(false)
 
   const toggle = (priv: Privilege) => {
-    setSelected((prev) =>
-      prev.includes(priv) ? prev.filter((p) => p !== priv) : [...prev, priv],
-    )
+    setSelected((prev) => (prev.includes(priv) ? prev.filter((p) => p !== priv) : [...prev, priv]))
   }
 
   const invalidateAndClose = async () => {
@@ -74,7 +72,13 @@ export function DevPrivilegeEmulator() {
   const displayLabel = `${user?.first ?? ''} ${user?.last ?? ''}`.trim() || 'unknown'
 
   return (
-    <Popover open={open} onOpenChange={(v) => { setOpen(v); if (v) setSelected(privileges) }}>
+    <Popover
+      open={open}
+      onOpenChange={(v) => {
+        setOpen(v)
+        if (v) setSelected(privileges)
+      }}
+    >
       <PopoverTrigger asChild>
         <button className="rounded border border-dashed border-yellow-500 bg-yellow-100 px-2 py-0.5 text-xs font-semibold text-yellow-800 hover:bg-yellow-200">
           Emulate: {displayLabel} [{privileges.join(', ') || 'none'}]

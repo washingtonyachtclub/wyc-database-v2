@@ -13,11 +13,9 @@ import { officers } from 'src/db/schema'
 import { requirePrivilege } from '@/lib/auth/auth-middleware'
 
 export const getPrivilegesTable = createServerFn({ method: 'GET' })
-  .inputValidator(
-    (input: { filters?: PrivilegeFilters }) => ({
-      filters: input.filters,
-    }),
-  )
+  .inputValidator((input: { filters?: PrivilegeFilters }) => ({
+    filters: input.filters,
+  }))
   .handler(async ({ data }) => {
     await requirePrivilege('db')
 
@@ -32,12 +30,20 @@ export const getPrivilegesTable = createServerFn({ method: 'GET' })
       // Group by member -- one row per member with all their roles
       const grouped = new Map<
         number,
-        { memberName: string; outToSea: boolean; roles: { officerIndex: number; positionId: number; positionName: string }[] }
+        {
+          memberName: string
+          outToSea: boolean
+          roles: { officerIndex: number; positionId: number; positionName: string }[]
+        }
       >()
 
       for (const row of mapped) {
         const existing = grouped.get(row.wycNumber)
-        const role = { officerIndex: row.officerIndex, positionId: row.positionId, positionName: row.positionName }
+        const role = {
+          officerIndex: row.officerIndex,
+          positionId: row.positionId,
+          positionName: row.positionName,
+        }
         if (existing) {
           existing.roles.push(role)
         } else {

@@ -40,11 +40,11 @@ The `quarters` table has a finite set of rows. New quarters must be added before
 
 The cycle repeats: **Summer, Fall, Winter, Spring**. Follow the existing naming pattern:
 
-| Column   | Example values                            |
-|----------|-------------------------------------------|
-| `text`   | `June 2027`, `Sept 2027`, `Dec 2027`, `March 2028` |
-| `school` | `Spring 2027`, `Summer 2027`, `Fall 2027`, `Winter 2028` |
-| `endDate`| Approximate quarter end date, or NULL      |
+| Column    | Example values                                           |
+| --------- | -------------------------------------------------------- |
+| `text`    | `June 2027`, `Sept 2027`, `Dec 2027`, `March 2028`       |
+| `school`  | `Spring 2027`, `Summer 2027`, `Fall 2027`, `Winter 2028` |
+| `endDate` | Approximate quarter end date, or NULL                    |
 
 ```sql
 -- Example: add quarters for the 2027 academic year

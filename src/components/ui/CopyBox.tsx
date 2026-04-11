@@ -13,12 +13,7 @@ export function CopyBox({ text }: { text: string }) {
 
   return (
     <div className="relative mt-2 rounded border bg-muted">
-      <Button
-        variant="outline"
-        size="sm"
-        onClick={handleCopy}
-        className="absolute top-2 left-2"
-      >
+      <Button variant="outline" size="sm" onClick={handleCopy} className="absolute top-2 left-2">
         {copied ? 'Copied!' : 'Copy'}
       </Button>
       <pre className="whitespace-pre-wrap p-4 pl-20 text-sm">{text}</pre>

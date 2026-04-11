@@ -41,7 +41,12 @@ export function ConfirmDialog({
   const allChecked = checked.every(Boolean)
 
   return (
-    <AlertDialog open={open} onOpenChange={(open) => { if (!open) onClose() }}>
+    <AlertDialog
+      open={open}
+      onOpenChange={(open) => {
+        if (!open) onClose()
+      }}
+    >
       <AlertDialogContent>
         <AlertDialogHeader>
           <AlertDialogTitle>{title}</AlertDialogTitle>

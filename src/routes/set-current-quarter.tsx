@@ -70,8 +70,12 @@ function SetCurrentQuarterPage() {
       { data: { newQuarter: effectiveSelection } },
       {
         onSuccess: (result) => {
-          const oldText = allQuarters?.find((q) => q.index === result.previousQuarter)?.school ?? `Quarter ${result.previousQuarter}`
-          const newText = allQuarters?.find((q) => q.index === result.newQuarter)?.school ?? `Quarter ${result.newQuarter}`
+          const oldText =
+            allQuarters?.find((q) => q.index === result.previousQuarter)?.school ??
+            `Quarter ${result.previousQuarter}`
+          const newText =
+            allQuarters?.find((q) => q.index === result.newQuarter)?.school ??
+            `Quarter ${result.newQuarter}`
           setSuccessMessage(`Quarter changed from ${oldText} to ${newText}.`)
           setSelectedQuarter(null)
         },
@@ -90,7 +94,9 @@ function SetCurrentQuarterPage() {
       {/* Current quarter display */}
       <div className="rounded-lg border bg-card p-4">
         <p className="text-sm text-muted-foreground">Current Quarter</p>
-        <p className="text-xl font-semibold">{currentQuarter?.school ?? `Quarter ${currentQuarterIndex}`}</p>
+        <p className="text-xl font-semibold">
+          {currentQuarter?.school ?? `Quarter ${currentQuarterIndex}`}
+        </p>
         {currentQuarter?.endDate && (
           <p className="text-sm text-muted-foreground">Ends: {currentQuarter.endDate}</p>
         )}
@@ -101,8 +107,8 @@ function SetCurrentQuarterPage() {
         <p className="font-semibold">Changing the current quarter affects the entire system:</p>
         <ul className="list-disc pl-5 space-y-1">
           <li>
-            <strong>Membership status</strong> — Members are active when their expiration quarter
-            {' '}&ge; the current quarter. Changing this determines who is considered active vs expired.
+            <strong>Membership status</strong> — Members are active when their expiration quarter{' '}
+            &ge; the current quarter. Changing this determines who is considered active vs expired.
           </li>
           <li>
             <strong>Lesson visibility</strong> — The public lesson page only shows lessons matching
@@ -167,15 +173,29 @@ function SetCurrentQuarterPage() {
             >
               {impact.direction === 'forward' ? (
                 <>
-                  <p className="font-semibold">Impact of advancing to {selectedQuarterObj?.school}:</p>
-                  <p>{impact.membersAffected} member{impact.membersAffected !== 1 ? 's' : ''} will become expired.</p>
-                  <p>{impact.lessonsAffected} lesson{impact.lessonsAffected !== 1 ? 's' : ''} will be hidden from the public page.</p>
+                  <p className="font-semibold">
+                    Impact of advancing to {selectedQuarterObj?.school}:
+                  </p>
+                  <p>
+                    {impact.membersAffected} member{impact.membersAffected !== 1 ? 's' : ''} will
+                    become expired.
+                  </p>
+                  <p>
+                    {impact.lessonsAffected} lesson{impact.lessonsAffected !== 1 ? 's' : ''} will be
+                    hidden from the public page.
+                  </p>
                 </>
               ) : (
                 <>
                   <p className="font-semibold">Going backward is unusual.</p>
-                  <p>{impact.membersAffected} member{impact.membersAffected !== 1 ? 's' : ''} will become re-activated.</p>
-                  <p>{impact.lessonsAffected} lesson{impact.lessonsAffected !== 1 ? 's' : ''} will become visible again.</p>
+                  <p>
+                    {impact.membersAffected} member{impact.membersAffected !== 1 ? 's' : ''} will
+                    become re-activated.
+                  </p>
+                  <p>
+                    {impact.lessonsAffected} lesson{impact.lessonsAffected !== 1 ? 's' : ''} will
+                    become visible again.
+                  </p>
                 </>
               )}
             </div>
@@ -225,14 +245,26 @@ function SetCurrentQuarterPage() {
             </p>
             {impact && impact.direction === 'forward' && (
               <ul className="list-disc pl-5 space-y-1">
-                <li>{impact.membersAffected} member{impact.membersAffected !== 1 ? 's' : ''} will become expired.</li>
-                <li>{impact.lessonsAffected} lesson{impact.lessonsAffected !== 1 ? 's' : ''} will be hidden from the public page.</li>
+                <li>
+                  {impact.membersAffected} member{impact.membersAffected !== 1 ? 's' : ''} will
+                  become expired.
+                </li>
+                <li>
+                  {impact.lessonsAffected} lesson{impact.lessonsAffected !== 1 ? 's' : ''} will be
+                  hidden from the public page.
+                </li>
               </ul>
             )}
             {impact && impact.direction === 'backward' && (
               <ul className="list-disc pl-5 space-y-1">
-                <li>{impact.membersAffected} member{impact.membersAffected !== 1 ? 's' : ''} will become re-activated.</li>
-                <li>{impact.lessonsAffected} lesson{impact.lessonsAffected !== 1 ? 's' : ''} will become visible again.</li>
+                <li>
+                  {impact.membersAffected} member{impact.membersAffected !== 1 ? 's' : ''} will
+                  become re-activated.
+                </li>
+                <li>
+                  {impact.lessonsAffected} lesson{impact.lessonsAffected !== 1 ? 's' : ''} will
+                  become visible again.
+                </li>
               </ul>
             )}
           </div>

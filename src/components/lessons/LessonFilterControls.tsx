@@ -79,9 +79,7 @@ export function LessonFilterControls({
           <Label className="mb-1">Instructor</Label>
           <MemberCombobox
             value={instructor ?? null}
-            onChange={(wycNumber) =>
-              onFilterChange({ instructor: wycNumber ?? undefined })
-            }
+            onChange={(wycNumber) => onFilterChange({ instructor: wycNumber ?? undefined })}
             placeholder="Any instructor"
           />
         </div>
@@ -142,7 +140,9 @@ export function LessonFilterControls({
             onChange={(e) => onFilterChange({ display: e.target.checked || undefined })}
             className="h-4 w-4 accent-primary"
           />
-          <Label htmlFor="filter-display" className="cursor-pointer">Display?</Label>
+          <Label htmlFor="filter-display" className="cursor-pointer">
+            Display?
+          </Label>
         </div>
 
         {hasFilters && (

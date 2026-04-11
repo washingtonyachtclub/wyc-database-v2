@@ -36,9 +36,7 @@ export function officerPageQuery() {
     .leftJoin(wycDatabase, eq(officers.member, wycDatabase.wycNumber))
     .leftJoin(positions, eq(officers.position, positions.index))
     .leftJoin(posType, eq(positions.type, posType.index))
-    .where(
-      and(eq(positions.active, 1), inArray(posType.index, [...OFFICER_PAGE_TYPES])),
-    )
+    .where(and(eq(positions.active, 1), inArray(posType.index, [...OFFICER_PAGE_TYPES])))
     .orderBy(desc(officers.active))
 }
 
@@ -53,9 +51,7 @@ export function getOfficerPagePositions() {
     })
     .from(positions)
     .leftJoin(posType, eq(positions.type, posType.index))
-    .where(
-      and(eq(positions.active, 1), inArray(positions.type, [...OFFICER_PAGE_TYPES])),
-    )
+    .where(and(eq(positions.active, 1), inArray(positions.type, [...OFFICER_PAGE_TYPES])))
     .orderBy(positions.sortorder)
 }
 

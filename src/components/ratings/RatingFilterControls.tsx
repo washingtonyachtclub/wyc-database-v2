@@ -32,9 +32,7 @@ export function RatingFilterControls({
           <MemberCombobox
             label="Member"
             value={memberWycNumber ?? null}
-            onChange={(wycNumber) =>
-              onFilterChange({ memberWycNumber: wycNumber ?? undefined })
-            }
+            onChange={(wycNumber) => onFilterChange({ memberWycNumber: wycNumber ?? undefined })}
             placeholder="Filter by member..."
           />
         </div>

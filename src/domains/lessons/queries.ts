@@ -81,9 +81,7 @@ export function withLessonFilters<T extends MySqlSelect>(
 }
 
 export function baseLessonsTaughtQuery(wycNumber: number, since?: string) {
-  const conditions = [
-    or(eq(lessons.instructor1, wycNumber), eq(lessons.instructor2, wycNumber)),
-  ]
+  const conditions = [or(eq(lessons.instructor1, wycNumber), eq(lessons.instructor2, wycNumber))]
   if (since) {
     conditions.push(gte(lessons.calendarDate, since))
   }
@@ -105,8 +103,9 @@ const signedUpLessonSelectFields = {
   instructor2Email: instructor2Table.email,
 }
 
-export type SignedUpLessonQueryRow =
-  Awaited<ReturnType<typeof baseSignedUpWithDetailsQuery>>[number]
+export type SignedUpLessonQueryRow = Awaited<
+  ReturnType<typeof baseSignedUpWithDetailsQuery>
+>[number]
 
 export function baseSignedUpWithDetailsQuery(wycNumber: number, minExpire: number) {
   return db

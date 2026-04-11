@@ -3,10 +3,7 @@ import { chiefInsertSchema } from '@/domains/chiefs/schema'
 import { ErrorAlert } from '../ui/ErrorAlert'
 import type { ChiefInsertData } from '@/domains/chiefs/schema'
 import { useAppForm } from '../../hooks/form'
-import {
-  getChiefTypesQueryOptions,
-  useCreateChiefMutation,
-} from '@/domains/chiefs/query-options'
+import { getChiefTypesQueryOptions, useCreateChiefMutation } from '@/domains/chiefs/query-options'
 import { Button } from '../ui/button'
 import { MemberCombobox } from '../ui/MemberCombobox'
 import { Modal } from '../ui/Modal'

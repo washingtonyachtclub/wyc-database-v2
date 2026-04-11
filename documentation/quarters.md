@@ -18,14 +18,15 @@ Quarters are stored as **integer indices**, not formatted strings. The `quarters
 
 Lookup table mapping integer indices to human-readable quarter names.
 
-| Column    | Type     | Description                              |
-|-----------|----------|------------------------------------------|
-| `_index`  | int PK   | Sequential quarter index                 |
-| `text`    | char(50) | Month + year display (e.g., "Dec 2024")  |
-| `school`  | char(50) | Academic term (e.g., "Fall 2024")        |
+| Column    | Type     | Description                               |
+| --------- | -------- | ----------------------------------------- |
+| `_index`  | int PK   | Sequential quarter index                  |
+| `text`    | char(50) | Month + year display (e.g., "Dec 2024")   |
+| `school`  | char(50) | Academic term (e.g., "Fall 2024")         |
 | `endDate` | date     | Quarter end date (may be NULL for future) |
 
 **Index pattern:**
+
 - Indices 1-2 are special (Unknown, Honorary)
 - Index 3 = Summer 1999 (first real quarter)
 - Increments by 1 each quarter in a repeating cycle: **Summer, Fall, Winter, Spring**
@@ -44,9 +45,9 @@ _index  text          school          endDate
 
 Single-row configuration table that stores which quarter is "current."
 
-| Column    | Type   | Description                                    |
-|-----------|--------|------------------------------------------------|
-| `_index`  | int PK | Always 1                                       |
+| Column    | Type   | Description                                     |
+| --------- | ------ | ----------------------------------------------- |
+| `_index`  | int PK | Always 1                                        |
 | `quarter` | int    | Current quarter index (FK to `quarters._index`) |
 
 This value is **manually updated** — there is no automatic rollover. In the legacy system, the Vice Commodore updates it via the Lesson Control Panel. If set incorrectly, membership validation, lesson visibility, and instructor privilege grants will all be wrong.
@@ -94,8 +95,8 @@ Code never displays raw quarter indices to users. When displaying quarters, the 
 
 ## Key Files
 
-| File | Purpose |
-|------|---------|
-| `src/db/schema.ts` | `quarters` and `lessonQuarter` table definitions |
-| `src/lib/lessons-server-fns.ts` | `getCurrentQuarter()` server function |
-| `src/lib/auth-server-fns.ts` | Quarter check in `loadUserPrivileges()` for instructor grant |
+| File                            | Purpose                                                      |
+| ------------------------------- | ------------------------------------------------------------ |
+| `src/db/schema.ts`              | `quarters` and `lessonQuarter` table definitions             |
+| `src/lib/lessons-server-fns.ts` | `getCurrentQuarter()` server function                        |
+| `src/lib/auth-server-fns.ts`    | Quarter check in `loadUserPrivileges()` for instructor grant |

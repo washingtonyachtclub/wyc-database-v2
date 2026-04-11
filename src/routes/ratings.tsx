@@ -32,9 +32,13 @@ export const Route = createFileRoute('/ratings')({
   beforeLoad: ({ context }) => {
     requirePrivilegeForRoute(context, '/ratings')
   },
-  loaderDeps: ({ search: { pageIndex, pageSize, memberWycNumber, ratingIndex, sortColumn, sortDesc } }) => {
+  loaderDeps: ({
+    search: { pageIndex, pageSize, memberWycNumber, ratingIndex, sortColumn, sortDesc },
+  }) => {
     const filters: RatingFilters | undefined =
-      memberWycNumber !== undefined || ratingIndex !== undefined ? { memberWycNumber, ratingIndex } : undefined
+      memberWycNumber !== undefined || ratingIndex !== undefined
+        ? { memberWycNumber, ratingIndex }
+        : undefined
 
     const sorting =
       sortColumn && sortColumn in ratingSortableColumns

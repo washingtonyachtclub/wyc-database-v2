@@ -24,7 +24,11 @@ import {
   SelectValue,
 } from '@/components/ui/select'
 import type { ChiefFilters } from '@/domains/chiefs/queries'
-import { getChiefsQueryOptions, getChiefTypesQueryOptions, useDeleteChiefMutation } from '@/domains/chiefs/query-options'
+import {
+  getChiefsQueryOptions,
+  getChiefTypesQueryOptions,
+  useDeleteChiefMutation,
+} from '@/domains/chiefs/query-options'
 import { requirePrivilegeForRoute } from '@/lib/route-guards'
 import { cn } from '@/lib/utils'
 import { useQuery, useSuspenseQuery } from '@tanstack/react-query'
@@ -118,10 +122,7 @@ function ChiefsPage() {
               }
             >
               <SelectTrigger
-                className={cn(
-                  'border-2',
-                  chiefType !== undefined ? activeClass : inactiveClass,
-                )}
+                className={cn('border-2', chiefType !== undefined ? activeClass : inactiveClass)}
               >
                 <SelectValue />
               </SelectTrigger>
@@ -177,13 +178,15 @@ function ChiefsPage() {
       <DataTable table={table} />
 
       {isAddModalOpen && (
-        <AddChiefModal
-          onClose={() => setIsAddModalOpen(false)}
-          onSuccess={() => {}}
-        />
+        <AddChiefModal onClose={() => setIsAddModalOpen(false)} onSuccess={() => {}} />
       )}
 
-      <AlertDialog open={deleteTarget !== null} onOpenChange={(open) => { if (!open) setDeleteTarget(null) }}>
+      <AlertDialog
+        open={deleteTarget !== null}
+        onOpenChange={(open) => {
+          if (!open) setDeleteTarget(null)
+        }}
+      >
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>Remove Chief Role</AlertDialogTitle>

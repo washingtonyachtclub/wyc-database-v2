@@ -62,10 +62,7 @@ function ClassTypesPage() {
       <DataTable table={table} />
 
       {isAddModalOpen && (
-        <AddClassTypeModal
-          onClose={() => setIsAddModalOpen(false)}
-          onSuccess={() => {}}
-        />
+        <AddClassTypeModal onClose={() => setIsAddModalOpen(false)} onSuccess={() => {}} />
       )}
 
       <ConfirmDialog
@@ -82,7 +79,8 @@ function ClassTypesPage() {
         description={
           <>
             <p className="mb-2">
-              Deleting <strong>{deleteTarget?.text}</strong> from the database is almost always the wrong thing to do.
+              Deleting <strong>{deleteTarget?.text}</strong> from the database is almost always the
+              wrong thing to do.
             </p>
             <p className="mb-2">
               If any lessons use this lesson type, those lessons will lose their type reference.

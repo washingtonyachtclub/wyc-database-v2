@@ -187,12 +187,19 @@ export const updateMember = createServerFn({ method: 'POST' })
   })
 
 export const renewMember = createServerFn({ method: 'POST' })
-  .inputValidator((input: { wycNumber: number; expireQtrIndex: number; sendEmail: boolean; formEmail: string }) => ({
-    wycNumber: Number(input.wycNumber),
-    expireQtrIndex: Number(input.expireQtrIndex),
-    sendEmail: input.sendEmail,
-    formEmail: input.formEmail,
-  }))
+  .inputValidator(
+    (input: {
+      wycNumber: number
+      expireQtrIndex: number
+      sendEmail: boolean
+      formEmail: string
+    }) => ({
+      wycNumber: Number(input.wycNumber),
+      expireQtrIndex: Number(input.expireQtrIndex),
+      sendEmail: input.sendEmail,
+      formEmail: input.formEmail,
+    }),
+  )
   .handler(async ({ data }) => {
     await requirePrivilege('db')
     try {
@@ -249,7 +256,13 @@ export const renewMember = createServerFn({ method: 'POST' })
         }
       }
 
-      return { success: true as const, wycNumber: data.wycNumber, emailSent, emailSimulated, emailAddress }
+      return {
+        success: true as const,
+        wycNumber: data.wycNumber,
+        emailSent,
+        emailSimulated,
+        emailAddress,
+      }
     } catch (error: any) {
       console.error('Failed to renew member:', error)
       throw new Error('Failed to renew member')
@@ -359,9 +372,7 @@ export const getDatabaseName = createServerFn({ method: 'GET' }).handler(async (
 
 export const getProcessedEntryIds = createServerFn({ method: 'GET' }).handler(async () => {
   await requirePrivilege('db', 'rtgs')
-  const rows = await db
-    .select({ entryId: processedFormEntries.entryId })
-    .from(processedFormEntries)
+  const rows = await db.select({ entryId: processedFormEntries.entryId }).from(processedFormEntries)
   return rows.map((r) => r.entryId)
 })
 

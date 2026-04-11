@@ -99,17 +99,26 @@ function LessonDetailPage() {
         <h2 className="text-lg font-semibold mb-2">
           Enrolled ({enrolledStudents.length}/{lesson.size})
         </h2>
-        <StudentList students={enrolledStudents} onRemove={handleRemove} emptyMessage="No students enrolled." />
+        <StudentList
+          students={enrolledStudents}
+          onRemove={handleRemove}
+          emptyMessage="No students enrolled."
+        />
       </section>
 
       <section>
-        <h2 className="text-lg font-semibold mb-2">
-          Waitlist ({waitlistedStudents.length})
-        </h2>
-        <StudentList students={waitlistedStudents} onRemove={handleRemove} emptyMessage="No students on waitlist." />
+        <h2 className="text-lg font-semibold mb-2">Waitlist ({waitlistedStudents.length})</h2>
+        <StudentList
+          students={waitlistedStudents}
+          onRemove={handleRemove}
+          emptyMessage="No students on waitlist."
+        />
       </section>
 
-      <AlertDialog open={!!studentToRemove} onOpenChange={(open) => !open && setStudentToRemove(null)}>
+      <AlertDialog
+        open={!!studentToRemove}
+        onOpenChange={(open) => !open && setStudentToRemove(null)}
+      >
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>Remove Student</AlertDialogTitle>
@@ -196,7 +205,9 @@ function StudentList({
         <div className="space-y-1">
           {students.map((student) => (
             <div key={student.wycNumber} className="text-sm flex items-center justify-between">
-              <span>{student.first} {student.last}</span>
+              <span>
+                {student.first} {student.last}
+              </span>
               <Button
                 type="button"
                 variant="ghost"
@@ -284,7 +295,12 @@ function LessonEditForm({ lesson }: { lesson: RichLesson }) {
         <form.AppField
           name="classTypeId"
           children={(field) => (
-            <field.GroupedSelectField label="Type" placeholder="Select type" groups={classTypeGroups} tooltip="Group headers match sections on the public lesson list" />
+            <field.GroupedSelectField
+              label="Type"
+              placeholder="Select type"
+              groups={classTypeGroups}
+              tooltip="Group headers match sections on the public lesson list"
+            />
           )}
         />
 

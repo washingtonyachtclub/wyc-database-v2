@@ -64,10 +64,7 @@ function BoatTypesPage() {
       <DataTable table={table} />
 
       {isAddModalOpen && (
-        <AddBoatTypeModal
-          onClose={() => setIsAddModalOpen(false)}
-          onSuccess={() => {}}
-        />
+        <AddBoatTypeModal onClose={() => setIsAddModalOpen(false)} onSuccess={() => {}} />
       )}
 
       <ConfirmDialog
@@ -84,11 +81,13 @@ function BoatTypesPage() {
         description={
           <>
             <p className="mb-2">
-              Deleting boat type <strong>{deleteTarget?.type}</strong> from the database is almost always the wrong thing to do.
+              Deleting boat type <strong>{deleteTarget?.type}</strong> from the database is almost
+              always the wrong thing to do.
             </p>
             <p className="mb-2">
-              Deleting an item from the database denies the fact that the item ever existed.
-              This could affect checkouts, historical data, and any other records that reference this boat type.
+              Deleting an item from the database denies the fact that the item ever existed. This
+              could affect checkouts, historical data, and any other records that reference this
+              boat type.
             </p>
             <p className="font-semibold">
               You should probably only do this if you just created it by mistake.

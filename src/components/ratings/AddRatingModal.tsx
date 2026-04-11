@@ -30,11 +30,7 @@ type AddRatingModalProps = {
   currentUserWycNumber: number
 }
 
-export function AddRatingModal({
-  onClose,
-  onSuccess,
-  currentUserWycNumber,
-}: AddRatingModalProps) {
+export function AddRatingModal({ onClose, onSuccess, currentUserWycNumber }: AddRatingModalProps) {
   const { data: ratingTypes = [] } = useQuery(getRatingTypesQueryOptions())
 
   const createMutation = useCreateRatingMutation({ onSuccess, onClose })
@@ -94,9 +90,7 @@ export function AddRatingModal({
 
           <form.AppField
             name="date"
-            children={(field) => (
-              <field.TextField label="Date" required type="date" />
-            )}
+            children={(field) => <field.TextField label="Date" required type="date" />}
           />
 
           <form.AppField
@@ -114,9 +108,7 @@ export function AddRatingModal({
 
           <form.AppField
             name="comments"
-            children={(field) => (
-              <field.TextAreaField label="Comments" className="md:col-span-2" />
-            )}
+            children={(field) => <field.TextAreaField label="Comments" className="md:col-span-2" />}
           />
         </div>
 

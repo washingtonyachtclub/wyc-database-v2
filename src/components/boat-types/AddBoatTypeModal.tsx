@@ -109,10 +109,7 @@ function FleetCombobox({
           <Button
             variant="outline"
             type="button"
-            className={cn(
-              'w-full justify-between font-normal',
-              !value && 'text-muted-foreground',
-            )}
+            className={cn('w-full justify-between font-normal', !value && 'text-muted-foreground')}
           >
             <span className="truncate">{value || 'Select or type a new fleet...'}</span>
             <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
@@ -121,7 +118,11 @@ function FleetCombobox({
 
         <PopoverContent className="w-[var(--radix-popover-trigger-width)] p-0" align="start">
           <Command shouldFilter={false}>
-            <CommandInput value={search} onValueChange={setSearch} placeholder="Search or type new..." />
+            <CommandInput
+              value={search}
+              onValueChange={setSearch}
+              placeholder="Search or type new..."
+            />
             <CommandList className="max-h-60">
               <CommandEmpty>No matching fleets.</CommandEmpty>
 

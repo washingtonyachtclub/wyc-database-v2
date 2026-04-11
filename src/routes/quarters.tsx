@@ -4,10 +4,7 @@ import type { QuarterTableMeta } from '@/components/quarters/columns'
 import { ConfirmDialog } from '@/components/ui/ConfirmDialog'
 import { Button } from '@/components/ui/button'
 import { DataTable } from '@/components/ui/DataTable'
-import {
-  getQuartersQueryOptions,
-  useDeleteQuarterMutation,
-} from '@/domains/quarters/query-options'
+import { getQuartersQueryOptions, useDeleteQuarterMutation } from '@/domains/quarters/query-options'
 import { requirePrivilegeForRoute } from '@/lib/route-guards'
 import { useSuspenseQuery } from '@tanstack/react-query'
 import { createFileRoute } from '@tanstack/react-router'
@@ -62,10 +59,7 @@ function QuartersPage() {
       <DataTable table={table} />
 
       {isAddModalOpen && (
-        <AddQuarterModal
-          onClose={() => setIsAddModalOpen(false)}
-          onSuccess={() => {}}
-        />
+        <AddQuarterModal onClose={() => setIsAddModalOpen(false)} onSuccess={() => {}} />
       )}
 
       <ConfirmDialog
@@ -82,11 +76,13 @@ function QuartersPage() {
         description={
           <>
             <p className="mb-2">
-              Deleting quarter <strong>{deleteTarget?.text}</strong> from the database is almost always the wrong thing to do.
+              Deleting quarter <strong>{deleteTarget?.text}</strong> from the database is almost
+              always the wrong thing to do.
             </p>
             <p className="mb-2">
-              If any lessons or member records reference this quarter, those records will lose their quarter reference.
-              This could affect lesson scheduling, member expiration tracking, and historical data.
+              If any lessons or member records reference this quarter, those records will lose their
+              quarter reference. This could affect lesson scheduling, member expiration tracking,
+              and historical data.
             </p>
             <p className="font-semibold">
               You should probably only do this if you just created it by mistake.

@@ -23,11 +23,7 @@ export function ErrorAlert({ error, action }: ErrorAlertProps) {
   if (!error) return null
 
   const timestamp = new Date().toLocaleString()
-  const report = [
-    `Time: ${timestamp}`,
-    `Page: ${location.pathname}`,
-    action && `Action: ${action}`,
-  ]
+  const report = [`Time: ${timestamp}`, `Page: ${location.pathname}`, action && `Action: ${action}`]
     .filter(Boolean)
     .join('\n')
 

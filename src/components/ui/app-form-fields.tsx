@@ -246,13 +246,7 @@ export function BooleanSelectField({
   )
 }
 
-export function CheckboxField({
-  label,
-  className,
-}: {
-  label: string
-  className?: string
-}) {
+export function CheckboxField({ label, className }: { label: string; className?: string }) {
   const field = useFieldContext<boolean>()
   return (
     <div className={cn('flex items-center gap-2', className)}>

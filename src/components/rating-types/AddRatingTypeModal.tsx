@@ -114,10 +114,7 @@ function TypeCombobox({
           <Button
             variant="outline"
             type="button"
-            className={cn(
-              'w-full justify-between font-normal',
-              !value && 'text-muted-foreground',
-            )}
+            className={cn('w-full justify-between font-normal', !value && 'text-muted-foreground')}
           >
             <span className="truncate">{value || 'Select or type a new type...'}</span>
             <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
@@ -126,7 +123,11 @@ function TypeCombobox({
 
         <PopoverContent className="w-[var(--radix-popover-trigger-width)] p-0" align="start">
           <Command shouldFilter={false}>
-            <CommandInput value={search} onValueChange={setSearch} placeholder="Search or type new..." />
+            <CommandInput
+              value={search}
+              onValueChange={setSearch}
+              placeholder="Search or type new..."
+            />
             <CommandList className="max-h-60">
               <CommandEmpty>No matching types.</CommandEmpty>
 
@@ -141,10 +142,7 @@ function TypeCombobox({
                   }}
                 >
                   <Check
-                    className={cn(
-                      'h-4 w-4 shrink-0',
-                      value === type ? 'opacity-100' : 'opacity-0',
-                    )}
+                    className={cn('h-4 w-4 shrink-0', value === type ? 'opacity-100' : 'opacity-0')}
                   />
                   {type}
                 </CommandItem>

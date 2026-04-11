@@ -1,14 +1,7 @@
 import { createServerFn } from '@tanstack/react-start'
 import { and, count, eq, gte, or } from 'drizzle-orm'
 import db from 'src/db/index'
-import {
-  lessonQuarter,
-  lessons,
-  officers,
-  posPrivMap,
-  privs,
-  wycDatabase,
-} from 'src/db/schema'
+import { lessonQuarter, lessons, officers, posPrivMap, privs, wycDatabase } from 'src/db/schema'
 import { hashPasswordArgon2, verifyPasswordDual } from '@/lib/auth/auth'
 import { isDevEnvironment } from '../env'
 import { hasPrivilege, type Privilege } from '../permissions'
@@ -175,56 +168,52 @@ export const loginServerFn = createServerFn({ method: 'POST' })
  * Logout server function
  * Deletes session and clears cookie
  */
-export const logoutServerFn = createServerFn({ method: 'POST' }).handler(
-  async () => {
-    try {
-      const session = await useAppSession()
-      await session.clear()
+export const logoutServerFn = createServerFn({ method: 'POST' }).handler(async () => {
+  try {
+    const session = await useAppSession()
+    await session.clear()
 
-      return {
-        success: true,
-        message: 'Logout successful',
-      } satisfies LogoutResponse
-    } catch (error: any) {
-      console.error('Logout error:', error)
-      return {
-        success: false,
-        message: 'An error occurred during logout',
-      } satisfies LogoutResponse
-    }
-  },
-)
+    return {
+      success: true,
+      message: 'Logout successful',
+    } satisfies LogoutResponse
+  } catch (error: any) {
+    console.error('Logout error:', error)
+    return {
+      success: false,
+      message: 'An error occurred during logout',
+    } satisfies LogoutResponse
+  }
+})
 
 /**
  * Get current user server function
  * Validates session and returns user info if authenticated
  */
-export const getCurrentUserServerFn = createServerFn({ method: 'GET' }).handler(
-  async () => {
-    try {
-      const session = await useAppSession()
-      const sessionData = session.data
+export const getCurrentUserServerFn = createServerFn({ method: 'GET' }).handler(async () => {
+  try {
+    const session = await useAppSession()
+    const sessionData = session.data
 
-      if (!sessionData.userId || !sessionData.user) {
-        return {
-          isValid: false,
-        } satisfies CurrentUserResponse
-      }
-
-      return {
-        isValid: true,
-        user: sessionData.user,
-        privileges: sessionData.privileges ?? [],
-        realPrivileges: sessionData.realIdentity?.privileges,
-      } satisfies CurrentUserResponse
-    } catch (error: any) {
-      console.error('Get current user error:', error)
+    if (!sessionData.userId || !sessionData.user) {
       return {
         isValid: false,
       } satisfies CurrentUserResponse
     }
-  },
-)
+
+    return {
+      isValid: true,
+      user: sessionData.user,
+      privileges: sessionData.privileges ?? [],
+      realPrivileges: sessionData.realIdentity?.privileges,
+    } satisfies CurrentUserResponse
+  } catch (error: any) {
+    console.error('Get current user error:', error)
+    return {
+      isValid: false,
+    } satisfies CurrentUserResponse
+  }
+})
 
 /**
  * DEV ONLY: Override the current session's privileges for testing RBAC.

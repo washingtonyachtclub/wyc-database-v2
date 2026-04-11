@@ -32,11 +32,7 @@ type LessonFormModalProps = {
   onSuccess: () => void
 }
 
-export function LessonFormModal({
-  onClose,
-  currentQuarter,
-  onSuccess,
-}: LessonFormModalProps) {
+export function LessonFormModal({ onClose, currentQuarter, onSuccess }: LessonFormModalProps) {
   const { data: quarters = [] } = useQuery(getQuartersQueryOptions())
   const { data: classTypes = [] } = useQuery(getClassTypesQueryOptions())
 

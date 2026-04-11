@@ -30,10 +30,7 @@ export type ChiefFilters = {
   showOutToSea?: boolean
 }
 
-export function withChiefFilters<T extends MySqlSelect>(
-  qb: T,
-  filters: ChiefFilters | undefined,
-) {
+export function withChiefFilters<T extends MySqlSelect>(qb: T, filters: ChiefFilters | undefined) {
   const conditions = [
     eq(posType.index, 3), // always: only chief positions
     eq(officers.active, 1), // always: only active officers

@@ -237,11 +237,7 @@ function LessonsPage() {
             >
               Test ErrorAlert
             </Button>
-            <Button
-              variant="destructive"
-              size="sm"
-              onClick={() => setTestBoom(true)}
-            >
+            <Button variant="destructive" size="sm" onClick={() => setTestBoom(true)}>
               Test Error Boundary
             </Button>
             {testError && (
@@ -272,7 +268,11 @@ function LessonsPage() {
         ) : (
           <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
             {myUpcoming.map((lesson) => (
-              <LessonCard key={lesson.index} lesson={lesson} onClick={() => goToLesson(lesson.index)} />
+              <LessonCard
+                key={lesson.index}
+                lesson={lesson}
+                onClick={() => goToLesson(lesson.index)}
+              />
             ))}
           </div>
         )}
@@ -290,7 +290,11 @@ function LessonsPage() {
                 <h3 className="text-lg font-semibold mb-2">Upcoming</h3>
                 <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
                   {otherUpcoming.map((lesson) => (
-                    <LessonCard key={lesson.index} lesson={lesson} onClick={() => goToLesson(lesson.index)} />
+                    <LessonCard
+                      key={lesson.index}
+                      lesson={lesson}
+                      onClick={() => goToLesson(lesson.index)}
+                    />
                   ))}
                 </div>
               </div>
@@ -300,7 +304,11 @@ function LessonsPage() {
                 <h3 className="text-lg font-semibold mb-2">Past</h3>
                 <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
                   {pastThisQuarter.map((lesson) => (
-                    <LessonCard key={lesson.index} lesson={lesson} onClick={() => goToLesson(lesson.index)} />
+                    <LessonCard
+                      key={lesson.index}
+                      lesson={lesson}
+                      onClick={() => goToLesson(lesson.index)}
+                    />
                   ))}
                 </div>
               </div>
@@ -317,7 +325,11 @@ function LessonsPage() {
         ) : (
           <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
             {futureLessons.map((lesson) => (
-              <LessonCard key={lesson.index} lesson={lesson} onClick={() => goToLesson(lesson.index)} />
+              <LessonCard
+                key={lesson.index}
+                lesson={lesson}
+                onClick={() => goToLesson(lesson.index)}
+              />
             ))}
           </div>
         )}

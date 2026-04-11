@@ -80,9 +80,7 @@ function SignedUpLessonCard({ lesson }: { lesson: SignedUpLesson }) {
         </h3>
         <span
           className={`inline-flex items-center rounded-full px-3 py-1 text-sm font-medium ${
-            isEnrolled
-              ? 'bg-green-100 text-green-800'
-              : 'bg-amber-100 text-amber-800'
+            isEnrolled ? 'bg-green-100 text-green-800' : 'bg-amber-100 text-amber-800'
           }`}
         >
           {isEnrolled ? 'Enrolled' : 'Waitlisted'}

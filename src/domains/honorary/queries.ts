@@ -32,10 +32,7 @@ export function withHonoraryFilters<T extends MySqlSelect>(
   qb: T,
   filters: HonoraryFilters | undefined,
 ) {
-  const conditions = [
-    eq(positions.index, 1030),
-    eq(officers.active, 1),
-  ]
+  const conditions = [eq(positions.index, 1030), eq(officers.active, 1)]
 
   if (!filters?.showOutToSea) {
     conditions.push(eq(wycDatabase.outToSea, 0))

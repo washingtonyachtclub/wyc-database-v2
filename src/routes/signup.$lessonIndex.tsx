@@ -25,9 +25,7 @@ export const Route = createFileRoute('/signup/$lessonIndex')({
 
 function SignupPage() {
   const { lessonIndex } = Route.useParams()
-  const { data: signupData } = useSuspenseQuery(
-    getLessonForSignupQueryOptions(Number(lessonIndex)),
-  )
+  const { data: signupData } = useSuspenseQuery(getLessonForSignupQueryOptions(Number(lessonIndex)))
   const enrollMutation = useEnrollInLessonMutation()
 
   if (!signupData) {
@@ -137,16 +135,8 @@ function SignupPage() {
 
         {/* Signup button */}
         {!isAlreadySignedUp && !enrollMutation.isSuccess && (
-          <Button
-            onClick={handleSignup}
-            disabled={enrollMutation.isPending}
-            className="w-full"
-          >
-            {enrollMutation.isPending
-              ? 'Signing up...'
-              : isFull
-                ? 'Join Waitlist'
-                : 'Sign Up'}
+          <Button onClick={handleSignup} disabled={enrollMutation.isPending} className="w-full">
+            {enrollMutation.isPending ? 'Signing up...' : isFull ? 'Join Waitlist' : 'Sign Up'}
           </Button>
         )}
 

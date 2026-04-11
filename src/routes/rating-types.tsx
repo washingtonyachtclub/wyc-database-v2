@@ -18,12 +18,7 @@ import { requirePrivilegeForRoute } from '@/lib/route-guards'
 import type { RatingType } from '@/domains/rating-types/schema'
 import { useSuspenseQuery } from '@tanstack/react-query'
 import { createFileRoute } from '@tanstack/react-router'
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from '@/components/ui/tooltip'
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip'
 import { Plus, X } from 'lucide-react'
 import { useMemo, useState } from 'react'
 
@@ -94,7 +89,9 @@ function RatingTypesPage() {
                             <TableCell className="py-1.5 px-2 text-sm">
                               <button
                                 className="text-muted-foreground hover:text-destructive"
-                                onClick={() => setDeleteTarget({ index: item.index, text: item.text })}
+                                onClick={() =>
+                                  setDeleteTarget({ index: item.index, text: item.text })
+                                }
                               >
                                 <X className="h-4 w-4" />
                               </button>
@@ -126,10 +123,7 @@ function RatingTypesPage() {
       </div>
 
       {isAddModalOpen && (
-        <AddRatingTypeModal
-          onClose={() => setIsAddModalOpen(false)}
-          onSuccess={() => {}}
-        />
+        <AddRatingTypeModal onClose={() => setIsAddModalOpen(false)} onSuccess={() => {}} />
       )}
 
       <ConfirmDialog
@@ -146,7 +140,8 @@ function RatingTypesPage() {
         description={
           <>
             <p className="mb-2">
-              Deleting rating type <strong>{deleteTarget?.text}</strong> from the database is almost always the wrong thing to do.
+              Deleting rating type <strong>{deleteTarget?.text}</strong> from the database is almost
+              always the wrong thing to do.
             </p>
             <p className="mb-2">
               If any members have this rating, those rating records will lose their type reference.

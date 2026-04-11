@@ -45,4 +45,3 @@ export function hasPrivilege(
   if (required.length === 0) return true
   return required.some((p) => userPrivileges.includes(p))
 }
-

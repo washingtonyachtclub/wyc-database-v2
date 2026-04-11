@@ -17,7 +17,10 @@ import { Plus } from 'lucide-react'
 import { DataTable } from '@/components/ui/DataTable'
 import { Label } from '@/components/ui/label'
 import type { HonoraryFilters } from '@/domains/honorary/queries'
-import { getHonoraryQueryOptions, useDeleteHonoraryMutation } from '@/domains/honorary/query-options'
+import {
+  getHonoraryQueryOptions,
+  useDeleteHonoraryMutation,
+} from '@/domains/honorary/query-options'
 import { requirePrivilegeForRoute } from '@/lib/route-guards'
 import { useSuspenseQuery } from '@tanstack/react-query'
 import { createFileRoute, useNavigate } from '@tanstack/react-router'
@@ -124,18 +127,21 @@ function HonoraryPage() {
       <DataTable table={table} />
 
       {isAddModalOpen && (
-        <AddHonoraryModal
-          onClose={() => setIsAddModalOpen(false)}
-          onSuccess={() => {}}
-        />
+        <AddHonoraryModal onClose={() => setIsAddModalOpen(false)} onSuccess={() => {}} />
       )}
 
-      <AlertDialog open={deleteTarget !== null} onOpenChange={(open) => { if (!open) setDeleteTarget(null) }}>
+      <AlertDialog
+        open={deleteTarget !== null}
+        onOpenChange={(open) => {
+          if (!open) setDeleteTarget(null)
+        }}
+      >
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>Remove Honorary Member</AlertDialogTitle>
             <AlertDialogDescription>
-              Are you sure you want to remove <strong>{deleteTarget?.memberName}</strong> from honorary members? This action cannot be undone.
+              Are you sure you want to remove <strong>{deleteTarget?.memberName}</strong> from
+              honorary members? This action cannot be undone.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>

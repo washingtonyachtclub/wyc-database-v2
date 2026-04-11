@@ -232,10 +232,7 @@ export const officers = mysqlTable(
     position: int(),
     active: tinyint().default(1).notNull(),
   },
-  (table) => [
-    primaryKey({ columns: [table.index] }),
-    unique('_index').on(table.index),
-  ],
+  (table) => [primaryKey({ columns: [table.index] }), unique('_index').on(table.index)],
 )
 
 export const options = mysqlTable(

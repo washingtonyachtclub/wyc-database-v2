@@ -11,12 +11,8 @@ export function hashPasswordLegacy(password: string): string {
   return `*${secondHash.toUpperCase()}`
 }
 
-export function verifyPasswordLegacy(
-  password: string,
-  storedHash: string,
-): boolean {
-  const clean = (h: string) =>
-    (h.startsWith('*') ? h.slice(1) : h).toUpperCase()
+export function verifyPasswordLegacy(password: string, storedHash: string): boolean {
+  const clean = (h: string) => (h.startsWith('*') ? h.slice(1) : h).toUpperCase()
   return clean(hashPasswordLegacy(password)) === clean(storedHash)
 }
 
@@ -26,10 +22,7 @@ export async function hashPasswordArgon2(password: string): Promise<string> {
   return argon2.hash(password, { type: argon2.argon2id })
 }
 
-export async function verifyPasswordArgon2(
-  password: string,
-  storedHash: string,
-): Promise<boolean> {
+export async function verifyPasswordArgon2(password: string, storedHash: string): Promise<boolean> {
   return argon2.verify(storedHash, password)
 }
 

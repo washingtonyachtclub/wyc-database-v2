@@ -24,7 +24,12 @@ export type SendEmailResult = {
   simulated: boolean
 }
 
-export async function sendEmail({ to, subject, text, idempotencyKey }: SendEmailParams): Promise<SendEmailResult> {
+export async function sendEmail({
+  to,
+  subject,
+  text,
+  idempotencyKey,
+}: SendEmailParams): Promise<SendEmailResult> {
   const simulated = isDevEnvironment()
   const actualTo = simulated ? DEV_RECIPIENT : to
   const actualKey = simulated ? `dev/${idempotencyKey}` : idempotencyKey

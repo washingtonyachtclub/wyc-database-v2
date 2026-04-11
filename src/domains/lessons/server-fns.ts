@@ -1,6 +1,11 @@
 import { createServerFn } from '@tanstack/react-start'
 import { and, asc, count, eq, gte, inArray, or } from 'drizzle-orm'
-import { baseLessonQuery, baseSignedUpWithDetailsQuery, lessonSortColumns, withLessonFilters } from '@/domains/lessons/queries'
+import {
+  baseLessonQuery,
+  baseSignedUpWithDetailsQuery,
+  lessonSortColumns,
+  withLessonFilters,
+} from '@/domains/lessons/queries'
 import type { LessonFilters } from '@/domains/lessons/filter-types'
 import type { LessonInsert, LessonStudent, SignedUpLesson } from '@/domains/lessons/schema'
 import { fromLessonInsert, toRichLesson } from '@/domains/lessons/schema'
@@ -9,7 +14,11 @@ import { enrollmentStatus, splitEnrollment } from 'src/db/signup-utils'
 import { withPagination, withSorting } from 'src/db/query-helpers'
 import { lessonQuarter, lessons, signups, wycDatabase } from 'src/db/schema'
 import db from '@/db/index'
-import { requireAuth, requireInstructorOrPrivilege, requirePrivilege } from '@/lib/auth/auth-middleware'
+import {
+  requireAuth,
+  requireInstructorOrPrivilege,
+  requirePrivilege,
+} from '@/lib/auth/auth-middleware'
 import { sendEmail } from '@/lib/email'
 import { lessonEnrolledEmail, lessonWaitlistedEmail } from '@/lib/email-templates'
 import type { LessonEmailInfo } from '@/lib/email-templates'
@@ -130,8 +139,10 @@ export const getLessonById = createServerFn({ method: 'GET' })
       email: s.email || '<Unknown>',
     }))
 
-    const { enrolled: enrolledStudents, waitlisted: waitlistedStudents } =
-      splitEnrollment(lessonStudents, lesson.size)
+    const { enrolled: enrolledStudents, waitlisted: waitlistedStudents } = splitEnrollment(
+      lessonStudents,
+      lesson.size,
+    )
 
     return { lesson, enrolledStudents, waitlistedStudents }
   })

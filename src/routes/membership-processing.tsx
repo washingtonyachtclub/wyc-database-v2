@@ -12,11 +12,7 @@ import {
   getProcessedEntryIdsQueryOptions,
 } from '@/domains/members/query-options'
 import { getQuartersQueryOptions } from '@/domains/quarters/query-options'
-import {
-  createMember,
-  markEntryProcessed,
-  renewMember,
-} from '@/domains/members/server-fns'
+import { createMember, markEntryProcessed, renewMember } from '@/domains/members/server-fns'
 import { isDevEnvironment } from '@/lib/env'
 import { newMemberEmailFallback, returningMemberEmail } from '@/lib/email-templates'
 import { cn } from '@/lib/utils'
@@ -88,7 +84,13 @@ type PageState =
       emailSimulated: boolean
     }
   | { kind: 'OldMember'; member: OldMember }
-  | { kind: 'OldMemberRenewed'; member: OldMember; emailSent: boolean; emailSimulated: boolean; emailAddress: string | null }
+  | {
+      kind: 'OldMemberRenewed'
+      member: OldMember
+      emailSent: boolean
+      emailSimulated: boolean
+      emailAddress: string | null
+    }
   | { kind: 'Error'; error: ParseError }
 
 const CATEGORY_VALUES = [

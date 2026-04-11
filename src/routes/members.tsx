@@ -8,10 +8,7 @@ import { PaginationControls } from '../components/members/PaginationControls'
 import { DataTable } from '../components/ui/DataTable'
 import type { MemberFilters } from '@/domains/members/filter-types'
 import { requirePrivilegeForRoute } from '../lib/route-guards'
-import {
-  getCategoriesQueryOptions,
-  getMembersQueryOptions,
-} from '@/domains/members/query-options'
+import { getCategoriesQueryOptions, getMembersQueryOptions } from '@/domains/members/query-options'
 import { getQuartersQueryOptions } from '@/domains/quarters/query-options'
 
 // ===== ROUTE DEFINITION =====

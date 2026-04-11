@@ -46,9 +46,7 @@ export const getQuarterChangeImpact = createServerFn({ method: 'GET' })
     }
 
     const forward = newQuarter > currentQuarter
-    const [low, high] = forward
-      ? [currentQuarter, newQuarter]
-      : [newQuarter, currentQuarter]
+    const [low, high] = forward ? [currentQuarter, newQuarter] : [newQuarter, currentQuarter]
 
     const [memberResult] = await db
       .select({ count: count() })
@@ -81,10 +79,7 @@ export const updateCurrentQuarter = createServerFn({ method: 'POST' })
     const previousQuarter = quarterRow[0].quarter
 
     try {
-      await db
-        .update(lessonQuarter)
-        .set({ quarter: newQuarter })
-        .where(eq(lessonQuarter.index, 1))
+      await db.update(lessonQuarter).set({ quarter: newQuarter }).where(eq(lessonQuarter.index, 1))
       return { previousQuarter, newQuarter }
     } catch (error) {
       console.error('Failed to update current quarter:', error)

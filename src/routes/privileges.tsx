@@ -23,7 +23,11 @@ import {
   SelectValue,
 } from '@/components/ui/select'
 import type { PrivilegeFilters } from '@/domains/privileges/queries'
-import { getPrivilegesQueryOptions, getPrivilegeTypesQueryOptions, useDeletePrivilegeMutation } from '@/domains/privileges/query-options'
+import {
+  getPrivilegesQueryOptions,
+  getPrivilegeTypesQueryOptions,
+  useDeletePrivilegeMutation,
+} from '@/domains/privileges/query-options'
 import { requirePrivilegeForRoute } from '@/lib/route-guards'
 import { cn } from '@/lib/utils'
 import { useQuery, useSuspenseQuery } from '@tanstack/react-query'
@@ -157,13 +161,15 @@ function PrivilegesPage() {
       <DataTable table={table} />
 
       {isAddModalOpen && (
-        <AddPrivilegeModal
-          onClose={() => setIsAddModalOpen(false)}
-          onSuccess={() => {}}
-        />
+        <AddPrivilegeModal onClose={() => setIsAddModalOpen(false)} onSuccess={() => {}} />
       )}
 
-      <AlertDialog open={deleteTarget !== null} onOpenChange={(open) => { if (!open) setDeleteTarget(null) }}>
+      <AlertDialog
+        open={deleteTarget !== null}
+        onOpenChange={(open) => {
+          if (!open) setDeleteTarget(null)
+        }}
+      >
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>Remove Privilege</AlertDialogTitle>

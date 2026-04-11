@@ -14,9 +14,7 @@ export function MemberRatingsGivenSection({
   title: string
   action?: ReactNode
 }) {
-  const { data: ratings } = useSuspenseQuery(
-    getMemberRatingsGivenQueryOptions(wycNumber, since),
-  )
+  const { data: ratings } = useSuspenseQuery(getMemberRatingsGivenQueryOptions(wycNumber, since))
 
   return (
     <div>

@@ -120,15 +120,25 @@ function MemberDetailPage() {
       <Suspense fallback={<p className="text-muted-foreground">Loading...</p>}>
         <MemberLessonsSection
           title={`Lessons Taught (${showAllLessonsTaught ? 'All Time' : 'Past 12 Months'})`}
-          queryOptions={getMemberLessonsTaughtQueryOptions(member.wycNumber, showAllLessonsTaught ? undefined : since)}
-          action={<ShowAllToggle showAll={showAllLessonsTaught} onToggle={setShowAllLessonsTaught} />}
+          queryOptions={getMemberLessonsTaughtQueryOptions(
+            member.wycNumber,
+            showAllLessonsTaught ? undefined : since,
+          )}
+          action={
+            <ShowAllToggle showAll={showAllLessonsTaught} onToggle={setShowAllLessonsTaught} />
+          }
         />
       </Suspense>
       <Suspense fallback={<p className="text-muted-foreground">Loading...</p>}>
         <MemberLessonsSection
           title={`Lessons Signed Up For (${showAllLessonsSignedUp ? 'All Time' : 'Past 12 Months'})`}
-          queryOptions={getMemberLessonsSignedUpQueryOptions(member.wycNumber, showAllLessonsSignedUp ? undefined : since)}
-          action={<ShowAllToggle showAll={showAllLessonsSignedUp} onToggle={setShowAllLessonsSignedUp} />}
+          queryOptions={getMemberLessonsSignedUpQueryOptions(
+            member.wycNumber,
+            showAllLessonsSignedUp ? undefined : since,
+          )}
+          action={
+            <ShowAllToggle showAll={showAllLessonsSignedUp} onToggle={setShowAllLessonsSignedUp} />
+          }
         />
       </Suspense>
       <Suspense fallback={<p className="text-muted-foreground">Loading...</p>}>
@@ -150,7 +160,8 @@ function MemberExpireQuarter({ expireQtrIndex }: { expireQtrIndex: number }) {
   const quarterLabel =
     quarters.find((q) => q.index === expireQtrIndex)?.school || `Quarter ${expireQtrIndex}`
 
-  const isActive = currentQuarter != null ? isMembershipActive(expireQtrIndex, currentQuarter) : null
+  const isActive =
+    currentQuarter != null ? isMembershipActive(expireQtrIndex, currentQuarter) : null
 
   return (
     <p
@@ -161,7 +172,9 @@ function MemberExpireQuarter({ expireQtrIndex }: { expireQtrIndex: number }) {
         isActive === null && 'text-muted-foreground',
       )}
     >
-      {isActive === false ? `Membership expired: ${quarterLabel}` : `Membership active through: ${quarterLabel}`}
+      {isActive === false
+        ? `Membership expired: ${quarterLabel}`
+        : `Membership active through: ${quarterLabel}`}
     </p>
   )
 }

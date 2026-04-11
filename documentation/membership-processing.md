@@ -35,9 +35,9 @@ Expiration quarters are resolved dynamically by matching the membership duration
 
 ## Key files
 
-| File | Purpose |
-|------|---------|
+| File                                   | Purpose                                                   |
+| -------------------------------------- | --------------------------------------------------------- |
 | `src/routes/membership-processing.tsx` | The membership processing page (parsing, UI, batch logic) |
-| `src/domains/members/server-fns.ts` | `createMember` and `renewMember` server functions |
-| `src/lib/email-templates.ts` | Welcome and renewal email templates |
-| `src/db/membership-utils.ts` | `isMembershipActive()` helper |
+| `src/domains/members/server-fns.ts`    | `createMember` and `renewMember` server functions         |
+| `src/lib/email-templates.ts`           | Welcome and renewal email templates                       |
+| `src/db/membership-utils.ts`           | `isMembershipActive()` helper                             |

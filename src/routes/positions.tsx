@@ -96,10 +96,7 @@ function PositionsPage() {
       <DataTable table={table} />
 
       {isAddModalOpen && (
-        <AddPositionModal
-          onClose={() => setIsAddModalOpen(false)}
-          onSuccess={() => {}}
-        />
+        <AddPositionModal onClose={() => setIsAddModalOpen(false)} onSuccess={() => {}} />
       )}
 
       <ConfirmDialog
@@ -116,13 +113,13 @@ function PositionsPage() {
         description={
           <>
             <p className="mb-2">
-              Deleting position <strong>{deleteTarget?.name}</strong> from the database
-              is almost always the wrong thing to do.
+              Deleting position <strong>{deleteTarget?.name}</strong> from the database is almost
+              always the wrong thing to do.
             </p>
             <p className="mb-2">
-              Deleting a position denies the fact that it ever existed. This could affect
-              officer records, privilege mappings, and any other data that references this
-              position. Consider marking it inactive instead.
+              Deleting a position denies the fact that it ever existed. This could affect officer
+              records, privilege mappings, and any other data that references this position.
+              Consider marking it inactive instead.
             </p>
             <p className="font-semibold">
               You should probably only do this if you just created it by mistake.

@@ -1,17 +1,19 @@
 import { eq } from 'drizzle-orm'
 import { createServerFn } from '@tanstack/react-start'
 import db from 'src/db'
-import { baseHonoraryQuery, type HonoraryFilters, withHonoraryFilters } from '@/domains/honorary/queries'
+import {
+  baseHonoraryQuery,
+  type HonoraryFilters,
+  withHonoraryFilters,
+} from '@/domains/honorary/queries'
 import { toHonoraryRow } from '@/domains/honorary/schema'
 import { officers } from 'src/db/schema'
 import { requirePrivilege } from '@/lib/auth/auth-middleware'
 
 export const getHonoraryTable = createServerFn({ method: 'GET' })
-  .inputValidator(
-    (input: { filters?: HonoraryFilters }) => ({
-      filters: input.filters,
-    }),
-  )
+  .inputValidator((input: { filters?: HonoraryFilters }) => ({
+    filters: input.filters,
+  }))
   .handler(async ({ data }) => {
     await requirePrivilege('db')
     try {
