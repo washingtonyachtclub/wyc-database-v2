@@ -10,6 +10,9 @@ import { withPagination, withSorting } from 'src/db/query-helpers'
 import { lessonQuarter, lessons, signups, wycDatabase } from 'src/db/schema'
 import db from '@/db/index'
 import { requireAuth, requireInstructorOrPrivilege, requirePrivilege } from '@/lib/auth/auth-middleware'
+import { sendEmail } from '@/lib/email'
+import { lessonEnrolledEmail, lessonWaitlistedEmail } from '@/lib/email-templates'
+import type { LessonEmailInfo } from '@/lib/email-templates'
 
 export const getPublicLessons = createServerFn({ method: 'GET' }).handler(async () => {
   // No auth required — this is the public lesson list for the WordPress iframe
@@ -267,19 +270,20 @@ export const enrollInLesson = createServerFn({ method: 'POST' })
     const userId = await requireAuth()
 
     try {
-      // Fetch lesson
-      const [lessonRow] = await db
-        .select({ index: lessons.index, size: lessons.size })
-        .from(lessons)
-        .where(eq(lessons.index, lessonIndex))
-        .limit(1)
-
+      // Fetch lesson (rich query for email template)
+      const [lessonRow] = await baseLessonQuery().where(eq(lessons.index, lessonIndex))
       if (!lessonRow) throw new Error('Lesson not found')
+      const lesson = toRichLesson(lessonRow)
 
       // Membership expiration check
       const currentQuarter = await getCurrentQuarter()
       const [member] = await db
-        .select({ expireQtrIndex: wycDatabase.expireQtrIndex })
+        .select({
+          expireQtrIndex: wycDatabase.expireQtrIndex,
+          first: wycDatabase.first,
+          last: wycDatabase.last,
+          email: wycDatabase.email,
+        })
         .from(wycDatabase)
         .where(eq(wycDatabase.wycNumber, userId))
         .limit(1)
@@ -311,9 +315,57 @@ export const enrollInLesson = createServerFn({ method: 'POST' })
         .orderBy(asc(signups.index))
 
       const position = allSignups.findIndex((s) => s.student === userId)
-      const status = enrollmentStatus(position, lessonRow.size ?? 0)
+      const status = enrollmentStatus(position, lesson.size)
 
-      // TODO: Send confirmation email (enrolled vs waitlisted)
+      // Send confirmation email (fire-and-forget — don't fail signup on email error)
+      try {
+        const instructorIds = [lesson.instructor1, lesson.instructor2].filter(
+          (id): id is number => id != null && id !== 0,
+        )
+        const instructorEmails =
+          instructorIds.length > 0
+            ? await db
+                .select({ wycNumber: wycDatabase.wycNumber, email: wycDatabase.email })
+                .from(wycDatabase)
+                .where(inArray(wycDatabase.wycNumber, instructorIds))
+            : []
+        const instructorEmailMap = new Map(
+          instructorEmails.map((i) => [i.wycNumber, i.email ?? '']),
+        )
+
+        const studentName = `${member.first ?? ''} ${member.last ?? ''}`.trim() || 'Member'
+        const lessonEmailInfo: LessonEmailInfo = {
+          type: lesson.type,
+          subtype: lesson.subtype,
+          day: lesson.day,
+          time: lesson.time,
+          dates: lesson.dates,
+          instructor1Name: lesson.instructor1Name,
+          instructor1Email: instructorEmailMap.get(lesson.instructor1) ?? '',
+          instructor2Name: lesson.instructor2Name,
+          instructor2Email: lesson.instructor2
+            ? (instructorEmailMap.get(lesson.instructor2) ?? '')
+            : '',
+        }
+
+        const emailText =
+          status === 'enrolled'
+            ? lessonEnrolledEmail(studentName, lessonEmailInfo)
+            : lessonWaitlistedEmail(studentName, lessonEmailInfo)
+        const emailSubject =
+          status === 'enrolled'
+            ? 'WYC lesson enrollment confirmation'
+            : 'WYC lesson waitlist notification'
+
+        await sendEmail({
+          to: member.email ?? '',
+          subject: emailSubject,
+          text: emailText,
+          idempotencyKey: `enroll/${lessonIndex}/${userId}`,
+        })
+      } catch (emailError) {
+        console.error('Failed to send enrollment email:', emailError)
+      }
 
       return { success: true as const, status }
     } catch (error: any) {

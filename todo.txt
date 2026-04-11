@@ -8,7 +8,6 @@
 - replace old checkout tool
   - good mobile UX
 - self-unenrollment from lessons
-- auto waitlist handling with email notifications?
 
 - data tables:
   - boat checkouts
@@ -19,9 +18,12 @@
 - membership renewal through database
   - automated dues exemption using positions table? (requires data cleanup)
   - switch to stripe?
+- lessons page: collapse lessons with same name (Intro to Keelboats cluttering lesson cards)
+  - generally better UI for current quarter lessons (display by date, row view instead of cards?)
 
 # Less Important
 - better ratings filtering (find all members with *at least* X rating, more complex logic like ANDs and ORs)
+- auto send email when off waitlist
 - LLM prompt -> filter parameters / direct read query on DB
 - add a higher level db permission? For managing who gets permissions
 - dev tool: indicator for last prod -> db sync
