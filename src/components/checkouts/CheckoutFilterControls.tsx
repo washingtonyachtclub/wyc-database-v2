@@ -75,9 +75,7 @@ export function CheckoutFilterControls({
           <Label className="mb-1">Fleet</Label>
           <Select
             value={fleet ?? ALL}
-            onValueChange={(value) =>
-              onFilterChange({ fleet: value === ALL ? undefined : value })
-            }
+            onValueChange={(value) => onFilterChange({ fleet: value === ALL ? undefined : value })}
           >
             <SelectTrigger
               className={cn('border-2 w-40', fleet !== undefined ? activeClass : inactiveClass)}
@@ -99,9 +97,7 @@ export function CheckoutFilterControls({
           <MemberCombobox
             label="Member"
             value={memberWycNumber ?? null}
-            onChange={(wycNumber) =>
-              onFilterChange({ memberWycNumber: wycNumber ?? undefined })
-            }
+            onChange={(wycNumber) => onFilterChange({ memberWycNumber: wycNumber ?? undefined })}
             placeholder="Filter by member..."
           />
         </div>

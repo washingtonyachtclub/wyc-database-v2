@@ -31,7 +31,17 @@ export const Route = createFileRoute('/checkouts')({
     requirePrivilegeForRoute(context, '/checkouts')
   },
   loaderDeps: ({
-    search: { pageIndex, pageSize, boatId, fleet, memberWycNumber, since, until, sortColumn, sortDesc },
+    search: {
+      pageIndex,
+      pageSize,
+      boatId,
+      fleet,
+      memberWycNumber,
+      since,
+      until,
+      sortColumn,
+      sortDesc,
+    },
   }) => {
     const filters: CheckoutFilters | undefined =
       boatId !== undefined ||
