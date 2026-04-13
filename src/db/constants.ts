@@ -18,6 +18,10 @@ export const OFFICER_PAGE_TYPES = [1, 2, 5] as const
  */
 export const LESSON_CATEGORIES = [
   {
+    label: 'Dinghy Sailing',
+    typeIds: [10],
+  },
+  {
     label: 'Novice Dinghy',
     typeIds: [1, 2], // NOV Dinghy Weekday, NOV Dinghy Weekend
   },
@@ -40,10 +44,6 @@ export const LESSON_CATEGORIES = [
   {
     label: 'Specialty',
     typeIds: [5],
-  },
-  {
-    label: 'Dinghy Sailing',
-    typeIds: [10],
   },
   {
     label: 'Windsurfing',

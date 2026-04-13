@@ -127,7 +127,7 @@ export type LessonEmailInfo = {
 
 function formatLessonInfo(lesson: LessonEmailInfo): string {
   const lines = [
-    `Class: ${lesson.type} — ${lesson.subtype}`,
+    `Class: ${lesson.subtype}`,
     `Day: ${lesson.day}`,
     `Time: ${lesson.time}`,
     `Dates: ${lesson.dates}`,
@@ -161,7 +161,7 @@ If you need to drop this class, please notify us as soon as possible at contact@
 
 Your instructor should contact you before your first class to tell you where to go and what to bring. In general, dinghy, catamaran, and keelboat classes meet at the Waterfront Activities Center near the canoe rentals, and windsurfing classes meet at Sail Sand Point. Be prepared to get wet — wear non-cotton clothing and bring a change of clothes.
 
-See your signed-up lessons at database.washingtonyachtclub.org`
+View your upcoming lessons at database.washingtonyachtclub.org`
 }
 
 export function lessonWaitlistedEmail(studentName: string, lesson: LessonEmailInfo): string {
@@ -175,5 +175,5 @@ If enough students drop the class, you will automatically be enrolled.
 
 If you want to drop from the waitlist, please notify us at contact@washingtonyachtclub.org.
 
-See your signed-up lessons at database.washingtonyachtclub.org`
+View your upcoming lessons at database.washingtonyachtclub.org`
 }
