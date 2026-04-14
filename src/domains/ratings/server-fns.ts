@@ -68,7 +68,9 @@ export const getRatingById = createServerFn({ method: 'GET' })
 export const getRatingTypes = createServerFn({ method: 'GET' }).handler(async () => {
   await requirePrivilege('rtgs')
   try {
-    return await db.select({ index: ratings.index, text: ratings.text }).from(ratings)
+    return await db
+      .select({ index: ratings.index, text: ratings.text, type: ratings.type })
+      .from(ratings)
   } catch (error) {
     console.error('Failed to fetch rating types:', error)
     throw new Error('Failed to fetch rating types')

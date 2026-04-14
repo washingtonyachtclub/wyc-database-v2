@@ -107,6 +107,20 @@ const MEMBERSHIP_STATUS_VALUES = [
   'Previous member looking to rejoin',
 ] as const
 
+function NameMismatchActions({
+  member,
+  onAcknowledge,
+}: {
+  member: OldMember
+  onAcknowledge: (member: OldMember) => void
+}) {
+  return (
+    <div className="mt-2">
+      <Button onClick={() => onAcknowledge(member)}>Acknowledged</Button>
+    </div>
+  )
+}
+
 function MembershipProcessingPage() {
   const { data: allMembers } = useQuery(getAllMembersLiteQueryOptions())
   const { data: currentQuarter } = useQuery(getCurrentQuarterQueryOptions())
@@ -763,15 +777,10 @@ function MembershipProcessingPage() {
         <>
           <p className="mt-4 text-red-600">{memberState.error.message}</p>
           {memberState.error.code === 'NAME_MISMATCH' && (
-            <div className="mt-2">
-              <Button
-                onClick={() =>
-                  setMemberState({ kind: 'OldMember', member: memberState.error.member })
-                }
-              >
-                Acknowledged
-              </Button>
-            </div>
+            <NameMismatchActions
+              member={memberState.error.member}
+              onAcknowledge={(member) => setMemberState({ kind: 'OldMember', member })}
+            />
           )}
           {memberState.error.code === 'MISSING_WYC_NUMBER' && (
             <div className="mt-4">

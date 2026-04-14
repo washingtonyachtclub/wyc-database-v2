@@ -50,9 +50,7 @@ export function SidebarNav({ onNavigate }: { onNavigate?: () => void }) {
 
   const linkClass = (isActive: boolean) =>
     `block px-4 py-2 rounded-md transition-colors ${
-      isActive
-        ? 'bg-primary/10 text-primary font-semibold'
-        : 'hover:bg-primary/5 text-foreground'
+      isActive ? 'bg-primary/10 text-primary font-semibold' : 'hover:bg-primary/5 text-foreground'
     }`
 
   return (
@@ -69,16 +67,10 @@ export function SidebarNav({ onNavigate }: { onNavigate?: () => void }) {
           >
             My Profile
           </Link>
-          <Link
-            to="/my-lessons"
-            className={linkClass(location.pathname === '/my-lessons')}
-          >
+          <Link to="/my-lessons" className={linkClass(location.pathname === '/my-lessons')}>
             My Lessons
           </Link>
-          <Link
-            to="/set-password"
-            className={linkClass(location.pathname === '/set-password')}
-          >
+          <Link to="/set-password" className={linkClass(location.pathname === '/set-password')}>
             Set Password
           </Link>
         </>

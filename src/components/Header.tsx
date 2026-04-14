@@ -11,13 +11,7 @@ import { AdminContactModal } from './AdminContactModal'
 import { DevPrivilegeEmulator } from './DevPrivilegeEmulator'
 import { SidebarNav } from './Sidebar'
 import { Button } from './ui/button'
-import {
-  Sheet,
-  SheetContent,
-  SheetHeader,
-  SheetTitle,
-  SheetTrigger,
-} from './ui/sheet'
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from './ui/sheet'
 
 const isDevApp = isDevEnvironment()
 
