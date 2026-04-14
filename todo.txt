@@ -3,7 +3,6 @@
   - good mobile UX
 - self-unenrollment from lessons
 - phone number login (easy for forgot password at docks and checking out a boat moments)
-- change calendarDate field on lessons to use last date of lesson (in progress lessons showing as past)  
 
 - tools
   - membership statistics

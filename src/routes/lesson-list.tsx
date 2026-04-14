@@ -50,14 +50,18 @@ function LessonListPage() {
   ]
 
   return (
-    <div style={styles.container}>
+    <div className="mx-auto max-w-[900px] px-4 py-2.5 font-[Verdana,Geneva,sans-serif] text-sm text-[#444]">
       {sections.map((section, i) => (
         <div key={section.label}>
-          {i > 0 && <hr style={styles.hr} />}
-          <div style={styles.section}>
-            <h2 style={styles.sectionTitle}>{section.label}</h2>
+          {i > 0 && <hr className="my-6 border-t border-[#b0c4d8]" />}
+          <div className="mb-2">
+            <h2 className="mb-2 font-[Verdana,Geneva,sans-serif] text-2xl font-bold text-[#3c0f53]">
+              {section.label}
+            </h2>
             {SECTION_DESCRIPTIONS[section.label] && (
-              <p style={styles.sectionDesc}>{SECTION_DESCRIPTIONS[section.label]}</p>
+              <p className="mb-4 text-sm leading-relaxed text-[#444]">
+                {SECTION_DESCRIPTIONS[section.label]}
+              </p>
             )}
             {section.lessons.map((entry) => (
               <LessonCard key={entry.lesson.index} entry={entry} />
@@ -68,62 +72,66 @@ function LessonListPage() {
     </div>
   )
 }
-
 function LessonCard({ entry }: { entry: PublicLesson }) {
   const { lesson, enrolledCount } = entry
   const isFull = lesson.size > 0 && enrolledCount >= lesson.size
   const hasTwo = !!lesson.instructor2Name
 
   return (
-    <div style={styles.card}>
-      <table style={styles.cardTable}>
-        <tbody>
-          <tr>
-            {/* Left column: title, day/dates, time */}
-            <td style={{ ...styles.cardCell, width: '35%' }}>
-              <div style={styles.className}>{lesson.subtype}</div>
-              <div style={styles.classInfo}>
-                {lesson.day} {lesson.dates}
-              </div>
-              {lesson.time && <div style={styles.classInfo}>{lesson.time}</div>}
-            </td>
+    <div className="mb-4 rounded-sm border border-[#C0C0C0] bg-[#E8F6FB]">
+      {/* Desktop: single row, Mobile: stacked */}
+      <div className="flex flex-col md:flex-row md:items-start">
+        {/* Title, day/dates, time */}
+        <div className="px-3 pt-2.5 pb-1 md:w-[35%] md:py-2.5">
+          <div className="mb-1 text-base font-bold text-[#444]">{lesson.subtype}</div>
+          <div className="text-[13px] leading-relaxed text-[#444]">
+            {lesson.day} {lesson.dates}
+          </div>
+          {lesson.time && (
+            <div className="text-[13px] leading-relaxed text-[#444]">{lesson.time}</div>
+          )}
+        </div>
 
-            {/* Instructor column */}
-            <td style={{ ...styles.cardCell, width: '20%' }}>
-              <div style={styles.classInfo}>
-                {hasTwo ? 'Instructors:' : 'Instructor:'}
-                <br />
-                {lesson.instructor1Name}
-                {hasTwo && (
-                  <>
-                    <br />
-                    {lesson.instructor2Name}
-                  </>
-                )}
-              </div>
-            </td>
+        {/* Instructor + Size: side by side on mobile, separate columns on desktop */}
+        <div className="flex flex-row md:w-[40%] md:flex-row">
+          <div className="w-1/2 px-3 pt-1 pb-1 md:w-1/2 md:py-2.5">
+            <div className="text-[13px] leading-relaxed text-[#444]">
+              {hasTwo ? 'Instructors:' : 'Instructor:'}
+              <br />
+              {lesson.instructor1Name}
+              {hasTwo && (
+                <>
+                  <br />
+                  {lesson.instructor2Name}
+                </>
+              )}
+            </div>
+          </div>
 
-            {/* Size / enrolled column */}
-            <td style={{ ...styles.cardCell, width: '20%' }}>
-              <div style={styles.classInfo}>
-                {lesson.size > 0 && (
-                  <>
-                    Class size: {lesson.size}
-                    <br />
-                  </>
-                )}
-                Enrolled: {enrolledCount}
-              </div>
-            </td>
+          <div className="w-1/2 px-3 pt-1 pb-1 md:w-1/2 md:py-2.5">
+            <div className="text-[13px] leading-relaxed text-[#444]">
+              {lesson.size > 0 && (
+                <>
+                  Class size: {lesson.size}
+                  <br />
+                </>
+              )}
+              Enrolled: {enrolledCount}
+            </div>
+          </div>
+        </div>
 
-            {/* Enroll button column */}
-            <td style={{ ...styles.cardCell, width: '25%', textAlign: 'center' }}>
-              <EnrollAction lessonIndex={lesson.index} isFull={isFull} />
-            </td>
-          </tr>
-        </tbody>
-      </table>
-      {lesson.comments && <div style={styles.comments}>{lesson.comments}</div>}
+        {/* Enroll button */}
+        <div className="px-3 pt-1 pb-2.5 md:flex md:w-[25%] md:items-center md:justify-center md:py-2.5">
+          <EnrollAction lessonIndex={lesson.index} isFull={isFull} />
+        </div>
+      </div>
+
+      {lesson.comments && (
+        <div className="px-5 pt-1 pb-2.5 text-[13px] leading-relaxed text-[#444]">
+          {lesson.comments}
+        </div>
+      )}
     </div>
   )
 }
@@ -133,10 +141,15 @@ function EnrollAction({ lessonIndex, isFull }: { lessonIndex: number; isFull: bo
 
   if (isFull) {
     return (
-      <div style={styles.classInfo}>
+      <div className="text-[13px] leading-relaxed text-[#444]">
         <span>Class Full</span>
         <br />
-        <a href={href} target="_blank" rel="noopener noreferrer" style={styles.link}>
+        <a
+          href={href}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="text-[#00859b] underline"
+        >
           Join Waitlist
         </a>
       </div>
@@ -144,92 +157,10 @@ function EnrollAction({ lessonIndex, isFull }: { lessonIndex: number; isFull: bo
   }
 
   return (
-    <a href={href} target="_blank" rel="noopener noreferrer" style={{ textDecoration: 'none' }}>
-      <span style={styles.enrollButton}>Enroll</span>
+    <a href={href} target="_blank" rel="noopener noreferrer" className="no-underline">
+      <span className="inline-block cursor-pointer rounded border-2 border-[#00859b] px-5 py-1.5 text-sm font-bold text-[#00859b]">
+        Enroll
+      </span>
     </a>
   )
-}
-
-const styles: Record<string, React.CSSProperties> = {
-  container: {
-    fontFamily: 'Verdana, Geneva, sans-serif',
-    maxWidth: 900,
-    margin: '0 auto',
-    padding: '10px 16px',
-    color: '#444',
-    fontSize: 14,
-  },
-  empty: {
-    padding: 20,
-    textAlign: 'center',
-    color: '#666',
-    fontStyle: 'italic',
-  },
-  hr: {
-    border: 'none',
-    borderTop: '1px solid #b0c4d8',
-    margin: '24px 0',
-  },
-  section: {
-    marginBottom: 8,
-  },
-  sectionTitle: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    color: '#3c0f53',
-    margin: '0 0 8px 0',
-    fontFamily: 'Verdana, Geneva, sans-serif',
-  },
-  sectionDesc: {
-    fontSize: 14,
-    color: '#444',
-    margin: '0 0 16px 0',
-    lineHeight: 1.5,
-  },
-  card: {
-    backgroundColor: '#E8F6FB',
-    border: '1px solid #C0C0C0',
-    borderRadius: 2,
-    marginBottom: 16,
-    padding: 0,
-  },
-  cardTable: {
-    width: '100%',
-    borderCollapse: 'collapse',
-  },
-  cardCell: {
-    padding: '10px 12px',
-    verticalAlign: 'top',
-  },
-  className: {
-    fontWeight: 'bold',
-    fontSize: 16,
-    color: '#444',
-    marginBottom: 4,
-  },
-  classInfo: {
-    fontSize: 13,
-    color: '#444',
-    lineHeight: 1.5,
-  },
-  comments: {
-    fontSize: 13,
-    color: '#444',
-    padding: '4px 20px 10px 20px',
-    lineHeight: 1.5,
-  },
-  link: {
-    color: '#00859b',
-    textDecoration: 'underline',
-  },
-  enrollButton: {
-    display: 'inline-block',
-    padding: '6px 20px',
-    border: '2px solid #00859b',
-    borderRadius: 4,
-    color: '#00859b',
-    fontWeight: 'bold',
-    fontSize: 14,
-    cursor: 'pointer',
-  },
 }

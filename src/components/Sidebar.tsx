@@ -3,7 +3,7 @@ import { useCurrentUser } from '@/lib/auth/auth-query-options'
 import type { ProtectedRoute } from '../lib/permissions'
 import { hasPrivilege, routePermissions } from '../lib/permissions'
 
-export default function Sidebar() {
+export function SidebarNav({ onNavigate }: { onNavigate?: () => void }) {
   const location = useLocation()
   const { user, privileges } = useCurrentUser()
 
@@ -48,143 +48,112 @@ export default function Sidebar() {
 
   const myProfilePath = user ? `/members/${user.wycNumber}` : null
 
+  const linkClass = (isActive: boolean) =>
+    `block px-4 py-2 rounded-md transition-colors ${
+      isActive
+        ? 'bg-primary/10 text-primary font-semibold'
+        : 'hover:bg-primary/5 text-foreground'
+    }`
+
   return (
-    <aside className="w-64 bg-muted border-r min-h-screen p-4">
-      <nav className="space-y-1">
-        {myProfilePath && (
-          <>
-            <h3 className="px-4 py-2 text-sm font-bold uppercase tracking-wider text-muted-foreground">
-              General
-            </h3>
-            <Link
-              to="/members/$wycNumber"
-              params={{ wycNumber: String(user!.wycNumber) }}
-              className={`block px-4 py-2 rounded-md transition-colors ${
-                location.pathname === myProfilePath
-                  ? 'bg-primary/10 text-primary font-semibold'
-                  : 'hover:bg-primary/5 text-foreground'
-              }`}
-            >
-              My Profile
-            </Link>
-            <Link
-              to="/my-lessons"
-              className={`block px-4 py-2 rounded-md transition-colors ${
-                location.pathname === '/my-lessons'
-                  ? 'bg-primary/10 text-primary font-semibold'
-                  : 'hover:bg-primary/5 text-foreground'
-              }`}
-            >
-              My Lessons
-            </Link>
-            <Link
-              to="/set-password"
-              className={`block px-4 py-2 rounded-md transition-colors ${
-                location.pathname === '/set-password'
-                  ? 'bg-primary/10 text-primary font-semibold'
-                  : 'hover:bg-primary/5 text-foreground'
-              }`}
-            >
-              Set Password
-            </Link>
-          </>
-        )}
-        {visibleAdminItems.length > 0 && (
-          <h3 className="px-4 pt-4 pb-2 text-sm font-bold uppercase tracking-wider text-muted-foreground">
-            Admin
+    <nav className="space-y-1" onClick={onNavigate}>
+      {myProfilePath && (
+        <>
+          <h3 className="px-4 py-2 text-sm font-bold uppercase tracking-wider text-muted-foreground">
+            General
           </h3>
-        )}
-        {visibleAdminItems.map((item) => {
-          const isActive =
-            (location.pathname === item.path || location.pathname.startsWith(item.path + '/')) &&
-            location.pathname !== myProfilePath
-          return (
-            <Link
-              key={item.path}
-              to={item.path}
-              className={`block px-4 py-2 rounded-md transition-colors ${
-                isActive
-                  ? 'bg-primary/10 text-primary font-semibold'
-                  : 'hover:bg-primary/5 text-foreground'
-              }`}
-            >
-              {item.label}
-            </Link>
-          )
-        })}
-        {visiblePeopleManagementItems.length > 0 && (
-          <h3 className="px-4 pt-4 pb-2 text-sm font-bold uppercase tracking-wider text-muted-foreground">
-            People Management
-          </h3>
-        )}
-        {visiblePeopleManagementItems.map((item) => {
-          const isActive =
-            location.pathname === item.path || location.pathname.startsWith(item.path + '/')
-          return (
-            <Link
-              key={item.path}
-              to={item.path}
-              className={`block px-4 py-2 rounded-md transition-colors ${
-                isActive
-                  ? 'bg-primary/10 text-primary font-semibold'
-                  : 'hover:bg-primary/5 text-foreground'
-              }`}
-            >
-              {item.label}
-            </Link>
-          )
-        })}
-        {visibleSupportTableItems.length > 0 && (
-          <h3 className="px-4 pt-4 pb-2 text-sm font-bold uppercase tracking-wider text-muted-foreground">
-            Support Tables
-          </h3>
-        )}
-        {visibleSupportTableItems.map((item) => {
-          const isActive =
-            location.pathname === item.path || location.pathname.startsWith(item.path + '/')
-          return (
-            <Link
-              key={item.path}
-              to={item.path}
-              className={`block px-4 py-2 rounded-md transition-colors ${
-                isActive
-                  ? 'bg-primary/10 text-primary font-semibold'
-                  : 'hover:bg-primary/5 text-foreground'
-              }`}
-            >
-              {item.label}
-            </Link>
-          )
-        })}
+          <Link
+            to="/members/$wycNumber"
+            params={{ wycNumber: String(user!.wycNumber) }}
+            className={linkClass(location.pathname === myProfilePath)}
+          >
+            My Profile
+          </Link>
+          <Link
+            to="/my-lessons"
+            className={linkClass(location.pathname === '/my-lessons')}
+          >
+            My Lessons
+          </Link>
+          <Link
+            to="/set-password"
+            className={linkClass(location.pathname === '/set-password')}
+          >
+            Set Password
+          </Link>
+        </>
+      )}
+      {visibleAdminItems.length > 0 && (
         <h3 className="px-4 pt-4 pb-2 text-sm font-bold uppercase tracking-wider text-muted-foreground">
-          Tools
+          Admin
         </h3>
-        {visibleToolsItems.map((item) => {
-          const isActive =
-            location.pathname === item.path || location.pathname.startsWith(item.path + '/')
-          return (
-            <Link
-              key={item.path}
-              to={item.path}
-              className={`block px-4 py-2 rounded-md transition-colors ${
-                isActive
-                  ? 'bg-primary/10 text-primary font-semibold'
-                  : 'hover:bg-primary/5 text-foreground'
-              }`}
-            >
-              {item.label}
-            </Link>
-          )
-        })}
-        <a
-          href="/lesson-list"
-          target="_blank"
-          rel="noopener noreferrer"
-          className="block px-4 py-2 rounded-md transition-colors hover:bg-primary/5 text-foreground"
-        >
-          View Public Lesson List
-        </a>
-      </nav>
+      )}
+      {visibleAdminItems.map((item) => {
+        const isActive =
+          (location.pathname === item.path || location.pathname.startsWith(item.path + '/')) &&
+          location.pathname !== myProfilePath
+        return (
+          <Link key={item.path} to={item.path} className={linkClass(isActive)}>
+            {item.label}
+          </Link>
+        )
+      })}
+      {visiblePeopleManagementItems.length > 0 && (
+        <h3 className="px-4 pt-4 pb-2 text-sm font-bold uppercase tracking-wider text-muted-foreground">
+          People Management
+        </h3>
+      )}
+      {visiblePeopleManagementItems.map((item) => {
+        const isActive =
+          location.pathname === item.path || location.pathname.startsWith(item.path + '/')
+        return (
+          <Link key={item.path} to={item.path} className={linkClass(isActive)}>
+            {item.label}
+          </Link>
+        )
+      })}
+      {visibleSupportTableItems.length > 0 && (
+        <h3 className="px-4 pt-4 pb-2 text-sm font-bold uppercase tracking-wider text-muted-foreground">
+          Support Tables
+        </h3>
+      )}
+      {visibleSupportTableItems.map((item) => {
+        const isActive =
+          location.pathname === item.path || location.pathname.startsWith(item.path + '/')
+        return (
+          <Link key={item.path} to={item.path} className={linkClass(isActive)}>
+            {item.label}
+          </Link>
+        )
+      })}
+      <h3 className="px-4 pt-4 pb-2 text-sm font-bold uppercase tracking-wider text-muted-foreground">
+        Tools
+      </h3>
+      {visibleToolsItems.map((item) => {
+        const isActive =
+          location.pathname === item.path || location.pathname.startsWith(item.path + '/')
+        return (
+          <Link key={item.path} to={item.path} className={linkClass(isActive)}>
+            {item.label}
+          </Link>
+        )
+      })}
+      <a
+        href="/lesson-list"
+        target="_blank"
+        rel="noopener noreferrer"
+        className="block px-4 py-2 rounded-md transition-colors hover:bg-primary/5 text-foreground"
+      >
+        View Public Lesson List
+      </a>
+    </nav>
+  )
+}
+
+export default function Sidebar() {
+  return (
+    <aside className="hidden md:block w-64 bg-muted border-r min-h-screen p-4">
+      <SidebarNav />
     </aside>
   )
 }
