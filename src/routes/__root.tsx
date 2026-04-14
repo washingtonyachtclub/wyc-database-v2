@@ -10,6 +10,7 @@ import Sidebar from '../components/Sidebar'
 import { TanStackDevTools } from '../components/TanStackDevTools'
 import { TooltipProvider } from '../components/ui/tooltip'
 
+import { Analytics } from '@vercel/analytics/react'
 import appCss from '../styles.css?url'
 
 import { getCurrentUserServerFn } from '@/lib/auth/auth-server-fns'
@@ -103,6 +104,7 @@ function RootDocument({ children }: { children: React.ReactNode }) {
           </TooltipProvider>
         )}
         <Scripts />
+        <Analytics />
       </body>
     </html>
   )
