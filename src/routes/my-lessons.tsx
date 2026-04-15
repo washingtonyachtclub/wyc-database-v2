@@ -3,9 +3,22 @@ import { LessonCard } from '@/components/lessons/LessonCard'
 import {
   getMyLessonsTaughtQueryOptions,
   getMySignedUpLessonsQueryOptions,
+  useUnenrollFromLessonMutation,
 } from '@/domains/lessons/query-options'
 import { useQuery, useSuspenseQuery } from '@tanstack/react-query'
 import { createFileRoute, redirect, useNavigate } from '@tanstack/react-router'
+import { useState } from 'react'
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog'
+import { Button } from '@/components/ui/button'
 
 export const Route = createFileRoute('/my-lessons')({
   beforeLoad: ({ context }) => {
@@ -71,6 +84,8 @@ function MyLessonsPage() {
 
 function SignedUpLessonCard({ lesson }: { lesson: SignedUpLesson }) {
   const isEnrolled = lesson.status === 'enrolled'
+  const [showUnenroll, setShowUnenroll] = useState(false)
+  const unenrollMutation = useUnenrollFromLessonMutation()
 
   return (
     <div className="rounded-lg border border-border p-4 space-y-3">
@@ -119,6 +134,33 @@ function SignedUpLessonCard({ lesson }: { lesson: SignedUpLesson }) {
           <p className="text-muted-foreground whitespace-pre-wrap">{lesson.comments}</p>
         </div>
       )}
+
+      <div className="flex justify-end">
+        <Button variant="destructive" size="sm" onClick={() => setShowUnenroll(true)}>
+          Unenroll
+        </Button>
+      </div>
+
+      <AlertDialog open={showUnenroll} onOpenChange={setShowUnenroll}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Unenroll from Lesson</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to unenroll from <strong>{lesson.subtype}</strong>? This will
+              remove you from the lesson. If anyone is on the waitlist, they will take your spot.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              onClick={() => unenrollMutation.mutate(lesson.index)}
+            >
+              Unenroll
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   )
 }

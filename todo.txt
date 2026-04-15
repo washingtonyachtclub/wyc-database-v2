@@ -1,7 +1,6 @@
 # Important
 - replace old checkout tool
   - good mobile UX
-- self-unenrollment from lessons
 - phone number login (easy for forgot password at docks and checking out a boat moments)
 
 - tools

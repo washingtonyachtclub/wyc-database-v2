@@ -112,39 +112,44 @@ export const getAllLessons = createServerFn({ method: 'GET' })
     return { data, totalCount: totalCountResult.count }
   })
 
+// Internal helper — no auth check. Used by getLessonById and removeStudentFromLesson.
+async function fetchLessonDetails(id: number) {
+  const [lessonRow] = await baseLessonQuery().where(eq(lessons.index, id))
+  if (!lessonRow) return null
+
+  const lesson = toRichLesson(lessonRow)
+  const students = await db
+    .select({
+      wycNumber: wycDatabase.wycNumber,
+      first: wycDatabase.first,
+      last: wycDatabase.last,
+      email: wycDatabase.email,
+    })
+    .from(signups)
+    .innerJoin(wycDatabase, eq(signups.student, wycDatabase.wycNumber))
+    .where(eq(signups.class, id))
+    .orderBy(asc(signups.index))
+
+  const lessonStudents: LessonStudent[] = students.map((s) => ({
+    wycNumber: s.wycNumber,
+    first: s.first || '<Unknown>',
+    last: s.last || '<Unknown>',
+    email: s.email || '<Unknown>',
+  }))
+
+  const { enrolled: enrolledStudents, waitlisted: waitlistedStudents } = splitEnrollment(
+    lessonStudents,
+    lesson.size,
+  )
+
+  return { lesson, enrolledStudents, waitlistedStudents }
+}
+
 export const getLessonById = createServerFn({ method: 'GET' })
   .inputValidator((input: { id: number }) => ({ id: input.id }))
   .handler(async ({ data: { id } }) => {
     await requireInstructorOrPrivilege(id, 'db')
-    const [lessonRow] = await baseLessonQuery().where(eq(lessons.index, id))
-    if (!lessonRow) return null
-
-    const lesson = toRichLesson(lessonRow)
-    const students = await db
-      .select({
-        wycNumber: wycDatabase.wycNumber,
-        first: wycDatabase.first,
-        last: wycDatabase.last,
-        email: wycDatabase.email,
-      })
-      .from(signups)
-      .innerJoin(wycDatabase, eq(signups.student, wycDatabase.wycNumber))
-      .where(eq(signups.class, id))
-      .orderBy(asc(signups.index))
-
-    const lessonStudents: LessonStudent[] = students.map((s) => ({
-      wycNumber: s.wycNumber,
-      first: s.first || '<Unknown>',
-      last: s.last || '<Unknown>',
-      email: s.email || '<Unknown>',
-    }))
-
-    const { enrolled: enrolledStudents, waitlisted: waitlistedStudents } = splitEnrollment(
-      lessonStudents,
-      lesson.size,
-    )
-
-    return { lesson, enrolledStudents, waitlistedStudents }
+    return fetchLessonDetails(id)
   })
 
 export const createLesson = createServerFn({ method: 'POST' })
@@ -184,10 +189,14 @@ export const removeStudentFromLesson = createServerFn({ method: 'POST' })
     studentWycNumber: input.studentWycNumber,
   }))
   .handler(async ({ data: { lessonId, studentWycNumber } }) => {
-    await requireInstructorOrPrivilege(lessonId, 'db')
+    // Self-removal is always allowed; otherwise require instructor or db privilege
+    const userId = await requireAuth()
+    if (studentWycNumber !== userId) {
+      await requireInstructorOrPrivilege(lessonId, 'db')
+    }
 
     // Get lesson + enrollment lists to detect waitlist promotion
-    const lessonData = await getLessonById({ data: { id: lessonId } })
+    const lessonData = await fetchLessonDetails(lessonId)
     if (!lessonData) throw new Error('Lesson not found')
     const { lesson, enrolledStudents, waitlistedStudents } = lessonData
 
@@ -245,6 +254,22 @@ export const removeStudentFromLesson = createServerFn({ method: 'POST' })
     }
 
     return { success: true }
+  })
+
+export const unenrollFromLesson = createServerFn({ method: 'POST' })
+  .inputValidator((input: { lessonId: number }) => ({ lessonId: input.lessonId }))
+  .handler(async ({ data: { lessonId } }) => {
+    const userId = await requireAuth()
+
+    const [signup] = await db
+      .select({ index: signups.index })
+      .from(signups)
+      .where(and(eq(signups.class, lessonId), eq(signups.student, userId)))
+      .limit(1)
+
+    if (!signup) throw new Error('You are not signed up for this lesson')
+
+    return removeStudentFromLesson({ data: { lessonId, studentWycNumber: userId } })
   })
 
 export const getMyLessonsTaught = createServerFn({ method: 'GET' }).handler(async () => {

@@ -12,6 +12,7 @@ import {
   getMySignedUpLessons,
   getQuarterLessons,
   removeStudentFromLesson,
+  unenrollFromLesson,
   updateLesson,
 } from './server-fns'
 
@@ -115,6 +116,16 @@ export const getLessonForSignupQueryOptions = (id: number) =>
       return await getLessonForSignup({ data: { id } })
     },
   })
+
+export function useUnenrollFromLessonMutation() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: (lessonId: number) => unenrollFromLesson({ data: { lessonId } }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['lessons', 'mySignedUp'] })
+    },
+  })
+}
 
 export function useEnrollInLessonMutation() {
   const queryClient = useQueryClient()
