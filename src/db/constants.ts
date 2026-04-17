@@ -18,6 +18,10 @@ export const OFFICER_PAGE_TYPES = [1, 2, 5] as const
  */
 export const LESSON_CATEGORIES = [
   {
+    label: 'Work Parties',
+    typeIds: [9],
+  },
+  {
     label: 'Dinghy Sailing',
     typeIds: [10],
   },
@@ -36,10 +40,6 @@ export const LESSON_CATEGORIES = [
   {
     label: 'Social Events',
     typeIds: [13],
-  },
-  {
-    label: 'Work Parties',
-    typeIds: [9],
   },
   {
     label: 'Specialty',

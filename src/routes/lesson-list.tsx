@@ -2,6 +2,7 @@ import { createFileRoute } from '@tanstack/react-router'
 import { LESSON_CATEGORIES } from '../db/constants'
 import type { RichLesson } from '@/domains/lessons/schema'
 import { getPublicLessons } from '@/domains/lessons/server-fns'
+import { cn } from '@/lib/utils'
 
 export const Route = createFileRoute('/lesson-list')({
   loader: () => getPublicLessons(),
@@ -27,6 +28,10 @@ const SECTION_DESCRIPTIONS: Record<string, string> = {
   'Social Events': 'Events and gatherings for WYC members.',
 }
 
+function isLessonFull(entry: PublicLesson) {
+  return entry.lesson.size > 0 && entry.enrolledCount >= entry.lesson.size
+}
+
 function LessonListPage() {
   const lessons = Route.useLoaderData()
 
@@ -39,46 +44,64 @@ function LessonListPage() {
   }
 
   const allSections = LESSON_CATEGORIES.map((cat) => {
-    const catLessons = cat.typeIds.flatMap((id) => lessonsByType.get(id) ?? [])
+    const catLessons = cat.typeIds
+      .flatMap((id) => lessonsByType.get(id) ?? [])
+      .sort((a, b) => a.lesson.calendarDate.localeCompare(b.lesson.calendarDate))
     return { label: cat.label, lessons: catLessons }
   })
 
-  // Active categories first (in definition order), then empty (in definition order)
+  const hasOpen = (s: { lessons: PublicLesson[] }) => s.lessons.some((e) => !isLessonFull(e))
   const sections = [
-    ...allSections.filter((s) => s.lessons.length > 0),
+    ...allSections.filter((s) => s.lessons.length > 0 && hasOpen(s)),
+    ...allSections.filter((s) => s.lessons.length > 0 && !hasOpen(s)),
     ...allSections.filter((s) => s.lessons.length === 0),
   ]
 
   return (
     <div className="mx-auto max-w-[900px] px-4 py-2.5 font-[Verdana,Geneva,sans-serif] text-sm text-[#444]">
-      {sections.map((section, i) => (
-        <div key={section.label}>
-          {i > 0 && <hr className="my-6 border-t border-[#b0c4d8]" />}
-          <div className="mb-2">
-            <h2 className="mb-2 font-[Verdana,Geneva,sans-serif] text-2xl font-bold text-[#3c0f53]">
-              {section.label}
-            </h2>
-            {SECTION_DESCRIPTIONS[section.label] && (
-              <p className="mb-4 text-sm leading-relaxed text-[#444]">
-                {SECTION_DESCRIPTIONS[section.label]}
-              </p>
-            )}
-            {section.lessons.map((entry) => (
-              <LessonCard key={entry.lesson.index} entry={entry} />
-            ))}
+      {sections.map((section, i) => {
+        const openLessons = section.lessons.filter((e) => !isLessonFull(e))
+        const fullLessons = section.lessons.filter(isLessonFull)
+
+        return (
+          <div key={section.label}>
+            {i > 0 && <hr className="my-6 border-t border-[#b0c4d8]" />}
+            <div className="mb-2">
+              <h2 className="mb-2 font-[Verdana,Geneva,sans-serif] text-2xl font-bold text-[#3c0f53]">
+                {section.label}
+              </h2>
+              {SECTION_DESCRIPTIONS[section.label] && (
+                <p className="mb-4 text-sm leading-relaxed text-[#444]">
+                  {SECTION_DESCRIPTIONS[section.label]}
+                </p>
+              )}
+
+              {openLessons.map((entry) => (
+                <LessonCard key={entry.lesson.index} entry={entry} />
+              ))}
+              {fullLessons.map((entry) => (
+                <LessonCard key={entry.lesson.index} entry={entry} muted />
+              ))}
+            </div>
           </div>
-        </div>
-      ))}
+        )
+      })}
     </div>
   )
 }
-function LessonCard({ entry }: { entry: PublicLesson }) {
+
+function LessonCard({ entry, muted }: { entry: PublicLesson; muted?: boolean }) {
   const { lesson, enrolledCount } = entry
-  const isFull = lesson.size > 0 && enrolledCount >= lesson.size
+  const isFull = isLessonFull(entry)
   const hasTwo = !!lesson.instructor2Name
 
   return (
-    <div className="mb-4 rounded-sm border border-[#C0C0C0] bg-[#E8F6FB]">
+    <div
+      className={cn(
+        'mb-4 rounded-sm border border-[#C0C0C0] bg-[#E8F6FB]',
+        muted && 'border-[#d8d8d8] bg-[#f2f2f2] opacity-80',
+      )}
+    >
       {/* Desktop: single row, Mobile: stacked */}
       <div className="flex flex-col md:flex-row md:items-start">
         {/* Title, day/dates, time */}
@@ -148,7 +171,7 @@ function EnrollAction({ lessonIndex, isFull }: { lessonIndex: number; isFull: bo
           href={href}
           target="_blank"
           rel="noopener noreferrer"
-          className="text-[#00859b] underline"
+          className="font-bold text-[#00859b] underline"
         >
           Join Waitlist
         </a>
