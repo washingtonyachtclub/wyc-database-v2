@@ -8,11 +8,13 @@ export function PaginationControls<T>({
   pageCount,
   totalCount,
   label = 'total records',
+  actions,
 }: {
   table: Table<T>
   pageCount: number
   totalCount: number
   label?: string
+  actions?: React.ReactNode
 }) {
   const pageSize = table.getState().pagination.pageSize
 
@@ -76,8 +78,11 @@ export function PaginationControls<T>({
           </SelectContent>
         </Select>
       </div>
-      <div className="text-sm text-muted-foreground">
-        {totalCount} {label}
+      <div className="flex items-center gap-3 text-sm text-muted-foreground">
+        <span>
+          {totalCount} {label}
+        </span>
+        {actions}
       </div>
     </div>
   )

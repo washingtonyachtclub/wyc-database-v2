@@ -1,14 +1,16 @@
 import { useQuery, useSuspenseQuery } from '@tanstack/react-query'
-import { createFileRoute, useNavigate } from '@tanstack/react-router'
+import { createFileRoute, redirect, useNavigate } from '@tanstack/react-router'
 import { getCoreRowModel, getSortedRowModel, useReactTable } from '@tanstack/react-table'
 import { z } from 'zod'
 import { columns } from '../components/members/columns'
+import { CopyEmailsButton } from '../components/members/CopyEmailsButton'
 import { FilterControls } from '../components/members/FilterControls'
 import { PaginationControls } from '../components/members/PaginationControls'
 import { DataTable } from '../components/ui/DataTable'
 import type { MemberFilters } from '@/domains/members/filter-types'
 import { requirePrivilegeForRoute } from '../lib/route-guards'
 import { getCategoriesQueryOptions, getMembersQueryOptions } from '@/domains/members/query-options'
+import { getCurrentQuarterQueryOptions } from '@/domains/lessons/query-options'
 import { getQuartersQueryOptions } from '@/domains/quarters/query-options'
 
 // ===== ROUTE DEFINITION =====
@@ -27,8 +29,18 @@ const memberSearchSchema = z.object({
 
 export const Route = createFileRoute('/members')({
   validateSearch: memberSearchSchema,
-  beforeLoad: ({ context }) => {
+  beforeLoad: async ({ context, search }) => {
     requirePrivilegeForRoute(context, '/members')
+    if (search.expireQtr === undefined) {
+      const currentQuarter = await context.queryClient.ensureQueryData(
+        getCurrentQuarterQueryOptions(),
+      )
+      throw redirect({
+        to: '/members',
+        search: { ...search, expireQtr: currentQuarter, expireQtrMode: 'atLeast' },
+        replace: true,
+      })
+    }
   },
   loaderDeps: ({
     search: {
@@ -185,7 +197,12 @@ function App() {
         onFilterChange={handleFilterChange}
         onClearFilters={handleClearFilters}
       />
-      <PaginationControls table={table} pageCount={pageCount} totalCount={totalCount} />
+      <PaginationControls
+        table={table}
+        pageCount={pageCount}
+        totalCount={totalCount}
+        actions={<CopyEmailsButton filters={filters} totalCount={totalCount} />}
+      />
       <DataTable table={table} />
       <PaginationControls table={table} pageCount={pageCount} totalCount={totalCount} />
     </div>

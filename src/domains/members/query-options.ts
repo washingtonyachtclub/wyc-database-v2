@@ -4,6 +4,7 @@ import {
   getAllMembersLite,
   getCategories,
   getMemberById,
+  getMemberEmails,
   getMemberLessonsSignedUp,
   getMemberLessonsTaught,
   getMemberRatings,
@@ -29,6 +30,13 @@ export const getMembersQueryOptions = (
       })
       return result
     },
+  })
+
+export const getMemberEmailsQueryOptions = (filters?: MemberFilters) =>
+  queryOptions({
+    queryKey: ['members', 'emails', filters],
+    queryFn: () => getMemberEmails({ data: { filters } }),
+    enabled: false,
   })
 
 export const getNextWycNumberQueryOptions = () =>

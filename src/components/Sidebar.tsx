@@ -90,6 +90,26 @@ export function SidebarNav({ onNavigate }: { onNavigate?: () => void }) {
           </Link>
         )
       })}
+      <h3 className="px-4 pt-4 pb-2 text-sm font-bold uppercase tracking-wider text-muted-foreground">
+        Tools
+      </h3>
+      {visibleToolsItems.map((item) => {
+        const isActive =
+          location.pathname === item.path || location.pathname.startsWith(item.path + '/')
+        return (
+          <Link key={item.path} to={item.path} className={linkClass(isActive)}>
+            {item.label}
+          </Link>
+        )
+      })}
+      <a
+        href="/lesson-list"
+        target="_blank"
+        rel="noopener noreferrer"
+        className="block px-4 py-2 rounded-md transition-colors hover:bg-primary/5 text-foreground"
+      >
+        View Public Lesson List
+      </a>
       {visiblePeopleManagementItems.length > 0 && (
         <h3 className="px-4 pt-4 pb-2 text-sm font-bold uppercase tracking-wider text-muted-foreground">
           People Management
@@ -118,26 +138,6 @@ export function SidebarNav({ onNavigate }: { onNavigate?: () => void }) {
           </Link>
         )
       })}
-      <h3 className="px-4 pt-4 pb-2 text-sm font-bold uppercase tracking-wider text-muted-foreground">
-        Tools
-      </h3>
-      {visibleToolsItems.map((item) => {
-        const isActive =
-          location.pathname === item.path || location.pathname.startsWith(item.path + '/')
-        return (
-          <Link key={item.path} to={item.path} className={linkClass(isActive)}>
-            {item.label}
-          </Link>
-        )
-      })}
-      <a
-        href="/lesson-list"
-        target="_blank"
-        rel="noopener noreferrer"
-        className="block px-4 py-2 rounded-md transition-colors hover:bg-primary/5 text-foreground"
-      >
-        View Public Lesson List
-      </a>
     </nav>
   )
 }

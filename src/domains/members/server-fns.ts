@@ -74,6 +74,21 @@ export const getMembersTable = createServerFn({ method: 'GET' })
     }
   })
 
+export const getMemberEmails = createServerFn({ method: 'GET' })
+  .inputValidator((input: { filters?: MemberFilters }) => ({ filters: input.filters }))
+  .handler(async ({ data }) => {
+    await requirePrivilege('db')
+    try {
+      const query = db.select({ email: wycDatabase.email }).from(wycDatabase).$dynamic()
+      withMemberFilters(query, data.filters)
+      const rows = await query
+      return rows.map((r) => r.email).filter((e): e is string => !!e && e.trim() !== '')
+    } catch (error) {
+      console.error('Failed to fetch member emails:', error)
+      throw new Error('Failed to fetch member emails')
+    }
+  })
+
 export const getNextWycNumber = createServerFn({ method: 'GET' }).handler(async () => {
   await requirePrivilege('db')
   const mostRecentWycNumberRow = await db
