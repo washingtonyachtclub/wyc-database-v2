@@ -68,6 +68,7 @@ export const getRouter = () => {
 
     defaultPreload: 'intent',
     defaultErrorComponent: DefaultErrorFallback,
+    scrollRestoration: true,
   })
 
   setupRouterSsrQueryIntegration({ router, queryClient: rqContext.queryClient })

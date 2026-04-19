@@ -1,6 +1,6 @@
 import { ErrorAlert } from '@/components/ui/ErrorAlert'
 import { isDevEnvironment } from '@/lib/env'
-import type { Lesson, RichLesson } from '@/domains/lessons/schema'
+import type { RichLessonWithEnrollment } from '@/domains/lessons/schema'
 import type { LessonFilters } from '@/domains/lessons/filter-types'
 import { useQuery, useSuspenseQuery } from '@tanstack/react-query'
 import { createFileRoute, useNavigate } from '@tanstack/react-router'
@@ -8,9 +8,9 @@ import { getCoreRowModel, getSortedRowModel, useReactTable } from '@tanstack/rea
 import { useMemo, useState } from 'react'
 import { z } from 'zod'
 import { columns } from '../components/lessons/columns'
-import { LessonCard } from '../components/lessons/LessonCard'
 import { LessonFilterControls } from '../components/lessons/LessonFilterControls'
 import { LessonFormModal } from '../components/lessons/LessonEditorModal'
+import { LessonsByCategory } from '../components/lessons/LessonViews'
 import { PaginationControls } from '../components/members/PaginationControls'
 import { Button } from '../components/ui/button'
 import { Plus } from 'lucide-react'
@@ -75,10 +75,6 @@ export const Route = createFileRoute('/lessons')({
   component: LessonsPage,
 })
 
-function isMyLesson(lesson: Lesson, userId: number) {
-  return lesson.instructor1 === userId || lesson.instructor2 === userId
-}
-
 function LessonsPage() {
   const navigate = useNavigate({ from: '/lessons' })
   const { classTypeId, instructor, display } = Route.useSearch()
@@ -97,45 +93,24 @@ function LessonsPage() {
 
   const quarterLessons = quarterData?.data ?? []
   const currentQuarter = quarterData?.currentQuarter ?? 0
-  const userId = quarterData?.userId ?? 0
 
-  const { myUpcoming, otherUpcoming, pastThisQuarter, futureLessons } = useMemo(() => {
-    const thisQuarterLessons: RichLesson[] = []
-    const future: RichLesson[] = []
+  const { upcomingThisQuarter, pastThisQuarter, futureLessons } = useMemo(() => {
+    const upcoming: RichLessonWithEnrollment[] = []
+    const past: RichLessonWithEnrollment[] = []
+    const future: RichLessonWithEnrollment[] = []
 
     for (const lesson of quarterLessons) {
       if (lesson.expire > currentQuarter) {
         future.push(lesson)
+      } else if (isLessonUpcoming(lesson.calendarDate)) {
+        upcoming.push(lesson)
       } else {
-        thisQuarterLessons.push(lesson)
+        past.push(lesson)
       }
     }
 
-    const myUpcomingLessons = []
-    const otherUpcomingLessons = []
-    const pastLessonsThisQuarter = []
-
-    for (const lesson of thisQuarterLessons) {
-      const upcoming = isLessonUpcoming(lesson.calendarDate)
-
-      if (upcoming) {
-        if (isMyLesson(lesson, userId)) {
-          myUpcomingLessons.push(lesson)
-        } else {
-          otherUpcomingLessons.push(lesson)
-        }
-      } else {
-        pastLessonsThisQuarter.push(lesson)
-      }
-    }
-
-    return {
-      myUpcoming: myUpcomingLessons,
-      otherUpcoming: otherUpcomingLessons,
-      pastThisQuarter: pastLessonsThisQuarter,
-      futureLessons: future,
-    }
-  }, [quarterLessons, currentQuarter, userId])
+    return { upcomingThisQuarter: upcoming, pastThisQuarter: past, futureLessons: future }
+  }, [quarterLessons, currentQuarter])
 
   const allLessons = allLessonsResponse.data
   const totalCount = allLessonsResponse.totalCount
@@ -258,59 +233,23 @@ function LessonsPage() {
         </Button>
       </div>
 
-      {/* My Upcoming Lessons */}
+      {/* Lessons This Quarter */}
       <section>
-        <h2 className="text-2xl font-bold mb-4">My Upcoming Lessons</h2>
-        {myUpcoming.length === 0 ? (
-          <p className="text-muted-foreground">
-            You are not instructing any upcoming lessons this quarter.
-          </p>
-        ) : (
-          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-            {myUpcoming.map((lesson) => (
-              <LessonCard
-                key={lesson.index}
-                lesson={lesson}
-                onClick={() => goToLesson(lesson.index)}
-              />
-            ))}
-          </div>
-        )}
-      </section>
-
-      {/* Other Lessons This Quarter */}
-      <section>
-        <h2 className="text-2xl font-bold mb-4">Other Lessons this Quarter</h2>
-        {otherUpcoming.length === 0 && pastThisQuarter.length === 0 ? (
-          <p className="text-muted-foreground">No other lessons this quarter.</p>
+        <h2 className="text-2xl font-bold mb-4">Lessons this Quarter</h2>
+        {upcomingThisQuarter.length === 0 && pastThisQuarter.length === 0 ? (
+          <p className="text-muted-foreground">No lessons this quarter.</p>
         ) : (
           <div className="space-y-4">
-            {otherUpcoming.length > 0 && (
+            {upcomingThisQuarter.length > 0 && (
               <div>
                 <h3 className="text-lg font-semibold mb-2">Upcoming</h3>
-                <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-                  {otherUpcoming.map((lesson) => (
-                    <LessonCard
-                      key={lesson.index}
-                      lesson={lesson}
-                      onClick={() => goToLesson(lesson.index)}
-                    />
-                  ))}
-                </div>
+                <LessonsByCategory lessons={upcomingThisQuarter} onLessonClick={goToLesson} />
               </div>
             )}
             {pastThisQuarter.length > 0 && (
               <div>
                 <h3 className="text-lg font-semibold mb-2">Past</h3>
-                <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-                  {pastThisQuarter.map((lesson) => (
-                    <LessonCard
-                      key={lesson.index}
-                      lesson={lesson}
-                      onClick={() => goToLesson(lesson.index)}
-                    />
-                  ))}
-                </div>
+                <LessonsByCategory lessons={pastThisQuarter} onLessonClick={goToLesson} />
               </div>
             )}
           </div>
@@ -323,15 +262,7 @@ function LessonsPage() {
         {futureLessons.length === 0 ? (
           <p className="text-muted-foreground">No lessons scheduled for future quarters.</p>
         ) : (
-          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-            {futureLessons.map((lesson) => (
-              <LessonCard
-                key={lesson.index}
-                lesson={lesson}
-                onClick={() => goToLesson(lesson.index)}
-              />
-            ))}
-          </div>
+          <LessonsByCategory lessons={futureLessons} onLessonClick={goToLesson} />
         )}
       </section>
 

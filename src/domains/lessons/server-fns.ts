@@ -59,12 +59,25 @@ export const getQuarterLessons = createServerFn({ method: 'GET' }).handler(async
   const userId = await requirePrivilege('db')
   const currentQuarter = await getCurrentQuarter()
 
-  const query = baseLessonQuery()
+  const raw = await baseLessonQuery()
     .where(gte(lessons.expire, currentQuarter))
     .orderBy(asc(lessons.calendarDate), asc(lessons.time))
 
-  const raw = await query
-  const data = raw.map(toRichLesson)
+  const lessonIds = raw.map((r) => r.index)
+  let enrollmentCounts = new Map<number, number>()
+  if (lessonIds.length > 0) {
+    const counts = await db
+      .select({ class: signups.class, count: count() })
+      .from(signups)
+      .where(inArray(signups.class, lessonIds))
+      .groupBy(signups.class)
+    enrollmentCounts = new Map(counts.map((c) => [c.class, c.count]))
+  }
+
+  const data = raw.map((row) => ({
+    ...toRichLesson(row),
+    enrolledCount: enrollmentCounts.get(row.index) ?? 0,
+  }))
 
   return { data, currentQuarter, userId }
 })

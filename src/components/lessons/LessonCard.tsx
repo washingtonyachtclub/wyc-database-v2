@@ -2,7 +2,13 @@ import type { RichLesson } from '@/domains/lessons/schema'
 import { AlertTriangle } from 'lucide-react'
 import { isLessonUpcoming } from '../../lib/date-utils'
 
-export function LessonCard({ lesson, onClick }: { lesson: RichLesson; onClick?: () => void }) {
+export function LessonCard({
+  lesson,
+  onClick,
+}: {
+  lesson: RichLesson & { enrolledCount?: number }
+  onClick?: () => void
+}) {
   const upcoming = isLessonUpcoming(lesson.calendarDate)
   const showUpcomingNotDisplayedWarning = upcoming && !lesson.display
   // old db inserts with 0000-00-00 for calendarDate
@@ -35,8 +41,14 @@ export function LessonCard({ lesson, onClick }: { lesson: RichLesson; onClick?: 
             <p className="text-sm text-muted-foreground mt-1 line-clamp-2">{lesson.comments}</p>
           )}
         </div>
-        <span className="text-xs text-muted-foreground whitespace-nowrap ml-4">
-          Size: {lesson.size}
+        <span className="text-xs text-muted-foreground whitespace-nowrap ml-4 text-right">
+          {lesson.enrolledCount !== undefined && (
+            <div>
+              Signed up: {lesson.enrolledCount}
+              {lesson.size > 0 ? ` / ${lesson.size}` : ''}
+            </div>
+          )}
+          {lesson.enrolledCount === undefined && <div>Size: {lesson.size}</div>}
         </span>
       </div>
       <div className="mt-3 space-y-1 text-sm">

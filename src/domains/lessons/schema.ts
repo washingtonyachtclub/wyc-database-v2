@@ -58,6 +58,8 @@ export type RichLesson = {
   size: number
   display: boolean
 }
+export type RichLessonWithEnrollment = RichLesson & { enrolledCount: number }
+
 export type SignedUpLesson = RichLesson & {
   status: 'enrolled' | 'waitlisted'
   instructor1Email: string
