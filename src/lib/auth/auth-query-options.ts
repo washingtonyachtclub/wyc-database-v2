@@ -1,6 +1,12 @@
 import { queryOptions, useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { getCurrentUserServerFn, loginServerFn, logoutServerFn } from './auth-server-fns'
-import type { LoginResponse } from './auth-server-fns'
+import {
+  getCurrentUserServerFn,
+  loginServerFn,
+  logoutServerFn,
+  requestEmailOtpServerFn,
+  verifyEmailOtpServerFn,
+} from './auth-server-fns'
+import type { LoginResponse, VerifyOtpResponse } from './auth-server-fns'
 
 /**
  * Query options for getting current authenticated user
@@ -31,6 +37,35 @@ export const useLoginMutation = () => {
         queryClient.invalidateQueries({
           queryKey: ['auth', 'currentUser'],
         })
+      }
+    },
+  })
+}
+
+/**
+ * Hook for requesting an email OTP code
+ */
+export const useRequestEmailOtpMutation = () => {
+  return useMutation({
+    mutationFn: async (data: { wycNumber: number }) => {
+      return await requestEmailOtpServerFn({ data })
+    },
+  })
+}
+
+/**
+ * Hook for verifying an email OTP code
+ */
+export const useVerifyEmailOtpMutation = () => {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: async (data: { wycNumber: number; code: string }) => {
+      return await verifyEmailOtpServerFn({ data })
+    },
+    onSuccess: (data: VerifyOtpResponse) => {
+      if (data.success) {
+        queryClient.invalidateQueries({ queryKey: ['auth', 'currentUser'] })
       }
     },
   })

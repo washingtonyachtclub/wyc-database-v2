@@ -43,6 +43,7 @@ See `documentation/` for detailed docs:
 - [Honorary members](documentation/honorary-members.md): honorary status implementation
 - [Maintenance](documentation/maintenance.md): recurring operational tasks
 - [Password migration](documentation/password-migration-plan.md): legacy to Argon2id transition plan
+- [Email OTP login](documentation/email-otp-login.md): passwordless login via a code sent to the member's email
 
 # Getting Started
 

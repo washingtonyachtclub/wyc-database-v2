@@ -3,8 +3,18 @@ import { and, count, eq, gte, or } from 'drizzle-orm'
 import db from 'src/db/index'
 import { lessonQuarter, lessons, officers, posPrivMap, privs, wycDatabase } from 'src/db/schema'
 import { hashPasswordArgon2, verifyPasswordDual } from '@/lib/auth/auth'
+import { sendEmail } from '@/lib/email'
+import { loginOtpEmail } from '@/lib/email-templates'
 import { isDevEnvironment } from '../env'
 import { hasPrivilege, type Privilege } from '../permissions'
+import {
+  checkRequestRateLimit,
+  consumeOtp,
+  createOtpRecord,
+  generateCode,
+  maskEmail,
+  OTP_CODE_TTL_MS,
+} from './otp'
 import { useAppSession, type SessionData } from './session'
 
 export type AuthUser = {
@@ -30,6 +40,18 @@ export type CurrentUserResponse = {
   user?: AuthUser
   privileges?: Privilege[]
   realPrivileges?: Privilege[]
+}
+
+export type RequestOtpResponse = {
+  success: boolean
+  message: string
+  emailMasked?: string
+}
+
+export type VerifyOtpResponse = {
+  success: boolean
+  message: string
+  user?: AuthUser
 }
 
 /**
@@ -161,6 +183,162 @@ export const loginServerFn = createServerFn({ method: 'POST' })
         success: false,
         message: 'An error occurred during login',
       } satisfies LoginResponse
+    }
+  })
+
+/**
+ * Request an email OTP for login.
+ * Looks up the member by WYC number, sends a 6-digit code to their email on file.
+ * Enforces rate limits and avoids leaking whether the member or email exists.
+ */
+export const requestEmailOtpServerFn = createServerFn({ method: 'POST' })
+  .inputValidator((input: { wycNumber: number }) => {
+    if (!input.wycNumber) {
+      throw new Error('WYC Number is required')
+    }
+    return { wycNumber: Number(input.wycNumber) }
+  })
+  .handler(async ({ data }): Promise<RequestOtpResponse> => {
+    const genericFailure: RequestOtpResponse = {
+      success: false,
+      message: 'Unable to send a code. Check your WYC Number or use password login.',
+    }
+
+    try {
+      const [user] = await db
+        .select({
+          wycNumber: wycDatabase.wycNumber,
+          first: wycDatabase.first,
+          last: wycDatabase.last,
+          email: wycDatabase.email,
+        })
+        .from(wycDatabase)
+        .where(eq(wycDatabase.wycNumber, data.wycNumber))
+        .limit(1)
+
+      if (!user) {
+        return genericFailure
+      }
+
+      const email = user.email?.trim()
+      if (!email) {
+        return genericFailure
+      }
+
+      const rate = await checkRequestRateLimit({
+        wycNumber: user.wycNumber,
+        channel: 'email',
+      })
+      if (!rate.ok) {
+        return {
+          success: false,
+          message:
+            rate.reason === 'too_frequent'
+              ? 'Please wait a moment before requesting another code.'
+              : 'Too many codes requested. Try again later or use password login.',
+        }
+      }
+
+      const code = generateCode()
+      await createOtpRecord({
+        wycNumber: user.wycNumber,
+        channel: 'email',
+        purpose: 'login',
+        destination: email,
+        code,
+      })
+
+      const name = `${user.first ?? ''} ${user.last ?? ''}`.trim()
+      const expiresInMinutes = Math.round(OTP_CODE_TTL_MS / 60000)
+      const emailText = loginOtpEmail(name, code, expiresInMinutes)
+
+      await sendEmail({
+        to: email,
+        subject: 'WYC Database - Login Code',
+        text: emailText,
+        idempotencyKey: `otp-login/${user.wycNumber}/${Date.now()}`,
+      })
+
+      return {
+        success: true,
+        message: 'Code sent.',
+        emailMasked: maskEmail(email),
+      }
+    } catch (error: any) {
+      console.error('Request email OTP error:', error)
+      return genericFailure
+    }
+  })
+
+/**
+ * Verify an email OTP and create a session identical to a password login.
+ */
+export const verifyEmailOtpServerFn = createServerFn({ method: 'POST' })
+  .inputValidator((input: { wycNumber: number; code: string }) => {
+    if (!input.wycNumber || !input.code) {
+      throw new Error('WYC Number and code are required')
+    }
+    return {
+      wycNumber: Number(input.wycNumber),
+      code: String(input.code).trim(),
+    }
+  })
+  .handler(async ({ data }): Promise<VerifyOtpResponse> => {
+    const genericFailure: VerifyOtpResponse = {
+      success: false,
+      message: 'Invalid or expired code.',
+    }
+
+    try {
+      const result = await consumeOtp({
+        wycNumber: data.wycNumber,
+        channel: 'email',
+        purpose: 'login',
+        code: data.code,
+      })
+
+      if (!result.ok) {
+        return genericFailure
+      }
+
+      const [userRow] = await db
+        .select({
+          wycNumber: wycDatabase.wycNumber,
+          first: wycDatabase.first,
+          last: wycDatabase.last,
+          email: wycDatabase.email,
+        })
+        .from(wycDatabase)
+        .where(eq(wycDatabase.wycNumber, data.wycNumber))
+        .limit(1)
+
+      if (!userRow) {
+        return genericFailure
+      }
+
+      const userData: AuthUser = {
+        wycNumber: userRow.wycNumber,
+        first: userRow.first,
+        last: userRow.last,
+        email: userRow.email,
+      }
+      const privileges = await loadUserPrivileges(userRow.wycNumber)
+
+      const session = await useAppSession()
+      await session.update({
+        userId: userRow.wycNumber,
+        user: userData,
+        privileges,
+      })
+
+      return {
+        success: true,
+        message: 'Login successful',
+        user: userData,
+      }
+    } catch (error: any) {
+      console.error('Verify email OTP error:', error)
+      return genericFailure
     }
   })
 

@@ -7,6 +7,7 @@ import {
   float,
   index,
   int,
+  mysqlEnum,
   mysqlTable,
   primaryKey,
   text,
@@ -434,6 +435,28 @@ export const processedFormEntries = mysqlTable('processed_form_entries', {
   wycNumber: int('wyc_number'),
   processedAt: timestamp('processed_at').defaultNow().notNull(),
 })
+
+export const otpCodes = mysqlTable(
+  'otp_codes',
+  {
+    id: int('id').autoincrement().notNull(),
+    wycNumber: int('wyc_number').notNull(),
+    channel: mysqlEnum('channel', ['email', 'sms']).notNull(),
+    purpose: varchar('purpose', { length: 32 }).notNull(),
+    destination: varchar('destination', { length: 255 }).notNull(),
+    codeHash: varchar('code_hash', { length: 255 }).notNull(),
+    expiresAt: timestamp('expires_at').notNull(),
+    attempts: int('attempts').default(0).notNull(),
+    maxAttempts: int('max_attempts').default(5).notNull(),
+    consumedAt: timestamp('consumed_at'),
+    createdAt: timestamp('created_at').defaultNow().notNull(),
+  },
+  (table) => [
+    primaryKey({ columns: [table.id] }),
+    index('idx_otp_lookup').on(table.wycNumber, table.channel, table.purpose, table.createdAt),
+    index('idx_otp_expires').on(table.expiresAt),
+  ],
+)
 
 export const wycWind = mysqlTable(
   'wyc_wind',

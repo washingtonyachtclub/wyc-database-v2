@@ -96,6 +96,16 @@ Your Temporary Password is: ${passphrase}
 Please log in and set a new password at your earliest convenience.`
 }
 
+export function loginOtpEmail(name: string, code: string, expiresInMinutes: number): string {
+  return `Hello ${name},
+
+Your WYC login code is: ${code}
+
+This code expires in ${expiresInMinutes} minutes.
+
+If you did not request this code, you can safely ignore this email.`
+}
+
 export function wycNumberLookupEmail(
   email: string,
   members: { wycNumber: number; name: string }[],
