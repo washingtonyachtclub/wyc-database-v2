@@ -3,6 +3,7 @@ import { AlertTriangle } from 'lucide-react'
 import { isLessonUpcoming } from '../../lib/date-utils'
 import { LESSON_CATEGORIES } from '../../db/constants'
 import { cn } from '../../lib/utils'
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
 
 function lessonName(lesson: RichLessonWithEnrollment) {
   return lesson.subtype || lesson.type || 'Untitled Lesson'
@@ -30,13 +31,7 @@ function isFull(lesson: RichLessonWithEnrollment) {
 const ROW_GRID =
   'grid grid-cols-[auto_minmax(0,3fr)_minmax(0,1.5fr)_minmax(0,1.5fr)_minmax(0,2fr)_minmax(0,1fr)] gap-3'
 
-function LessonRow({
-  lesson,
-  onClick,
-}: {
-  lesson: RichLessonWithEnrollment
-  onClick: () => void
-}) {
+function LessonRow({ lesson, onClick }: { lesson: RichLessonWithEnrollment; onClick: () => void }) {
   const warning = lessonWarning(lesson)
   const full = isFull(lesson)
 
@@ -50,9 +45,12 @@ function LessonRow({
     >
       <div className="w-4">
         {warning && (
-          <span title={warning} aria-label={warning}>
-            <AlertTriangle className="h-4 w-4 text-destructive" />
-          </span>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <AlertTriangle className="h-4 w-4 text-destructive" aria-label={warning} />
+            </TooltipTrigger>
+            <TooltipContent>{warning}</TooltipContent>
+          </Tooltip>
         )}
       </div>
       <div className="truncate font-medium">
@@ -115,12 +113,11 @@ export function LessonsByCategory({
     byCategoryId.set(lesson.classTypeId, arr)
   }
 
-  const sections: Array<{ label: string; lessons: RichLessonWithEnrollment[] }> = LESSON_CATEGORIES
-    .map((cat) => ({
+  const sections: Array<{ label: string; lessons: RichLessonWithEnrollment[] }> =
+    LESSON_CATEGORIES.map((cat) => ({
       label: cat.label as string,
       lessons: cat.typeIds.flatMap((id) => byCategoryId.get(id) ?? []),
-    }))
-    .filter((s) => s.lessons.length > 0)
+    })).filter((s) => s.lessons.length > 0)
 
   const knownIds = new Set<number>(LESSON_CATEGORIES.flatMap((c) => [...c.typeIds]))
   const uncategorized = lessons.filter((l) => !knownIds.has(l.classTypeId))
