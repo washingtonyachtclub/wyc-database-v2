@@ -120,7 +120,7 @@ export function LessonFormModal({ onClose, currentQuarter, onSuccess }: LessonFo
             name="calendarDate"
             children={(field) => (
               <field.TextField
-                label="Calendar Date (Earliest Date if Multi-day)"
+                label="Calendar Date (Latest Date if Multi-day)"
                 required
                 type="date"
               />
