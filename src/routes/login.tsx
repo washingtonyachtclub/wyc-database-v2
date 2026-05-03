@@ -45,9 +45,17 @@ function LoginPage() {
           </div>
 
           {mode === 'password' ? (
-            <PasswordForm redirectTo={redirectTo} onSwitchMode={() => setMode('email')} navigate={navigate} />
+            <PasswordForm
+              redirectTo={redirectTo}
+              onSwitchMode={() => setMode('email')}
+              navigate={navigate}
+            />
           ) : (
-            <EmailOtpFlow redirectTo={redirectTo} onSwitchMode={() => setMode('password')} navigate={navigate} />
+            <EmailOtpFlow
+              redirectTo={redirectTo}
+              onSwitchMode={() => setMode('password')}
+              navigate={navigate}
+            />
           )}
         </div>
       </div>
@@ -272,8 +280,9 @@ function EmailOtpFlow({
       )}
 
       <p className="text-sm text-muted-foreground text-center">
-        Code sent to <span className="font-medium text-foreground">{emailMasked ?? 'your email'}</span>.
-        Enter the 6-digit code below.
+        Code sent to{' '}
+        <span className="font-medium text-foreground">{emailMasked ?? 'your email'}</span>. Enter
+        the 6-digit code below.
       </p>
 
       <div>
@@ -294,7 +303,11 @@ function EmailOtpFlow({
         />
       </div>
 
-      <Button type="submit" disabled={verifyMutation.isPending || code.length !== 6} className="w-full">
+      <Button
+        type="submit"
+        disabled={verifyMutation.isPending || code.length !== 6}
+        className="w-full"
+      >
         {verifyMutation.isPending ? 'Verifying...' : 'Verify and sign in'}
       </Button>
 

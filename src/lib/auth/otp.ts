@@ -17,9 +17,7 @@ export type ConsumeResult =
   | { ok: true }
   | { ok: false; reason: 'no_code' | 'expired' | 'locked' | 'invalid' }
 
-export type RequestLimitResult =
-  | { ok: true }
-  | { ok: false; reason: 'too_frequent' | 'too_many' }
+export type RequestLimitResult = { ok: true } | { ok: false; reason: 'too_frequent' | 'too_many' }
 
 /** Cryptographically secure 6-digit string (100000–999999). */
 export function generateCode(): string {

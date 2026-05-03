@@ -15,30 +15,30 @@ Requesting a new code invalidates any prior unused code for the same member. Cli
 
 ## Schema: `otp_codes`
 
-| Column         | Type                  | Notes                                                         |
-| -------------- | --------------------- | ------------------------------------------------------------- |
-| `id`           | int PK                | Auto-increment                                                |
-| `wyc_number`   | int                   | Member who requested the code                                 |
-| `channel`      | ENUM('email','sms')   | Delivery channel                                              |
-| `purpose`      | varchar(32)           | Currently `'login'`                                           |
-| `destination`  | varchar(255)          | Email address or phone, for masked display and audit          |
-| `code_hash`    | varchar(255)          | Argon2id hash. Never plaintext.                               |
-| `expires_at`   | timestamp             | `created_at + 10 minutes`                                     |
-| `attempts`     | int                   | Incremented on failed verify                                  |
-| `max_attempts` | int                   | Per-row cap (default 5)                                       |
-| `consumed_at`  | timestamp NULL        | Set on successful verify or when superseded                   |
-| `created_at`   | timestamp             | Issue time                                                    |
+| Column         | Type                | Notes                                                |
+| -------------- | ------------------- | ---------------------------------------------------- |
+| `id`           | int PK              | Auto-increment                                       |
+| `wyc_number`   | int                 | Member who requested the code                        |
+| `channel`      | ENUM('email','sms') | Delivery channel                                     |
+| `purpose`      | varchar(32)         | Currently `'login'`                                  |
+| `destination`  | varchar(255)        | Email address or phone, for masked display and audit |
+| `code_hash`    | varchar(255)        | Argon2id hash. Never plaintext.                      |
+| `expires_at`   | timestamp           | `created_at + 10 minutes`                            |
+| `attempts`     | int                 | Incremented on failed verify                         |
+| `max_attempts` | int                 | Per-row cap (default 5)                              |
+| `consumed_at`  | timestamp NULL      | Set on successful verify or when superseded          |
+| `created_at`   | timestamp           | Issue time                                           |
 
 Indexed on `(wyc_number, channel, purpose, created_at)` for lookup and on `expires_at` for cleanup.
 
 ## Rate limits
 
-| Limit                          | Value             |
-| ------------------------------ | ----------------- |
-| Min interval between requests  | 30 seconds        |
-| Max requests per 10-min window | 3                 |
-| Max verify attempts per code   | 5                 |
-| Code lifetime                  | 10 minutes        |
+| Limit                          | Value      |
+| ------------------------------ | ---------- |
+| Min interval between requests  | 30 seconds |
+| Max requests per 10-min window | 3          |
+| Max verify attempts per code   | 5          |
+| Code lifetime                  | 10 minutes |
 
 Once a code reaches its attempt cap, further guesses against it always fail (even a correct code). The member must request a new one. This bounds brute-force risk against any single issued code.
 

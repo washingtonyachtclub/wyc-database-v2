@@ -1,17 +1,21 @@
 # Important
+- add needpw redirect from old forgot password pages
+- clear filters button on members page doesn't clear defaults
+	- all quarters option doesn't even work
+- fix documents.washingtonyachtclub.org
+- easy 1 button on lessons page to hide past lessons
+- daysailor outboard checkouts item missing on square 
+
 - replace old checkout tool
   - good mobile UX
-- phone number login (easy for forgot password at docks and checking out a boat moments)
 
-- tools
 - membership renewal through database
   - automated dues exemption using positions table? (requires data cleanup)
-  - switch to stripe?
-- lessons page: collapse lessons with same name (Intro to Keelboats cluttering lesson cards)
-  - generally better UI for current quarter lessons (display by date, row view instead of cards?)
-  - show how many signed up for each lesson
+
+- public chief list
 
 # Less Important
+- create featured lessons, pin to top of lesson list
 - better ratings filtering (find all members with *at least* X rating, more complex logic like ANDs and ORs)
 - LLM prompt -> filter parameters / direct read query on DB
 - add a higher level db permission? For managing who gets permissions
@@ -21,8 +25,6 @@
   - automated email reminder for lesson_quarter
 - easily review out_to_sea statuses (or re-think its usage)
 - track memberships more precisely (by every renewal instance rather than overwriting expireQtr)
-- replace old lesson sign-up flow
-  - involves sending the emails, wiring up to main website
 - test UX on mobile
 - fix overall slowness
 - IMA plus one matching
