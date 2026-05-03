@@ -27,6 +27,7 @@ import { Route as LessonListRouteImport } from './routes/lesson-list'
 import { Route as HonoraryRouteImport } from './routes/honorary'
 import { Route as ForgotPasswordRouteImport } from './routes/forgot-password'
 import { Route as ForbiddenRouteImport } from './routes/forbidden'
+import { Route as DbDotcgiRouteImport } from './routes/db[.]cgi'
 import { Route as ClassTypesRouteImport } from './routes/class-types'
 import { Route as ChiefsRouteImport } from './routes/chiefs'
 import { Route as CheckoutsRouteImport } from './routes/checkouts'
@@ -127,6 +128,11 @@ const ForbiddenRoute = ForbiddenRouteImport.update({
   path: '/forbidden',
   getParentRoute: () => rootRouteImport,
 } as any)
+const DbDotcgiRoute = DbDotcgiRouteImport.update({
+  id: '/db.cgi',
+  path: '/db.cgi',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ClassTypesRoute = ClassTypesRouteImport.update({
   id: '/class-types',
   path: '/class-types',
@@ -179,6 +185,7 @@ export interface FileRoutesByFullPath {
   '/checkouts': typeof CheckoutsRoute
   '/chiefs': typeof ChiefsRoute
   '/class-types': typeof ClassTypesRoute
+  '/db.cgi': typeof DbDotcgiRoute
   '/forbidden': typeof ForbiddenRoute
   '/forgot-password': typeof ForgotPasswordRoute
   '/honorary': typeof HonoraryRoute
@@ -208,6 +215,7 @@ export interface FileRoutesByTo {
   '/checkouts': typeof CheckoutsRoute
   '/chiefs': typeof ChiefsRoute
   '/class-types': typeof ClassTypesRoute
+  '/db.cgi': typeof DbDotcgiRoute
   '/forbidden': typeof ForbiddenRoute
   '/forgot-password': typeof ForgotPasswordRoute
   '/honorary': typeof HonoraryRoute
@@ -238,6 +246,7 @@ export interface FileRoutesById {
   '/checkouts': typeof CheckoutsRoute
   '/chiefs': typeof ChiefsRoute
   '/class-types': typeof ClassTypesRoute
+  '/db.cgi': typeof DbDotcgiRoute
   '/forbidden': typeof ForbiddenRoute
   '/forgot-password': typeof ForgotPasswordRoute
   '/honorary': typeof HonoraryRoute
@@ -269,6 +278,7 @@ export interface FileRouteTypes {
     | '/checkouts'
     | '/chiefs'
     | '/class-types'
+    | '/db.cgi'
     | '/forbidden'
     | '/forgot-password'
     | '/honorary'
@@ -298,6 +308,7 @@ export interface FileRouteTypes {
     | '/checkouts'
     | '/chiefs'
     | '/class-types'
+    | '/db.cgi'
     | '/forbidden'
     | '/forgot-password'
     | '/honorary'
@@ -327,6 +338,7 @@ export interface FileRouteTypes {
     | '/checkouts'
     | '/chiefs'
     | '/class-types'
+    | '/db.cgi'
     | '/forbidden'
     | '/forgot-password'
     | '/honorary'
@@ -357,6 +369,7 @@ export interface RootRouteChildren {
   CheckoutsRoute: typeof CheckoutsRoute
   ChiefsRoute: typeof ChiefsRoute
   ClassTypesRoute: typeof ClassTypesRoute
+  DbDotcgiRoute: typeof DbDotcgiRoute
   ForbiddenRoute: typeof ForbiddenRoute
   ForgotPasswordRoute: typeof ForgotPasswordRoute
   HonoraryRoute: typeof HonoraryRoute
@@ -509,6 +522,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ForbiddenRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/db.cgi': {
+      id: '/db.cgi'
+      path: '/db.cgi'
+      fullPath: '/db.cgi'
+      preLoaderRoute: typeof DbDotcgiRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/class-types': {
       id: '/class-types'
       path: '/class-types'
@@ -581,6 +601,7 @@ const rootRouteChildren: RootRouteChildren = {
   CheckoutsRoute: CheckoutsRoute,
   ChiefsRoute: ChiefsRoute,
   ClassTypesRoute: ClassTypesRoute,
+  DbDotcgiRoute: DbDotcgiRoute,
   ForbiddenRoute: ForbiddenRoute,
   ForgotPasswordRoute: ForgotPasswordRoute,
   HonoraryRoute: HonoraryRoute,
