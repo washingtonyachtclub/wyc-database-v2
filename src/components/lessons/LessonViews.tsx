@@ -41,6 +41,7 @@ function LessonRow({ lesson, onClick }: { lesson: RichLessonWithEnrollment; onCl
       className={cn(
         ROW_GRID,
         'items-center px-3 py-2 border-b border-border text-sm hover:bg-accent cursor-pointer',
+        !lesson.display && 'opacity-50',
       )}
     >
       <div className="w-4">

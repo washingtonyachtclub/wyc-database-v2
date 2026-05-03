@@ -1,13 +1,4 @@
-import type { SignedUpLesson } from '@/domains/lessons/schema'
 import { LessonCard } from '@/components/lessons/LessonCard'
-import {
-  getMyLessonsTaughtQueryOptions,
-  getMySignedUpLessonsQueryOptions,
-  useUnenrollFromLessonMutation,
-} from '@/domains/lessons/query-options'
-import { useQuery, useSuspenseQuery } from '@tanstack/react-query'
-import { createFileRoute, redirect, useNavigate } from '@tanstack/react-router'
-import { useState } from 'react'
 import {
   AlertDialog,
   AlertDialogAction,
@@ -19,6 +10,15 @@ import {
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog'
 import { Button } from '@/components/ui/button'
+import {
+  getMyLessonsTaughtQueryOptions,
+  getMySignedUpLessonsQueryOptions,
+  useUnenrollFromLessonMutation,
+} from '@/domains/lessons/query-options'
+import type { SignedUpLesson } from '@/domains/lessons/schema'
+import { useQuery, useSuspenseQuery } from '@tanstack/react-query'
+import { createFileRoute, redirect, useNavigate } from '@tanstack/react-router'
+import { useState } from 'react'
 
 export const Route = createFileRoute('/my-lessons')({
   beforeLoad: ({ context }) => {
@@ -60,13 +60,14 @@ function MyLessonsPage() {
       <section>
         <h2 className="text-xl font-semibold mb-4">Teaching</h2>
         {lessonsTaught.length === 0 ? (
-          <p className="text-muted-foreground">You are not teaching any upcoming lessons.</p>
+          <p className="text-muted-foreground">You are not teaching any lessons this quarter.</p>
         ) : (
           <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
             {lessonsTaught.map((lesson) => (
               <LessonCard
                 key={lesson.index}
                 lesson={lesson}
+                dimmed={!lesson.display}
                 onClick={() =>
                   navigate({
                     to: '/lessons/$lessonIndex',

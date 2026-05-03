@@ -5,21 +5,23 @@ import { isLessonUpcoming } from '../../lib/date-utils'
 export function LessonCard({
   lesson,
   onClick,
+  dimmed,
 }: {
   lesson: RichLesson & { enrolledCount?: number }
   onClick?: () => void
+  dimmed?: boolean
 }) {
   const upcoming = isLessonUpcoming(lesson.calendarDate)
-  const showUpcomingNotDisplayedWarning = upcoming && !lesson.display
+  const showUpcomingNotDisplayedWarning = !dimmed && upcoming && !lesson.display
   // old db inserts with 0000-00-00 for calendarDate
   const showDisplayedPastWarning =
-    !upcoming && lesson.display && !(lesson.calendarDate === '0000-00-00')
+    !dimmed && !upcoming && lesson.display && !(lesson.calendarDate === '0000-00-00')
 
   return (
     <div
       className={`border rounded-lg p-4 hover:bg-accent transition-colors ${
         onClick ? 'cursor-pointer' : ''
-      }`}
+      } ${dimmed ? 'opacity-50' : ''}`}
       onClick={onClick}
     >
       {showUpcomingNotDisplayedWarning && (

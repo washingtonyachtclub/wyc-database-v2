@@ -115,7 +115,7 @@ export function baseSignedUpWithDetailsQuery(wycNumber: number, minExpire: numbe
     .leftJoin(classType, eq(classType.index, lessons.type))
     .leftJoin(instructor1Table, eq(lessons.instructor1, instructor1Table.wycNumber))
     .leftJoin(instructor2Table, eq(lessons.instructor2, instructor2Table.wycNumber))
-    .where(and(eq(signups.student, wycNumber), gte(lessons.expire, minExpire)))
+    .where(and(eq(signups.student, wycNumber), gte(lessons.expire, minExpire), eq(lessons.display, 1)))
     .orderBy(asc(lessons.calendarDate), asc(lessons.time))
 }
 
