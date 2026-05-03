@@ -23,6 +23,7 @@ const memberSearchSchema = z.object({
   category: z.number().optional(),
   expireQtr: z.number().optional(),
   expireQtrMode: z.enum(['exactly', 'atLeast']).catch('exactly'),
+  expireQtrAll: z.boolean().catch(false),
   sortColumn: z.string().optional(),
   sortDesc: z.boolean().catch(false),
 })
@@ -31,7 +32,7 @@ export const Route = createFileRoute('/members')({
   validateSearch: memberSearchSchema,
   beforeLoad: async ({ context, search }) => {
     requirePrivilegeForRoute(context, '/members')
-    if (search.expireQtr === undefined) {
+    if (search.expireQtr === undefined && !search.expireQtrAll) {
       const currentQuarter = await context.queryClient.ensureQueryData(
         getCurrentQuarterQueryOptions(),
       )
@@ -164,6 +165,7 @@ function App() {
         ...('expireQtrFilter' in changes && {
           expireQtr: changes.expireQtrFilter?.quarter,
           expireQtrMode: changes.expireQtrFilter?.mode,
+          expireQtrAll: changes.expireQtrFilter === undefined,
         }),
       }),
       replace: true,
@@ -179,6 +181,7 @@ function App() {
         name: undefined,
         category: undefined,
         expireQtr: undefined,
+        expireQtrAll: true,
       }),
       replace: true,
     })

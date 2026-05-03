@@ -1,8 +1,5 @@
 import { ErrorAlert } from '@/components/ui/ErrorAlert'
 import { LESSON_CATEGORIES, TBD_WYC_NUMBER } from '@/db/constants'
-import type { LessonInsert, LessonStudent, RichLesson } from '@/domains/lessons/schema'
-import { lessonInsertSchema } from '@/domains/lessons/schema'
-import { useAppForm } from '@/hooks/form'
 import { getClassTypesQueryOptions } from '@/domains/class-types/query-options'
 import {
   getLessonByIdQueryOptions,
@@ -10,11 +7,13 @@ import {
   useRemoveStudentMutation,
   useUpdateLessonMutation,
 } from '@/domains/lessons/query-options'
+import type { LessonInsert, LessonStudent, RichLesson } from '@/domains/lessons/schema'
+import { lessonInsertSchema } from '@/domains/lessons/schema'
 import { getQuartersQueryOptions } from '@/domains/quarters/query-options'
+import { useAppForm } from '@/hooks/form'
+import { useCurrentUser } from '@/lib/auth/auth-query-options'
 import { useQuery, useSuspenseQuery } from '@tanstack/react-query'
 import { createFileRoute, redirect, useNavigate } from '@tanstack/react-router'
-import { useCurrentUser } from '@/lib/auth/auth-query-options'
-import { hasPrivilege } from '../lib/permissions'
 import { useState } from 'react'
 import {
   AlertDialog,
@@ -30,6 +29,7 @@ import { Button } from '../components/ui/button'
 import { Checkbox } from '../components/ui/checkbox'
 import { Label } from '../components/ui/label'
 import { MemberCombobox } from '../components/ui/MemberCombobox'
+import { hasPrivilege } from '../lib/permissions'
 
 export const Route = createFileRoute('/lessons_/$lessonIndex')({
   beforeLoad: ({ context }) => {
@@ -330,7 +330,7 @@ function LessonEditForm({ lesson }: { lesson: RichLesson }) {
           name="calendarDate"
           children={(field) => (
             <field.TextField
-              label="Calendar Date (Earliest Date if Multi-day)"
+              label="Calendar Date (Latest Date if Multi-day)"
               required
               type="date"
             />

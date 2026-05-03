@@ -12,6 +12,7 @@ import {
   getMySignedUpLessons,
   getQuarterLessons,
   removeStudentFromLesson,
+  setLessonDisplay,
   unenrollFromLesson,
   updateLesson,
 } from './server-fns'
@@ -62,6 +63,16 @@ export function useRemoveStudentMutation(lessonId: number) {
       removeStudentFromLesson({ data: { lessonId, studentWycNumber } }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['lessons', 'byId', lessonId] })
+    },
+  })
+}
+
+export function useSetLessonDisplayMutation() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: setLessonDisplay,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['lessons'] })
     },
   })
 }

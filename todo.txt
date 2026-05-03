@@ -1,8 +1,5 @@
 # Important
-- clear filters button on members page doesn't clear defaults
-	- all quarters option doesn't even work
 - fix documents.washingtonyachtclub.org
-- easy 1 button on lessons page to hide past lessons
 - daysailor outboard checkouts item missing on square 
 - add student phone numbers to lesson page
 

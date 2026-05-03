@@ -1,19 +1,24 @@
+import { Button } from '@/components/ui/button'
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
+import { useSetLessonDisplayMutation } from '@/domains/lessons/query-options'
 import type { RichLessonWithEnrollment } from '@/domains/lessons/schema'
 import { AlertTriangle } from 'lucide-react'
-import { isLessonUpcoming } from '../../lib/date-utils'
 import { LESSON_CATEGORIES } from '../../db/constants'
+import { isLessonUpcoming } from '../../lib/date-utils'
 import { cn } from '../../lib/utils'
-import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
 
 function lessonName(lesson: RichLessonWithEnrollment) {
   return lesson.subtype || lesson.type || 'Untitled Lesson'
 }
 
-function lessonWarning(lesson: RichLessonWithEnrollment): string | null {
+function lessonWarning(
+  lesson: RichLessonWithEnrollment,
+): { message: string; color: 'yellow' | 'red' } | null {
   const upcoming = isLessonUpcoming(lesson.calendarDate)
-  if (upcoming && !lesson.display) return 'Upcoming but not displayed on website'
+  if (upcoming && !lesson.display)
+    return { message: 'Upcoming but not displayed on website', color: 'yellow' }
   if (!upcoming && lesson.display && lesson.calendarDate !== '0000-00-00') {
-    return 'Past but still displayed on website'
+    return { message: 'Past but still displayed on website', color: 'red' }
   }
   return null
 }
@@ -34,6 +39,7 @@ const ROW_GRID =
 function LessonRow({ lesson, onClick }: { lesson: RichLessonWithEnrollment; onClick: () => void }) {
   const warning = lessonWarning(lesson)
   const full = isFull(lesson)
+  const setDisplayMutation = useSetLessonDisplayMutation()
 
   return (
     <div
@@ -48,9 +54,15 @@ function LessonRow({ lesson, onClick }: { lesson: RichLessonWithEnrollment; onCl
         {warning && (
           <Tooltip>
             <TooltipTrigger asChild>
-              <AlertTriangle className="h-4 w-4 text-destructive" aria-label={warning} />
+              <AlertTriangle
+                className={cn(
+                  'h-4 w-4',
+                  warning.color === 'yellow' ? 'text-yellow-500' : 'text-destructive',
+                )}
+                aria-label={warning.message}
+              />
             </TooltipTrigger>
-            <TooltipContent>{warning}</TooltipContent>
+            <TooltipContent>{warning.message}</TooltipContent>
           </Tooltip>
         )}
       </div>
@@ -67,13 +79,24 @@ function LessonRow({ lesson, onClick }: { lesson: RichLessonWithEnrollment; onCl
       <div className="truncate text-muted-foreground">
         {[lesson.instructor1Name, lesson.instructor2Name].filter(Boolean).join(', ')}
       </div>
-      <div
-        className={cn(
-          'text-right whitespace-nowrap tabular-nums',
-          full ? 'text-destructive font-medium' : 'text-muted-foreground',
+      <div className="text-right whitespace-nowrap tabular-nums">
+        {warning?.color === 'red' ? (
+          <Button
+            variant="destructive"
+            size="sm"
+            disabled={setDisplayMutation.isPending}
+            onClick={(e) => {
+              e.stopPropagation()
+              setDisplayMutation.mutate({ data: { index: lesson.index, display: false } })
+            }}
+          >
+            Un-display
+          </Button>
+        ) : (
+          <span className={cn(full ? 'text-destructive font-medium' : 'text-muted-foreground')}>
+            {enrollmentLabel(lesson)}
+          </span>
         )}
-      >
-        {enrollmentLabel(lesson)}
       </div>
     </div>
   )
