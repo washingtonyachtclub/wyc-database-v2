@@ -200,7 +200,10 @@ export const setLessonDisplay = createServerFn({ method: 'POST' })
   .inputValidator((input: { index: number; display: boolean }) => input)
   .handler(async ({ data: { index, display } }) => {
     await requirePrivilege('db')
-    await db.update(lessons).set({ display: display ? 1 : 0 }).where(eq(lessons.index, index))
+    await db
+      .update(lessons)
+      .set({ display: display ? 1 : 0 })
+      .where(eq(lessons.index, index))
     return { success: true }
   })
 
