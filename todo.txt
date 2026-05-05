@@ -1,7 +1,6 @@
 # Important
 - fix documents.washingtonyachtclub.org
 - daysailor outboard checkouts item missing on square 
-- add student phone numbers to lesson page
 
 - replace old checkout tool
   - good mobile UX
@@ -10,6 +9,7 @@
   - automated dues exemption using positions table? (requires data cleanup)
 
 - public chief list
+- lesson sign up UI: compact view, sort by date (ignoring category) view, calendar view
 
 # Less Important
 - create featured lessons, pin to top of lesson list

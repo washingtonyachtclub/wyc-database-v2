@@ -137,6 +137,7 @@ async function fetchLessonDetails(id: number) {
       first: wycDatabase.first,
       last: wycDatabase.last,
       email: wycDatabase.email,
+      phone1: wycDatabase.phone1,
     })
     .from(signups)
     .innerJoin(wycDatabase, eq(signups.student, wycDatabase.wycNumber))
@@ -148,6 +149,7 @@ async function fetchLessonDetails(id: number) {
     first: s.first || '<Unknown>',
     last: s.last || '<Unknown>',
     email: s.email || '<Unknown>',
+    phone1: s.phone1 || '',
   }))
 
   const { enrolled: enrolledStudents, waitlisted: waitlistedStudents } = splitEnrollment(

@@ -1,4 +1,6 @@
+import { CopyBox } from '@/components/ui/CopyBox'
 import { ErrorAlert } from '@/components/ui/ErrorAlert'
+import { parsePhoneNumberFromString } from 'libphonenumber-js'
 import { LESSON_CATEGORIES, TBD_WYC_NUMBER } from '@/db/constants'
 import { getClassTypesQueryOptions } from '@/domains/class-types/query-options'
 import {
@@ -199,7 +201,7 @@ function StudentList({
   }
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
       <div className="rounded-md border border-border p-4">
         <h3 className="text-sm font-medium text-muted-foreground mb-2">Names</h3>
         <div className="space-y-1">
@@ -234,7 +236,15 @@ function StudentList({
         </div>
       </div>
 
-      <EmailCopyBox emails={students.map((s) => s.email).filter(Boolean)} />
+      <CopyBox label="Emails" text={students.map((s) => s.email).filter(Boolean).join('\n')} />
+      <CopyBox
+        label="Phone Numbers"
+        text={students
+          .map((s) => s.phone1)
+          .filter(Boolean)
+          .map(normalizePhone)
+          .join('\n')}
+      />
     </div>
   )
 }
@@ -411,26 +421,22 @@ function LessonEditForm({ lesson }: { lesson: RichLesson }) {
   )
 }
 
-function EmailCopyBox({ emails }: { emails: string[] }) {
-  const [copied, setCopied] = useState(false)
-  const emailText = emails.join('\n')
+function normalizePhone(raw: string): string {
+  const cleaned = raw
+    .replace(/\s*\([hw]\)\s*$/i, '')
+    .replace(/\s*\(home\)\s*$/i, '')
+    .replace(/\s*\(work\)\s*$/i, '')
+    .trim()
 
-  function handleCopy() {
-    navigator.clipboard.writeText(emailText).then(() => {
-      setCopied(true)
-      setTimeout(() => setCopied(false), 2000)
-    })
-  }
+  // Strip trailing zero (apostrophe data-entry artifact: "(206) 295-38190" → "(206) 295-3819")
+  const digits = cleaned.replace(/\D/g, '')
+  const prestripped =
+    digits.length === 11 && digits.endsWith('0') && !digits.startsWith('1')
+      ? cleaned.slice(0, -1)
+      : cleaned
 
-  return (
-    <div className="rounded-md border border-border p-4">
-      <div className="flex items-center justify-between mb-2">
-        <h3 className="text-sm font-medium text-muted-foreground">Emails</h3>
-        <Button type="button" variant="outline" size="sm" onClick={handleCopy}>
-          {copied ? 'Copied!' : 'Copy All'}
-        </Button>
-      </div>
-      <pre className="text-sm whitespace-pre-wrap break-all">{emailText}</pre>
-    </div>
-  )
+  const parsed = parsePhoneNumberFromString(prestripped, 'US')
+  if (parsed?.isValid()) return parsed.formatNational()
+  return raw
 }
+

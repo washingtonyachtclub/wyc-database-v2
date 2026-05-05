@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { Button } from './button'
 
-export function CopyBox({ text }: { text: string }) {
+export function CopyBox({ text, label }: { text: string; label?: string }) {
   const [copied, setCopied] = useState(false)
 
   function handleCopy() {
@@ -9,6 +9,20 @@ export function CopyBox({ text }: { text: string }) {
       setCopied(true)
       setTimeout(() => setCopied(false), 2000)
     })
+  }
+
+  if (label) {
+    return (
+      <div className="rounded-md border border-border p-4">
+        <div className="flex items-center justify-between mb-2">
+          <h3 className="text-sm font-medium text-muted-foreground">{label}</h3>
+          <Button type="button" variant="outline" size="sm" onClick={handleCopy}>
+            {copied ? 'Copied!' : 'Copy All'}
+          </Button>
+        </div>
+        <pre className="text-sm whitespace-pre-wrap break-all">{text}</pre>
+      </div>
+    )
   }
 
   return (

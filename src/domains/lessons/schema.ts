@@ -71,6 +71,7 @@ export type LessonStudent = {
   first: string
   last: string
   email: string
+  phone1: string
 }
 
 export type ClassTypeRow = typeof classType.$inferSelect

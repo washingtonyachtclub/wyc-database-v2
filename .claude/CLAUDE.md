@@ -87,6 +87,7 @@ This project uses [shadcn/ui](https://ui.shadcn.com) — source-owned components
 - **Exception**: Native `<select>` is acceptable for filter controls that need conditional active-state styling (e.g., `FilterControls.tsx`). Use the shared `selectClass` constant for consistent styling.
 - **Use `cn()` from `@/lib/utils`** for conditional/merged class names.
 - **Use theme tokens** (`bg-primary`, `text-muted-foreground`, `border-input`, etc.) — never hardcode colors like `bg-indigo-600` or `text-gray-900`.
+- **Check `src/components/ui/` before writing any new UI component.** If a component already exists that's close but not quite right, extend it (e.g., add a prop) rather than duplicating it inline. If you're about to write something that looks reusable — a copy box, a labeled container, a confirmation pattern — flag it and ask whether it should live in `src/components/ui/` instead of inline in a route.
 
 ### Form fields + TanStack Form
 
