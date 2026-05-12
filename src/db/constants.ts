@@ -51,8 +51,8 @@ export const LESSON_CATEGORIES = [
   },
 ] as const
 
-/** Position ID for the Webmaster (database administrator) */
-export const DATABASE_ADMIN_POSITION_ID = 2260
+/** WYC number of the database administrator */
+export const DATABASE_ADMIN_WYC_NUMBER = 23757
 
 /** Club webmaster email address */
 export const WEBMASTER_EMAIL = 'webmaster@washingtonyachtclub.org'

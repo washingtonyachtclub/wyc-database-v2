@@ -1,22 +1,25 @@
 import { and, eq } from 'drizzle-orm'
 import { createServerFn } from '@tanstack/react-start'
 import db from 'src/db/index'
-import { DATABASE_ADMIN_POSITION_ID } from 'src/db/constants'
+import { DATABASE_ADMIN_WYC_NUMBER } from 'src/db/constants'
 import { toOfficer } from '@/domains/officers/schema'
 import type { OfficerInsert } from '@/domains/officers/schema'
 import {
   baseMemberPositionsQuery,
   baseOfficersQuery,
-  getActiveOfficerByPosition,
   getOfficerPagePositions,
   officerPageQuery,
 } from '@/domains/officers/queries'
-import { officers } from 'src/db/schema'
+import { officers, wycDatabase } from 'src/db/schema'
 import { requirePrivilege, requireSelfOrPrivilege } from '@/lib/auth/auth-middleware'
 
 export const getDatabaseAdmin = createServerFn({ method: 'GET' }).handler(async () => {
   try {
-    const row = await getActiveOfficerByPosition(DATABASE_ADMIN_POSITION_ID)
+    const [row] = await db
+      .select({ first: wycDatabase.first, last: wycDatabase.last, email: wycDatabase.email })
+      .from(wycDatabase)
+      .where(eq(wycDatabase.wycNumber, DATABASE_ADMIN_WYC_NUMBER))
+      .limit(1)
     if (!row) return null
     return {
       name: `${row.first ?? ''} ${row.last ?? ''}`.trim() || 'Database Admin',
