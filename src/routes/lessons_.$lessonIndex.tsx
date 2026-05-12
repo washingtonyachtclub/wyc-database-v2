@@ -236,7 +236,13 @@ function StudentList({
         </div>
       </div>
 
-      <CopyBox label="Emails" text={students.map((s) => s.email).filter(Boolean).join('\n')} />
+      <CopyBox
+        label="Emails"
+        text={students
+          .map((s) => s.email)
+          .filter(Boolean)
+          .join('\n')}
+      />
       <CopyBox
         label="Phone Numbers"
         text={students
@@ -439,4 +445,3 @@ function normalizePhone(raw: string): string {
   if (parsed?.isValid()) return parsed.formatNational()
   return raw
 }
-

@@ -1,5 +1,4 @@
 # Important
-- fix documents.washingtonyachtclub.org
 - daysailor outboard checkouts item missing on square 
 
 - replace old checkout tool

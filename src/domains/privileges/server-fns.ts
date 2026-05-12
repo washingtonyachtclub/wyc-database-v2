@@ -6,10 +6,10 @@ import {
   getPrivilegePositions,
   withPrivilegeFilters,
 } from '@/domains/privileges/queries'
-import db from 'src/db'
+import db from '@/db'
 import { toPrivilegeRow } from '@/domains/privileges/schema'
 import type { PrivilegeTableRow } from '@/domains/privileges/schema'
-import { officers } from 'src/db/schema'
+import { officers } from '@/db/schema'
 import { requirePrivilege } from '@/lib/auth/auth-middleware'
 
 export const getPrivilegesTable = createServerFn({ method: 'GET' })

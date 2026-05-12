@@ -2,7 +2,7 @@ import { createServerFn } from '@tanstack/react-start'
 import { and, count, desc, eq, gte, lt } from 'drizzle-orm'
 import type { QuarterInsertData } from '@/domains/quarters/schema'
 import { toQuarter } from '@/domains/quarters/schema'
-import { lessonQuarter, lessons, quarters, wycDatabase } from 'src/db/schema'
+import { lessonQuarter, lessons, quarters, wycDatabase } from '@/db/schema'
 import db from '@/db/index'
 import { requireAuth, requirePrivilege } from '@/lib/auth/auth-middleware'
 

@@ -1,7 +1,7 @@
 import { and, count, desc, eq, gt, gte, isNull, lt, sql } from 'drizzle-orm'
 import { randomInt } from 'node:crypto'
-import db from 'src/db/index'
-import { otpCodes } from 'src/db/schema'
+import db from '@/db/index'
+import { otpCodes } from '@/db/schema'
 import { hashPasswordArgon2, verifyPasswordArgon2 } from './auth'
 
 export type OtpChannel = 'email' | 'sms'

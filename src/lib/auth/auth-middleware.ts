@@ -1,5 +1,5 @@
 import { eq } from 'drizzle-orm'
-import { lessons } from 'src/db/schema'
+import { lessons } from '@/db/schema'
 import db from '@/db/index'
 import { hasPrivilege } from '../permissions'
 import type { Privilege } from '../permissions'

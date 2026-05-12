@@ -7,8 +7,8 @@ import {
   withChiefFilters,
 } from '@/domains/chiefs/queries'
 import { toChiefRow, type ChiefTableRow } from '@/domains/chiefs/schema'
-import { officers } from 'src/db/schema'
-import db from 'src/db'
+import { officers } from '@/db/schema'
+import db from '@/db'
 import { requirePrivilege } from '@/lib/auth/auth-middleware'
 
 function formatChiefType(positionName: string, positionId: number): string {

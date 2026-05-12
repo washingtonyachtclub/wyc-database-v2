@@ -18,10 +18,10 @@ import type { LessonEmailInfo } from '@/lib/email-templates'
 import { lessonEnrolledEmail, lessonWaitlistedEmail } from '@/lib/email-templates'
 import { createServerFn } from '@tanstack/react-start'
 import { and, asc, count, eq, gte, inArray, or } from 'drizzle-orm'
-import { isMembershipActive } from 'src/db/membership-utils'
-import { withPagination, withSorting } from 'src/db/query-helpers'
-import { lessonQuarter, lessons, signups, wycDatabase } from 'src/db/schema'
-import { enrollmentStatus, splitEnrollment } from 'src/db/signup-utils'
+import { isMembershipActive } from '@/db/membership-utils'
+import { withPagination, withSorting } from '@/db/query-helpers'
+import { lessonQuarter, lessons, signups, wycDatabase } from '@/db/schema'
+import { enrollmentStatus, splitEnrollment } from '@/db/signup-utils'
 
 export const getPublicLessons = createServerFn({ method: 'GET' }).handler(async () => {
   // No auth required — this is the public lesson list for the WordPress iframe

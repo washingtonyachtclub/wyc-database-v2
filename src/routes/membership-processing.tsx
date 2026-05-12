@@ -106,7 +106,10 @@ function buildColumnMap(
     else map.set(col, idx)
   }
   if (missing.length === REQUIRED_COLUMNS.length) {
-    return { ok: false, message: 'No header row detected. The first row must contain column names.' }
+    return {
+      ok: false,
+      message: 'No header row detected. The first row must contain column names.',
+    }
   }
   if (missing.length > 0) {
     return { ok: false, message: `Missing required columns: ${missing.join(', ')}` }

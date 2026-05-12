@@ -2,7 +2,7 @@ import { createServerFn } from '@tanstack/react-start'
 import { asc, eq } from 'drizzle-orm'
 import type { ClassTypeInsertData } from '@/domains/class-types/schema'
 import { toClassType } from '@/domains/class-types/schema'
-import { classType } from 'src/db/schema'
+import { classType } from '@/db/schema'
 import db from '@/db/index'
 import { requireAuth, requirePrivilege } from '@/lib/auth/auth-middleware'
 

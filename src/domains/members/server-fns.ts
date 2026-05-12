@@ -11,9 +11,9 @@ import {
 import type { MemberFilters } from '@/domains/members/filter-types'
 import { baseMemberQuery, memberSortColumns, withMemberFilters } from '@/domains/members/queries'
 import { CreateMember, MemberProfileUpdate } from '@/domains/members/schema'
-import { withPagination, withSorting } from 'src/db/query-helpers'
+import { withPagination, withSorting } from '@/db/query-helpers'
 import { baseMemberRatingsQuery, baseRatingsGivenQuery } from '@/domains/ratings/queries'
-import { memcat, processedFormEntries, quarters, wycDatabase } from 'src/db/schema'
+import { memcat, processedFormEntries, quarters, wycDatabase } from '@/db/schema'
 import db from '@/db/index'
 import {
   requireAuth,

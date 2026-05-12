@@ -2,7 +2,7 @@ import { createServerFn } from '@tanstack/react-start'
 import { desc, eq } from 'drizzle-orm'
 import type { BoatTypeInsertData } from '@/domains/boat-types/schema'
 import { toBoatType } from '@/domains/boat-types/schema'
-import { boatTypes } from 'src/db/schema'
+import { boatTypes } from '@/db/schema'
 import db from '@/db/index'
 import { requirePrivilege } from '@/lib/auth/auth-middleware'
 

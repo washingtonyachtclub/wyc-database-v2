@@ -1,4 +1,4 @@
-import { WEBMASTER_EMAIL } from 'src/db/constants'
+import { WEBMASTER_EMAIL } from '@/db/constants'
 import { CopyRow } from './ui/CopyRow'
 import { Modal } from './ui/Modal'
 

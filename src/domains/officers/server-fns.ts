@@ -1,7 +1,7 @@
 import { and, eq } from 'drizzle-orm'
 import { createServerFn } from '@tanstack/react-start'
-import db from 'src/db/index'
-import { DATABASE_ADMIN_WYC_NUMBER } from 'src/db/constants'
+import db from '@/db/index'
+import { DATABASE_ADMIN_WYC_NUMBER } from '@/db/constants'
 import { toOfficer } from '@/domains/officers/schema'
 import type { OfficerInsert } from '@/domains/officers/schema'
 import {
@@ -10,7 +10,7 @@ import {
   getOfficerPagePositions,
   officerPageQuery,
 } from '@/domains/officers/queries'
-import { officers, wycDatabase } from 'src/db/schema'
+import { officers, wycDatabase } from '@/db/schema'
 import { requirePrivilege, requireSelfOrPrivilege } from '@/lib/auth/auth-middleware'
 
 export const getDatabaseAdmin = createServerFn({ method: 'GET' }).handler(async () => {
@@ -71,10 +71,7 @@ export const createOfficer = createServerFn({ method: 'POST' })
       .from(officers)
       .where(and(eq(officers.member, data.member), eq(officers.position, data.position)))
     if (existing) {
-      await db
-        .update(officers)
-        .set({ active: 1 })
-        .where(eq(officers.index, existing.index))
+      await db.update(officers).set({ active: 1 }).where(eq(officers.index, existing.index))
       return { success: true, id: existing.index, reactivated: true }
     }
     const id = await db.insert(officers).values(data).$returningId()

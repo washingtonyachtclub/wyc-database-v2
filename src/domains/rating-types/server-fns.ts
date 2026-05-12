@@ -2,7 +2,7 @@ import { createServerFn } from '@tanstack/react-start'
 import { eq } from 'drizzle-orm'
 import { toRatingType } from '@/domains/rating-types/schema'
 import type { RatingTypeInsertData } from '@/domains/rating-types/schema'
-import { ratings } from 'src/db/schema'
+import { ratings } from '@/db/schema'
 import db from '@/db/index'
 import { requirePrivilege } from '@/lib/auth/auth-middleware'
 

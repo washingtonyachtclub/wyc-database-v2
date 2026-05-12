@@ -1,13 +1,13 @@
 import { eq } from 'drizzle-orm'
 import { createServerFn } from '@tanstack/react-start'
-import db from 'src/db'
+import db from '@/db'
 import {
   baseHonoraryQuery,
   type HonoraryFilters,
   withHonoraryFilters,
 } from '@/domains/honorary/queries'
 import { toHonoraryRow } from '@/domains/honorary/schema'
-import { officers } from 'src/db/schema'
+import { officers } from '@/db/schema'
 import { requirePrivilege } from '@/lib/auth/auth-middleware'
 
 export const getHonoraryTable = createServerFn({ method: 'GET' })

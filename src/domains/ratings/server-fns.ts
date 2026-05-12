@@ -9,8 +9,8 @@ import {
   ratingSortColumns,
   withRatingFilters,
 } from '@/domains/ratings/queries'
-import { withPagination, withSorting } from 'src/db/query-helpers'
-import { ratings, wycRatings } from 'src/db/schema'
+import { withPagination, withSorting } from '@/db/query-helpers'
+import { ratings, wycRatings } from '@/db/schema'
 import db from '@/db/index'
 import { requirePrivilege } from '@/lib/auth/auth-middleware'
 
