@@ -43,7 +43,6 @@ type ParseResult =
 
 type ParseError =
   | { code: 'MISSING_WYC_NUMBER'; message: string; rawInput: string; duplicates: DuplicateMatch[] }
-  | { code: 'COLUMN_COUNT_MISMATCH'; message: string }
   | { code: 'WYC_NOT_FOUND'; message: string }
   | { code: 'NAME_MISMATCH'; message: string; member: OldMember }
   | { code: 'INVALID_FIELD'; message: string }
@@ -93,6 +92,37 @@ type PageState =
     }
   | { kind: 'Error'; error: ParseError }
 
+const REQUIRED_COLUMNS_CSV = `"Name: First","Name: Last",Email,"Quarterly or Annual Membership","What is your UW Status for the duration of your WYC membership?","What best describes your WYC membership status?","What is your WYC number?","Address: Address Line 1","Address: Address Line 2","Address: City","Address: State","Address: Zip/Postal Code","Address: Country","Primary Phone Number","Alternative Phone Number","Entry ID"`
+const REQUIRED_COLUMNS = Papa.parse<string[]>(REQUIRED_COLUMNS_CSV, { header: false }).data[0]
+
+function buildColumnMap(
+  inputHeader: string[],
+): { ok: true; map: Map<string, number> } | { ok: false; message: string } {
+  const map = new Map<string, number>()
+  const missing: string[] = []
+  for (const col of REQUIRED_COLUMNS) {
+    const idx = inputHeader.findIndex((h) => h.trim() === col)
+    if (idx === -1) missing.push(col)
+    else map.set(col, idx)
+  }
+  if (missing.length === REQUIRED_COLUMNS.length) {
+    return { ok: false, message: 'No header row detected. The first row must contain column names.' }
+  }
+  if (missing.length > 0) {
+    return { ok: false, message: `Missing required columns: ${missing.join(', ')}` }
+  }
+  return { ok: true, map }
+}
+
+function filterCsvForDisplay(csvLine: string, colMap: Map<string, number>): string {
+  const cells = Papa.parse<string[]>(csvLine, { header: false }).data[0]
+  const filtered = REQUIRED_COLUMNS.map((col) => {
+    const idx = colMap.get(col)
+    return idx !== undefined ? (cells[idx] ?? '') : ''
+  })
+  return Papa.unparse([filtered], { header: false })
+}
+
 const CATEGORY_VALUES = [
   'Student',
   'Student, but graduating, taking quarter off, etc.',
@@ -133,13 +163,11 @@ function MembershipProcessingPage() {
   const [activeBatchIndex, setActiveBatchIndex] = useState<number | null>(null)
   const [skipWycNumber, setSkipWycNumber] = useState<string>('')
   const [skippingIndex, setSkippingIndex] = useState<number | null>(null)
+  const [columnMap, setColumnMap] = useState<Map<string, number> | null>(null)
+  const [batchError, setBatchError] = useState<string | null>(null)
   const queryClient = useQueryClient()
   const { data: processedEntryIds } = useQuery(getProcessedEntryIdsQueryOptions())
   const processedSet = useMemo(() => new Set(processedEntryIds ?? []), [processedEntryIds])
-
-  const headerString = `"Name: First","Name: Last",Email,"Quarterly or Annual Membership","What is your UW Status for the duration of your WYC membership?","What best describes your WYC membership status?","What is your WYC number?","Address: Address Line 1","Address: Address Line 2","Address: City","Address: State","Address: Zip/Postal Code","Address: Country","Primary Phone Number","Alternative Phone Number","Entry ID"`
-  const headerRow = Papa.parse<string[]>(headerString, { header: false }).data[0]
-  const wycNumberIndex = headerRow.indexOf('What is your WYC number?')
 
   type Ok<T> = { ok: true; value: T }
   type Err = { ok: false; error: string }
@@ -222,19 +250,29 @@ function MembershipProcessingPage() {
   }
 
   function reprocessWithWycNumber(wycNumberEntry: string): void {
+    if (!columnMap) return
     const cells = Papa.parse<string[]>(activeLineInput, { header: false }).data[0]
-    cells[wycNumberIndex] = wycNumberEntry
+    const wycIdx = columnMap.get('What is your WYC number?')
+    if (wycIdx === undefined) return
+    cells[wycIdx] = wycNumberEntry
     const newInput = Papa.unparse([cells], { header: false })
     setActiveLineInput(newInput)
     handleProcess(newInput)
   }
 
   function parseInput(input: string, quartersData: QuarterRow[]): ParseResult {
+    if (!columnMap) {
+      return {
+        kind: 'Error',
+        error: { code: 'DATA_LOADING', message: 'Process batch data first' },
+      }
+    }
+
     const inputRow = Papa.parse<string[]>(input, { header: false }).data[0]
 
     const get = (key: string) => {
-      const idx = headerRow.indexOf(key)
-      if (idx === -1) throw new Error(`Unknown column: ${key}`)
+      const idx = columnMap.get(key)
+      if (idx === undefined) throw new Error(`Unknown column: ${key}`)
       return inputRow[idx] ?? ''
     }
 
@@ -281,16 +319,7 @@ function MembershipProcessingPage() {
       }
     const membershipStatus = membershipStatusResult.value
 
-    // input validation
-    if (inputRow.length !== headerRow.length) {
-      return {
-        kind: 'Error',
-        error: {
-          code: 'COLUMN_COUNT_MISMATCH',
-          message: 'Expected ' + headerRow.length + ' cells, got ' + inputRow.length,
-        },
-      }
-    } else if (membershipStatus !== 'New member' && !wycNumber) {
+    if (membershipStatus !== 'New member' && !wycNumber) {
       return {
         kind: 'Error',
         error: {
@@ -395,16 +424,35 @@ function MembershipProcessingPage() {
   const visibleBatch = classifiedBatch.filter((item) => item.status !== 'filtered')
   const filteredCount = classifiedBatch.length - visibleBatch.length
 
-  function handleBatchProcess(): void {
-    const parsed = Papa.parse<string[]>(batchInput, { header: false })
-    const rows = parsed.data.filter((row) => row.length === headerRow.length)
+  function handleBatchProcess(overrideInput?: string): void {
+    const raw = overrideInput ?? batchInput
+    const parsed = Papa.parse<string[]>(raw, { header: false })
+    const rows = parsed.data.filter((row) => row.some((cell) => cell.trim() !== ''))
 
-    const firstIdx = headerRow.indexOf('Name: First')
-    const lastIdx = headerRow.indexOf('Name: Last')
-    const emailIdx = headerRow.indexOf('Email')
-    const entryIdIdx = headerRow.indexOf('Entry ID')
+    if (rows.length === 0) {
+      setBatchError('No data found')
+      setBatchItems([])
+      return
+    }
 
-    const items: BatchItem[] = rows
+    const result = buildColumnMap(rows[0])
+    if (!result.ok) {
+      setBatchError(result.message)
+      setBatchItems([])
+      return
+    }
+
+    const map = result.map
+    setColumnMap(map)
+    setBatchError(null)
+
+    const dataRows = rows.slice(1)
+    const firstIdx = map.get('Name: First')!
+    const lastIdx = map.get('Name: Last')!
+    const emailIdx = map.get('Email')!
+    const entryIdIdx = map.get('Entry ID')!
+
+    const items: BatchItem[] = dataRows
       .map((row) => {
         const entryIdStr = (row[entryIdIdx] ?? '').trim()
         const entryId = entryIdStr && !isNaN(Number(entryIdStr)) ? Number(entryIdStr) : null
@@ -524,8 +572,8 @@ function MembershipProcessingPage() {
     }
   }
 
-  const newMemberExampleInput = `Sahil,Chowdhury,sahilch@uw.edu,"Spring 2026",Student,"New member",,"217 245th pl ne",,Sammamish,WA,98074,US,'+14255892521,,9999`
-  const oldMemberExampleInput = `Luka,Ukrainczyk,lukrainczyk@gmail.com,"Spring 2026",Neither,"Current member looking to renew",17323,,,,,,,,,9998`
+  const newMemberExampleData = `Sahil,Chowdhury,sahilch@uw.edu,"Spring 2026",Student,"New member",,"217 245th pl ne",,Sammamish,WA,98074,US,'+14255892521,,9999`
+  const oldMemberExampleData = `Luka,Ukrainczyk,lukrainczyk@gmail.com,"Spring 2026",Neither,"Current member looking to renew",17323,,,,,,,,,9998`
   return (
     <div className="p-8">
       {isDevEnvironment() && (
@@ -537,9 +585,9 @@ function MembershipProcessingPage() {
         <Button
           variant="secondary"
           onClick={() => {
-            setBatchInput(newMemberExampleInput)
-            setActiveLineInput(newMemberExampleInput)
-            handleProcess(newMemberExampleInput)
+            const input = REQUIRED_COLUMNS_CSV + '\n' + newMemberExampleData
+            setBatchInput(input)
+            handleBatchProcess(input)
           }}
         >
           Set new member example
@@ -547,24 +595,25 @@ function MembershipProcessingPage() {
         <Button
           variant="secondary"
           onClick={() => {
-            setBatchInput(oldMemberExampleInput)
-            setActiveLineInput(oldMemberExampleInput)
-            handleProcess(oldMemberExampleInput)
+            const input = REQUIRED_COLUMNS_CSV + '\n' + oldMemberExampleData
+            setBatchInput(input)
+            handleBatchProcess(input)
           }}
         >
           Set old member example
         </Button>
       </div>
-      <Label>Paste CSV lines (no header)</Label>
+      <Label>Paste CSV with header row</Label>
       <Textarea
         value={batchInput}
         onChange={(e) => setBatchInput(e.target.value)}
         rows={6}
         className="font-mono text-xs"
       />
-      <Button className="mt-4" onClick={handleBatchProcess}>
+      <Button className="mt-4" onClick={() => handleBatchProcess()}>
         Process
       </Button>
+      {batchError && <p className="mt-2 text-red-600">{batchError}</p>}
 
       {classifiedBatch.length > 0 && (
         <div className="mt-4">
@@ -621,9 +670,9 @@ function MembershipProcessingPage() {
         </div>
       )}
 
-      {activeBatchIndex != null && memberState.kind !== 'Initial' && (
+      {activeBatchIndex != null && memberState.kind !== 'Initial' && columnMap && (
         <pre className="mt-4 p-3 rounded bg-muted text-xs font-mono whitespace-pre-wrap break-all">
-          {classifiedBatch[activeBatchIndex]?.csvLine}
+          {filterCsvForDisplay(classifiedBatch[activeBatchIndex]?.csvLine, columnMap)}
         </pre>
       )}
 
