@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { Check, ChevronDown } from 'lucide-react'
 import {
   EXPIRE_QTR_MODES,
@@ -6,6 +6,7 @@ import {
   type ExpireQtrFilter,
 } from '@/domains/members/filter-types'
 import type { LessonFilters } from '@/domains/lessons/filter-types'
+import { Input } from '../ui/input'
 import { Button } from '../ui/button'
 import { Command, CommandItem, CommandList } from '../ui/command'
 import { Label } from '../ui/label'
@@ -26,6 +27,7 @@ export function LessonFilterControls({
   instructor,
   expireQtrFilter,
   display,
+  search,
   classTypes,
   quarters,
   onFilterChange,
@@ -35,13 +37,23 @@ export function LessonFilterControls({
   instructor?: number
   expireQtrFilter?: ExpireQtrFilter
   display?: boolean
+  search?: string
   classTypes: Array<{ index: number; text: string | null }>
   quarters: Array<{ index: number; text: string | null; school: string | null }>
   onFilterChange: (changes: Partial<LessonFilters>) => void
   onClearFilters: () => void
 }) {
+  const [searchInput, setSearchInput] = useState(search ?? '')
+  useEffect(() => {
+    setSearchInput(search ?? '')
+  }, [search])
+
   const hasFilters =
-    classTypeId !== undefined || instructor !== undefined || expireQtrFilter || display === true
+    classTypeId !== undefined ||
+    instructor !== undefined ||
+    expireQtrFilter ||
+    display === true ||
+    !!search
 
   const activeClass = 'bg-primary/10 border-primary'
   const inactiveClass = 'bg-background border-border'
@@ -130,6 +142,24 @@ export function LessonFilterControls({
               </Select>
             )}
           </div>
+        </div>
+
+        <div>
+          <Label className="mb-1">Search</Label>
+          <Input
+            placeholder="Subtype or comments..."
+            value={searchInput}
+            onChange={(e) => setSearchInput(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter') {
+                onFilterChange({ search: searchInput.trim() || undefined })
+              }
+            }}
+            className={cn(
+              'border-2 w-48',
+              search ? activeClass : inactiveClass,
+            )}
+          />
         </div>
 
         <div className="flex items-center gap-2 pb-1">

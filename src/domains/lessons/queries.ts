@@ -1,4 +1,4 @@
-import { and, asc, desc, eq, gte, or } from 'drizzle-orm'
+import { and, asc, desc, eq, gte, like, or, sql } from 'drizzle-orm'
 import { alias, type MySqlColumn, type MySqlSelect } from 'drizzle-orm/mysql-core'
 import db from '@/db/index'
 import type { LessonFilters } from './filter-types'
@@ -71,6 +71,16 @@ export function withLessonFilters<T extends MySqlSelect>(
 
   if (filters?.display === true) {
     conditions.push(eq(lessons.display, 1))
+  }
+
+  if (filters?.search) {
+    const pattern = `%${filters.search}%`
+    conditions.push(
+      or(
+        like(lessons.subtype, pattern),
+        sql`CAST(${lessons.comments} AS CHAR) LIKE ${pattern}`,
+      ),
+    )
   }
 
   if (conditions.length > 0) {

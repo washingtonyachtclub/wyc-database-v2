@@ -32,6 +32,7 @@ const lessonSearchSchema = z.object({
   expireQtr: z.number().optional(),
   expireQtrMode: z.enum(['exactly', 'atLeast']).catch('exactly'),
   display: z.boolean().optional(),
+  search: z.string().optional(),
   sortColumn: z.string().optional(),
   sortDesc: z.boolean().catch(false),
 })
@@ -50,6 +51,7 @@ export const Route = createFileRoute('/lessons')({
       expireQtr,
       expireQtrMode,
       display,
+      search,
       sortColumn,
       sortDesc,
     },
@@ -57,8 +59,12 @@ export const Route = createFileRoute('/lessons')({
     const expireQtrFilter = expireQtr ? { quarter: expireQtr, mode: expireQtrMode } : undefined
 
     const filters: LessonFilters | undefined =
-      classTypeId !== undefined || instructor !== undefined || expireQtrFilter || display === true
-        ? { classTypeId, instructor, expireQtrFilter, display }
+      classTypeId !== undefined ||
+      instructor !== undefined ||
+      expireQtrFilter ||
+      display === true ||
+      search
+        ? { classTypeId, instructor, expireQtrFilter, display, search }
         : undefined
 
     const sorting =
@@ -77,7 +83,7 @@ export const Route = createFileRoute('/lessons')({
 
 function LessonsPage() {
   const navigate = useNavigate({ from: '/lessons' })
-  const { classTypeId, instructor, display } = Route.useSearch()
+  const { classTypeId, instructor, display, search } = Route.useSearch()
   const { pageIndex, pageSize, filters, sorting } = Route.useLoaderDeps()
   const expireQtrFilter = filters?.expireQtrFilter
   const [isLessonModalOpen, setIsLessonModalOpen] = useState(false)
@@ -172,6 +178,7 @@ function LessonsPage() {
           expireQtrMode: changes.expireQtrFilter?.mode,
         }),
         ...('display' in changes && { display: changes.display }),
+        ...('search' in changes && { search: changes.search }),
       }),
       replace: true,
       resetScroll: false,
@@ -187,6 +194,7 @@ function LessonsPage() {
         instructor: undefined,
         expireQtr: undefined,
         display: undefined,
+        search: undefined,
       }),
       replace: true,
       resetScroll: false,
@@ -278,6 +286,7 @@ function LessonsPage() {
           instructor={instructor}
           expireQtrFilter={expireQtrFilter}
           display={display}
+          search={search}
           classTypes={classTypes}
           quarters={quarters}
           onFilterChange={handleFilterChange}
