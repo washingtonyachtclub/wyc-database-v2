@@ -155,10 +155,7 @@ export function LessonFilterControls({
                 onFilterChange({ search: searchInput.trim() || undefined })
               }
             }}
-            className={cn(
-              'border-2 w-48',
-              search ? activeClass : inactiveClass,
-            )}
+            className={cn('border-2 w-48', search ? activeClass : inactiveClass)}
           />
         </div>
 

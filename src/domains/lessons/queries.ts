@@ -76,10 +76,7 @@ export function withLessonFilters<T extends MySqlSelect>(
   if (filters?.search) {
     const pattern = `%${filters.search}%`
     conditions.push(
-      or(
-        like(lessons.subtype, pattern),
-        sql`CAST(${lessons.comments} AS CHAR) LIKE ${pattern}`,
-      ),
+      or(like(lessons.subtype, pattern), sql`CAST(${lessons.comments} AS CHAR) LIKE ${pattern}`),
     )
   }
 
