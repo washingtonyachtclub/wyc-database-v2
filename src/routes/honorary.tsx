@@ -98,6 +98,7 @@ function HonoraryPage() {
                     showOutToSea: checked === true,
                   }),
                   replace: true,
+                  resetScroll: false,
                 })
               }
             />
@@ -114,6 +115,7 @@ function HonoraryPage() {
                     showOutToSea: false,
                   }),
                   replace: true,
+                  resetScroll: false,
                 })
               }
             >

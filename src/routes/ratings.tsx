@@ -105,6 +105,7 @@ function RatingsPage() {
           pageSize: newPagination.pageSize,
         }),
         replace: true,
+        resetScroll: false,
       })
     },
     onSortingChange: (updater) => {
@@ -121,6 +122,7 @@ function RatingsPage() {
           sortDesc: sort?.desc || false,
         }),
         replace: true,
+        resetScroll: false,
       })
     },
   })
@@ -134,6 +136,7 @@ function RatingsPage() {
         ...('ratingIndex' in changes && { ratingIndex: changes.ratingIndex }),
       }),
       replace: true,
+      resetScroll: false,
     })
   }
 
@@ -146,6 +149,7 @@ function RatingsPage() {
         ratingIndex: undefined,
       }),
       replace: true,
+      resetScroll: false,
     })
   }
 

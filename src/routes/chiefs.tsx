@@ -118,6 +118,7 @@ function ChiefsPage() {
                     chiefType: value === ALL ? undefined : Number(value),
                   }),
                   replace: true,
+                  resetScroll: false,
                 })
               }
             >
@@ -148,6 +149,7 @@ function ChiefsPage() {
                     showOutToSea: checked === true,
                   }),
                   replace: true,
+                  resetScroll: false,
                 })
               }
             />
@@ -165,6 +167,7 @@ function ChiefsPage() {
                     showOutToSea: false,
                   }),
                   replace: true,
+                  resetScroll: false,
                 })
               }
             >

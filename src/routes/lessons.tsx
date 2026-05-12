@@ -138,6 +138,7 @@ function LessonsPage() {
           pageSize: newPagination.pageSize,
         }),
         replace: true,
+        resetScroll: false,
       })
     },
     onSortingChange: (updater) => {
@@ -154,6 +155,7 @@ function LessonsPage() {
           sortDesc: sort?.desc || false,
         }),
         replace: true,
+        resetScroll: false,
       })
     },
   })
@@ -172,6 +174,7 @@ function LessonsPage() {
         ...('display' in changes && { display: changes.display }),
       }),
       replace: true,
+      resetScroll: false,
     })
   }
 
@@ -186,6 +189,7 @@ function LessonsPage() {
         display: undefined,
       }),
       replace: true,
+      resetScroll: false,
     })
   }
 

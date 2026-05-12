@@ -116,6 +116,7 @@ function PrivilegesPage() {
                     privilegeType: value === ALL ? undefined : Number(value),
                   }),
                   replace: true,
+                  resetScroll: false,
                 })
               }
             >
@@ -148,6 +149,7 @@ function PrivilegesPage() {
                     privilegeType: undefined,
                   }),
                   replace: true,
+                  resetScroll: false,
                 })
               }
             >

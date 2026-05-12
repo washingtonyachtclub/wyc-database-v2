@@ -115,6 +115,7 @@ function CheckoutsPage() {
           pageSize: newPagination.pageSize,
         }),
         replace: true,
+        resetScroll: false,
       })
     },
     onSortingChange: (updater) => {
@@ -131,6 +132,7 @@ function CheckoutsPage() {
           sortDesc: sort?.desc || false,
         }),
         replace: true,
+        resetScroll: false,
       })
     },
   })
@@ -147,6 +149,7 @@ function CheckoutsPage() {
         ...('until' in changes && { until: changes.until }),
       }),
       replace: true,
+      resetScroll: false,
     })
   }
 
@@ -162,6 +165,7 @@ function CheckoutsPage() {
         until: undefined,
       }),
       replace: true,
+      resetScroll: false,
     })
   }
 

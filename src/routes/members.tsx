@@ -133,6 +133,7 @@ function App() {
           pageSize: newPagination.pageSize,
         }),
         replace: true,
+        resetScroll: false,
       })
     },
     onSortingChange: (updater) => {
@@ -150,6 +151,7 @@ function App() {
           sortDesc: sort?.desc || false,
         }),
         replace: true,
+        resetScroll: false,
       })
     },
   })
@@ -169,6 +171,7 @@ function App() {
         }),
       }),
       replace: true,
+      resetScroll: false,
     })
   }
 
@@ -184,6 +187,7 @@ function App() {
         expireQtrAll: true,
       }),
       replace: true,
+      resetScroll: false,
     })
   }
 
