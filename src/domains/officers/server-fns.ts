@@ -1,4 +1,4 @@
-import { eq } from 'drizzle-orm'
+import { and, eq } from 'drizzle-orm'
 import { createServerFn } from '@tanstack/react-start'
 import db from 'src/db/index'
 import { DATABASE_ADMIN_POSITION_ID } from 'src/db/constants'
@@ -63,6 +63,17 @@ export const createOfficer = createServerFn({ method: 'POST' })
   .inputValidator((data: OfficerInsert) => data)
   .handler(async ({ data }) => {
     await requirePrivilege('db')
+    const [existing] = await db
+      .select({ index: officers.index })
+      .from(officers)
+      .where(and(eq(officers.member, data.member), eq(officers.position, data.position)))
+    if (existing) {
+      await db
+        .update(officers)
+        .set({ active: 1 })
+        .where(eq(officers.index, existing.index))
+      return { success: true, id: existing.index, reactivated: true }
+    }
     const id = await db.insert(officers).values(data).$returningId()
     return { success: true, id }
   })
