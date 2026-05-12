@@ -16,6 +16,7 @@ export function SidebarNav({ onNavigate }: { onNavigate?: () => void }) {
 
   const peopleManagementItems = [
     { path: '/officers' as const, label: 'Officers & Positions' },
+    { path: '/ratings-examiners' as const, label: 'Ratings Examiners' },
     { path: '/chiefs' as const, label: 'Chiefs' },
     { path: '/privileges' as const, label: 'Privileges' },
     { path: '/honorary' as const, label: 'Honorary' },

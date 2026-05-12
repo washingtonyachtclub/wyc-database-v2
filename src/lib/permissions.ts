@@ -26,6 +26,7 @@ export const routePermissions = {
   '/class-types': ['db'],
   '/quarters': ['db'],
   '/positions': ['db'],
+  '/ratings-examiners': ['db'],
   '/membership-processing': ['db'],
   '/set-current-quarter': ['db'],
   '/tests': ['db', 'rtgs'],

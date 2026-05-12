@@ -12,6 +12,7 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as TestsRouteImport } from './routes/tests'
 import { Route as SetPasswordRouteImport } from './routes/set-password'
 import { Route as SetCurrentQuarterRouteImport } from './routes/set-current-quarter'
+import { Route as RatingsExaminersRouteImport } from './routes/ratings-examiners'
 import { Route as RatingsRouteImport } from './routes/ratings'
 import { Route as RatingTypesRouteImport } from './routes/rating-types'
 import { Route as QuartersRouteImport } from './routes/quarters'
@@ -51,6 +52,11 @@ const SetPasswordRoute = SetPasswordRouteImport.update({
 const SetCurrentQuarterRoute = SetCurrentQuarterRouteImport.update({
   id: '/set-current-quarter',
   path: '/set-current-quarter',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const RatingsExaminersRoute = RatingsExaminersRouteImport.update({
+  id: '/ratings-examiners',
+  path: '/ratings-examiners',
   getParentRoute: () => rootRouteImport,
 } as any)
 const RatingsRoute = RatingsRouteImport.update({
@@ -201,6 +207,7 @@ export interface FileRoutesByFullPath {
   '/quarters': typeof QuartersRoute
   '/rating-types': typeof RatingTypesRoute
   '/ratings': typeof RatingsRoute
+  '/ratings-examiners': typeof RatingsExaminersRoute
   '/set-current-quarter': typeof SetCurrentQuarterRoute
   '/set-password': typeof SetPasswordRoute
   '/tests': typeof TestsRoute
@@ -231,6 +238,7 @@ export interface FileRoutesByTo {
   '/quarters': typeof QuartersRoute
   '/rating-types': typeof RatingTypesRoute
   '/ratings': typeof RatingsRoute
+  '/ratings-examiners': typeof RatingsExaminersRoute
   '/set-current-quarter': typeof SetCurrentQuarterRoute
   '/set-password': typeof SetPasswordRoute
   '/tests': typeof TestsRoute
@@ -262,6 +270,7 @@ export interface FileRoutesById {
   '/quarters': typeof QuartersRoute
   '/rating-types': typeof RatingTypesRoute
   '/ratings': typeof RatingsRoute
+  '/ratings-examiners': typeof RatingsExaminersRoute
   '/set-current-quarter': typeof SetCurrentQuarterRoute
   '/set-password': typeof SetPasswordRoute
   '/tests': typeof TestsRoute
@@ -294,6 +303,7 @@ export interface FileRouteTypes {
     | '/quarters'
     | '/rating-types'
     | '/ratings'
+    | '/ratings-examiners'
     | '/set-current-quarter'
     | '/set-password'
     | '/tests'
@@ -324,6 +334,7 @@ export interface FileRouteTypes {
     | '/quarters'
     | '/rating-types'
     | '/ratings'
+    | '/ratings-examiners'
     | '/set-current-quarter'
     | '/set-password'
     | '/tests'
@@ -354,6 +365,7 @@ export interface FileRouteTypes {
     | '/quarters'
     | '/rating-types'
     | '/ratings'
+    | '/ratings-examiners'
     | '/set-current-quarter'
     | '/set-password'
     | '/tests'
@@ -385,6 +397,7 @@ export interface RootRouteChildren {
   QuartersRoute: typeof QuartersRoute
   RatingTypesRoute: typeof RatingTypesRoute
   RatingsRoute: typeof RatingsRoute
+  RatingsExaminersRoute: typeof RatingsExaminersRoute
   SetCurrentQuarterRoute: typeof SetCurrentQuarterRoute
   SetPasswordRoute: typeof SetPasswordRoute
   TestsRoute: typeof TestsRoute
@@ -415,6 +428,13 @@ declare module '@tanstack/react-router' {
       path: '/set-current-quarter'
       fullPath: '/set-current-quarter'
       preLoaderRoute: typeof SetCurrentQuarterRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/ratings-examiners': {
+      id: '/ratings-examiners'
+      path: '/ratings-examiners'
+      fullPath: '/ratings-examiners'
+      preLoaderRoute: typeof RatingsExaminersRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/ratings': {
@@ -617,6 +637,7 @@ const rootRouteChildren: RootRouteChildren = {
   QuartersRoute: QuartersRoute,
   RatingTypesRoute: RatingTypesRoute,
   RatingsRoute: RatingsRoute,
+  RatingsExaminersRoute: RatingsExaminersRoute,
   SetCurrentQuarterRoute: SetCurrentQuarterRoute,
   SetPasswordRoute: SetPasswordRoute,
   TestsRoute: TestsRoute,
