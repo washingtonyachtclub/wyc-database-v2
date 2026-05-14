@@ -22,6 +22,7 @@ import { Route as OfficersRouteImport } from './routes/officers'
 import { Route as MyLessonsRouteImport } from './routes/my-lessons'
 import { Route as MembershipProcessingRouteImport } from './routes/membership-processing'
 import { Route as MembersRouteImport } from './routes/members'
+import { Route as MeetTheTeamRouteImport } from './routes/meet-the-team'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as LessonsRouteImport } from './routes/lessons'
 import { Route as LessonListRouteImport } from './routes/lesson-list'
@@ -102,6 +103,11 @@ const MembershipProcessingRoute = MembershipProcessingRouteImport.update({
 const MembersRoute = MembersRouteImport.update({
   id: '/members',
   path: '/members',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const MeetTheTeamRoute = MeetTheTeamRouteImport.update({
+  id: '/meet-the-team',
+  path: '/meet-the-team',
   getParentRoute: () => rootRouteImport,
 } as any)
 const LoginRoute = LoginRouteImport.update({
@@ -198,6 +204,7 @@ export interface FileRoutesByFullPath {
   '/lesson-list': typeof LessonListRoute
   '/lessons': typeof LessonsRoute
   '/login': typeof LoginRoute
+  '/meet-the-team': typeof MeetTheTeamRoute
   '/members': typeof MembersRoute
   '/membership-processing': typeof MembershipProcessingRoute
   '/my-lessons': typeof MyLessonsRoute
@@ -229,6 +236,7 @@ export interface FileRoutesByTo {
   '/lesson-list': typeof LessonListRoute
   '/lessons': typeof LessonsRoute
   '/login': typeof LoginRoute
+  '/meet-the-team': typeof MeetTheTeamRoute
   '/members': typeof MembersRoute
   '/membership-processing': typeof MembershipProcessingRoute
   '/my-lessons': typeof MyLessonsRoute
@@ -261,6 +269,7 @@ export interface FileRoutesById {
   '/lesson-list': typeof LessonListRoute
   '/lessons': typeof LessonsRoute
   '/login': typeof LoginRoute
+  '/meet-the-team': typeof MeetTheTeamRoute
   '/members': typeof MembersRoute
   '/membership-processing': typeof MembershipProcessingRoute
   '/my-lessons': typeof MyLessonsRoute
@@ -294,6 +303,7 @@ export interface FileRouteTypes {
     | '/lesson-list'
     | '/lessons'
     | '/login'
+    | '/meet-the-team'
     | '/members'
     | '/membership-processing'
     | '/my-lessons'
@@ -325,6 +335,7 @@ export interface FileRouteTypes {
     | '/lesson-list'
     | '/lessons'
     | '/login'
+    | '/meet-the-team'
     | '/members'
     | '/membership-processing'
     | '/my-lessons'
@@ -356,6 +367,7 @@ export interface FileRouteTypes {
     | '/lesson-list'
     | '/lessons'
     | '/login'
+    | '/meet-the-team'
     | '/members'
     | '/membership-processing'
     | '/my-lessons'
@@ -388,6 +400,7 @@ export interface RootRouteChildren {
   LessonListRoute: typeof LessonListRoute
   LessonsRoute: typeof LessonsRoute
   LoginRoute: typeof LoginRoute
+  MeetTheTeamRoute: typeof MeetTheTeamRoute
   MembersRoute: typeof MembersRoute
   MembershipProcessingRoute: typeof MembershipProcessingRoute
   MyLessonsRoute: typeof MyLessonsRoute
@@ -498,6 +511,13 @@ declare module '@tanstack/react-router' {
       path: '/members'
       fullPath: '/members'
       preLoaderRoute: typeof MembersRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/meet-the-team': {
+      id: '/meet-the-team'
+      path: '/meet-the-team'
+      fullPath: '/meet-the-team'
+      preLoaderRoute: typeof MeetTheTeamRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/login': {
@@ -628,6 +648,7 @@ const rootRouteChildren: RootRouteChildren = {
   LessonListRoute: LessonListRoute,
   LessonsRoute: LessonsRoute,
   LoginRoute: LoginRoute,
+  MeetTheTeamRoute: MeetTheTeamRoute,
   MembersRoute: MembersRoute,
   MembershipProcessingRoute: MembershipProcessingRoute,
   MyLessonsRoute: MyLessonsRoute,
