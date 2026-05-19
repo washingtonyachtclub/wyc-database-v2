@@ -21,7 +21,8 @@ const TEAM: RoleGroup[] = [
     people: [
       {
         name: 'Eshan Arora',
-        photo: '', // TODO: add photo URL
+        photo:
+          'https://washingtonyachtclub.org/wp-content/uploads/2026/05/boat_square.jpg',
         boat: 'Deception',
       },
       {
@@ -36,9 +37,10 @@ const TEAM: RoleGroup[] = [
     title: 'Vice Commodore',
     people: [
       {
-        name: 'Tingyi Yan',
-        photo: '', // TODO: add photo URL
-        boat: '', // TODO
+        name: 'Τingуi Υаn',
+        photo:
+          'https://washingtonyachtclub.org/wp-content/uploads/2026/05/0c51eb668d258d7026dfceef37ac5543.webp',
+        boat: 'Nightshade',
       },
     ],
   },
