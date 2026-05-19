@@ -17,18 +17,16 @@ type RoleGroup = {
 
 const TEAM: RoleGroup[] = [
   {
-    title: 'Co‑Commodores',
+    title: 'Co-Commodores',
     people: [
       {
         name: 'Eshan Arora',
-        photo:
-          'https://washingtonyachtclub.org/wp-content/uploads/2026/05/boat_square.jpg',
+        photo: 'https://washingtonyachtclub.org/wp-content/uploads/2026/05/boat_square.jpg',
         boat: 'Deception',
       },
       {
         name: 'Zachary Taylor',
-        photo:
-          'https://washingtonyachtclub.org/wp-content/uploads/2025/12/zach2.jpeg',
+        photo: 'https://washingtonyachtclub.org/wp-content/uploads/2025/12/zach2.jpeg',
         boat: 'Charlotte',
       },
     ],
@@ -45,18 +43,16 @@ const TEAM: RoleGroup[] = [
     ],
   },
   {
-    title: 'Co‑Rear Commodores',
+    title: 'Co-Rear Commodores',
     people: [
       {
         name: 'Colby Sharp',
-        photo:
-          'https://washingtonyachtclub.org/wp-content/uploads/2025/12/colby_.jpeg',
+        photo: 'https://washingtonyachtclub.org/wp-content/uploads/2025/12/colby_.jpeg',
         boat: 'Hobie 16',
       },
       {
         name: 'Harry Huang',
-        photo:
-          'https://washingtonyachtclub.org/wp-content/uploads/2025/12/harry2.jpeg',
+        photo: 'https://washingtonyachtclub.org/wp-content/uploads/2025/12/harry2.jpeg',
         boat: 'FJs',
       },
     ],
@@ -72,8 +68,7 @@ const TEAM: RoleGroup[] = [
       // },
       {
         name: 'Aidan Smit',
-        photo:
-          'https://washingtonyachtclub.org/wp-content/uploads/2025/12/aidan2.jpeg',
+        photo: 'https://washingtonyachtclub.org/wp-content/uploads/2025/12/aidan2.jpeg',
         boat: 'Lasers',
         specificRole: 'Treasurer',
       },

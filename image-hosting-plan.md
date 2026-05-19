@@ -21,7 +21,7 @@ Vercel Blob is an S3-compatible object store integrated with Vercel. Simple SDK,
 
 1. `npm install @vercel/blob` (with `--legacy-peer-deps`)
 2. Server function receives file via form upload
-3. Call `put(`member-photos/${wycNumber}.${ext}`, file, { access: 'public' })` 
+3. Call `put(`member-photos/${wycNumber}.${ext}`, file, { access: 'public' })`
 4. Store returned URL in `image_name` column (change from filename to full URL)
 5. Serve images directly from the Blob CDN URL
 

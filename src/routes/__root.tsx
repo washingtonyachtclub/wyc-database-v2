@@ -77,8 +77,7 @@ function NotFound() {
 
 function RootDocument({ children }: { children: React.ReactNode }) {
   const location = useLocation()
-  const isEmbedPage =
-    location.pathname === '/lesson-list' || location.pathname === '/meet-the-team'
+  const isEmbedPage = location.pathname === '/lesson-list' || location.pathname === '/meet-the-team'
   const isBarePage =
     ['/login', '/forgot-password'].includes(location.pathname) ||
     location.pathname.startsWith('/signup')
