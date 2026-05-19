@@ -20,6 +20,7 @@ import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { createFileRoute } from '@tanstack/react-router'
 import Papa from 'papaparse'
 import { Fragment, useMemo, useState } from 'react'
+import { ManualAddMemberModal } from '@/components/members/ManualAddMemberModal'
 import { requirePrivilegeForRoute } from '../lib/route-guards'
 
 export const Route = createFileRoute('/membership-processing')({
@@ -171,6 +172,7 @@ function MembershipProcessingPage() {
   const queryClient = useQueryClient()
   const { data: processedEntryIds } = useQuery(getProcessedEntryIdsQueryOptions())
   const processedSet = useMemo(() => new Set(processedEntryIds ?? []), [processedEntryIds])
+  const [showManualAddModal, setShowManualAddModal] = useState(false)
 
   type Ok<T> = { ok: true; value: T }
   type Err = { ok: false; error: string }
@@ -585,6 +587,7 @@ function MembershipProcessingPage() {
         </div>
       )}
       <div className="flex gap-2 mb-4">
+        <Button onClick={() => setShowManualAddModal(true)}>Manual Add</Button>
         <Button
           variant="secondary"
           onClick={() => {
@@ -884,6 +887,16 @@ function MembershipProcessingPage() {
             </div>
           )}
         </>
+      )}
+      {showManualAddModal && (
+        <ManualAddMemberModal
+          onClose={() => setShowManualAddModal(false)}
+          onSubmit={(member) => {
+            const duplicates = findDuplicates(member.first, member.last, member.email)
+            setMemberState({ kind: 'NewMember', member, duplicates })
+            setActiveBatchIndex(null)
+          }}
+        />
       )}
     </div>
   )
