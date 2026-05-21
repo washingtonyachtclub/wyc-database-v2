@@ -15,9 +15,7 @@ export const getChiefsTable = createServerFn({ method: 'GET' }).handler(async ()
   await requireAuth()
 
   try {
-    const rawRows = await baseChiefsQuery().where(
-      and(eq(posType.index, 3), eq(officers.active, 1)),
-    )
+    const rawRows = await baseChiefsQuery().where(and(eq(posType.index, 3), eq(officers.active, 1)))
     const mapped = rawRows.map(toChiefRow)
 
     const grouped = new Map<
