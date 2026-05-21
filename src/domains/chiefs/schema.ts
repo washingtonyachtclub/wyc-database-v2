@@ -15,12 +15,14 @@ export type ChiefInsertData = z.infer<typeof chiefInsertSchema>
 
 export type ChiefRole = {
   officerIndex: number
+  positionId: number
   name: string
 }
 
 export type ChiefTableRow = {
   wycNumber: number
   memberName: string
+  outToSea: boolean
   chiefRoles: ChiefRole[]
 }
 
@@ -33,5 +35,6 @@ export function toChiefRow(row: ChiefQueryRow) {
     memberName: fullName(row.memberFirst, row.memberLast),
     positionId: num(row.positionId),
     positionName: str(row.positionName),
+    outToSea: num(row.outToSea) !== 0,
   }
 }

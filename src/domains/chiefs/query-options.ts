@@ -1,12 +1,11 @@
 import { queryOptions, useMutation, useQueryClient } from '@tanstack/react-query'
-import type { ChiefFilters } from '@/domains/chiefs/queries'
 import { deleteChief, getChiefsTable, getChiefTypes } from './server-fns'
 import { createOfficer } from '@/domains/officers/server-fns'
 
-export const getChiefsQueryOptions = (filters?: ChiefFilters) =>
+export const getChiefsQueryOptions = () =>
   queryOptions({
-    queryKey: ['chiefs', filters],
-    queryFn: () => getChiefsTable({ data: { filters } }),
+    queryKey: ['chiefs'],
+    queryFn: () => getChiefsTable(),
   })
 
 export const getChiefTypesQueryOptions = () =>

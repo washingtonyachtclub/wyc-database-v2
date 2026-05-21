@@ -1,5 +1,4 @@
 import { and, eq } from 'drizzle-orm'
-import type { MySqlSelect } from 'drizzle-orm/mysql-core'
 import db from '@/db/index'
 import { officers, positions, posType, wycDatabase } from '@/db/schema'
 
@@ -23,29 +22,6 @@ export function baseChiefsQuery() {
     .leftJoin(wycDatabase, eq(officers.member, wycDatabase.wycNumber))
     .leftJoin(positions, eq(officers.position, positions.index))
     .leftJoin(posType, eq(positions.type, posType.index))
-}
-
-export type ChiefFilters = {
-  chiefType?: number
-  showOutToSea?: boolean
-}
-
-export function withChiefFilters<T extends MySqlSelect>(qb: T, filters: ChiefFilters | undefined) {
-  const conditions = [
-    eq(posType.index, 3), // always: only chief positions
-    eq(officers.active, 1), // always: only active officers
-  ]
-
-  if (filters?.chiefType !== undefined) {
-    conditions.push(eq(positions.index, filters.chiefType))
-  }
-
-  if (!filters?.showOutToSea) {
-    conditions.push(eq(wycDatabase.outToSea, 0))
-  }
-
-  qb.where(and(...conditions))
-  return qb
 }
 
 /** Positions where type=3 — populates the chief type filter dropdown */
