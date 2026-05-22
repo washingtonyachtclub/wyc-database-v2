@@ -1,10 +1,19 @@
 import { Button } from '@/components/ui/button'
 import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog'
+import {
   getLessonForSignupQueryOptions,
   useEnrollInLessonMutation,
 } from '@/domains/lessons/query-options'
 import { useSuspenseQuery } from '@tanstack/react-query'
 import { createFileRoute, Link, redirect } from '@tanstack/react-router'
+import { useState } from 'react'
 
 export const Route = createFileRoute('/signup/$lessonIndex')({
   beforeLoad: ({ context, params }) => {
@@ -26,6 +35,7 @@ export const Route = createFileRoute('/signup/$lessonIndex')({
 function SignupPage() {
   const { lessonIndex } = Route.useParams()
   const { data: signupData } = useSuspenseQuery(getLessonForSignupQueryOptions(Number(lessonIndex)))
+  const [showConfirmDialog, setShowConfirmDialog] = useState(false)
   const enrollMutation = useEnrollInLessonMutation()
 
   if (!signupData) {
@@ -45,7 +55,10 @@ function SignupPage() {
   const isFull = enrolledCount >= lesson.size
 
   const handleSignup = () => {
-    enrollMutation.mutate({ data: { lessonIndex: lesson.index } })
+    enrollMutation.mutate(
+      { data: { lessonIndex: lesson.index } },
+      { onSuccess: () => setShowConfirmDialog(true) },
+    )
   }
 
   return (
@@ -141,6 +154,21 @@ function SignupPage() {
         )}
 
         {/* TODO: Self-unenroll button */}
+
+        <Dialog open={showConfirmDialog} onOpenChange={setShowConfirmDialog}>
+          <DialogContent className="sm:max-w-lg">
+            <DialogHeader>
+              <DialogTitle className="text-2xl">A Quick Reminder</DialogTitle>
+              <DialogDescription className="text-lg pt-2">
+                If you're unable to attend, please unenroll as soon as possible so another member
+                can take your spot. Our instructors and fellow members appreciate it!
+              </DialogDescription>
+            </DialogHeader>
+            <DialogFooter className="pt-2">
+              <Button onClick={() => setShowConfirmDialog(false)}>I understand</Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
       </div>
     </div>
   )

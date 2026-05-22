@@ -10,6 +10,7 @@
 - lesson sign up UI: compact view, sort by date (ignoring category) view, calendar view
 
 # Less Important
+- required lesson confirmation 1 week before lesson, after 4 days move them to waitlist
 - create featured lessons, pin to top of lesson list
 - better ratings filtering (find all members with *at least* X rating, more complex logic like ANDs and ORs)
 - LLM prompt -> filter parameters / direct read query on DB
