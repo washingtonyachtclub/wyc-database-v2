@@ -78,9 +78,7 @@ Your WYC membership has been renewed!
 Your WYC Number is: ${wycNumber}
 Your membership is now active through ${newExpireQtrSchoolText}.
 You can review your ratings and information at database.washingtonyachtclub.org.
-${mismatchNote}
-${SIGNATURE_NAME}
-${SIGNATURE_POSITION}`
+${mismatchNote}`
 }
 
 // --- Password / account recovery ---
