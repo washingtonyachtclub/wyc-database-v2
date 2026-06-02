@@ -2,7 +2,8 @@ import { useQuery } from '@tanstack/react-query'
 import { LESSON_CATEGORIES, TBD_WYC_NUMBER } from '../../db/constants'
 import { ErrorAlert } from '../ui/ErrorAlert'
 import type { LessonInsert } from '@/domains/lessons/schema'
-import { lessonInsertSchema } from '@/domains/lessons/schema'
+import { lessonInsertSchemaForQuarters } from '@/domains/lessons/schema'
+import { useMemo } from 'react'
 import { useAppForm } from '../../hooks/form'
 import { getClassTypesQueryOptions } from '@/domains/class-types/query-options'
 import { useCreateLessonMutation } from '@/domains/lessons/query-options'
@@ -40,10 +41,12 @@ export function LessonFormModal({ onClose, currentQuarter, onSuccess }: LessonFo
 
   const createLessonMutation = useCreateLessonMutation({ onSuccess, onClose })
 
+  const lessonSchema = useMemo(() => lessonInsertSchemaForQuarters(quarters), [quarters])
+
   const form = useAppForm({
     defaultValues: emptyDefaults(defaultQuarter?.index ?? 0),
     validators: {
-      onSubmit: lessonInsertSchema,
+      onSubmit: lessonSchema,
     },
     onSubmit: async ({ value }) => {
       await createLessonMutation.mutateAsync({ data: value })

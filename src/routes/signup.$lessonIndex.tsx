@@ -51,7 +51,14 @@ function SignupPage() {
     )
   }
 
-  const { lesson, enrolledCount, waitlistedCount, isAlreadySignedUp } = signupData
+  const {
+    lesson,
+    enrolledCount,
+    waitlistedCount,
+    isAlreadySignedUp,
+    isMembershipSufficient,
+    requiredQuarterName,
+  } = signupData
   const isFull = enrolledCount >= lesson.size
 
   const handleSignup = () => {
@@ -146,14 +153,18 @@ function SignupPage() {
           </div>
         )}
 
+        {!isMembershipSufficient && !isAlreadySignedUp && !enrollMutation.isSuccess && (
+          <div className="rounded-md bg-amber-100 text-amber-900 p-4 text-sm border border-amber-300">
+            Renew to {requiredQuarterName} to sign up for this lesson.
+          </div>
+        )}
+
         {/* Signup button */}
-        {!isAlreadySignedUp && !enrollMutation.isSuccess && (
+        {isMembershipSufficient && !isAlreadySignedUp && !enrollMutation.isSuccess && (
           <Button onClick={handleSignup} disabled={enrollMutation.isPending} className="w-full">
             {enrollMutation.isPending ? 'Signing up...' : isFull ? 'Join Waitlist' : 'Sign Up'}
           </Button>
         )}
-
-        {/* TODO: Self-unenroll button */}
 
         <Dialog open={showConfirmDialog} onOpenChange={setShowConfirmDialog}>
           <DialogContent className="sm:max-w-lg">

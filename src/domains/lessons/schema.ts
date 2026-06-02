@@ -1,5 +1,6 @@
 import { z } from 'zod'
 import type { LessonQueryRow } from './queries'
+import { quarterMismatchError, type QuarterDates } from './quarter-rules'
 import { num, str, fullName } from '@/db/mapper-utils'
 import type { classType } from '@/db/schema'
 
@@ -21,6 +22,15 @@ export const lessonInsertSchema = z.object({
 })
 
 export type LessonInsert = z.infer<typeof lessonInsertSchema>
+
+export function lessonInsertSchemaForQuarters(quarters: QuarterDates[]) {
+  return lessonInsertSchema.superRefine((data, ctx) => {
+    const error = quarterMismatchError(data.calendarDate, data.expire, quarters)
+    if (error) {
+      ctx.addIssue({ code: 'custom', message: error, path: ['expire'] })
+    }
+  })
+}
 
 // --- Core & display types ---
 

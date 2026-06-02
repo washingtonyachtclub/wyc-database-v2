@@ -10,13 +10,13 @@ import {
   useUpdateLessonMutation,
 } from '@/domains/lessons/query-options'
 import type { LessonInsert, LessonStudent, RichLesson } from '@/domains/lessons/schema'
-import { lessonInsertSchema } from '@/domains/lessons/schema'
+import { lessonInsertSchemaForQuarters } from '@/domains/lessons/schema'
 import { getQuartersQueryOptions } from '@/domains/quarters/query-options'
 import { useAppForm } from '@/hooks/form'
 import { useCurrentUser } from '@/lib/auth/auth-query-options'
 import { useQuery, useSuspenseQuery } from '@tanstack/react-query'
 import { createFileRoute, redirect, useNavigate } from '@tanstack/react-router'
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
 import {
   AlertDialog,
   AlertDialogAction,
@@ -265,10 +265,12 @@ function LessonEditForm({ lesson }: { lesson: RichLesson }) {
     onClose: () => {},
   })
 
+  const lessonSchema = useMemo(() => lessonInsertSchemaForQuarters(quarters), [quarters])
+
   const form = useAppForm({
     defaultValues: lessonToDefaults(lesson),
     validators: {
-      onSubmit: lessonInsertSchema,
+      onSubmit: lessonSchema,
     },
     onSubmit: async ({ value }) => {
       setSaveMessage('')

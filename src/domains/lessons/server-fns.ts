@@ -8,6 +8,7 @@ import {
 } from '@/domains/lessons/queries'
 import type { LessonInsert, LessonStudent, SignedUpLesson } from '@/domains/lessons/schema'
 import { fromLessonInsert, toRichLesson } from '@/domains/lessons/schema'
+import { quarterMismatchError } from '@/domains/lessons/quarter-rules'
 import {
   requireAuth,
   requireInstructorOrPrivilege,
@@ -20,7 +21,7 @@ import { createServerFn } from '@tanstack/react-start'
 import { and, asc, count, eq, gte, inArray, or } from 'drizzle-orm'
 import { isMembershipActive } from '@/db/membership-utils'
 import { withPagination, withSorting } from '@/db/query-helpers'
-import { lessonQuarter, lessons, signups, wycDatabase } from '@/db/schema'
+import { lessonQuarter, lessons, quarters, signups, wycDatabase } from '@/db/schema'
 import { enrollmentStatus, splitEnrollment } from '@/db/signup-utils'
 
 export const getPublicLessons = createServerFn({ method: 'GET' }).handler(async () => {
@@ -33,7 +34,7 @@ export const getPublicLessons = createServerFn({ method: 'GET' }).handler(async 
   const currentQuarter = quarterRow[0].quarter
 
   const raw = await baseLessonQuery()
-    .where(and(eq(lessons.expire, currentQuarter), eq(lessons.display, 1)))
+    .where(and(gte(lessons.expire, currentQuarter), eq(lessons.display, 1)))
     .orderBy(asc(lessons.calendarDate), asc(lessons.time))
 
   const lessonIds = raw.map((r) => r.index)
@@ -125,6 +126,13 @@ export const getAllLessons = createServerFn({ method: 'GET' })
     return { data, totalCount: totalCountResult.count }
   })
 
+async function fetchQuarterDates() {
+  const rows = await db
+    .select({ index: quarters.index, school: quarters.school, endDate: quarters.endDate })
+    .from(quarters)
+  return rows.map((q) => ({ index: q.index, school: q.school ?? '', endDate: q.endDate ?? '' }))
+}
+
 // Internal helper — no auth check. Used by getLessonById and removeStudentFromLesson.
 async function fetchLessonDetails(id: number) {
   const [lessonRow] = await baseLessonQuery().where(eq(lessons.index, id))
@@ -171,6 +179,8 @@ export const createLesson = createServerFn({ method: 'POST' })
   .inputValidator((data: LessonInsert) => data)
   .handler(async ({ data }) => {
     await requirePrivilege('db')
+    const mismatch = quarterMismatchError(data.calendarDate, data.expire, await fetchQuarterDates())
+    if (mismatch) throw new Error(mismatch)
     const row = fromLessonInsert(data)
     const id = await db.insert(lessons).values(row).$returningId()
     return { success: true, id }
@@ -184,6 +194,8 @@ export const updateLesson = createServerFn({ method: 'POST' })
   .handler(async ({ data }) => {
     const { index, ...rest } = data
     await requireInstructorOrPrivilege(index, 'db')
+    const mismatch = quarterMismatchError(rest.calendarDate, rest.expire, await fetchQuarterDates())
+    if (mismatch) throw new Error(mismatch)
     const row = fromLessonInsert(rest)
     await db.update(lessons).set(row).where(eq(lessons.index, index))
     return { success: true, index }
@@ -362,8 +374,24 @@ export const getLessonForSignup = createServerFn({ method: 'GET' })
 
     const lesson = toRichLesson(lessonRow)
 
-    // Block signup for non-displayed lessons
     if (!lesson.display) return null
+
+    // Membership must cover the lesson's own quarter, not just the current one
+    const [member] = await db
+      .select({ expireQtrIndex: wycDatabase.expireQtrIndex })
+      .from(wycDatabase)
+      .where(eq(wycDatabase.wycNumber, userId))
+      .limit(1)
+    const isMembershipSufficient = member
+      ? isMembershipActive(member.expireQtrIndex, lesson.expire)
+      : false
+
+    const [requiredQuarter] = await db
+      .select({ school: quarters.school })
+      .from(quarters)
+      .where(eq(quarters.index, lesson.expire))
+      .limit(1)
+    const requiredQuarterName = requiredQuarter?.school ?? `Quarter ${lesson.expire}`
 
     // Get all signups to compute enrollment counts
     const lessonSignups = await db
@@ -379,6 +407,8 @@ export const getLessonForSignup = createServerFn({ method: 'GET' })
       enrolledCount: enrolled.length,
       waitlistedCount: waitlisted.length,
       isAlreadySignedUp: lessonSignups.some((s) => s.student === userId),
+      isMembershipSufficient,
+      requiredQuarterName,
     }
   })
 
@@ -393,8 +423,7 @@ export const enrollInLesson = createServerFn({ method: 'POST' })
       if (!lessonRow) throw new Error('Lesson not found')
       const lesson = toRichLesson(lessonRow)
 
-      // Membership expiration check
-      const currentQuarter = await getCurrentQuarter()
+      // Membership must cover the lesson's own quarter, not just the current one
       const [member] = await db
         .select({
           expireQtrIndex: wycDatabase.expireQtrIndex,
@@ -407,10 +436,14 @@ export const enrollInLesson = createServerFn({ method: 'POST' })
         .limit(1)
 
       if (!member) throw new Error('Member not found')
-      if (!isMembershipActive(member.expireQtrIndex, currentQuarter)) {
-        throw new Error(
-          'Your membership has expired. Please renew your membership before signing up for lessons.',
-        )
+      if (!isMembershipActive(member.expireQtrIndex, lesson.expire)) {
+        const [requiredQuarter] = await db
+          .select({ school: quarters.school })
+          .from(quarters)
+          .where(eq(quarters.index, lesson.expire))
+          .limit(1)
+        const requiredQuarterName = requiredQuarter?.school ?? `Quarter ${lesson.expire}`
+        throw new Error(`Renew your membership to ${requiredQuarterName} to sign up.`)
       }
 
       // Duplicate check
@@ -492,7 +525,7 @@ export const enrollInLesson = createServerFn({ method: 'POST' })
         error.message === 'Lesson not found' ||
         error.message === 'Member not found' ||
         error.message === 'You are already signed up for this lesson.' ||
-        error.message?.startsWith('Your membership has expired')
+        error.message?.startsWith('Renew your membership to')
       ) {
         throw error
       }
