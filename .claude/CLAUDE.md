@@ -1,5 +1,9 @@
 # WYC Database v2 — Claude Instructions
 
+## Code comments
+
+Keep comments concise and write them only when the code can't speak for itself (a non-obvious decision, a constraint, a gotcha). Don't narrate what the code already says. Never reference transient artifacts — planning docs, `CLAUDE.md`, chat decisions, "mirrors X" — since those drift; explain the reason inline instead.
+
 ## Type-driven data flow
 
 This codebase uses a 3-layer type system with null cleanup at the mapper boundary. Every domain (members, lessons) follows this pattern.
