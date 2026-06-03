@@ -154,9 +154,9 @@ function SignupPage() {
         )}
 
         {!isMembershipSufficient && !isAlreadySignedUp && !enrollMutation.isSuccess && (
-          <div className="rounded-md bg-amber-100 text-amber-900 p-4 text-sm border border-amber-300">
-            Renew to {requiredQuarterName} to sign up for this lesson.
-          </div>
+          <Button asChild className="w-full">
+            <Link to="/renew-membership">Renew to {requiredQuarterName} to sign up</Link>
+          </Button>
         )}
 
         {/* Signup button */}
