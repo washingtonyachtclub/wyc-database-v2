@@ -12,6 +12,7 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as TestsRouteImport } from './routes/tests'
 import { Route as SetPasswordRouteImport } from './routes/set-password'
 import { Route as SetCurrentQuarterRouteImport } from './routes/set-current-quarter'
+import { Route as RenewMembershipRouteImport } from './routes/renew-membership'
 import { Route as RatingsExaminersRouteImport } from './routes/ratings-examiners'
 import { Route as RatingsRouteImport } from './routes/ratings'
 import { Route as RatingTypesRouteImport } from './routes/rating-types'
@@ -53,6 +54,11 @@ const SetPasswordRoute = SetPasswordRouteImport.update({
 const SetCurrentQuarterRoute = SetCurrentQuarterRouteImport.update({
   id: '/set-current-quarter',
   path: '/set-current-quarter',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const RenewMembershipRoute = RenewMembershipRouteImport.update({
+  id: '/renew-membership',
+  path: '/renew-membership',
   getParentRoute: () => rootRouteImport,
 } as any)
 const RatingsExaminersRoute = RatingsExaminersRouteImport.update({
@@ -215,6 +221,7 @@ export interface FileRoutesByFullPath {
   '/rating-types': typeof RatingTypesRoute
   '/ratings': typeof RatingsRoute
   '/ratings-examiners': typeof RatingsExaminersRoute
+  '/renew-membership': typeof RenewMembershipRoute
   '/set-current-quarter': typeof SetCurrentQuarterRoute
   '/set-password': typeof SetPasswordRoute
   '/tests': typeof TestsRoute
@@ -247,6 +254,7 @@ export interface FileRoutesByTo {
   '/rating-types': typeof RatingTypesRoute
   '/ratings': typeof RatingsRoute
   '/ratings-examiners': typeof RatingsExaminersRoute
+  '/renew-membership': typeof RenewMembershipRoute
   '/set-current-quarter': typeof SetCurrentQuarterRoute
   '/set-password': typeof SetPasswordRoute
   '/tests': typeof TestsRoute
@@ -280,6 +288,7 @@ export interface FileRoutesById {
   '/rating-types': typeof RatingTypesRoute
   '/ratings': typeof RatingsRoute
   '/ratings-examiners': typeof RatingsExaminersRoute
+  '/renew-membership': typeof RenewMembershipRoute
   '/set-current-quarter': typeof SetCurrentQuarterRoute
   '/set-password': typeof SetPasswordRoute
   '/tests': typeof TestsRoute
@@ -314,6 +323,7 @@ export interface FileRouteTypes {
     | '/rating-types'
     | '/ratings'
     | '/ratings-examiners'
+    | '/renew-membership'
     | '/set-current-quarter'
     | '/set-password'
     | '/tests'
@@ -346,6 +356,7 @@ export interface FileRouteTypes {
     | '/rating-types'
     | '/ratings'
     | '/ratings-examiners'
+    | '/renew-membership'
     | '/set-current-quarter'
     | '/set-password'
     | '/tests'
@@ -378,6 +389,7 @@ export interface FileRouteTypes {
     | '/rating-types'
     | '/ratings'
     | '/ratings-examiners'
+    | '/renew-membership'
     | '/set-current-quarter'
     | '/set-password'
     | '/tests'
@@ -411,6 +423,7 @@ export interface RootRouteChildren {
   RatingTypesRoute: typeof RatingTypesRoute
   RatingsRoute: typeof RatingsRoute
   RatingsExaminersRoute: typeof RatingsExaminersRoute
+  RenewMembershipRoute: typeof RenewMembershipRoute
   SetCurrentQuarterRoute: typeof SetCurrentQuarterRoute
   SetPasswordRoute: typeof SetPasswordRoute
   TestsRoute: typeof TestsRoute
@@ -441,6 +454,13 @@ declare module '@tanstack/react-router' {
       path: '/set-current-quarter'
       fullPath: '/set-current-quarter'
       preLoaderRoute: typeof SetCurrentQuarterRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/renew-membership': {
+      id: '/renew-membership'
+      path: '/renew-membership'
+      fullPath: '/renew-membership'
+      preLoaderRoute: typeof RenewMembershipRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/ratings-examiners': {
@@ -659,6 +679,7 @@ const rootRouteChildren: RootRouteChildren = {
   RatingTypesRoute: RatingTypesRoute,
   RatingsRoute: RatingsRoute,
   RatingsExaminersRoute: RatingsExaminersRoute,
+  RenewMembershipRoute: RenewMembershipRoute,
   SetCurrentQuarterRoute: SetCurrentQuarterRoute,
   SetPasswordRoute: SetPasswordRoute,
   TestsRoute: TestsRoute,

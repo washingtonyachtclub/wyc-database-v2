@@ -48,6 +48,7 @@
     "react": "^19.2.0",
     "react-dom": "^19.2.0",
     "resend": "^6.9.4",
+    "square": "^44.1.0",
     "tailwind-merge": "^3.4.0",
     "tailwindcss": "^4.0.6",
     "vite-tsconfig-paths": "^6.0.2",

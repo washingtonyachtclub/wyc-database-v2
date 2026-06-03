@@ -458,6 +458,29 @@ export const otpCodes = mysqlTable(
   ],
 )
 
+export const membershipPayments = mysqlTable(
+  'membership_payments',
+  {
+    index: int('_index').autoincrement().notNull(),
+    wycNumber: int('wyc_number').notNull(),
+    // null for non-payment renewals (e.g. dues-exempt).
+    squarePaymentId: varchar('square_payment_id', { length: 255 }),
+    squareOrderId: varchar('square_order_id', { length: 255 }),
+    amountCents: int('amount_cents').notNull(), // from the Square order total (audit only)
+    currency: char('currency', { length: 3 }).default('USD').notNull(),
+    tier: varchar('tier', { length: 20 }).notNull(), // 'student' | 'nonstudent'
+    duration: varchar('duration', { length: 20 }).notNull(), // 'quarterly' | 'annual'
+    prevExpireQtr: int('prev_expire_qtr').notNull(),
+    newExpireQtr: int('new_expire_qtr').notNull(),
+    status: varchar('status', { length: 20 }).notNull(), // 'COMPLETED' (later 'EXEMPT')
+    createdAt: timestamp('created_at').defaultNow().notNull(),
+  },
+  (table) => [
+    primaryKey({ columns: [table.index] }),
+    index('idx_membership_payments_wyc').on(table.wycNumber),
+  ],
+)
+
 export const wycWind = mysqlTable(
   'wyc_wind',
   {
