@@ -35,6 +35,7 @@ import { Route as ClassTypesRouteImport } from './routes/class-types'
 import { Route as ChiefsRouteImport } from './routes/chiefs'
 import { Route as CheckoutsRouteImport } from './routes/checkouts'
 import { Route as BoatTypesRouteImport } from './routes/boat-types'
+import { Route as ApproveExemptionsRouteImport } from './routes/approve-exemptions'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as SignupLessonIndexRouteImport } from './routes/signup.$lessonIndex'
 import { Route as RatingsRatingIndexRouteImport } from './routes/ratings_.$ratingIndex'
@@ -171,6 +172,11 @@ const BoatTypesRoute = BoatTypesRouteImport.update({
   path: '/boat-types',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApproveExemptionsRoute = ApproveExemptionsRouteImport.update({
+  id: '/approve-exemptions',
+  path: '/approve-exemptions',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
@@ -199,6 +205,7 @@ const LessonsLessonIndexRoute = LessonsLessonIndexRouteImport.update({
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/approve-exemptions': typeof ApproveExemptionsRoute
   '/boat-types': typeof BoatTypesRoute
   '/checkouts': typeof CheckoutsRoute
   '/chiefs': typeof ChiefsRoute
@@ -232,6 +239,7 @@ export interface FileRoutesByFullPath {
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/approve-exemptions': typeof ApproveExemptionsRoute
   '/boat-types': typeof BoatTypesRoute
   '/checkouts': typeof CheckoutsRoute
   '/chiefs': typeof ChiefsRoute
@@ -266,6 +274,7 @@ export interface FileRoutesByTo {
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/approve-exemptions': typeof ApproveExemptionsRoute
   '/boat-types': typeof BoatTypesRoute
   '/checkouts': typeof CheckoutsRoute
   '/chiefs': typeof ChiefsRoute
@@ -301,6 +310,7 @@ export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
+    | '/approve-exemptions'
     | '/boat-types'
     | '/checkouts'
     | '/chiefs'
@@ -334,6 +344,7 @@ export interface FileRouteTypes {
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
+    | '/approve-exemptions'
     | '/boat-types'
     | '/checkouts'
     | '/chiefs'
@@ -367,6 +378,7 @@ export interface FileRouteTypes {
   id:
     | '__root__'
     | '/'
+    | '/approve-exemptions'
     | '/boat-types'
     | '/checkouts'
     | '/chiefs'
@@ -401,6 +413,7 @@ export interface FileRouteTypes {
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  ApproveExemptionsRoute: typeof ApproveExemptionsRoute
   BoatTypesRoute: typeof BoatTypesRoute
   CheckoutsRoute: typeof CheckoutsRoute
   ChiefsRoute: typeof ChiefsRoute
@@ -617,6 +630,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof BoatTypesRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/approve-exemptions': {
+      id: '/approve-exemptions'
+      path: '/approve-exemptions'
+      fullPath: '/approve-exemptions'
+      preLoaderRoute: typeof ApproveExemptionsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/': {
       id: '/'
       path: '/'
@@ -657,6 +677,7 @@ declare module '@tanstack/react-router' {
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  ApproveExemptionsRoute: ApproveExemptionsRoute,
   BoatTypesRoute: BoatTypesRoute,
   CheckoutsRoute: CheckoutsRoute,
   ChiefsRoute: ChiefsRoute,

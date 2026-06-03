@@ -481,6 +481,27 @@ export const membershipPayments = mysqlTable(
   ],
 )
 
+export const duesExemptionRequests = mysqlTable(
+  'dues_exemption_requests',
+  {
+    index: int('_index').autoincrement().notNull(),
+    wycNumber: int('wyc_number').notNull(),
+    // Target quarter frozen at request time; the grant is a no-op if already covered by approval.
+    requestedExpireQtr: int('requested_expire_qtr').notNull(),
+    status: varchar('status', { length: 20 }).notNull(), // 'pending' | 'approved' | 'denied'
+    // EXEMPT membership_payments row written on approval (null when the grant no-ops or still pending).
+    paymentId: int('payment_id'),
+    decidedBy: int('decided_by'),
+    decidedAt: timestamp('decided_at'),
+    createdAt: timestamp('created_at').defaultNow().notNull(),
+  },
+  (table) => [
+    primaryKey({ columns: [table.index] }),
+    index('idx_dues_exemption_requests_wyc').on(table.wycNumber),
+    index('idx_dues_exemption_requests_status').on(table.status),
+  ],
+)
+
 export const wycWind = mysqlTable(
   'wyc_wind',
   {

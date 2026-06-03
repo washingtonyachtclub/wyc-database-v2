@@ -1,18 +1,29 @@
-import { useQuery, useSuspenseQuery } from '@tanstack/react-query'
-import { createFileRoute, redirect } from '@tanstack/react-router'
-import { useRef, useState } from 'react'
-import { SquareCardForm } from '@/components/renewals/SquareCardForm'
 import type { SquareCardHandle } from '@/components/renewals/SquareCardForm'
+import { SquareCardForm } from '@/components/renewals/SquareCardForm'
 import { Button } from '@/components/ui/button'
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog'
 import { EmailSimulatedNotice } from '@/components/ui/EmailSimulatedNotice'
 import { ErrorAlert } from '@/components/ui/ErrorAlert'
 import { Label } from '@/components/ui/label'
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip'
 import type { RenewalDuration, RenewalTier } from '@/domains/renewals/compute-renewal'
 import {
   getRenewalPriceQueryOptions,
   getRenewalStatusQueryOptions,
   usePayAndRenewMutation,
+  useRequestDuesExemptionMutation,
 } from '@/domains/renewals/query-options'
+import { useQuery, useSuspenseQuery } from '@tanstack/react-query'
+import { createFileRoute, redirect } from '@tanstack/react-router'
+import { CircleHelp } from 'lucide-react'
+import { useRef, useState } from 'react'
 
 export const Route = createFileRoute('/renew-membership')({
   beforeLoad: ({ context }) => {
@@ -215,6 +226,92 @@ function RenewMembershipPage() {
       >
         {submitting ? 'Processing…' : 'Pay & Renew'}
       </Button>
+
+      <DuesExemptSection
+        exemptionRequest={status.exemptionRequest}
+        targetQuarterLabel={status.preview.quarterly.label}
+      />
+    </div>
+  )
+}
+
+function DuesExemptSection({
+  exemptionRequest,
+  targetQuarterLabel,
+}: {
+  exemptionRequest: { label: string } | null
+  targetQuarterLabel: string
+}) {
+  const [showModal, setShowModal] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+  const mutation = useRequestDuesExemptionMutation()
+
+  const pending = exemptionRequest !== null || mutation.isSuccess
+
+  async function submit() {
+    setError(null)
+    try {
+      await mutation.mutateAsync()
+      setShowModal(false)
+    } catch (e: any) {
+      setError(e?.message ?? 'Something went wrong. Please try again.')
+    }
+  }
+
+  return (
+    <div className="space-y-2 border-t pt-4">
+      {pending ? (
+        <div className="rounded-md border bg-muted p-3 text-sm">
+          Exemption requested — pending review.
+        </div>
+      ) : (
+        <div className="flex items-center gap-2">
+          <Button variant="outline" className="flex-1" onClick={() => setShowModal(true)}>
+            Request Dues Exempt
+          </Button>
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <button
+                  type="button"
+                  className="text-muted-foreground hover:text-foreground"
+                  aria-label="Who is dues exempt?"
+                >
+                  <CircleHelp className="h-5 w-5" />
+                </button>
+              </TooltipTrigger>
+              <TooltipContent className="max-w-xs">
+                Dues exempt for officers, position holders, instructors, honorary, etc.
+              </TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
+        </div>
+      )}
+
+      <Dialog open={showModal} onOpenChange={setShowModal}>
+        <DialogContent className="sm:max-w-lg">
+          <DialogHeader>
+            <DialogTitle>Request Dues Exempt</DialogTitle>
+            <DialogDescription className="pt-2">
+              You're requesting dues-exempt membership for <strong>{targetQuarterLabel}</strong>.
+              You should be sure you're eligible.
+            </DialogDescription>
+          </DialogHeader>
+          <ErrorAlert error={error} action="Request dues exemption" />
+          <DialogFooter className="pt-2">
+            <Button
+              variant="outline"
+              onClick={() => setShowModal(false)}
+              disabled={mutation.isPending}
+            >
+              Cancel
+            </Button>
+            <Button onClick={submit} disabled={mutation.isPending}>
+              {mutation.isPending ? 'Submitting…' : 'I understand'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }

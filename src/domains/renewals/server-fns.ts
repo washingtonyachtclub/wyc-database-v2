@@ -1,10 +1,16 @@
 import { createServerFn } from '@tanstack/react-start'
-import { eq } from 'drizzle-orm'
+import { and, eq } from 'drizzle-orm'
 import { variationId } from './catalog'
 import { MAX_QUARTERS_AHEAD, computeRenewal } from './compute-renewal'
 import type { RenewalDuration, RenewalTier } from './compute-renewal'
 import db from '@/db/index'
-import { lessonQuarter, membershipPayments, quarters, wycDatabase } from '@/db/schema'
+import {
+  duesExemptionRequests,
+  lessonQuarter,
+  membershipPayments,
+  quarters,
+  wycDatabase,
+} from '@/db/schema'
 import { requireAuth } from '@/lib/auth/auth-middleware'
 import { sendEmail } from '@/lib/email'
 import { returningMemberEmail } from '@/lib/email-templates'
@@ -73,6 +79,18 @@ export const getRenewalStatus = createServerFn({ method: 'GET' }).handler(async 
     }
   }
 
+  // Surface any open exemption request so the renew page can show pending state across reloads.
+  const [openRequest] = await db
+    .select({ requestedExpireQtr: duesExemptionRequests.requestedExpireQtr })
+    .from(duesExemptionRequests)
+    .where(
+      and(
+        eq(duesExemptionRequests.wycNumber, wycNumber),
+        eq(duesExemptionRequests.status, 'pending'),
+      ),
+    )
+    .limit(1)
+
   return {
     wycNumber,
     currentQuarter,
@@ -84,6 +102,12 @@ export const getRenewalStatus = createServerFn({ method: 'GET' }).handler(async 
       quarterly: previewFor('quarterly'),
       annual: previewFor('annual'),
     },
+    exemptionRequest: openRequest
+      ? {
+          requestedExpireQtr: openRequest.requestedExpireQtr,
+          label: labelFor(openRequest.requestedExpireQtr),
+        }
+      : null,
   }
 })
 

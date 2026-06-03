@@ -1,11 +1,18 @@
+import { useQuery } from '@tanstack/react-query'
 import { Link, useLocation } from '@tanstack/react-router'
 import { useCurrentUser } from '@/lib/auth/auth-query-options'
+import { getIsExemptionApproverQueryOptions } from '@/domains/renewals/query-options'
 import type { ProtectedRoute } from '../lib/permissions'
 import { hasPrivilege, routePermissions } from '../lib/permissions'
 
 export function SidebarNav({ onNavigate }: { onNavigate?: () => void }) {
   const location = useLocation()
   const { user, privileges } = useCurrentUser()
+  const { data: approver } = useQuery({
+    ...getIsExemptionApproverQueryOptions(),
+    enabled: Boolean(user),
+  })
+  const isExemptionApprover = approver?.isApprover ?? false
 
   const adminItems = [
     { path: '/members' as const, label: 'Members' },
@@ -109,6 +116,14 @@ export function SidebarNav({ onNavigate }: { onNavigate?: () => void }) {
           </Link>
         )
       })}
+      {isExemptionApprover && (
+        <Link
+          to="/approve-exemptions"
+          className={linkClass(location.pathname === '/approve-exemptions')}
+        >
+          Dues Exemptions
+        </Link>
+      )}
       <a
         href="/lesson-list"
         target="_blank"

@@ -1,26 +1,29 @@
 # Important
-- daysailor outboard checkouts item missing on square 
 
-- replace old checkout tool
-  - good mobile UX
+- add quarters to quarters table and editing ability (esp. for end date)
+	- automated reminders to edit these / keep up to date
 
-- membership renewal through database
-  - automated dues exemption using positions table? (requires data cleanup)
+- add to checkouts on profile when you are crew on a boat
 
+- resolve any drizzle shchema.ts and actual schema mismatch. Make drizzle the source of truth?
+- add admin role to control pages: privileges, dues exempt approvals, chiefs, maybe others
+
+## bigger projects
+- image hosting for chiefs / officers
 - lesson sign up UI: compact view, sort by date (ignoring category) view, calendar view
+- replace old checkout tool (good mobile UX)
+- overall better mobile UX (especially on non-admin pages)
 
 # Less Important
+- public officers page
 - required lesson confirmation 1 week before lesson, after 4 days move them to waitlist
 - create featured lessons, pin to top of lesson list
 - better ratings filtering (find all members with *at least* X rating, more complex logic like ANDs and ORs)
 - LLM prompt -> filter parameters / direct read query on DB
-- add a higher level db permission? For managing who gets permissions
 - dev tool: indicator for last prod -> db sync
 - automate the stuff in maintenance.md
   - quarters table
   - automated email reminder for lesson_quarter
 - easily review out_to_sea statuses (or re-think its usage)
-- track memberships more precisely (by every renewal instance rather than overwriting expireQtr)
-- test UX on mobile
 - fix overall slowness
 - IMA plus one matching

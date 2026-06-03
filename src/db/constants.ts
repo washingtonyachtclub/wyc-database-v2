@@ -51,6 +51,12 @@ export const LESSON_CATEGORIES = [
   },
 ] as const
 
+/**
+ * Active holders of these positions may approve/deny dues-exemption requests.
+ * pos `_index` values: 1000=Commodore, 1010=Vice Commodore, 2260=Webmaster.
+ */
+export const EXEMPTION_APPROVER_POSITIONS = [1000, 1010, 2260] as const
+
 /** WYC number of the database administrator */
 export const DATABASE_ADMIN_WYC_NUMBER = 23757
 
