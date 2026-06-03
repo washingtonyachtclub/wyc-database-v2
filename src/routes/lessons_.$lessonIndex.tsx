@@ -73,7 +73,7 @@ function LessonDetailPage() {
 
   const navigate = useNavigate()
   const { privileges } = useCurrentUser()
-  const hasDb = hasPrivilege(privileges, ['db'])
+  const canManageLessons = hasPrivilege(privileges, ['db', 'rtgs'])
   const { lesson, enrolledStudents, waitlistedStudents } = lessonDetails
   const [studentToRemove, setStudentToRemove] = useState<{
     wycNumber: number
@@ -146,7 +146,7 @@ function LessonDetailPage() {
         </AlertDialogContent>
       </AlertDialog>
 
-      {hasDb && (
+      {canManageLessons && (
         <>
           <div className="pt-4 border-t">
             <Button variant="destructive" onClick={() => setShowDeleteDialog(true)}>

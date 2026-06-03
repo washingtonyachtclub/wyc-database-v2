@@ -57,7 +57,7 @@ export const getPublicLessons = createServerFn({ method: 'GET' }).handler(async 
 })
 
 export const getQuarterLessons = createServerFn({ method: 'GET' }).handler(async () => {
-  const userId = await requirePrivilege('db')
+  const userId = await requirePrivilege('db', 'rtgs')
   const currentQuarter = await getCurrentQuarter()
 
   const raw = await baseLessonQuery()
@@ -108,7 +108,7 @@ export const getAllLessons = createServerFn({ method: 'GET' })
     }),
   )
   .handler(async ({ data: { pageIndex, pageSize, filters, sorting } }) => {
-    await requirePrivilege('db')
+    await requirePrivilege('db', 'rtgs')
 
     const query = baseLessonQuery().$dynamic()
 
@@ -171,14 +171,14 @@ async function fetchLessonDetails(id: number) {
 export const getLessonById = createServerFn({ method: 'GET' })
   .inputValidator((input: { id: number }) => ({ id: input.id }))
   .handler(async ({ data: { id } }) => {
-    await requireInstructorOrPrivilege(id, 'db')
+    await requireInstructorOrPrivilege(id, 'db', 'rtgs')
     return fetchLessonDetails(id)
   })
 
 export const createLesson = createServerFn({ method: 'POST' })
   .inputValidator((data: LessonInsert) => data)
   .handler(async ({ data }) => {
-    await requirePrivilege('db')
+    await requirePrivilege('db', 'rtgs')
     const mismatch = quarterMismatchError(data.calendarDate, data.expire, await fetchQuarterDates())
     if (mismatch) throw new Error(mismatch)
     const row = fromLessonInsert(data)
@@ -193,7 +193,7 @@ export const updateLesson = createServerFn({ method: 'POST' })
   }))
   .handler(async ({ data }) => {
     const { index, ...rest } = data
-    await requireInstructorOrPrivilege(index, 'db')
+    await requireInstructorOrPrivilege(index, 'db', 'rtgs')
     const mismatch = quarterMismatchError(rest.calendarDate, rest.expire, await fetchQuarterDates())
     if (mismatch) throw new Error(mismatch)
     const row = fromLessonInsert(rest)
@@ -204,7 +204,7 @@ export const updateLesson = createServerFn({ method: 'POST' })
 export const deleteLesson = createServerFn({ method: 'POST' })
   .inputValidator((input: { index: number }) => input)
   .handler(async ({ data: { index } }) => {
-    await requirePrivilege('db')
+    await requirePrivilege('db', 'rtgs')
     await db.delete(signups).where(eq(signups.class, index))
     await db.delete(lessons).where(eq(lessons.index, index))
     return { success: true }
@@ -213,7 +213,7 @@ export const deleteLesson = createServerFn({ method: 'POST' })
 export const setLessonDisplay = createServerFn({ method: 'POST' })
   .inputValidator((input: { index: number; display: boolean }) => input)
   .handler(async ({ data: { index, display } }) => {
-    await requirePrivilege('db')
+    await requirePrivilege('db', 'rtgs')
     await db
       .update(lessons)
       .set({ display: display ? 1 : 0 })
@@ -230,7 +230,7 @@ export const removeStudentFromLesson = createServerFn({ method: 'POST' })
     // Self-removal is always allowed; otherwise require instructor or db privilege
     const userId = await requireAuth()
     if (studentWycNumber !== userId) {
-      await requireInstructorOrPrivilege(lessonId, 'db')
+      await requireInstructorOrPrivilege(lessonId, 'db', 'rtgs')
     }
 
     // Get lesson + enrollment lists to detect waitlist promotion
