@@ -13,9 +13,11 @@
 - lesson sign up UI: compact view, sort by date (ignoring category) view, calendar view
 - replace old checkout tool (good mobile UX)
 - overall better mobile UX (especially on non-admin pages)
+- linking discord roles with db roles (for auto sync of roles like chiefs, kb novice, etc)
 
 # Less Important
 - public officers page
+- better ratings viewing: de-duping expired novices, showing only highest earned rating per category, etc
 - required lesson confirmation 1 week before lesson, after 4 days move them to waitlist
 - create featured lessons, pin to top of lesson list
 - better ratings filtering (find all members with *at least* X rating, more complex logic like ANDs and ORs)

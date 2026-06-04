@@ -4,6 +4,16 @@
 
 Keep comments concise and write them only when the code can't speak for itself (a non-obvious decision, a constraint, a gotcha). Don't narrate what the code already says. Never reference transient artifacts — planning docs, `CLAUDE.md`, chat decisions, "mirrors X" — since those drift; explain the reason inline instead.
 
+## Writing documentation (`documentation/`)
+
+Docs in `documentation/` describe how the system works **right now**, declaratively. They are not changelogs or migration notes.
+
+- **Describe the current state, not the change.** Never reference what something replaced, what it used to do, or how it differs from before ("previously X", "now also Y", "replacing the legacy Z", "this is the first record of..."). State what is, not what changed. (A dedicated "Legacy system" or "Migration" section is the only exception, when the history itself is the subject.)
+- **Be concise.** No unnecessary words, no restating the obvious, much shorter than any plan it came from. No em dashes in prose.
+- **No transient artifacts.** Don't reference planning docs, chat decisions, or TODOs.
+- **Verify against the code, not the plan.** Implementations drift from their plans; document what the code actually does.
+- Follow the structure of existing docs (e.g. `membership-processing.md`): an Overview, "How it works" sections, and a Key Files table. Use relative links to sibling docs.
+
 ## Type-driven data flow
 
 This codebase uses a 3-layer type system with null cleanup at the mapper boundary. Every domain (members, lessons) follows this pattern.
