@@ -21,11 +21,15 @@ import {
   useRequestDuesExemptionMutation,
 } from '@/domains/renewals/query-options'
 import { useQuery, useSuspenseQuery } from '@tanstack/react-query'
-import { createFileRoute, redirect } from '@tanstack/react-router'
+import { createFileRoute, redirect, useNavigate } from '@tanstack/react-router'
 import { CircleHelp } from 'lucide-react'
 import { useRef, useState } from 'react'
 
 export const Route = createFileRoute('/renew-membership')({
+  validateSearch: (search: Record<string, unknown>) => {
+    const redirectTo = search.redirect as string | undefined
+    return redirectTo ? { redirect: redirectTo } : {}
+  },
   beforeLoad: ({ context }) => {
     if (!context.isAuthenticated) {
       throw redirect({ to: '/login' })
@@ -50,6 +54,8 @@ type RenewResult = {
 
 function RenewMembershipPage() {
   const { data: status } = useSuspenseQuery(getRenewalStatusQueryOptions())
+  const { redirect: redirectTo } = Route.useSearch()
+  const navigate = useNavigate()
 
   // Quarterly is the smallest jump, so if it's over the cap nothing can be renewed right now.
   const canRenew = status.preview.quarterly.allowed
@@ -113,6 +119,11 @@ function RenewMembershipPage() {
           <p className="text-sm text-muted-foreground">A confirmation email is on its way.</p>
         )}
         {result.emailSimulated && <EmailSimulatedNotice />}
+        {redirectTo && (
+          <Button className="w-full" onClick={() => navigate({ to: redirectTo })}>
+            Continue to sign up
+          </Button>
+        )}
       </div>
     )
   }

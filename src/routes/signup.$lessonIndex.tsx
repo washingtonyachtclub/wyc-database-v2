@@ -155,7 +155,9 @@ function SignupPage() {
 
         {!isMembershipSufficient && !isAlreadySignedUp && !enrollMutation.isSuccess && (
           <Button asChild className="w-full">
-            <Link to="/renew-membership">Renew to {requiredQuarterName} to sign up</Link>
+            <Link to="/renew-membership" search={{ redirect: `/signup/${lesson.index}` }}>
+              Renew to {requiredQuarterName} to sign up
+            </Link>
           </Button>
         )}
 
