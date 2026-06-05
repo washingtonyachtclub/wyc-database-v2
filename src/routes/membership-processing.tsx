@@ -12,9 +12,9 @@ import {
   getProcessedEntryIdsQueryOptions,
 } from '@/domains/members/query-options'
 import { getQuartersQueryOptions } from '@/domains/quarters/query-options'
-import { createMember, markEntryProcessed, renewMember } from '@/domains/members/server-fns'
+import { createMember, markEntryProcessed } from '@/domains/members/server-fns'
 import { isDevEnvironment } from '@/lib/env'
-import { newMemberEmailFallback, returningMemberEmail } from '@/lib/email-templates'
+import { newMemberEmailFallback } from '@/lib/email-templates'
 import { cn } from '@/lib/utils'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { createFileRoute } from '@tanstack/react-router'
@@ -30,22 +30,11 @@ export const Route = createFileRoute('/membership-processing')({
   component: MembershipProcessingPage,
 })
 
-export type OldMember = {
-  wycNumber: number
-  newExpireQtr: number
-  first: string
-  last: string
-  email: string
-}
 type ParseResult =
   | { kind: 'NewMember'; member: MemberProfileUpdate }
-  | { kind: 'OldMember'; member: OldMember }
   | { kind: 'Error'; error: ParseError }
 
 type ParseError =
-  | { code: 'MISSING_WYC_NUMBER'; message: string; rawInput: string; duplicates: DuplicateMatch[] }
-  | { code: 'WYC_NOT_FOUND'; message: string }
-  | { code: 'NAME_MISMATCH'; message: string; member: OldMember }
   | { code: 'INVALID_FIELD'; message: string }
   | { code: 'DATA_LOADING'; message: string }
 
@@ -54,7 +43,7 @@ type DuplicateMatch = {
   first: string | null
   last: string | null
   email: string | null
-  matchMethod: 'name' | 'email' | 'name+email'
+  matchMethod: string
   status: 'active' | 'expired'
 }
 
@@ -83,17 +72,9 @@ type PageState =
       emailSent: boolean
       emailSimulated: boolean
     }
-  | { kind: 'OldMember'; member: OldMember }
-  | {
-      kind: 'OldMemberRenewed'
-      member: OldMember
-      emailSent: boolean
-      emailSimulated: boolean
-      emailAddress: string | null
-    }
   | { kind: 'Error'; error: ParseError }
 
-const REQUIRED_COLUMNS_CSV = `"Name: First","Name: Last",Email,"Quarterly or Annual Membership","What is your UW Status for the duration of your WYC membership?","What best describes your WYC membership status?","What is your WYC number?","Address: Address Line 1","Address: Address Line 2","Address: City","Address: State","Address: Zip/Postal Code","Address: Country","Primary Phone Number","Alternative Phone Number","Entry ID"`
+const REQUIRED_COLUMNS_CSV = `"Name: First","Name: Last",Email,"Quarterly or Annual Membership","What is your UW Status for the duration of your WYC membership?","Address: Address Line 1","Address: Address Line 2","Address: City","Address: State","Address: Zip/Postal Code","Address: Country","Primary Phone Number","Entry ID"`
 const REQUIRED_COLUMNS = Papa.parse<string[]>(REQUIRED_COLUMNS_CSV, { header: false }).data[0]
 
 function buildColumnMap(
@@ -135,24 +116,26 @@ const CATEGORY_VALUES = [
 ] as const
 type CategoryText = (typeof CATEGORY_VALUES)[number]
 
-const MEMBERSHIP_STATUS_VALUES = [
-  'New member',
-  'Current member looking to renew',
-  'Previous member looking to rejoin',
-] as const
+// Strip diacritics, punctuation, and whitespace so "O'Brien" / "OBrien" / "Jose" / "José" collapse.
+function normalizeName(s: string): string {
+  return s
+    .normalize('NFKD')
+    .replace(/[̀-ͯ]/g, '')
+    .toLowerCase()
+    .replace(/[^a-z0-9]/g, '')
+}
 
-function NameMismatchActions({
-  member,
-  onAcknowledge,
-}: {
-  member: OldMember
-  onAcknowledge: (member: OldMember) => void
-}) {
-  return (
-    <div className="mt-2">
-      <Button onClick={() => onAcknowledge(member)}>Acknowledged</Button>
-    </div>
-  )
+// Canonicalize for comparison; gmail ignores dots and +suffixes, so two spellings hit one inbox.
+function canonicalEmail(raw: string): string {
+  const e = raw.toLowerCase().trim()
+  const at = e.indexOf('@')
+  if (at === -1) return e
+  const local = e.slice(0, at)
+  const domain = e.slice(at + 1)
+  if (domain === 'gmail.com' || domain === 'googlemail.com') {
+    return `${local.split('+')[0].replace(/\./g, '')}@gmail.com`
+  }
+  return `${local}@${domain}`
 }
 
 function MembershipProcessingPage() {
@@ -162,7 +145,6 @@ function MembershipProcessingPage() {
   const [memberState, setMemberState] = useState<PageState>({ kind: 'Initial' })
   const [batchInput, setBatchInput] = useState<string>('')
   const [activeLineInput, setActiveLineInput] = useState<string>('')
-  const [wycNumberEntry, setWycNumberEntry] = useState<string>('')
   const [batchItems, setBatchItems] = useState<BatchItem[]>([])
   const [activeBatchIndex, setActiveBatchIndex] = useState<number | null>(null)
   const [skipWycNumber, setSkipWycNumber] = useState<string>('')
@@ -203,13 +185,6 @@ function MembershipProcessingPage() {
     return { ok: true, index: match.index }
   }
 
-  function getSchoolText(quarterIndex: number, quartersData: QuarterRow[]): string {
-    return (
-      quartersData.find((q) => q.index === quarterIndex)?.school ??
-      `Unknown quarter ${quarterIndex}`
-    )
-  }
-
   function cleanPhone(raw: string): string {
     const digits = raw.replace(/\D/g, '')
     if (digits.length > 10) return digits.slice(-10)
@@ -229,40 +204,59 @@ function MembershipProcessingPage() {
     }
   }
 
-  function findDuplicates(first: string, last: string, email: string): DuplicateMatch[] {
+  function findDuplicates(
+    first: string,
+    last: string,
+    email: string,
+    phone: string,
+  ): DuplicateMatch[] {
     if (!allMembers || currentQuarter == null) return []
-    const normFirst = first.toLowerCase().trim()
-    const normLast = last.toLowerCase().trim()
-    const normEmail = email.toLowerCase().trim()
+    const nFirst = normalizeName(first)
+    const nLast = normalizeName(last)
+    const cEmail = email.trim() ? canonicalEmail(email) : ''
+    const nPhone = cleanPhone(phone)
+
     const matches: DuplicateMatch[] = []
     for (const m of allMembers) {
-      const nameMatch =
-        m.first?.toLowerCase().trim() === normFirst && m.last?.toLowerCase().trim() === normLast
-      const emailMatch =
-        normEmail !== '' && m.email != null && m.email.toLowerCase().trim() === normEmail
-      if (nameMatch || emailMatch) {
+      const mFirst = normalizeName(m.first ?? '')
+      const mLast = normalizeName(m.last ?? '')
+      const reasons: string[] = []
+
+      if (nFirst !== '' && nLast !== '' && mFirst === nFirst && mLast === nLast) {
+        reasons.push('name')
+      } else if (
+        nLast !== '' &&
+        mLast === nLast &&
+        nFirst !== '' &&
+        mFirst !== '' &&
+        mFirst[0] === nFirst[0]
+      ) {
+        // Same last name + first initial catches nicknames like Mike/Michael.
+        reasons.push('name (initial)')
+      }
+
+      if (cEmail !== '' && m.email && canonicalEmail(m.email) === cEmail) reasons.push('email')
+
+      if (
+        nPhone !== '' &&
+        ((m.phone1 && cleanPhone(m.phone1) === nPhone) ||
+          (m.phone2 && cleanPhone(m.phone2) === nPhone))
+      ) {
+        reasons.push('phone')
+      }
+
+      if (reasons.length > 0) {
         matches.push({
           wycNumber: m.wycNumber,
           first: m.first,
           last: m.last,
           email: m.email,
-          matchMethod: nameMatch && emailMatch ? 'name+email' : nameMatch ? 'name' : 'email',
+          matchMethod: reasons.join(' + '),
           status: isMembershipActive(m.expireQtrIndex, currentQuarter) ? 'active' : 'expired',
         })
       }
     }
     return matches
-  }
-
-  function reprocessWithWycNumber(wycNumberEntry: string): void {
-    if (!columnMap) return
-    const cells = Papa.parse<string[]>(activeLineInput, { header: false }).data[0]
-    const wycIdx = columnMap.get('What is your WYC number?')
-    if (wycIdx === undefined) return
-    cells[wycIdx] = wycNumberEntry
-    const newInput = Papa.unparse([cells], { header: false })
-    setActiveLineInput(newInput)
-    handleProcess(newInput)
   }
 
   function parseInput(input: string, quartersData: QuarterRow[]): ParseResult {
@@ -289,12 +283,9 @@ function MembershipProcessingPage() {
     const state = get('Address: State')
     const zipCode = get('Address: Zip/Postal Code')
     const phone1 = cleanPhone(get('Primary Phone Number'))
-    const phone2 = cleanPhone(get('Alternative Phone Number'))
     const email = get('Email')
     const rawCategory = get('What is your UW Status for the duration of your WYC membership?')
     const rawQuartersText = get('Quarterly or Annual Membership')
-    const wycNumber = get('What is your WYC number?')
-    const rawMembershipStatus = get('What best describes your WYC membership status?')
 
     const categoryResult = parseOneOf(rawCategory, CATEGORY_VALUES, 'category')
     if (!categoryResult.ok)
@@ -312,39 +303,6 @@ function MembershipProcessingPage() {
       }
     const expireQtrIndex = expireQtrResult.index
 
-    const membershipStatusResult = parseOneOf(
-      rawMembershipStatus,
-      MEMBERSHIP_STATUS_VALUES,
-      'membership status',
-    )
-    if (!membershipStatusResult.ok)
-      return {
-        kind: 'Error',
-        error: { code: 'INVALID_FIELD', message: membershipStatusResult.error },
-      }
-    const membershipStatus = membershipStatusResult.value
-
-    if (membershipStatus !== 'New member' && !wycNumber) {
-      return {
-        kind: 'Error',
-        error: {
-          code: 'MISSING_WYC_NUMBER',
-          message: 'Returning member but no WYC number provided',
-          rawInput: input,
-          duplicates: findDuplicates(first, last, email),
-        },
-      }
-    } else if (wycNumber && isNaN(Number(wycNumber))) {
-      return {
-        kind: 'Error',
-        error: {
-          code: 'INVALID_FIELD',
-          message: 'Invalid WYC number provided',
-        },
-      }
-      // todo: better wycNumber validation
-    }
-
     if (!allMembers)
       return {
         kind: 'Error',
@@ -357,65 +315,25 @@ function MembershipProcessingPage() {
         error: { code: 'DATA_LOADING', message: 'Quarter data still loading' },
       }
 
-    if (wycNumber) {
-      const dbMember = allMembers?.find((m) => m.wycNumber === Number(wycNumber))
-      if (!dbMember) {
-        return {
-          kind: 'Error',
-          error: {
-            code: 'WYC_NOT_FOUND',
-            message: `WYC number ${wycNumber} not found in database`,
-          },
-        }
-      }
-      if (
-        dbMember.first?.toLowerCase() !== first.toLowerCase() ||
-        dbMember.last?.toLowerCase() !== last.toLowerCase()
-      ) {
-        return {
-          kind: 'Error',
-          error: {
-            code: 'NAME_MISMATCH',
-            message: `Name mismatch for WYC #${wycNumber}:\n  Form: "${first} ${last}"\n  Database: "${dbMember.first} ${dbMember.last}"`,
-            member: {
-              wycNumber: Number(wycNumber),
-              newExpireQtr: expireQtrIndex,
-              first: dbMember.first ?? first,
-              last: dbMember.last ?? last,
-              email: email,
-            },
-          },
-        }
-      }
-      return {
-        kind: 'OldMember',
-        member: {
-          wycNumber: Number(wycNumber),
-          newExpireQtr: expireQtrIndex,
-          first: first,
-          last: last,
-          email: email,
-        },
-      }
-    } else {
-      return {
-        kind: 'NewMember',
-        member: {
-          last,
-          first,
-          streetAddress: [addressLine1, addressLine2].filter(Boolean).join(' '),
-          city,
-          state,
-          zipCode,
-          phone1,
-          phone2,
-          email,
-          categoryId: extractCategoryID(category),
-          expireQtrIndex,
-          studentId: null,
-          outToSea: false,
-        } satisfies MemberProfileUpdate,
-      }
+    // Renewals are self-service (/renew-membership), so the form only yields new
+    // members. Returning members who sign up here are surfaced via findDuplicates.
+    return {
+      kind: 'NewMember',
+      member: {
+        last,
+        first,
+        streetAddress: [addressLine1, addressLine2].filter(Boolean).join(' '),
+        city,
+        state,
+        zipCode,
+        phone1,
+        phone2: '',
+        email,
+        categoryId: extractCategoryID(category),
+        expireQtrIndex,
+        studentId: null,
+        outToSea: false,
+      } satisfies MemberProfileUpdate,
     }
   }
 
@@ -511,6 +429,7 @@ function MembershipProcessingPage() {
         result.member.first,
         result.member.last,
         result.member.email,
+        result.member.phone1,
       )
       setMemberState({ ...result, duplicates })
     } else {
@@ -545,40 +464,7 @@ function MembershipProcessingPage() {
     }
   }
 
-  async function handleRenewMember(): Promise<void> {
-    if (memberState.kind !== 'OldMember') return
-    try {
-      const result = await renewMember({
-        data: {
-          wycNumber: memberState.member.wycNumber,
-          expireQtrIndex: memberState.member.newExpireQtr,
-          sendEmail: true,
-          formEmail: memberState.member.email,
-        },
-      })
-      const activeBatchItem = activeBatchIndex != null ? classifiedBatch[activeBatchIndex] : null
-      if (activeBatchItem) {
-        await markEntryProcessed({
-          data: { entryId: activeBatchItem.entryId, wycNumber: memberState.member.wycNumber },
-        })
-      }
-      setMemberState({
-        kind: 'OldMemberRenewed',
-        member: memberState.member,
-        emailSent: result.emailSent,
-        emailSimulated: result.emailSimulated,
-        emailAddress: result.emailAddress,
-      })
-    } catch (error: any) {
-      setMemberState({
-        kind: 'Error',
-        error: { code: 'INVALID_FIELD', message: error.message ?? 'Failed to renew member' },
-      })
-    }
-  }
-
-  const newMemberExampleData = `Sahil,Chowdhury,sahilch@uw.edu,"Spring 2026",Student,"New member",,"217 245th pl ne",,Sammamish,WA,98074,US,'+14255892521,,9999`
-  const oldMemberExampleData = `Luka,Ukrainczyk,lukrainczyk@gmail.com,"Spring 2026",Neither,"Current member looking to renew",17323,,,,,,,,,9998`
+  const newMemberExampleData = `Sahil,Chowdhury,sahilch@uw.edu,"Summer 2026",Student,"217 245th pl ne",,Sammamish,WA,98074,US,'+14255892521,9999`
   return (
     <div className="p-8">
       {isDevEnvironment() && (
@@ -597,16 +483,6 @@ function MembershipProcessingPage() {
           }}
         >
           Set new member example
-        </Button>
-        <Button
-          variant="secondary"
-          onClick={() => {
-            const input = REQUIRED_COLUMNS_CSV + '\n' + oldMemberExampleData
-            setBatchInput(input)
-            handleBatchProcess(input)
-          }}
-        >
-          Set old member example
         </Button>
       </div>
       <Label>Paste CSV with header row</Label>
@@ -754,145 +630,19 @@ function MembershipProcessingPage() {
           )}
         </div>
       )}
-      {memberState.kind === 'OldMember' && (
-        <div className="mt-4">
-          <h3 className="font-semibold">Returning Member</h3>
-          <dl className="grid grid-cols-[auto_1fr] gap-x-4">
-            {Object.entries(memberState.member).map(([key, value]) => (
-              <Fragment key={key}>
-                <dt className="font-semibold text-right">{key}:</dt>
-                <dd>{String(value)}</dd>
-              </Fragment>
-            ))}
-          </dl>
-          <Button className="mt-4" onClick={handleRenewMember}>
-            Renew Membership
-          </Button>
-        </div>
-      )}
-      {memberState.kind === 'OldMemberRenewed' && (
-        <div className="mt-4">
-          <p className="text-green-600 font-semibold">
-            Membership renewed for WYC #{memberState.member.wycNumber}
-          </p>
-          {(() => {
-            const formEmailDiffers =
-              memberState.emailAddress != null &&
-              memberState.member.email.toLowerCase().trim() !==
-                memberState.emailAddress.toLowerCase().trim()
-            if (memberState.emailSent) {
-              return (
-                <>
-                  {formEmailDiffers ? (
-                    <p className="text-green-600">
-                      Renewal email sent to {memberState.emailAddress} (on file) and{' '}
-                      {memberState.member.email} (form)
-                    </p>
-                  ) : (
-                    <p className="text-green-600">
-                      Renewal email sent to {memberState.emailAddress}
-                    </p>
-                  )}
-                  {memberState.emailSimulated && <EmailSimulatedNotice />}
-                </>
-              )
-            }
-            return (
-              <>
-                <p className="text-destructive font-semibold">
-                  Email failed to send. Copy and send manually:
-                </p>
-                <CopyBox text={memberState.emailAddress ?? memberState.member.email} />
-                {formEmailDiffers && <CopyBox text={memberState.member.email} />}
-                <CopyBox
-                  text={returningMemberEmail(
-                    memberState.member.first,
-                    memberState.member.last,
-                    memberState.member.wycNumber,
-                    getSchoolText(memberState.member.newExpireQtr, quarters ?? []),
-                    formEmailDiffers
-                      ? {
-                          formEmail: memberState.member.email,
-                          onFileEmail: memberState.emailAddress!,
-                        }
-                      : undefined,
-                  )}
-                />
-              </>
-            )
-          })()}
-          {batchItems.length > 0 && (
-            <Button className="mt-4" onClick={handleDone}>
-              Done
-            </Button>
-          )}
-        </div>
-      )}
       {memberState.kind === 'Error' && (
-        <>
-          <p className="mt-4 text-red-600">{memberState.error.message}</p>
-          {memberState.error.code === 'NAME_MISMATCH' && (
-            <NameMismatchActions
-              member={memberState.error.member}
-              onAcknowledge={(member) => setMemberState({ kind: 'OldMember', member })}
-            />
-          )}
-          {memberState.error.code === 'MISSING_WYC_NUMBER' && (
-            <div className="mt-4">
-              {memberState.error.duplicates.length > 0 && (
-                <div className="mb-4 rounded border border-yellow-400 bg-yellow-50 p-4 text-yellow-900">
-                  <p className="font-semibold">Possible matches:</p>
-                  <ul className="mt-2 list-disc pl-5">
-                    {memberState.error.duplicates.map((d) => (
-                      <li key={d.wycNumber} className="flex items-center gap-2">
-                        <span>
-                          WYC #{d.wycNumber} — {d.first} {d.last}
-                          {d.email ? ` (${d.email})` : ''}
-                          {' — matched by '}
-                          <span className="font-medium">{d.matchMethod}</span>
-                          {' — '}
-                          <span
-                            className={
-                              d.status === 'active'
-                                ? 'text-green-700 font-medium'
-                                : 'text-red-700 font-medium'
-                            }
-                          >
-                            {d.status}
-                          </span>
-                        </span>
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          onClick={() => reprocessWithWycNumber(String(d.wycNumber))}
-                        >
-                          Use #{d.wycNumber}
-                        </Button>
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-              )}
-              <div className="flex gap-2">
-                <Input
-                  type="text"
-                  value={wycNumberEntry}
-                  onChange={(e) => setWycNumberEntry(e.target.value)}
-                  placeholder="WYC Number"
-                />
-                <Button onClick={() => reprocessWithWycNumber(wycNumberEntry)}>
-                  Set WYC Number
-                </Button>
-              </div>
-            </div>
-          )}
-        </>
+        <p className="mt-4 text-red-600">{memberState.error.message}</p>
       )}
       {showManualAddModal && (
         <ManualAddMemberModal
           onClose={() => setShowManualAddModal(false)}
           onSubmit={(member) => {
-            const duplicates = findDuplicates(member.first, member.last, member.email)
+            const duplicates = findDuplicates(
+              member.first,
+              member.last,
+              member.email,
+              member.phone1,
+            )
             setMemberState({ kind: 'NewMember', member, duplicates })
             setActiveBatchIndex(null)
           }}

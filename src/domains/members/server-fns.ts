@@ -292,6 +292,8 @@ export const getAllMembersLite = createServerFn({ method: 'GET' }).handler(async
       first: wycDatabase.first,
       last: wycDatabase.last,
       email: wycDatabase.email,
+      phone1: wycDatabase.phone1,
+      phone2: wycDatabase.phone2,
       expireQtrIndex: wycDatabase.expireQtrIndex,
     })
     .from(wycDatabase)

@@ -1,3 +1,4 @@
+import { createHash } from 'node:crypto'
 import { createServerFn } from '@tanstack/react-start'
 import { and, eq } from 'drizzle-orm'
 import { variationId } from './catalog'
@@ -201,7 +202,13 @@ export const payAndRenew = createServerFn({ method: 'POST' })
       currency = order.totalMoney?.currency ?? 'USD'
 
       const payRes = await squareClient.payments.create({
-        idempotencyKey: `renew-p/${wycNumber}/${targetExpireQtr}`,
+        // Keyed on the single-use card nonce (hashed; Square caps the key at 45 chars) so a
+        // genuine resubmit of the same nonce dedupes, but a fresh attempt (new card token)
+        // gets a distinct key.
+        idempotencyKey: `renew-p/${wycNumber}/${targetExpireQtr}/${createHash('sha256')
+          .update(data.sourceId)
+          .digest('hex')
+          .slice(0, 16)}`,
         sourceId: data.sourceId,
         orderId: order.id,
         amountMoney: { amount: BigInt(amountCents), currency: currency as any },
