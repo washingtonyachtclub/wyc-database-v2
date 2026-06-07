@@ -502,6 +502,30 @@ export const duesExemptionRequests = mysqlTable(
   ],
 )
 
+export const renewalQuestionnaire = mysqlTable(
+  'renewal_questionnaire',
+  {
+    index: int('_index').autoincrement().notNull(),
+    wycNumber: int('wyc_number').notNull(),
+    // Renewal quarter these answers were captured for.
+    quarter: int('quarter').notNull(),
+    uwStatus: varchar('uw_status', { length: 20 }).notNull(), // 'student' | 'employee_retiree' | 'neither'
+    // Self-describing code (sponsor_* / sponsee_*) so a row is interpretable without UW status.
+    plusOneResponse: varchar('plus_one_response', { length: 30 }).notNull(),
+    // 'active' (paid) | 'pending' (exempt, awaiting approval) | 'void' (exempt denied).
+    status: varchar('status', { length: 20 }).notNull(),
+    source: varchar('source', { length: 20 }).notNull(), // 'paid' | 'exempt'
+    // Links an exempt-path row to its request so approval/denial can flip the status.
+    requestId: int('request_id'),
+    createdAt: timestamp('created_at').defaultNow().notNull(),
+  },
+  (table) => [
+    primaryKey({ columns: [table.index] }),
+    index('idx_renewal_questionnaire_wyc').on(table.wycNumber),
+    index('idx_renewal_questionnaire_status').on(table.status),
+  ],
+)
+
 export const wycWind = mysqlTable(
   'wyc_wind',
   {

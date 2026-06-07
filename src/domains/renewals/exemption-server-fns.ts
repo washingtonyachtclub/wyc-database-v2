@@ -1,14 +1,15 @@
 import { createServerFn } from '@tanstack/react-start'
 import { and, desc, eq, inArray } from 'drizzle-orm'
 import { computeRenewal } from './compute-renewal'
+import { parseQuestionnaire } from './questionnaire'
 import db from '@/db/index'
 import { EXEMPTION_APPROVER_POSITIONS } from '@/db/constants'
 import {
   duesExemptionRequests,
-  lessonQuarter,
   membershipPayments,
   officers,
   quarters,
+  renewalQuestionnaire,
   wycDatabase,
 } from '@/db/schema'
 import { requireAuth } from '@/lib/auth/auth-middleware'
@@ -40,15 +41,6 @@ async function requireExemptionApprover(): Promise<number> {
   return wycNumber
 }
 
-async function readCurrentQuarter(): Promise<number> {
-  const [cq] = await db
-    .select({ quarter: lessonQuarter.quarter })
-    .from(lessonQuarter)
-    .where(eq(lessonQuarter.index, 1))
-    .limit(1)
-  return cq.quarter
-}
-
 /** Boolean approver check for route gating (does not throw on non-approver). */
 export const getIsExemptionApprover = createServerFn({ method: 'GET' }).handler(async () => {
   const wycNumber = await requireAuth()
@@ -60,46 +52,59 @@ export const getIsExemptionApprover = createServerFn({ method: 'GET' }).handler(
  * No payment — just records a pending request for an approver to review. The target quarter
  * is frozen here (one quarter only, same baseline as a quarterly renewal).
  */
-export const requestDuesExemption = createServerFn({ method: 'POST' }).handler(async () => {
-  const wycNumber = await requireAuth()
+export const requestDuesExemption = createServerFn({ method: 'POST' })
+  .inputValidator((input: { questionnaire: unknown }) => ({
+    answers: parseQuestionnaire(input.questionnaire),
+  }))
+  .handler(async ({ data }) => {
+    const wycNumber = await requireAuth()
 
-  const currentQuarter = await readCurrentQuarter()
+    const [member] = await db
+      .select({ expireQtrIndex: wycDatabase.expireQtrIndex })
+      .from(wycDatabase)
+      .where(eq(wycDatabase.wycNumber, wycNumber))
+    if (!member) {
+      console.error('requestDuesExemption: member not found for wycNumber', wycNumber)
+      throw new Error('We could not find your membership record.')
+    }
 
-  const [member] = await db
-    .select({ expireQtrIndex: wycDatabase.expireQtrIndex })
-    .from(wycDatabase)
-    .where(eq(wycDatabase.wycNumber, wycNumber))
-  if (!member) {
-    console.error('requestDuesExemption: member not found for wycNumber', wycNumber)
-    throw new Error('We could not find your membership record.')
-  }
+    // One open request per member.
+    const [existing] = await db
+      .select({ index: duesExemptionRequests.index })
+      .from(duesExemptionRequests)
+      .where(
+        and(
+          eq(duesExemptionRequests.wycNumber, wycNumber),
+          eq(duesExemptionRequests.status, 'pending'),
+        ),
+      )
+      .limit(1)
+    if (existing) {
+      throw new Error('You already have a dues-exemption request pending review.')
+    }
 
-  // One open request per member.
-  const [existing] = await db
-    .select({ index: duesExemptionRequests.index })
-    .from(duesExemptionRequests)
-    .where(
-      and(
-        eq(duesExemptionRequests.wycNumber, wycNumber),
-        eq(duesExemptionRequests.status, 'pending'),
-      ),
-    )
-    .limit(1)
-  if (existing) {
-    throw new Error('You already have a dues-exemption request pending review.')
-  }
+    const expireQtr = member.expireQtrIndex ?? 0
+    const requestedExpireQtr = computeRenewal(expireQtr, 'quarterly')
 
-  const expireQtr = member.expireQtrIndex ?? 0
-  const requestedExpireQtr = computeRenewal(currentQuarter, expireQtr, 'quarterly')
+    const [request] = await db.insert(duesExemptionRequests).values({
+      wycNumber,
+      requestedExpireQtr,
+      status: 'pending',
+    })
 
-  await db.insert(duesExemptionRequests).values({
-    wycNumber,
-    requestedExpireQtr,
-    status: 'pending',
+    // Answers stay 'pending' until an approver acts; flipped to 'active' on approval, 'void' on denial.
+    await db.insert(renewalQuestionnaire).values({
+      wycNumber,
+      quarter: requestedExpireQtr,
+      uwStatus: data.answers.uwStatus,
+      plusOneResponse: data.answers.plusOneResponse,
+      status: 'pending',
+      source: 'exempt',
+      requestId: request.insertId,
+    })
+
+    return { success: true as const }
   })
-
-  return { success: true as const }
-})
 
 /** Pending requests for the approval screen, with requester name, requested quarter, and current ExpireQtr. */
 export const listPendingExemptionRequests = createServerFn({ method: 'GET' }).handler(async () => {
@@ -212,6 +217,11 @@ export const approveExemptionRequest = createServerFn({ method: 'POST' })
           decidedAt: new Date(),
         })
         .where(eq(duesExemptionRequests.index, data.requestId))
+
+      await db
+        .update(renewalQuestionnaire)
+        .set({ status: 'active' })
+        .where(eq(renewalQuestionnaire.requestId, data.requestId))
     } catch (error) {
       console.error('approveExemptionRequest: DB update failed:', error)
       throw new Error('We could not approve this request. Please try again.')
@@ -263,6 +273,11 @@ export const denyExemptionRequest = createServerFn({ method: 'POST' })
       .update(duesExemptionRequests)
       .set({ status: 'denied', decidedBy: approver, decidedAt: new Date() })
       .where(eq(duesExemptionRequests.index, data.requestId))
+
+    await db
+      .update(renewalQuestionnaire)
+      .set({ status: 'void' })
+      .where(eq(renewalQuestionnaire.requestId, data.requestId))
 
     return { success: true as const }
   })

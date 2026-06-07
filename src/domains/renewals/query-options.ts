@@ -8,6 +8,7 @@ import {
   requestDuesExemption,
 } from './exemption-server-fns'
 import type { RenewalDuration, RenewalTier } from './compute-renewal'
+import type { QuestionnaireAnswers } from './questionnaire'
 
 export const getRenewalStatusQueryOptions = () =>
   queryOptions({
@@ -24,8 +25,11 @@ export const getRenewalPriceQueryOptions = (tier: RenewalTier, duration: Renewal
 export function usePayAndRenewMutation() {
   const queryClient = useQueryClient()
   return useMutation({
-    mutationFn: (input: { tier: RenewalTier; duration: RenewalDuration; sourceId: string }) =>
-      payAndRenew({ data: input }),
+    mutationFn: (input: {
+      duration: RenewalDuration
+      sourceId: string
+      questionnaire: QuestionnaireAnswers
+    }) => payAndRenew({ data: input }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['renewals', 'status'] })
     },
@@ -47,7 +51,8 @@ export const getIsExemptionApproverQueryOptions = () =>
 export function useRequestDuesExemptionMutation() {
   const queryClient = useQueryClient()
   return useMutation({
-    mutationFn: () => requestDuesExemption(),
+    mutationFn: (questionnaire: QuestionnaireAnswers) =>
+      requestDuesExemption({ data: { questionnaire } }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['renewals', 'status'] })
     },

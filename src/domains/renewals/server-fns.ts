@@ -1,21 +1,23 @@
-import { createHash } from 'node:crypto'
-import { createServerFn } from '@tanstack/react-start'
-import { and, eq } from 'drizzle-orm'
-import { variationId } from './catalog'
-import { MAX_QUARTERS_AHEAD, computeRenewal } from './compute-renewal'
-import type { RenewalDuration, RenewalTier } from './compute-renewal'
 import db from '@/db/index'
 import {
   duesExemptionRequests,
   lessonQuarter,
   membershipPayments,
   quarters,
+  renewalQuestionnaire,
   wycDatabase,
 } from '@/db/schema'
 import { requireAuth } from '@/lib/auth/auth-middleware'
 import { sendEmail } from '@/lib/email'
 import { returningMemberEmail } from '@/lib/email-templates'
 import { SQUARE_LOCATION_ID, squareClient } from '@/lib/square'
+import { createServerFn } from '@tanstack/react-start'
+import { and, eq } from 'drizzle-orm'
+import { createHash } from 'node:crypto'
+import { variationId } from './catalog'
+import type { RenewalDuration, RenewalTier } from './compute-renewal'
+import { MAX_QUARTERS_AHEAD, RENEWAL_QUARTER, computeRenewal } from './compute-renewal'
+import { parseQuestionnaire, tierForUwStatus } from './questionnaire'
 
 function parseTier(v: unknown): RenewalTier {
   if (v === 'student' || v === 'nonstudent') return v
@@ -72,11 +74,11 @@ export const getRenewalStatus = createServerFn({ method: 'GET' }).handler(async 
   const labelFor = (idx: number) => labels.find((q) => q.index === idx)?.school ?? `quarter ${idx}`
 
   const previewFor = (duration: RenewalDuration) => {
-    const newExpireQtr = computeRenewal(currentQuarter, expireQtr, duration)
+    const newExpireQtr = computeRenewal(expireQtr, duration)
     return {
       newExpireQtr,
       label: labelFor(newExpireQtr),
-      allowed: newExpireQtr <= currentQuarter + MAX_QUARTERS_AHEAD,
+      allowed: newExpireQtr <= RENEWAL_QUARTER + MAX_QUARTERS_AHEAD,
     }
   }
 
@@ -139,26 +141,21 @@ export const getRenewalPrice = createServerFn({ method: 'GET' })
  * ExpireQtr, log the renewal, and email confirmation. The session user is the member (requireAuth).
  */
 export const payAndRenew = createServerFn({ method: 'POST' })
-  .inputValidator((input: { tier: string; duration: string; sourceId: string }) => ({
-    tier: parseTier(input.tier),
+  .inputValidator((input: { duration: string; sourceId: string; questionnaire: unknown }) => ({
     duration: parseDuration(input.duration),
     sourceId: String(input.sourceId),
+    answers: parseQuestionnaire(input.questionnaire),
   }))
   .handler(async ({ data }) => {
     const wycNumber = await requireAuth()
+
+    // Honor-system price tier comes from UW status; we never trust a client-sent tier.
+    const tier = tierForUwStatus(data.answers.uwStatus)
 
     if (!SQUARE_LOCATION_ID) {
       console.error('SQUARE_LOCATION_ID is not configured')
       throw new Error('Payments are not configured. Please contact the club.')
     }
-
-    // Read live: lesson_quarter.quarter gets corrected occasionally, so never cache it.
-    const [cq] = await db
-      .select({ quarter: lessonQuarter.quarter })
-      .from(lessonQuarter)
-      .where(eq(lessonQuarter.index, 1))
-      .limit(1)
-    const currentQuarter = cq.quarter
 
     const [member] = await db
       .select({
@@ -175,13 +172,13 @@ export const payAndRenew = createServerFn({ method: 'POST' })
     }
 
     const prevExpireQtr = member.expireQtrIndex ?? 0
-    const targetExpireQtr = computeRenewal(currentQuarter, prevExpireQtr, data.duration)
-    if (targetExpireQtr > currentQuarter + MAX_QUARTERS_AHEAD) {
+    const targetExpireQtr = computeRenewal(prevExpireQtr, data.duration)
+    if (targetExpireQtr > RENEWAL_QUARTER + MAX_QUARTERS_AHEAD) {
       throw new Error(
         'Your membership is already paid as far ahead as we allow. Please renew again closer to your expiry date.',
       )
     }
-    const variation = variationId(data.tier, data.duration)
+    const variation = variationId(tier, data.duration)
 
     // Orders computes the total from the catalog item; Payments charges it.
     let orderId: string
@@ -242,7 +239,7 @@ export const payAndRenew = createServerFn({ method: 'POST' })
         squareOrderId: orderId,
         amountCents,
         currency,
-        tier: data.tier,
+        tier,
         duration: data.duration,
         prevExpireQtr,
         newExpireQtr: targetExpireQtr,
@@ -261,6 +258,19 @@ export const payAndRenew = createServerFn({ method: 'POST' })
         'Your payment went through, but we hit a problem updating your membership. ' +
           'Please contact the club — do not pay again.',
       )
+    }
+
+    try {
+      await db.insert(renewalQuestionnaire).values({
+        wycNumber,
+        quarter: targetExpireQtr,
+        uwStatus: data.answers.uwStatus,
+        plusOneResponse: data.answers.plusOneResponse,
+        status: 'active',
+        source: 'paid',
+      })
+    } catch (error) {
+      console.error('payAndRenew: failed to record questionnaire answers:', { wycNumber, error })
     }
 
     // Confirmation email — non-fatal.

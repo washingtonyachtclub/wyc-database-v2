@@ -2,6 +2,7 @@
 
 - add quarters to quarters table and editing ability (esp. for end date)
 	- automated reminders to edit these / keep up to date
+- banner for pending dues exempt requests (only shows for people who can accept them).
 
 - add to checkouts on profile when you are crew on a boat
 

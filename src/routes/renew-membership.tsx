@@ -13,13 +13,19 @@ import { EmailSimulatedNotice } from '@/components/ui/EmailSimulatedNotice'
 import { ErrorAlert } from '@/components/ui/ErrorAlert'
 import { Label } from '@/components/ui/label'
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip'
-import type { RenewalDuration, RenewalTier } from '@/domains/renewals/compute-renewal'
+import type { RenewalDuration } from '@/domains/renewals/compute-renewal'
 import {
   getRenewalPriceQueryOptions,
   getRenewalStatusQueryOptions,
   usePayAndRenewMutation,
   useRequestDuesExemptionMutation,
 } from '@/domains/renewals/query-options'
+import type {
+  PlusOneResponse,
+  QuestionnaireAnswers,
+  UwStatus,
+} from '@/domains/renewals/questionnaire'
+import { tierForUwStatus } from '@/domains/renewals/questionnaire'
 import { useQuery, useSuspenseQuery } from '@tanstack/react-query'
 import { createFileRoute, redirect, useNavigate } from '@tanstack/react-router'
 import { CircleHelp } from 'lucide-react'
@@ -43,6 +49,40 @@ function formatMoney(cents: number, currency: string) {
   return (cents / 100).toLocaleString('en-US', { style: 'currency', currency })
 }
 
+const UW_STATUS_OPTIONS: { value: UwStatus; label: string }[] = [
+  { value: 'student', label: 'Student' },
+  { value: 'employee_retiree', label: 'Employee/Retiree' },
+  { value: 'neither', label: 'Neither' },
+]
+
+const IMA_PURCHASE_URL = 'https://www.washington.edu/ima/member/'
+
+const SPONSOR_OPTIONS: { value: PlusOneResponse; label: string }[] = [
+  {
+    value: 'sponsor_already',
+    label: 'I am already sponsoring a WYC member and can coordinate renewal with them on my own',
+  },
+  { value: 'sponsor_yes', label: 'Yes' },
+  { value: 'sponsor_no', label: 'No' },
+]
+
+const SPONSEE_OPTIONS: { value: PlusOneResponse; label: string }[] = [
+  {
+    value: 'sponsee_already',
+    label: 'No, I am already sponsored and can coordinate renewal with them on my own',
+  },
+  {
+    value: 'sponsee_no_facilities',
+    label: 'No, I will not use the facilities/docks at the Waterfront Activities Center',
+  },
+  { value: 'sponsee_yes', label: 'Yes' },
+]
+
+const SPONSOR_HELPER =
+  'We will pair you with a WYC member via email for the two of you to coordinate a time to visit the IMA for them to purchase a Plus One membership through you.'
+const SPONSEE_HELPER =
+  'If a current WYC member is willing to sponsor, we will pair you via email for the two of you to coordinate a time to visit the IMA for you to purchase a Plus One membership through them.'
+
 type RenewResult = {
   newExpireQtr: number
   quarterLabel: string
@@ -60,7 +100,11 @@ function RenewMembershipPage() {
   // Quarterly is the smallest jump, so if it's over the cap nothing can be renewed right now.
   const canRenew = status.preview.quarterly.allowed
 
-  const [tier, setTier] = useState<RenewalTier | null>(null)
+  // Questionnaire (required, shown above duration/card). UW status drives the price tier.
+  const [uwStatus, setUwStatus] = useState<UwStatus | null>(null)
+  const [imaAcknowledged, setImaAcknowledged] = useState(false)
+  const [plusOne, setPlusOne] = useState<PlusOneResponse | null>(null)
+
   const [duration, setDuration] = useState<RenewalDuration>(
     status.preview.annual.allowed ? 'annual' : 'quarterly',
   )
@@ -70,6 +114,24 @@ function RenewMembershipPage() {
 
   const cardRef = useRef<SquareCardHandle>(null)
   const mutation = usePayAndRenewMutation()
+
+  function selectUwStatus(next: UwStatus) {
+    setUwStatus(next)
+    // Follow-up answers depend on the status, so clear them when it changes.
+    setImaAcknowledged(false)
+    setPlusOne(null)
+  }
+
+  // Complete, validated answers (null until every required follow-up is filled).
+  const questionnaire: QuestionnaireAnswers | null =
+    uwStatus && plusOne && imaAcknowledged
+      ? {
+          uwStatus,
+          plusOneResponse: plusOne,
+        }
+      : null
+
+  const tier = uwStatus ? tierForUwStatus(uwStatus) : null
 
   const priceQuarterly = useQuery({
     ...getRenewalPriceQueryOptions(tier ?? 'student', 'quarterly'),
@@ -88,12 +150,12 @@ function RenewMembershipPage() {
   }
 
   async function handlePay() {
-    if (!tier) return
+    if (!questionnaire) return
     setError(null)
     setSubmitting(true)
     try {
       const sourceId = await cardRef.current!.tokenize()
-      const data = await mutation.mutateAsync({ tier, duration, sourceId })
+      const data = await mutation.mutateAsync({ duration, sourceId, questionnaire })
       setResult(data)
     } catch (e: any) {
       setError(e?.message ?? 'Something went wrong. Please try again.')
@@ -146,40 +208,68 @@ function RenewMembershipPage() {
   }
 
   return (
-    <div className="p-4 max-w-md space-y-6">
+    <div className="mx-auto max-w-2xl space-y-6 p-4">
       <h1 className="text-2xl font-bold">Renew Membership</h1>
 
       <p>
         Your membership is paid through <strong>{status.expireQtrLabel}</strong>.
       </p>
 
-      <div className="space-y-2">
-        <Label className="text-base">Rate</Label>
-        <div className="grid grid-cols-2 gap-3">
+      <ChoiceGroup
+        label="What is your UW Status?"
+        options={UW_STATUS_OPTIONS}
+        value={uwStatus}
+        onChange={selectUwStatus}
+      />
+
+      {uwStatus && (
+        <div className="space-y-2">
+          <p className="text-base">
+            An IMA rec membership is required to use the WAC docks and facilities.{' '}
+            <a
+              href={IMA_PURCHASE_URL}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="font-medium text-primary underline"
+            >
+              Membership Info
+            </a>
+          </p>
           <Button
             type="button"
-            variant={tier === 'student' ? 'default' : 'outline'}
-            onClick={() => setTier('student')}
-            className="h-auto border-2 py-3 text-base"
+            variant={imaAcknowledged ? 'default' : 'outline'}
+            onClick={() => setImaAcknowledged((v) => !v)}
+            className="h-auto w-full justify-start whitespace-normal border-2 px-4 py-3 text-left text-base font-normal"
           >
-            Student
-          </Button>
-          <Button
-            type="button"
-            variant={tier === 'nonstudent' ? 'default' : 'outline'}
-            onClick={() => setTier('nonstudent')}
-            className="h-auto border-2 py-3 text-base"
-          >
-            Non-student
+            I understand
           </Button>
         </div>
-      </div>
+      )}
 
+      {(uwStatus === 'student' || uwStatus === 'employee_retiree') && (
+        <ChoiceGroup
+          label="Are you willing to sponsor a WYC member as your Plus One?"
+          helper={SPONSOR_HELPER}
+          options={SPONSOR_OPTIONS}
+          value={plusOne}
+          onChange={setPlusOne}
+        />
+      )}
+
+      {uwStatus === 'neither' && (
+        <ChoiceGroup
+          label="Would you like to be paired with a student to sign up for an Plus One Membership?"
+          helper={SPONSEE_HELPER}
+          options={SPONSEE_OPTIONS}
+          value={plusOne}
+          onChange={setPlusOne}
+        />
+      )}
       <div className="space-y-2">
         <Label className="text-base">Duration</Label>
-        {tier === null && (
+        {uwStatus === null && (
           <p className="text-base font-medium text-muted-foreground">
-            Choose your rate above to see pricing.
+            Answer the questions above to see pricing.
           </p>
         )}
         <div
@@ -189,7 +279,7 @@ function RenewMembershipPage() {
             type="button"
             variant={duration === 'quarterly' ? 'default' : 'outline'}
             onClick={() => setDuration('quarterly')}
-            disabled={tier === null}
+            disabled={uwStatus === null}
             className="h-auto flex-col items-stretch gap-0 whitespace-normal border-2 px-4 py-3 text-left"
           >
             <span className="flex items-baseline justify-between gap-2">
@@ -204,7 +294,7 @@ function RenewMembershipPage() {
               type="button"
               variant={duration === 'annual' ? 'default' : 'outline'}
               onClick={() => setDuration('annual')}
-              disabled={tier === null}
+              disabled={uwStatus === null}
               className="h-auto flex-col items-stretch gap-0 whitespace-normal border-2 px-4 py-3 text-left"
             >
               <span className="flex items-baseline justify-between gap-2">
@@ -229,7 +319,7 @@ function RenewMembershipPage() {
         onClick={handlePay}
         disabled={
           submitting ||
-          tier === null ||
+          questionnaire === null ||
           selectedPrice.isLoading ||
           !status.preview[duration].allowed
         }
@@ -241,7 +331,42 @@ function RenewMembershipPage() {
       <DuesExemptSection
         exemptionRequest={status.exemptionRequest}
         targetQuarterLabel={status.preview.quarterly.label}
+        questionnaire={questionnaire}
       />
+    </div>
+  )
+}
+
+function ChoiceGroup<T extends string>({
+  label,
+  helper,
+  options,
+  value,
+  onChange,
+}: {
+  label: string
+  helper?: string
+  options: { value: T; label: string }[]
+  value: T | null
+  onChange: (value: T) => void
+}) {
+  return (
+    <div className="space-y-2">
+      <Label className="text-base">{label}</Label>
+      <div className="grid gap-2">
+        {options.map((opt) => (
+          <Button
+            key={opt.value}
+            type="button"
+            variant={value === opt.value ? 'default' : 'outline'}
+            onClick={() => onChange(opt.value)}
+            className="h-auto justify-start whitespace-normal border-2 px-4 py-3 text-left text-base font-normal"
+          >
+            {opt.label}
+          </Button>
+        ))}
+      </div>
+      {helper && <p className="text-sm text-muted-foreground">{helper}</p>}
     </div>
   )
 }
@@ -249,9 +374,11 @@ function RenewMembershipPage() {
 function DuesExemptSection({
   exemptionRequest,
   targetQuarterLabel,
+  questionnaire,
 }: {
   exemptionRequest: { label: string } | null
   targetQuarterLabel: string
+  questionnaire: QuestionnaireAnswers | null
 }) {
   const [showModal, setShowModal] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -260,9 +387,10 @@ function DuesExemptSection({
   const pending = exemptionRequest !== null || mutation.isSuccess
 
   async function submit() {
+    if (!questionnaire) return
     setError(null)
     try {
-      await mutation.mutateAsync()
+      await mutation.mutateAsync(questionnaire)
       setShowModal(false)
     } catch (e: any) {
       setError(e?.message ?? 'Something went wrong. Please try again.')
@@ -277,7 +405,12 @@ function DuesExemptSection({
         </div>
       ) : (
         <div className="flex items-center gap-2">
-          <Button variant="outline" className="flex-1" onClick={() => setShowModal(true)}>
+          <Button
+            variant="outline"
+            className="flex-1"
+            onClick={() => setShowModal(true)}
+            disabled={questionnaire === null}
+          >
             Request Dues Exempt
           </Button>
           <TooltipProvider>
