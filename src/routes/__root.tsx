@@ -8,6 +8,7 @@ import {
 import Header from '../components/Header'
 import { ExemptionApproverBanner } from '../components/ExemptionApproverBanner'
 import { MembershipBanner } from '../components/MembershipBanner'
+import { QuarterMaintenanceBanner } from '../components/QuarterMaintenanceBanner'
 import Sidebar from '../components/Sidebar'
 import { TanStackDevTools } from '../components/TanStackDevTools'
 import { TooltipProvider } from '../components/ui/tooltip'
@@ -97,6 +98,7 @@ function RootDocument({ children }: { children: React.ReactNode }) {
             <Header />
             {!isBarePage && <MembershipBanner />}
             {!isBarePage && <ExemptionApproverBanner />}
+            {!isBarePage && <QuarterMaintenanceBanner />}
             {!isBarePage && (
               <div className="flex">
                 <Sidebar />

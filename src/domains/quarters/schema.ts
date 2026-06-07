@@ -7,7 +7,8 @@ import { quarters } from '@/db/schema'
 export const quarterInsertSchema = z.object({
   text: z.string().min(1, 'Quarter name is required'),
   school: z.string().min(1, 'School name is required'),
-  endDate: z.string().min(1, 'End date is required'),
+  // End dates aren't published until ~a year out, so a quarter can exist before its is known.
+  endDate: z.string(),
 })
 
 export type QuarterInsertData = z.infer<typeof quarterInsertSchema>

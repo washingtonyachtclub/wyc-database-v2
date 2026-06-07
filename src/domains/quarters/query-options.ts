@@ -4,7 +4,9 @@ import {
   deleteQuarter,
   getAllQuarters,
   getQuarterChangeImpact,
+  getQuarterHealth,
   updateCurrentQuarter,
+  updateQuarter,
 } from './server-fns'
 
 export const getQuartersQueryOptions = () =>
@@ -13,14 +15,31 @@ export const getQuartersQueryOptions = () =>
     queryFn: getAllQuarters,
   })
 
-export function useCreateQuarterMutation(opts: { onSuccess: () => void; onClose: () => void }) {
+export const getQuarterHealthQueryOptions = () =>
+  queryOptions({
+    queryKey: ['quarters', 'health'],
+    queryFn: getQuarterHealth,
+  })
+
+export function useCreateQuarterMutation(opts?: { onSuccess?: () => void; onClose?: () => void }) {
   const queryClient = useQueryClient()
   return useMutation({
     mutationFn: createQuarter,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['quarters'] })
-      opts.onSuccess()
-      opts.onClose()
+      opts?.onSuccess?.()
+      opts?.onClose?.()
+    },
+  })
+}
+
+export function useUpdateQuarterMutation(opts?: { onSuccess?: () => void }) {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: updateQuarter,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['quarters'] })
+      opts?.onSuccess?.()
     },
   })
 }
