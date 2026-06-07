@@ -6,6 +6,7 @@ import {
 } from '@tanstack/react-router'
 
 import Header from '../components/Header'
+import { ExemptionApproverBanner } from '../components/ExemptionApproverBanner'
 import { MembershipBanner } from '../components/MembershipBanner'
 import Sidebar from '../components/Sidebar'
 import { TanStackDevTools } from '../components/TanStackDevTools'
@@ -95,6 +96,7 @@ function RootDocument({ children }: { children: React.ReactNode }) {
           <TooltipProvider delayDuration={0}>
             <Header />
             {!isBarePage && <MembershipBanner />}
+            {!isBarePage && <ExemptionApproverBanner />}
             {!isBarePage && (
               <div className="flex">
                 <Sidebar />

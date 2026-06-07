@@ -1,14 +1,14 @@
-import { useSuspenseQuery } from '@tanstack/react-query'
-import { createFileRoute, redirect } from '@tanstack/react-router'
-import { useState } from 'react'
 import { Button } from '@/components/ui/button'
 import { ErrorAlert } from '@/components/ui/ErrorAlert'
+import { getIsExemptionApprover } from '@/domains/renewals/exemption-server-fns'
 import {
   getPendingExemptionsQueryOptions,
   useApproveExemptionMutation,
   useDenyExemptionMutation,
 } from '@/domains/renewals/query-options'
-import { getIsExemptionApprover } from '@/domains/renewals/exemption-server-fns'
+import { useSuspenseQuery } from '@tanstack/react-query'
+import { createFileRoute, redirect } from '@tanstack/react-router'
+import { useState } from 'react'
 
 export const Route = createFileRoute('/approve-exemptions')({
   beforeLoad: async ({ context }) => {
@@ -47,9 +47,6 @@ function ApproveExemptionsPage() {
     <div className="mx-auto max-w-3xl px-4 py-8 space-y-6">
       <div>
         <h1 className="text-2xl font-bold">Dues Exemption Requests</h1>
-        <p className="mt-1 text-sm text-muted-foreground">
-          Approve grants the requested quarter at no charge; deny closes the request with no change.
-        </p>
       </div>
 
       <ErrorAlert error={error} action="Decide exemption request" />

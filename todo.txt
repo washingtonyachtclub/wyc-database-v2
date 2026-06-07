@@ -2,7 +2,6 @@
 
 - add quarters to quarters table and editing ability (esp. for end date)
 	- automated reminders to edit these / keep up to date
-- banner for pending dues exempt requests (only shows for people who can accept them).
 
 - add to checkouts on profile when you are crew on a boat
 
@@ -19,6 +18,7 @@
 # Less Important
 - public officers page
 - better ratings viewing: de-duping expired novices, showing only highest earned rating per category, etc
+- apple pay on membership dues payment
 - required lesson confirmation 1 week before lesson, after 4 days move them to waitlist
 - create featured lessons, pin to top of lesson list
 - better ratings filtering (find all members with *at least* X rating, more complex logic like ANDs and ORs)
@@ -27,6 +27,6 @@
 - automate the stuff in maintenance.md
   - quarters table
   - automated email reminder for lesson_quarter
+- IMA plus one matching
 - easily review out_to_sea statuses (or re-think its usage)
 - fix overall slowness
-- IMA plus one matching
