@@ -1,8 +1,5 @@
 # Important
 
-- add quarters to quarters table and editing ability (esp. for end date)
-	- automated reminders to edit these / keep up to date
-
 - add to checkouts on profile when you are crew on a boat
 
 - resolve any drizzle shchema.ts and actual schema mismatch. Make drizzle the source of truth?
@@ -11,7 +8,7 @@
 ## bigger projects
 - image hosting for chiefs / officers
 - lesson sign up UI: compact view, sort by date (ignoring category) view, calendar view
-- replace old checkout tool (good mobile UX)
+- new checkout page (good mobile UX)
 - overall better mobile UX (especially on non-admin pages)
 - linking discord roles with db roles (for auto sync of roles like chiefs, kb novice, etc)
 

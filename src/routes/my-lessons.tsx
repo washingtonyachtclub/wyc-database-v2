@@ -60,7 +60,7 @@ function MyLessonsPage() {
       <section>
         <h2 className="text-xl font-semibold mb-4">Teaching</h2>
         {lessonsTaught.length === 0 ? (
-          <p className="text-muted-foreground">You are not teaching any lessons this quarter.</p>
+          <p className="text-muted-foreground">You are not teaching any upcoming lessons.</p>
         ) : (
           <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
             {lessonsTaught.map((lesson) => (
