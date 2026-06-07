@@ -39,10 +39,10 @@ export const columns = [
     enableSorting: true,
   }),
   columnHelper.accessor('joinDate', {
-    header: 'Join Date (M/D/YYYY)',
+    header: 'Join Date',
     cell: (info) => {
       const date = info.getValue()
-      return date ? new Date(date).toLocaleDateString() : '—'
+      return date ? date : '—'
     },
     enableSorting: true,
   }),

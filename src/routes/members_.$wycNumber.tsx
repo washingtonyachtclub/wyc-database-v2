@@ -208,7 +208,7 @@ function MemberReadOnlyInfo({ member }: { member: Member }) {
         <ReadOnlyField label="Phone 2" value={member.phone2} />
         <ReadOnlyField label="Category" value={categoryLabel} />
         <ReadOnlyField label="Out to Sea" value={member.outToSea ? 'Yes' : 'No'} />
-        <ReadOnlyField label="Join Date" value={new Date(member.joinDate).toLocaleDateString()} />
+        <ReadOnlyField label="Join Date" value={member.joinDate} />
       </div>
     </div>
   )
@@ -261,7 +261,7 @@ function MemberEditForm({
     >
       <ErrorAlert error={mutationError} action="Updating member" />
 
-      <ReadOnlyField label="Join Date" value={new Date(member.joinDate).toLocaleDateString()} />
+      <ReadOnlyField label="Join Date" value={member.joinDate} />
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <form.AppField
