@@ -13,6 +13,11 @@ export function getTodayPacificDateString(): string {
   return pacificString
 }
 
+// Strips the time portion from a datetime string, leaving YYYY-MM-DD.
+export function dateOnly(value: string): string {
+  return value ? value.slice(0, 10) : ''
+}
+
 export function isLessonUpcoming(calendarDate: string): boolean {
   if (!calendarDate) return false
   const todayPacific = getTodayPacificDateString()
