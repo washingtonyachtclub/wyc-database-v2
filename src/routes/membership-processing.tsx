@@ -1,9 +1,19 @@
 import { Button } from '@/components/ui/button'
+import { Checkbox } from '@/components/ui/checkbox'
 import { EmailSimulatedNotice } from '@/components/ui/EmailSimulatedNotice'
 import { CopyBox } from '@/components/ui/CopyBox'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select'
 import { Textarea } from '@/components/ui/textarea'
+import { adminRecordRenewal } from '@/domains/renewals/server-fns'
+import type { RenewalDuration } from '@/domains/renewals/compute-renewal'
 import type { MemberProfileUpdate } from '@/domains/members/schema'
 import { isMembershipActive } from '@/db/membership-utils'
 import { getCurrentQuarterQueryOptions } from '@/domains/lessons/query-options'
@@ -71,6 +81,14 @@ type PageState =
       wycNumber: number
       emailSent: boolean
       emailSimulated: boolean
+    }
+  | {
+      kind: 'RenewedExisting'
+      wycNumber: number
+      quarterLabel: string
+      emailSent: boolean
+      emailSimulated: boolean
+      emailAddress: string | null
     }
   | { kind: 'Error'; error: ParseError }
 
@@ -155,6 +173,16 @@ function MembershipProcessingPage() {
   const { data: processedEntryIds } = useQuery(getProcessedEntryIdsQueryOptions())
   const processedSet = useMemo(() => new Set(processedEntryIds ?? []), [processedEntryIds])
   const [showManualAddModal, setShowManualAddModal] = useState(false)
+
+  // "Renew instead": record a renewal against a member surfaced as a duplicate.
+  const [renewingDupeWyc, setRenewingDupeWyc] = useState<number | null>(null)
+  const [renewDuration, setRenewDuration] = useState<RenewalDuration>('quarterly')
+  const [renewAmount, setRenewAmount] = useState<string>('')
+  const [renewSquareOrderId, setRenewSquareOrderId] = useState<string>('')
+  const [renewSquarePaymentId, setRenewSquarePaymentId] = useState<string>('')
+  const [renewSendEmail, setRenewSendEmail] = useState<boolean>(true)
+  const [renewError, setRenewError] = useState<string | null>(null)
+  const [renewSubmitting, setRenewSubmitting] = useState<boolean>(false)
 
   type Ok<T> = { ok: true; value: T }
   type Err = { ok: false; error: string }
@@ -464,6 +492,63 @@ function MembershipProcessingPage() {
     }
   }
 
+  function openRenewInstead(wycNumber: number): void {
+    setRenewingDupeWyc(wycNumber)
+    setRenewDuration('quarterly')
+    setRenewAmount('')
+    setRenewSquareOrderId('')
+    setRenewSquarePaymentId('')
+    setRenewSendEmail(true)
+    setRenewError(null)
+  }
+
+  async function handleRenewInstead(): Promise<void> {
+    if (memberState.kind !== 'NewMember' || renewingDupeWyc == null) return
+    const amount = Number(renewAmount)
+    if (!Number.isFinite(amount) || amount < 0) {
+      setRenewError('Enter the amount paid (in dollars).')
+      return
+    }
+    // categoryId 1 = student.
+    const tier = memberState.member.categoryId === 1 ? 'student' : 'nonstudent'
+    setRenewSubmitting(true)
+    setRenewError(null)
+    try {
+      const result = await adminRecordRenewal({
+        data: {
+          wycNumber: renewingDupeWyc,
+          targetExpireQtr: memberState.member.expireQtrIndex,
+          tier,
+          duration: renewDuration,
+          amountCents: Math.round(amount * 100),
+          squareOrderId: renewSquareOrderId.trim() || null,
+          squarePaymentId: renewSquarePaymentId.trim() || null,
+          formEmail: memberState.member.email,
+          sendEmail: renewSendEmail,
+        },
+      })
+      const activeBatchItem = activeBatchIndex != null ? classifiedBatch[activeBatchIndex] : null
+      if (activeBatchItem) {
+        await markEntryProcessed({
+          data: { entryId: activeBatchItem.entryId, wycNumber: result.wycNumber },
+        })
+      }
+      setRenewingDupeWyc(null)
+      setMemberState({
+        kind: 'RenewedExisting',
+        wycNumber: result.wycNumber,
+        quarterLabel: result.quarterLabel,
+        emailSent: result.emailSent,
+        emailSimulated: result.emailSimulated,
+        emailAddress: result.emailAddress,
+      })
+    } catch (error: any) {
+      setRenewError(error?.message ?? 'Failed to record the renewal')
+    } finally {
+      setRenewSubmitting(false)
+    }
+  }
+
   const newMemberExampleData = `Sahil,Chowdhury,sahilch@uw.edu,"Summer 2026",Student,"217 245th pl ne",,Sammamish,WA,98074,US,'+14255892521,9999`
   return (
     <div className="p-8">
@@ -566,20 +651,101 @@ function MembershipProcessingPage() {
               <ul className="mt-2 list-disc pl-5">
                 {memberState.duplicates.map((d) => (
                   <li key={d.wycNumber}>
-                    WYC #{d.wycNumber} — {d.first} {d.last}
-                    {d.email ? ` (${d.email})` : ''}
-                    {' — matched by '}
-                    <span className="font-medium">{d.matchMethod}</span>
-                    {' — '}
-                    <span
-                      className={
-                        d.status === 'active'
-                          ? 'text-green-700 font-medium'
-                          : 'text-red-700 font-medium'
-                      }
-                    >
-                      {d.status}
-                    </span>
+                    <div className="flex items-center gap-2">
+                      <span>
+                        WYC #{d.wycNumber} — {d.first} {d.last}
+                        {d.email ? ` (${d.email})` : ''}
+                        {' — matched by '}
+                        <span className="font-medium">{d.matchMethod}</span>
+                        {' — '}
+                        <span
+                          className={
+                            d.status === 'active'
+                              ? 'text-green-700 font-medium'
+                              : 'text-red-700 font-medium'
+                          }
+                        >
+                          {d.status}
+                        </span>
+                      </span>
+                      <Button
+                        size="sm"
+                        variant="secondary"
+                        onClick={() =>
+                          renewingDupeWyc === d.wycNumber
+                            ? setRenewingDupeWyc(null)
+                            : openRenewInstead(d.wycNumber)
+                        }
+                      >
+                        Renew #{d.wycNumber} instead
+                      </Button>
+                    </div>
+                    {renewingDupeWyc === d.wycNumber && (
+                      <div className="mt-2 ml-1 flex flex-col gap-2 rounded border border-input bg-background p-3 text-foreground">
+                        <p className="text-sm text-muted-foreground">
+                          Records a renewal against WYC #{d.wycNumber} with no Square charge. Pull
+                          the order/payment IDs from the Square dashboard if you want them linked.
+                        </p>
+                        <div className="flex flex-wrap items-end gap-3">
+                          <div>
+                            <Label className="text-xs">Duration</Label>
+                            <Select
+                              value={renewDuration}
+                              onValueChange={(v) => setRenewDuration(v as RenewalDuration)}
+                            >
+                              <SelectTrigger className="w-36">
+                                <SelectValue />
+                              </SelectTrigger>
+                              <SelectContent>
+                                <SelectItem value="quarterly">Quarterly</SelectItem>
+                                <SelectItem value="annual">Annual</SelectItem>
+                              </SelectContent>
+                            </Select>
+                          </div>
+                          <div>
+                            <Label className="text-xs">Amount paid ($)</Label>
+                            <Input
+                              type="number"
+                              min="0"
+                              step="0.01"
+                              value={renewAmount}
+                              onChange={(e) => setRenewAmount(e.target.value)}
+                              placeholder="0.00"
+                              className="w-32"
+                            />
+                          </div>
+                          <div>
+                            <Label className="text-xs">Square order ID (optional)</Label>
+                            <Input
+                              value={renewSquareOrderId}
+                              onChange={(e) => setRenewSquareOrderId(e.target.value)}
+                              className="w-56"
+                            />
+                          </div>
+                          <div>
+                            <Label className="text-xs">Square payment ID (optional)</Label>
+                            <Input
+                              value={renewSquarePaymentId}
+                              onChange={(e) => setRenewSquarePaymentId(e.target.value)}
+                              className="w-56"
+                            />
+                          </div>
+                        </div>
+                        <label className="flex items-center gap-2 text-sm">
+                          <Checkbox
+                            checked={renewSendEmail}
+                            onCheckedChange={(c) => setRenewSendEmail(c === true)}
+                          />
+                          Send renewal confirmation email
+                        </label>
+                        {renewError && <p className="text-sm text-red-600">{renewError}</p>}
+                        <div>
+                          <Button size="sm" onClick={handleRenewInstead} disabled={renewSubmitting}>
+                            {renewSubmitting ? 'Recording…' : 'Confirm renewal'}
+                          </Button>
+                        </div>
+                      </div>
+                    )}
                   </li>
                 ))}
               </ul>
@@ -622,6 +788,29 @@ function MembershipProcessingPage() {
                 })}
               />
             </>
+          )}
+          {batchItems.length > 0 && (
+            <Button className="mt-4" onClick={handleDone}>
+              Done
+            </Button>
+          )}
+        </div>
+      )}
+      {memberState.kind === 'RenewedExisting' && (
+        <div className="mt-4">
+          <p className="text-green-600 font-semibold">
+            Renewed WYC #{memberState.wycNumber} through {memberState.quarterLabel}
+          </p>
+          {memberState.emailSent ? (
+            <>
+              <p className="text-green-600">
+                Confirmation email sent
+                {memberState.emailAddress ? ` to ${memberState.emailAddress}` : ''}
+              </p>
+              {memberState.emailSimulated && <EmailSimulatedNotice />}
+            </>
+          ) : (
+            <p className="text-muted-foreground">No confirmation email sent.</p>
           )}
           {batchItems.length > 0 && (
             <Button className="mt-4" onClick={handleDone}>

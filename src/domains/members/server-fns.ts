@@ -13,7 +13,7 @@ import { baseMemberQuery, memberSortColumns, withMemberFilters } from '@/domains
 import { CreateMember, MemberProfileUpdate } from '@/domains/members/schema'
 import { withPagination, withSorting } from '@/db/query-helpers'
 import { baseMemberRatingsQuery, baseRatingsGivenQuery } from '@/domains/ratings/queries'
-import { memcat, processedFormEntries, quarters, wycDatabase } from '@/db/schema'
+import { memcat, processedFormEntries, wycDatabase } from '@/db/schema'
 import db from '@/db/index'
 import {
   requireAuth,
@@ -24,7 +24,7 @@ import {
 import { hashPasswordArgon2, hashPasswordLegacy } from '@/lib/auth/auth'
 import { sendEmail } from '@/lib/email'
 import { generatePassphrase } from '@/lib/generate-passphrase'
-import { newMemberEmail, returningMemberEmail } from '@/lib/email-templates'
+import { newMemberEmail } from '@/lib/email-templates'
 
 export const getMembersTable = createServerFn({ method: 'GET' })
   .inputValidator(
@@ -199,89 +199,6 @@ export const updateMember = createServerFn({ method: 'POST' })
     const row = fromMemberInsert(rest)
     await db.update(wycDatabase).set(row).where(eq(wycDatabase.wycNumber, wycNumber))
     return { success: true, wycNumber }
-  })
-
-export const renewMember = createServerFn({ method: 'POST' })
-  .inputValidator(
-    (input: {
-      wycNumber: number
-      expireQtrIndex: number
-      sendEmail: boolean
-      formEmail: string
-    }) => ({
-      wycNumber: Number(input.wycNumber),
-      expireQtrIndex: Number(input.expireQtrIndex),
-      sendEmail: input.sendEmail,
-      formEmail: input.formEmail,
-    }),
-  )
-  .handler(async ({ data }) => {
-    await requirePrivilege('db')
-    try {
-      await db
-        .update(wycDatabase)
-        .set({ expireQtrIndex: data.expireQtrIndex })
-        .where(eq(wycDatabase.wycNumber, data.wycNumber))
-
-      let emailSent = false
-      let emailSimulated = false
-      let emailAddress: string | null = null
-      if (data.sendEmail) {
-        try {
-          const [member] = await db
-            .select({
-              first: wycDatabase.first,
-              last: wycDatabase.last,
-              email: wycDatabase.email,
-            })
-            .from(wycDatabase)
-            .where(eq(wycDatabase.wycNumber, data.wycNumber))
-
-          const [quarter] = await db
-            .select({ school: quarters.school })
-            .from(quarters)
-            .where(eq(quarters.index, data.expireQtrIndex))
-
-          if (member && member.email) {
-            emailAddress = member.email
-            const formEmailDiffers =
-              data.formEmail.toLowerCase().trim() !== member.email.toLowerCase().trim()
-            const emailMismatch = formEmailDiffers
-              ? { formEmail: data.formEmail, onFileEmail: member.email }
-              : undefined
-            const emailText = returningMemberEmail(
-              member.first ?? '',
-              member.last ?? '',
-              data.wycNumber,
-              quarter?.school ?? `quarter ${data.expireQtrIndex}`,
-              emailMismatch,
-            )
-            const to = formEmailDiffers ? [member.email, data.formEmail] : member.email
-            const result = await sendEmail({
-              to,
-              subject: 'WYC Membership Renewed',
-              text: emailText,
-              idempotencyKey: `renewal/${data.wycNumber}/${data.expireQtrIndex}`,
-            })
-            emailSent = true
-            emailSimulated = result.simulated
-          }
-        } catch (emailError) {
-          console.error('Failed to send renewal email:', emailError)
-        }
-      }
-
-      return {
-        success: true as const,
-        wycNumber: data.wycNumber,
-        emailSent,
-        emailSimulated,
-        emailAddress,
-      }
-    } catch (error: any) {
-      console.error('Failed to renew member:', error)
-      throw new Error('Failed to renew member')
-    }
   })
 
 export const getAllMembersLite = createServerFn({ method: 'GET' }).handler(async () => {
