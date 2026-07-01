@@ -23,3 +23,10 @@ export function isLessonUpcoming(calendarDate: string): boolean {
   const todayPacific = getTodayPacificDateString()
   return calendarDate >= todayPacific
 }
+
+// Whole days from today (Pacific) until the given YYYY-MM-DD date. Negative if the date is past.
+export function daysUntil(calendarDate: string): number {
+  const ms =
+    Date.parse(`${calendarDate}T00:00:00Z`) - Date.parse(`${getTodayPacificDateString()}T00:00:00Z`)
+  return Math.round(ms / 86_400_000)
+}

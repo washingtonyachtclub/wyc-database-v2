@@ -1,29 +1,28 @@
 # Important
 
+## smaller things
 - add to checkouts on profile when you are crew on a boat
 
 - resolve any drizzle shchema.ts and actual schema mismatch. Make drizzle the source of truth?
 - add admin role to control pages: privileges, dues exempt approvals, chiefs, maybe others
 
 ## bigger projects
-- image hosting for chiefs / officers
+- automated IMA plus one matching
 - lesson sign up UI: compact view, sort by date (ignoring category) view, calendar view
 - new checkout page (good mobile UX)
 - overall better mobile UX (especially on non-admin pages)
 - linking discord roles with db roles (for auto sync of roles like chiefs, kb novice, etc)
 
 # Less Important
+- image hosting for chiefs / officers
 - public officers page
 - better ratings viewing: de-duping expired novices, showing only highest earned rating per category, etc
 - apple pay on membership dues payment
 - required lesson confirmation 1 week before lesson, after 4 days move them to waitlist
 - create featured lessons, pin to top of lesson list
-- better ratings filtering (find all members with *at least* X rating, more complex logic like ANDs and ORs)
 - LLM prompt -> filter parameters / direct read query on DB
 - dev tool: indicator for last prod -> db sync
 - automate the stuff in maintenance.md
-  - quarters table
   - automated email reminder for lesson_quarter
-- IMA plus one matching
 - easily review out_to_sea statuses (or re-think its usage)
 - fix overall slowness

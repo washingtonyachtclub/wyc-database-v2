@@ -17,35 +17,57 @@ export function QuarterMaintenanceBanner() {
 
   if (!canEdit || !health) return null
 
-  const messages: string[] = []
+  // Quarter data the VC fixes in-app on /quarters.
+  const maintenanceMessages: string[] = []
   if (health.isLow) {
-    messages.push(
+    maintenanceMessages.push(
       `Only ${health.quartersAhead} quarter${health.quartersAhead === 1 ? '' : 's'} defined ` +
         `ahead of the current one (aim for ${health.target}).`,
     )
   }
   if (health.missingEndDates.length > 0) {
-    messages.push(`End date not set for ${health.missingEndDates.join(' and ')}.`)
-  }
-  if (health.renewalQuarterBehind) {
-    messages.push('The renewal quarter constant needs bumping in compute-renewal.ts.')
+    maintenanceMessages.push(`End date not set for ${health.missingEndDates.join(' and ')}.`)
   }
 
-  if (messages.length === 0) return null
+  // Bumping RENEWAL_QUARTER is a code change, not a /quarters edit, so it gets its own bar
+  // with no "Manage quarters" button.
+  let renewalMessage: string | null = null
+  const reminder = health.renewalReminder
+  if (reminder?.state === 'stale') {
+    renewalMessage =
+      'Renewal quarter is stale: the current quarter has passed it. Bump it in compute-renewal.ts.'
+  } else if (reminder?.state === 'dueSoon') {
+    const window =
+      reminder.days >= 1 ? ` (in ${reminder.days} day${reminder.days === 1 ? '' : 's'})` : ''
+    renewalMessage = `Renewal quarter needs bumping in compute-renewal.ts before ${reminder.quarterName} ends${window}.`
+  }
+
+  if (maintenanceMessages.length === 0 && !renewalMessage) return null
 
   return (
-    <div className="border-b border-amber-300 bg-amber-50 text-amber-900">
-      <div className="mx-auto flex max-w-7xl flex-wrap items-center justify-center gap-3 px-4 py-2 sm:px-6 lg:px-8">
-        <span className="text-sm font-medium">{messages.join(' ')}</span>
-        <Button
-          asChild
-          size="sm"
-          variant="outline"
-          className="border-amber-400 bg-background text-amber-900 hover:bg-amber-100"
-        >
-          <Link to="/quarters">Manage quarters</Link>
-        </Button>
-      </div>
-    </div>
+    <>
+      {maintenanceMessages.length > 0 && (
+        <div className="border-b border-amber-300 bg-amber-50 text-amber-900">
+          <div className="mx-auto flex max-w-7xl flex-wrap items-center justify-center gap-3 px-4 py-2 sm:px-6 lg:px-8">
+            <span className="text-sm font-medium">{maintenanceMessages.join(' ')}</span>
+            <Button
+              asChild
+              size="sm"
+              variant="outline"
+              className="border-amber-400 bg-background text-amber-900 hover:bg-amber-100"
+            >
+              <Link to="/quarters">Manage quarters</Link>
+            </Button>
+          </div>
+        </div>
+      )}
+      {renewalMessage && (
+        <div className="border-b border-blue-300 bg-blue-50 text-blue-900">
+          <div className="mx-auto flex max-w-7xl flex-wrap items-center justify-center gap-3 px-4 py-2 sm:px-6 lg:px-8">
+            <span className="text-sm font-medium">{renewalMessage}</span>
+          </div>
+        </div>
+      )}
+    </>
   )
 }

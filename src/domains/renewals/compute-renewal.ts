@@ -1,6 +1,9 @@
 export type RenewalTier = 'student' | 'nonstudent'
 export type RenewalDuration = 'quarterly' | 'annual'
 
+// The quarter an expired member renews into, and the anchor for all renewal math below. Normally
+// equal to the current quarter (lesson_quarter.quarter); bump it to the next quarter about two weeks
+// before the current one ends so members can renew ahead of the rollover.
 export const RENEWAL_QUARTER = 111 // Summer 2026
 
 export const MAX_QUARTERS_AHEAD = 4

@@ -6,9 +6,15 @@ import { lessonQuarter, lessons, quarters, wycDatabase } from '@/db/schema'
 import db from '@/db/index'
 import { requireAuth, requirePrivilege } from '@/lib/auth/auth-middleware'
 import { RENEWAL_QUARTER } from '@/domains/renewals/compute-renewal'
+import { daysUntil } from '@/lib/date-utils'
 
 export const QUARTERS_AHEAD_TARGET = 8
 export const QUARTERS_AHEAD_MIN = 6
+
+export type RenewalReminder =
+  | { state: 'stale' }
+  | { state: 'dueSoon'; quarterName: string; days: number }
+  | null
 
 export const getAllQuarters = createServerFn({ method: 'GET' }).handler(async () => {
   await requireAuth()
@@ -57,14 +63,30 @@ export const getQuarterHealth = createServerFn({ method: 'GET' }).handler(async 
 
   const quartersAhead = maxIndex - currentQuarter
 
+  // RENEWAL_QUARTER is hand-maintained and normally equals the current quarter. It gets bumped to
+  // the next quarter a couple weeks early so members can renew ahead of the rollover. Nag once we're
+  // inside that window and it hasn't been bumped yet ('dueSoon'), or if the quarter already rolled
+  // past it ('stale'/overdue). A missing end date is nagged separately.
+  const current = rows.find((r) => r.index === currentQuarter)
+  const daysToEnd = current?.endDate != null ? daysUntil(current.endDate) : null
+  const renewalReminder: RenewalReminder =
+    RENEWAL_QUARTER < currentQuarter
+      ? { state: 'stale' }
+      : RENEWAL_QUARTER === currentQuarter && daysToEnd != null && daysToEnd <= 14
+        ? {
+            state: 'dueSoon',
+            quarterName: current?.school ?? `quarter ${currentQuarter}`,
+            days: daysToEnd,
+          }
+        : null
+
   return {
     currentQuarter,
     quartersAhead,
     target: QUARTERS_AHEAD_TARGET,
     isLow: quartersAhead < QUARTERS_AHEAD_MIN,
     missingEndDates,
-    // RENEWAL_QUARTER is hand-maintained; flag when the current quarter has caught up to it.
-    renewalQuarterBehind: currentQuarter >= RENEWAL_QUARTER,
+    renewalReminder,
   }
 })
 

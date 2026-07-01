@@ -22,14 +22,18 @@ Both toggles also show the resulting expiry quarter for each duration so the mem
 
 ## Quarter math
 
-`computeRenewal(currentQuarter, expireQtr, duration)` rewards early renewal and never removes paid time:
+All renewal math anchors to `RENEWAL_QUARTER`, a hand-maintained constant in `compute-renewal.ts`. It is the quarter an expired member renews into. `computeRenewal(expireQtr, duration)` rewards early renewal and never removes paid time:
 
-- **Active** (`expireQtr >= currentQuarter`): stack the new period on remaining time. Quarterly adds 1, annual adds 4.
-- **Expired** (`expireQtr < currentQuarter`): start fresh from the current quarter. Quarterly lands on `currentQuarter`, annual on `currentQuarter + 3`.
+- **Active** (`expireQtr >= RENEWAL_QUARTER`): stack the new period on remaining time. Quarterly adds 1, annual adds 4.
+- **Expired** (`expireQtr < RENEWAL_QUARTER`): start fresh. Quarterly lands on `RENEWAL_QUARTER`, annual on `RENEWAL_QUARTER + 3`.
 
-A pre-pay cap (`MAX_QUARTERS_AHEAD = 4`) blocks any renewal that would push `ExpireQtr` more than four quarters past the current quarter, so members cannot bank many quarters ahead of a dues increase. A standard annual renewal from the current quarter lands exactly at the cap.
+A pre-pay cap (`MAX_QUARTERS_AHEAD = 4`) blocks any renewal that would push `ExpireQtr` more than four quarters past `RENEWAL_QUARTER`, so members cannot bank many quarters ahead of a dues increase. A standard annual renewal from `RENEWAL_QUARTER` lands exactly at the cap.
 
-The current quarter is read live from `lesson_quarter.quarter` on every call, never cached, because that value is corrected manually from time to time.
+### The `RENEWAL_QUARTER` constant
+
+`RENEWAL_QUARTER` is normally equal to the current quarter (`lesson_quarter.quarter`). It is a separate constant, not read live, so it can be advanced **early**: in the couple of weeks before a quarter ends, bump it to the next quarter so members can renew into the upcoming quarter before the rollover happens. Anchoring renewals directly to `lesson_quarter.quarter` would remove that early window, and would also let an operational edit of that field silently reprice and re-date every member's renewal.
+
+**When to bump it:** raise `RENEWAL_QUARTER` to the next quarter index (in `compute-renewal.ts`) about two weeks before the current quarter's end date. `QuarterMaintenanceBanner` shows a dedicated reminder to `db`-privileged users, separate from the in-app quarter-data warnings because bumping the constant is a code change. It appears in two cases: **due soon**, within 14 days of the current quarter's end date while `RENEWAL_QUARTER` still equals the current quarter; and **stale**, if the current quarter has already rolled past `RENEWAL_QUARTER`. Bumping the constant clears it.
 
 ## Square integration
 

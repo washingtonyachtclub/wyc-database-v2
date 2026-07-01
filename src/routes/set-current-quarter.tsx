@@ -1,5 +1,7 @@
 import { Button } from '@/components/ui/button'
+import { Checkbox } from '@/components/ui/checkbox'
 import { ConfirmDialog } from '@/components/ui/ConfirmDialog'
+import { Label } from '@/components/ui/label'
 import {
   Select,
   SelectContent,
@@ -14,8 +16,6 @@ import {
   useUpdateCurrentQuarterMutation,
 } from '@/domains/quarters/query-options'
 import { cn } from '@/lib/utils'
-import { Checkbox } from '@/components/ui/checkbox'
-import { Label } from '@/components/ui/label'
 import { useQuery } from '@tanstack/react-query'
 import { createFileRoute } from '@tanstack/react-router'
 import { useMemo, useState } from 'react'
@@ -111,12 +111,9 @@ function SetCurrentQuarterPage() {
             &ge; the current quarter. Changing this determines who is considered active vs expired.
           </li>
           <li>
-            <strong>Lesson visibility</strong> — The public lesson page only shows lessons matching
-            the current quarter. Previous quarter lessons will no longer appear on the website.
-          </li>
-          <li>
-            <strong>Instructor privileges</strong> — Instructors teaching current-quarter lessons
-            receive the ratings privilege. Changing the quarter may revoke or grant this access.
+            <strong>Lesson visibility</strong> — The public lesson page only shows lessons in or
+            after the current quarter. Previous quarter lessons will no longer appear on the
+            website.
           </li>
         </ul>
         <p className="pt-1 font-medium">
