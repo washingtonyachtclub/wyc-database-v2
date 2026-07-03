@@ -3,6 +3,7 @@
 ## smaller things
 - add to checkouts on profile when you are crew on a boat
 
+## backend
 - resolve any drizzle shchema.ts and actual schema mismatch. Make drizzle the source of truth?
 - add admin role to control pages: privileges, dues exempt approvals, chiefs, maybe others
 

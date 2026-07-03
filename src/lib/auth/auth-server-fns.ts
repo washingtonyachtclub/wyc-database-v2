@@ -71,7 +71,7 @@ async function loadUserPrivileges(wycNumber: number): Promise<Privilege[]> {
     .map((r) => r.name?.trim())
     .filter((name): name is Privilege => name === 'db' || name === 'rtgs')
 
-  // 2. Dynamic "rtgs" grant — instructors for current-quarter lessons get ratings access
+  // 2. Dynamic "rtgs" grant — instructors for current-or-later-quarter lessons get ratings access
   const quarterRow = await db
     .select({ quarter: lessonQuarter.quarter })
     .from(lessonQuarter)
