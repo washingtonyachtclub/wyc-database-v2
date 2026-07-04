@@ -1,5 +1,5 @@
+import { fullName, num, str } from '@/db/mapper-utils'
 import type { CheckoutQueryRow, CheckoutTableQueryRow } from './queries'
-import { num, str, fullName } from '@/db/mapper-utils'
 
 // --- Core types ---
 
@@ -7,6 +7,7 @@ export type Checkout = {
   index: number
   wycNumber: number
   skipperName: string
+  isSkipper: boolean
   boatId: number
   boatName: string
   fleet: string
@@ -17,12 +18,13 @@ export type Checkout = {
 
 // --- Mappers ---
 
-export function toCheckout(row: CheckoutQueryRow): Checkout {
+export function toCheckout(row: CheckoutQueryRow, profileWycNumber?: number): Checkout {
   const timeDeparture = str(row.timeDeparture)
   return {
     index: row.index,
     wycNumber: row.wycNumber,
     skipperName: fullName(row.skipperFirst, row.skipperLast),
+    isSkipper: profileWycNumber === undefined || row.wycNumber === profileWycNumber,
     boatId: num(row.boatId),
     boatName: str(row.boatName),
     fleet: str(row.fleet),

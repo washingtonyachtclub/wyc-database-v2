@@ -1,8 +1,8 @@
-import { and, count, desc, eq, gte, lte } from 'drizzle-orm'
+import { and, count, desc, eq, exists, gte, lte, or } from 'drizzle-orm'
 import type { MySqlColumn, MySqlSelect } from 'drizzle-orm/mysql-core'
 import { alias } from 'drizzle-orm/mysql-core'
 import db from '@/db/index'
-import { boatTypes, checkouts, ratings, wycDatabase } from '@/db/schema'
+import { boatTypes, checkouts, crew, ratings, wycDatabase } from '@/db/schema'
 import type { CheckoutFilters } from './filter-types'
 
 const skipperTable = alias(wycDatabase, 'skipper')
@@ -24,7 +24,22 @@ export type CheckoutQueryRow = Awaited<ReturnType<typeof baseCheckoutsQuery>>[nu
 
 export function baseCheckoutsQuery(opts?: { wycNumber?: number; since?: string }) {
   const conditions = []
-  if (opts?.wycNumber) conditions.push(eq(checkouts.wycNumber, opts.wycNumber))
+  if (opts?.wycNumber) {
+    // Match checkouts the member skippered or crewed. exists() rather than a
+    // join so a skipper listed in their own crew stays a single row.
+    const wycNumber = opts.wycNumber
+    conditions.push(
+      or(
+        eq(checkouts.wycNumber, wycNumber),
+        exists(
+          db
+            .select({ n: crew.index })
+            .from(crew)
+            .where(and(eq(crew.checkoutId, checkouts.index), eq(crew.crewId, wycNumber))),
+        ),
+      ),
+    )
+  }
   if (opts?.since) conditions.push(gte(checkouts.expectedReturn, opts.since))
 
   const query = db

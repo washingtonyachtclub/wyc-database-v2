@@ -29,6 +29,7 @@ export function MemberCheckoutsSection({
             <tr className="border-b">
               <th className="text-left py-2 font-medium">Boat</th>
               <th className="text-left py-2 font-medium">Date</th>
+              <th className="text-left py-2 font-medium">Role</th>
             </tr>
           </thead>
           <tbody>
@@ -36,6 +37,9 @@ export function MemberCheckoutsSection({
               <tr key={checkout.index} className="border-b">
                 <td className="py-2">{checkout.boatName}</td>
                 <td className="py-2">{checkout.departureDate}</td>
+                <td className="py-2">
+                  {checkout.isSkipper ? 'Skipper' : `Crew · ${checkout.skipperName}`}
+                </td>
               </tr>
             ))}
           </tbody>

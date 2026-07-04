@@ -22,7 +22,7 @@ export const getCheckouts = createServerFn({ method: 'GET' })
     // wycNumber is optional in the query, but on the profile page it's always provided
     await requireSelfOrPrivilege(data.wycNumber ?? 0, 'db')
     const raw = await baseCheckoutsQuery(data)
-    return raw.map(toCheckout)
+    return raw.map((row) => toCheckout(row, data.wycNumber))
   })
 
 export const getAllCheckouts = createServerFn({ method: 'GET' })
