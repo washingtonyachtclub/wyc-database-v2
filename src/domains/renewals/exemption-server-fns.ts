@@ -1,9 +1,5 @@
-import { createServerFn } from '@tanstack/react-start'
-import { and, desc, eq, inArray } from 'drizzle-orm'
-import { computeRenewal } from './compute-renewal'
-import { parseQuestionnaire } from './questionnaire'
-import db from '@/db/index'
 import { EXEMPTION_APPROVER_POSITIONS } from '@/db/constants'
+import db from '@/db/index'
 import {
   duesExemptionRequests,
   membershipPayments,
@@ -15,6 +11,10 @@ import {
 import { requireAuth } from '@/lib/auth/auth-middleware'
 import { sendEmail } from '@/lib/email'
 import { returningMemberEmail } from '@/lib/email-templates'
+import { createServerFn } from '@tanstack/react-start'
+import { and, desc, eq, inArray } from 'drizzle-orm'
+import { computeRenewal } from './compute-renewal'
+import { parseQuestionnaire } from './questionnaire'
 
 /** Whether a member is an active holder of an approver position (Commodore / Vice Commodore / Webmaster). */
 async function isApprover(wycNumber: number): Promise<boolean> {
@@ -105,6 +105,40 @@ export const requestDuesExemption = createServerFn({ method: 'POST' })
 
     return { success: true as const }
   })
+
+export const cancelDuesExemption = createServerFn({ method: 'POST' }).handler(async () => {
+  const wycNumber = await requireAuth()
+
+  const [existing] = await db
+    .select({ index: duesExemptionRequests.index })
+    .from(duesExemptionRequests)
+    .where(
+      and(
+        eq(duesExemptionRequests.wycNumber, wycNumber),
+        eq(duesExemptionRequests.status, 'pending'),
+      ),
+    )
+    .limit(1)
+  // Nothing open to cancel (already decided, or none) — treat as success so the UI settles.
+  if (!existing) return { success: true as const }
+
+  try {
+    await db
+      .update(duesExemptionRequests)
+      .set({ status: 'cancelled', decidedAt: new Date() })
+      .where(eq(duesExemptionRequests.index, existing.index))
+
+    await db
+      .update(renewalQuestionnaire)
+      .set({ status: 'void' })
+      .where(eq(renewalQuestionnaire.requestId, existing.index))
+  } catch (error) {
+    console.error('cancelDuesExemption: DB update failed:', error)
+    throw new Error('We could not cancel your request. Please try again.')
+  }
+
+  return { success: true as const }
+})
 
 /** Pending requests for the approval screen, with requester name, requested quarter, and current ExpireQtr. */
 export const listPendingExemptionRequests = createServerFn({ method: 'GET' }).handler(async () => {

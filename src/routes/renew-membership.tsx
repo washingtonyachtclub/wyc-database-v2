@@ -17,6 +17,7 @@ import type { RenewalDuration } from '@/domains/renewals/compute-renewal'
 import {
   getRenewalPriceQueryOptions,
   getRenewalStatusQueryOptions,
+  useCancelDuesExemptionMutation,
   usePayAndRenewMutation,
   useRequestDuesExemptionMutation,
 } from '@/domains/renewals/query-options'
@@ -111,6 +112,7 @@ function RenewMembershipPage() {
   const [error, setError] = useState<string | null>(null)
   const [submitting, setSubmitting] = useState(false)
   const [result, setResult] = useState<RenewResult | null>(null)
+  const [exemptRequested, setExemptRequested] = useState(false)
 
   const cardRef = useRef<SquareCardHandle>(null)
   const mutation = usePayAndRenewMutation()
@@ -187,6 +189,15 @@ function RenewMembershipPage() {
           </Button>
         )}
       </div>
+    )
+  }
+
+  if (status.exemptionRequest || exemptRequested) {
+    return (
+      <ExemptionRequestedScreen
+        quarterLabel={status.exemptionRequest?.label ?? status.preview.quarterly.label}
+        onCancelled={() => setExemptRequested(false)}
+      />
     )
   }
 
@@ -329,9 +340,9 @@ function RenewMembershipPage() {
       </Button>
 
       <DuesExemptSection
-        exemptionRequest={status.exemptionRequest}
         targetQuarterLabel={status.preview.quarterly.label}
         questionnaire={questionnaire}
+        onRequested={() => setExemptRequested(true)}
       />
     </div>
   )
@@ -372,19 +383,17 @@ function ChoiceGroup<T extends string>({
 }
 
 function DuesExemptSection({
-  exemptionRequest,
   targetQuarterLabel,
   questionnaire,
+  onRequested,
 }: {
-  exemptionRequest: { label: string } | null
   targetQuarterLabel: string
   questionnaire: QuestionnaireAnswers | null
+  onRequested: () => void
 }) {
   const [showModal, setShowModal] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const mutation = useRequestDuesExemptionMutation()
-
-  const pending = exemptionRequest !== null || mutation.isSuccess
 
   async function submit() {
     if (!questionnaire) return
@@ -392,6 +401,7 @@ function DuesExemptSection({
     try {
       await mutation.mutateAsync(questionnaire)
       setShowModal(false)
+      onRequested()
     } catch (e: any) {
       setError(e?.message ?? 'Something went wrong. Please try again.')
     }
@@ -399,38 +409,32 @@ function DuesExemptSection({
 
   return (
     <div className="space-y-2 border-t pt-4">
-      {pending ? (
-        <div className="rounded-md border bg-muted p-3 text-sm">
-          Exemption requested — pending review.
-        </div>
-      ) : (
-        <div className="flex items-center gap-2">
-          <Button
-            variant="outline"
-            className="flex-1"
-            onClick={() => setShowModal(true)}
-            disabled={questionnaire === null}
-          >
-            Request Dues Exempt
-          </Button>
-          <TooltipProvider>
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <button
-                  type="button"
-                  className="text-muted-foreground hover:text-foreground"
-                  aria-label="Who is dues exempt?"
-                >
-                  <CircleHelp className="h-5 w-5" />
-                </button>
-              </TooltipTrigger>
-              <TooltipContent className="max-w-xs">
-                Dues exempt for officers, position holders, instructors, honorary, etc.
-              </TooltipContent>
-            </Tooltip>
-          </TooltipProvider>
-        </div>
-      )}
+      <div className="flex items-center gap-2">
+        <Button
+          variant="outline"
+          className="flex-1"
+          onClick={() => setShowModal(true)}
+          disabled={questionnaire === null}
+        >
+          Request Dues Exempt
+        </Button>
+        <TooltipProvider>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <button
+                type="button"
+                className="text-muted-foreground hover:text-foreground"
+                aria-label="Who is dues exempt?"
+              >
+                <CircleHelp className="h-5 w-5" />
+              </button>
+            </TooltipTrigger>
+            <TooltipContent className="max-w-xs">
+              Dues exempt for officers, position holders, instructors, honorary, etc.
+            </TooltipContent>
+          </Tooltip>
+        </TooltipProvider>
+      </div>
 
       <Dialog open={showModal} onOpenChange={setShowModal}>
         <DialogContent className="sm:max-w-lg">
@@ -452,6 +456,70 @@ function DuesExemptSection({
             </Button>
             <Button onClick={submit} disabled={mutation.isPending}>
               {mutation.isPending ? 'Submitting…' : 'I understand'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    </div>
+  )
+}
+
+function ExemptionRequestedScreen({
+  quarterLabel,
+  onCancelled,
+}: {
+  quarterLabel: string
+  onCancelled: () => void
+}) {
+  const [showModal, setShowModal] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+  const mutation = useCancelDuesExemptionMutation()
+
+  async function cancel() {
+    setError(null)
+    try {
+      await mutation.mutateAsync()
+      setShowModal(false)
+      onCancelled()
+    } catch (e: any) {
+      setError(e?.message ?? 'Something went wrong. Please try again.')
+    }
+  }
+
+  return (
+    <div className="p-4 max-w-md space-y-4">
+      <h1 className="text-2xl font-bold">Dues Exemption Requested</h1>
+      <div className="rounded-md border border-green-300 bg-green-50 p-4 text-green-800">
+        <p className="font-semibold">Your request is in.</p>
+        <p className="mt-1">
+          We've submitted your dues-exemption request for <strong>{quarterLabel}</strong>. A club
+          officer will review it, and you'll get an email once it's approved.
+        </p>
+      </div>
+      <Button variant="outline" className="w-full" onClick={() => setShowModal(true)}>
+        Cancel request
+      </Button>
+
+      <Dialog open={showModal} onOpenChange={setShowModal}>
+        <DialogContent className="sm:max-w-lg">
+          <DialogHeader>
+            <DialogTitle>Cancel exemption request?</DialogTitle>
+            <DialogDescription className="pt-2">
+              This withdraws your dues-exemption request for <strong>{quarterLabel}</strong>. You
+              can request again or renew by paying.
+            </DialogDescription>
+          </DialogHeader>
+          <ErrorAlert error={error} action="Cancel exemption request" />
+          <DialogFooter className="pt-2">
+            <Button
+              variant="outline"
+              onClick={() => setShowModal(false)}
+              disabled={mutation.isPending}
+            >
+              Keep request
+            </Button>
+            <Button onClick={cancel} disabled={mutation.isPending}>
+              {mutation.isPending ? 'Cancelling…' : 'Cancel request'}
             </Button>
           </DialogFooter>
         </DialogContent>

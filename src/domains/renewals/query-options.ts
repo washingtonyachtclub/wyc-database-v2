@@ -2,6 +2,7 @@ import { queryOptions, useMutation, useQueryClient } from '@tanstack/react-query
 import { getRenewalPrice, getRenewalStatus, payAndRenew } from './server-fns'
 import {
   approveExemptionRequest,
+  cancelDuesExemption,
   denyExemptionRequest,
   getIsExemptionApprover,
   listPendingExemptionRequests,
@@ -53,6 +54,16 @@ export function useRequestDuesExemptionMutation() {
   return useMutation({
     mutationFn: (questionnaire: QuestionnaireAnswers) =>
       requestDuesExemption({ data: { questionnaire } }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['renewals', 'status'] })
+    },
+  })
+}
+
+export function useCancelDuesExemptionMutation() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: () => cancelDuesExemption(),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['renewals', 'status'] })
     },

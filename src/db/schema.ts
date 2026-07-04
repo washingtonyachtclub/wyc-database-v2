@@ -488,7 +488,7 @@ export const duesExemptionRequests = mysqlTable(
     wycNumber: int('wyc_number').notNull(),
     // Target quarter frozen at request time; the grant is a no-op if already covered by approval.
     requestedExpireQtr: int('requested_expire_qtr').notNull(),
-    status: varchar('status', { length: 20 }).notNull(), // 'pending' | 'approved' | 'denied'
+    status: varchar('status', { length: 20 }).notNull(), // 'pending' | 'approved' | 'denied' | 'cancelled'
     // EXEMPT membership_payments row written on approval (null when the grant no-ops or still pending).
     paymentId: int('payment_id'),
     decidedBy: int('decided_by'),
