@@ -1,7 +1,8 @@
+import { getIsExemptionApproverQueryOptions } from '@/domains/renewals/query-options'
+import { useCurrentUser } from '@/lib/auth/auth-query-options'
 import { useQuery } from '@tanstack/react-query'
 import { Link, useLocation } from '@tanstack/react-router'
-import { useCurrentUser } from '@/lib/auth/auth-query-options'
-import { getIsExemptionApproverQueryOptions } from '@/domains/renewals/query-options'
+import { ExternalLink } from 'lucide-react'
 import type { ProtectedRoute } from '../lib/permissions'
 import { hasPrivilege, routePermissions } from '../lib/permissions'
 
@@ -78,6 +79,15 @@ export function SidebarNav({ onNavigate }: { onNavigate?: () => void }) {
           <Link to="/my-lessons" className={linkClass(location.pathname === '/my-lessons')}>
             My Lessons
           </Link>
+          <a
+            href="https://checkout.washingtonyachtclub.org"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="flex items-center gap-2 px-4 py-2 rounded-md transition-colors hover:bg-primary/5 text-foreground"
+          >
+            Check Out a Boat
+            <ExternalLink className="h-3.5 w-3.5 text-muted-foreground" />
+          </a>
           <Link
             to="/renew-membership"
             className={linkClass(location.pathname === '/renew-membership')}
@@ -128,9 +138,10 @@ export function SidebarNav({ onNavigate }: { onNavigate?: () => void }) {
         href="/lesson-list"
         target="_blank"
         rel="noopener noreferrer"
-        className="block px-4 py-2 rounded-md transition-colors hover:bg-primary/5 text-foreground"
+        className="flex items-center gap-2 px-4 py-2 rounded-md transition-colors hover:bg-primary/5 text-foreground"
       >
-        View Public Lesson List
+        Lesson List
+        <ExternalLink className="h-3.5 w-3.5 text-muted-foreground" />
       </a>
       {visiblePeopleManagementItems.length > 0 && (
         <h3 className="px-4 pt-4 pb-2 text-sm font-bold uppercase tracking-wider text-muted-foreground">
