@@ -17,6 +17,7 @@ export function PaginationControls<T>({
   actions?: React.ReactNode
 }) {
   const pageSize = table.getState().pagination.pageSize
+  const showingAll = totalCount > 0 && pageSize >= totalCount
 
   return (
     <div className="flex items-center justify-between mt-4">
@@ -63,8 +64,10 @@ export function PaginationControls<T>({
           Page {table.getState().pagination.pageIndex + 1} of {pageCount || 1}
         </span>
         <Select
-          value={String(pageSize)}
-          onValueChange={(value) => table.setPageSize(Number(value))}
+          value={showingAll ? 'all' : String(pageSize)}
+          onValueChange={(value) =>
+            table.setPageSize(value === 'all' ? totalCount || 1 : Number(value))
+          }
         >
           <SelectTrigger className="w-[120px]">
             <SelectValue />
@@ -75,6 +78,7 @@ export function PaginationControls<T>({
                 Show {size}
               </SelectItem>
             ))}
+            <SelectItem value="all">Show All</SelectItem>
           </SelectContent>
         </Select>
       </div>

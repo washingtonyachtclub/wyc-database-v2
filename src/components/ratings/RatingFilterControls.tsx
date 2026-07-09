@@ -1,5 +1,6 @@
 import type { RatingFilters } from '@/domains/ratings/filter-types'
 import { Button } from '../ui/button'
+import { DatePicker } from '../ui/DatePicker'
 import { Label } from '../ui/label'
 import { MemberCombobox } from '../ui/MemberCombobox'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select'
@@ -10,17 +11,25 @@ const ALL = '__all__'
 export function RatingFilterControls({
   memberWycNumber,
   ratingIndex,
+  since,
+  until,
   ratingTypes,
   onFilterChange,
   onClearFilters,
 }: {
   memberWycNumber?: number
   ratingIndex?: number
+  since?: string
+  until?: string
   ratingTypes: Array<{ index: number; text: string | null }>
   onFilterChange: (changes: Partial<RatingFilters>) => void
   onClearFilters: () => void
 }) {
-  const hasFilters = memberWycNumber !== undefined || ratingIndex !== undefined
+  const hasFilters =
+    memberWycNumber !== undefined ||
+    ratingIndex !== undefined ||
+    since !== undefined ||
+    until !== undefined
 
   const activeClass = 'bg-primary/10 border-primary'
   const inactiveClass = 'bg-background border-border'
@@ -62,6 +71,20 @@ export function RatingFilterControls({
             </SelectContent>
           </Select>
         </div>
+
+        <DatePicker
+          label="From"
+          value={since}
+          onChange={(value) => onFilterChange({ since: value })}
+          className={cn('border-2 w-40', since ? activeClass : inactiveClass)}
+        />
+
+        <DatePicker
+          label="Until"
+          value={until}
+          onChange={(value) => onFilterChange({ until: value })}
+          className={cn('border-2 w-40', until ? activeClass : inactiveClass)}
+        />
 
         {hasFilters && (
           <Button variant="destructive" onClick={onClearFilters}>

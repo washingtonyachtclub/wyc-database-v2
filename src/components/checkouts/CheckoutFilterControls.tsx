@@ -1,7 +1,7 @@
 import type { CheckoutFilters } from '@/domains/checkouts/filter-types'
 import { cn } from '@/lib/utils'
 import { Button } from '../ui/button'
-import { Input } from '../ui/input'
+import { DatePicker } from '../ui/DatePicker'
 import { Label } from '../ui/label'
 import { MemberCombobox } from '../ui/MemberCombobox'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select'
@@ -102,25 +102,19 @@ export function CheckoutFilterControls({
           />
         </div>
 
-        <div>
-          <Label className="mb-1">From</Label>
-          <Input
-            type="date"
-            className={cn('border-2 w-40', since ? activeClass : inactiveClass)}
-            value={since ?? ''}
-            onChange={(e) => onFilterChange({ since: e.target.value || undefined })}
-          />
-        </div>
+        <DatePicker
+          label="From"
+          value={since}
+          onChange={(value) => onFilterChange({ since: value })}
+          className={cn('border-2 w-40', since ? activeClass : inactiveClass)}
+        />
 
-        <div>
-          <Label className="mb-1">Until</Label>
-          <Input
-            type="date"
-            className={cn('border-2 w-40', until ? activeClass : inactiveClass)}
-            value={until ?? ''}
-            onChange={(e) => onFilterChange({ until: e.target.value || undefined })}
-          />
-        </div>
+        <DatePicker
+          label="Until"
+          value={until}
+          onChange={(value) => onFilterChange({ until: value })}
+          className={cn('border-2 w-40', until ? activeClass : inactiveClass)}
+        />
 
         {hasFilters && (
           <Button variant="destructive" onClick={onClearFilters}>

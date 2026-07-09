@@ -23,6 +23,8 @@ const ratingSearchSchema = z.object({
   pageSize: z.number().catch(10),
   memberWycNumber: z.number().optional(),
   ratingIndex: z.number().optional(),
+  since: z.string().optional(),
+  until: z.string().optional(),
   sortColumn: z.string().optional(),
   sortDesc: z.boolean().catch(false),
 })
@@ -33,11 +35,23 @@ export const Route = createFileRoute('/ratings')({
     requirePrivilegeForRoute(context, '/ratings')
   },
   loaderDeps: ({
-    search: { pageIndex, pageSize, memberWycNumber, ratingIndex, sortColumn, sortDesc },
+    search: {
+      pageIndex,
+      pageSize,
+      memberWycNumber,
+      ratingIndex,
+      since,
+      until,
+      sortColumn,
+      sortDesc,
+    },
   }) => {
     const filters: RatingFilters | undefined =
-      memberWycNumber !== undefined || ratingIndex !== undefined
-        ? { memberWycNumber, ratingIndex }
+      memberWycNumber !== undefined ||
+      ratingIndex !== undefined ||
+      since !== undefined ||
+      until !== undefined
+        ? { memberWycNumber, ratingIndex, since, until }
         : undefined
 
     const sorting =
@@ -68,7 +82,7 @@ const ratingSortableColumns: Record<string, true> = {
 
 function RatingsPage() {
   const navigate = useNavigate({ from: '/ratings' })
-  const { memberWycNumber, ratingIndex } = Route.useSearch()
+  const { memberWycNumber, ratingIndex, since, until } = Route.useSearch()
   const { pageIndex, pageSize, filters, sorting } = Route.useLoaderDeps()
   const [isAddModalOpen, setIsAddModalOpen] = useState(false)
   const { user } = useCurrentUser()
@@ -134,6 +148,8 @@ function RatingsPage() {
         pageIndex: 0,
         ...('memberWycNumber' in changes && { memberWycNumber: changes.memberWycNumber }),
         ...('ratingIndex' in changes && { ratingIndex: changes.ratingIndex }),
+        ...('since' in changes && { since: changes.since }),
+        ...('until' in changes && { until: changes.until }),
       }),
       replace: true,
       resetScroll: false,
@@ -147,6 +163,8 @@ function RatingsPage() {
         pageIndex: 0,
         memberWycNumber: undefined,
         ratingIndex: undefined,
+        since: undefined,
+        until: undefined,
       }),
       replace: true,
       resetScroll: false,
@@ -163,6 +181,8 @@ function RatingsPage() {
       <RatingFilterControls
         memberWycNumber={memberWycNumber}
         ratingIndex={ratingIndex}
+        since={since}
+        until={until}
         ratingTypes={ratingTypes}
         onFilterChange={handleFilterChange}
         onClearFilters={handleClearFilters}

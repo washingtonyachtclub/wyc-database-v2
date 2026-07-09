@@ -1,4 +1,4 @@
-import { and, count, desc, eq, gte } from 'drizzle-orm'
+import { and, count, desc, eq, gte, lte } from 'drizzle-orm'
 import type { MySqlColumn, MySqlSelect } from 'drizzle-orm/mysql-core'
 import { alias } from 'drizzle-orm/mysql-core'
 import db from '@/db/index'
@@ -74,6 +74,14 @@ export function withRatingFilters<T extends MySqlSelect>(
 
   if (filters?.memberWycNumber !== undefined) {
     conditions.push(eq(wycRatings.member, filters.memberWycNumber))
+  }
+
+  if (filters?.since) {
+    conditions.push(gte(wycRatings.date, filters.since))
+  }
+
+  if (filters?.until) {
+    conditions.push(lte(wycRatings.date, filters.until))
   }
 
   if (conditions.length > 0) {
