@@ -1,5 +1,8 @@
 # Important
 
+auto google calendar sync lessons
+auto email days before lesson
+
 ## backend
 - resolve any drizzle shchema.ts and actual schema mismatch. Make drizzle the source of truth?
 - add admin role to control pages: privileges, dues exempt approvals, chiefs, maybe others
