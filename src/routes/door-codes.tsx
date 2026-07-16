@@ -1,6 +1,3 @@
-import { useSuspenseQuery } from '@tanstack/react-query'
-import { createFileRoute, Link } from '@tanstack/react-router'
-import { useState } from 'react'
 import { DoorCodeCard } from '@/components/door-codes/DoorCodeCard'
 import { EditDoorCodeModal } from '@/components/door-codes/EditDoorCodeModal'
 import { ConfirmDialog } from '@/components/ui/ConfirmDialog'
@@ -10,6 +7,9 @@ import {
   useUpdateDoorCodeMutation,
 } from '@/domains/door-codes/query-options'
 import { requirePrivilegeForRoute } from '@/lib/route-guards'
+import { useSuspenseQuery } from '@tanstack/react-query'
+import { createFileRoute, Link } from '@tanstack/react-router'
+import { useState } from 'react'
 
 export const Route = createFileRoute('/door-codes')({
   beforeLoad: ({ context }) => {
@@ -90,7 +90,7 @@ function DoorCodesPage() {
         }}
         title="ARE YOU SURE?"
         confirmLabel="Update code"
-        confirmLabels={['I have verified this code at the door']}
+        confirmLabels={['I am sure']}
         description={
           <>
             <p className="mb-2">
@@ -98,10 +98,7 @@ function DoorCodesPage() {
               <strong className="font-mono">{pendingEdit?.currentCode}</strong> to{' '}
               <strong className="font-mono">{pendingEdit?.newCode}</strong>.
             </p>
-            <p>
-              Everyone who relies on this door will see the new code immediately. If it is wrong,
-              they will be locked out until someone fixes it.
-            </p>
+            <p>Everyone will see the new code immediately.</p>
           </>
         }
       />
