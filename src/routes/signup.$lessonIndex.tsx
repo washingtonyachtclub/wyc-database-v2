@@ -1,4 +1,5 @@
 import { Button } from '@/components/ui/button'
+import { formatSessions } from '@/domains/lessons/format-sessions'
 import {
   Dialog,
   DialogContent,
@@ -14,6 +15,7 @@ import {
 import { useSuspenseQuery } from '@tanstack/react-query'
 import { createFileRoute, Link, redirect } from '@tanstack/react-router'
 import { useState } from 'react'
+import { RichText } from '@/components/ui/RichText'
 
 export const Route = createFileRoute('/signup/$lessonIndex')({
   beforeLoad: ({ context, params }) => {
@@ -60,6 +62,7 @@ function SignupPage() {
     requiredQuarterName,
   } = signupData
   const isFull = enrolledCount >= lesson.size
+  const sessionLines = formatSessions(lesson.sessions)
 
   const handleSignup = () => {
     enrollMutation.mutate(
@@ -80,9 +83,9 @@ function SignupPage() {
 
         {/* Lesson info */}
         <div className="text-sm text-muted-foreground space-y-1">
-          <p>
-            {lesson.day} | {lesson.time} | {lesson.dates}
-          </p>
+          {sessionLines.map((line) => (
+            <p key={line}>{line}</p>
+          ))}
           <p>
             <span className="font-medium text-foreground">Instructor: </span>
             {lesson.instructor1Name}
@@ -96,7 +99,7 @@ function SignupPage() {
           {lesson.comments && (
             <div>
               <span className="font-medium text-foreground">Comments: </span>
-              <span className="whitespace-pre-wrap">{lesson.comments}</span>
+              <RichText text={lesson.comments} />
             </div>
           )}
         </div>

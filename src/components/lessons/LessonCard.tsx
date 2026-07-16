@@ -1,6 +1,8 @@
+import { formatSessions } from '@/domains/lessons/format-sessions'
 import type { RichLesson } from '@/domains/lessons/schema'
 import { AlertTriangle } from 'lucide-react'
 import { isLessonUpcoming } from '../../lib/date-utils'
+import { RichText } from '../ui/RichText'
 
 export function LessonCard({
   lesson,
@@ -11,6 +13,7 @@ export function LessonCard({
   onClick?: () => void
   dimmed?: boolean
 }) {
+  const sessionLines = formatSessions(lesson.sessions)
   const upcoming = isLessonUpcoming(lesson.calendarDate)
   const showUpcomingNotDisplayedWarning = !dimmed && upcoming && !lesson.display
   // old db inserts with 0000-00-00 for calendarDate
@@ -40,7 +43,9 @@ export function LessonCard({
         <div>
           <h4 className="font-semibold">{lesson.subtype || lesson.type || 'Untitled Lesson'}</h4>
           {lesson.comments && (
-            <p className="text-sm text-muted-foreground mt-1 line-clamp-2">{lesson.comments}</p>
+            <p className="text-sm text-muted-foreground mt-1 line-clamp-2">
+              <RichText text={lesson.comments} />
+            </p>
           )}
         </div>
         <span className="text-xs text-muted-foreground whitespace-nowrap ml-4 text-right">
@@ -54,14 +59,11 @@ export function LessonCard({
         </span>
       </div>
       <div className="mt-3 space-y-1 text-sm">
-        {lesson.dates && <div className="text-foreground font-medium">{lesson.dates}</div>}
-        {(lesson.day || lesson.time) && (
-          <div className="text-muted-foreground">
-            {lesson.day && <span>{lesson.day}</span>}
-            {lesson.day && lesson.time && <span className="mx-1 text-xs align-middle">•</span>}
-            {lesson.time && <span>{lesson.time}</span>}
+        {sessionLines.map((line) => (
+          <div key={line} className="text-foreground font-medium">
+            {line}
           </div>
-        )}
+        ))}
         {(lesson.instructor1Name || lesson.instructor2Name) && (
           <div className="text-foreground space-y-0.5">
             {lesson.instructor1Name && (

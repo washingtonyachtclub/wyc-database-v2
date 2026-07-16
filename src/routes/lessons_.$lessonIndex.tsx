@@ -1,3 +1,4 @@
+import { LessonSessionsField } from '@/components/lessons/LessonSessionsField'
 import { CopyBox } from '@/components/ui/CopyBox'
 import { ErrorAlert } from '@/components/ui/ErrorAlert'
 import { parsePhoneNumberFromString } from 'libphonenumber-js'
@@ -10,7 +11,7 @@ import {
   useUpdateLessonMutation,
 } from '@/domains/lessons/query-options'
 import type { LessonInsert, LessonStudent, RichLesson } from '@/domains/lessons/schema'
-import { lessonInsertSchemaForQuarters } from '@/domains/lessons/schema'
+import { lessonInsertSchemaForQuarters, toSessionInput } from '@/domains/lessons/schema'
 import { getQuartersQueryOptions } from '@/domains/quarters/query-options'
 import { useAppForm } from '@/hooks/form'
 import { useCurrentUser } from '@/lib/auth/auth-query-options'
@@ -46,10 +47,7 @@ function lessonToDefaults(lesson: RichLesson): LessonInsert {
   return {
     classTypeId: lesson.classTypeId,
     subtype: lesson.subtype,
-    day: lesson.day,
-    time: lesson.time,
-    dates: lesson.dates,
-    calendarDate: lesson.calendarDate,
+    sessions: lesson.sessions.map(toSessionInput),
     instructor1: lesson.instructor1,
     instructor2: lesson.instructor2,
     comments: lesson.comments,
@@ -327,33 +325,7 @@ function LessonEditForm({ lesson }: { lesson: RichLesson }) {
           children={(field) => <field.TextField label="Title" required />}
         />
 
-        <form.AppField
-          name="day"
-          children={(field) => <field.TextField label="Day of week" required />}
-        />
-
-        <form.AppField
-          name="time"
-          children={(field) => <field.TextField label="Time" required />}
-        />
-
-        <form.AppField
-          name="dates"
-          children={(field) => (
-            <field.TextField label="Dates" required placeholder="March 7th, March 14th" />
-          )}
-        />
-
-        <form.AppField
-          name="calendarDate"
-          children={(field) => (
-            <field.TextField
-              label="Calendar Date (Latest Date if Multi-day)"
-              required
-              type="date"
-            />
-          )}
-        />
+        <LessonSessionsField form={form} />
 
         <form.AppField
           name="instructor1"

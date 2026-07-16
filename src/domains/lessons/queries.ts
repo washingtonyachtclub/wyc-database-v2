@@ -1,8 +1,9 @@
-import { and, asc, desc, eq, gte, like, or, sql } from 'drizzle-orm'
+import { and, asc, desc, eq, gte, inArray, like, or, sql } from 'drizzle-orm'
 import { alias, type MySqlColumn, type MySqlSelect } from 'drizzle-orm/mysql-core'
 import db from '@/db/index'
 import type { LessonFilters } from './filter-types'
-import { classType, lessons, signups, wycDatabase } from '@/db/schema'
+import { toLessonSession, type LessonSession } from './schema'
+import { classType, lessonSessions, lessons, signups, wycDatabase } from '@/db/schema'
 
 const instructor1Table = alias(wycDatabase, 'i1')
 const instructor2Table = alias(wycDatabase, 'i2')
@@ -17,9 +18,6 @@ export const lessonTableSelectFields = {
   typeId: lessons.type,
   type: classType.text,
   subtype: lessons.subtype,
-  day: lessons.day,
-  time: lessons.time,
-  dates: lessons.dates,
   calendarDate: lessons.calendarDate,
   instructor1: lessons.instructor1,
   instructor2: lessons.instructor2,
@@ -42,6 +40,30 @@ export function baseLessonQuery() {
     .leftJoin(classType, eq(classType.index, lessons.type))
     .leftJoin(instructor1Table, eq(lessons.instructor1, instructor1Table.wycNumber))
     .leftJoin(instructor2Table, eq(lessons.instructor2, instructor2Table.wycNumber))
+}
+
+export async function fetchSessionsByLesson(
+  lessonIds: number[],
+): Promise<Map<number, LessonSession[]>> {
+  const byLesson = new Map<number, LessonSession[]>()
+  if (lessonIds.length === 0) return byLesson
+
+  const rows = await db
+    .select()
+    .from(lessonSessions)
+    .where(inArray(lessonSessions.lessonId, lessonIds))
+    .orderBy(asc(lessonSessions.startsAt))
+
+  for (const row of rows) {
+    const arr = byLesson.get(row.lessonId) ?? []
+    arr.push(toLessonSession(row))
+    byLesson.set(row.lessonId, arr)
+  }
+  return byLesson
+}
+
+export async function fetchLessonSessions(lessonId: number): Promise<LessonSession[]> {
+  return (await fetchSessionsByLesson([lessonId])).get(lessonId) ?? []
 }
 
 export function withLessonFilters<T extends MySqlSelect>(
@@ -125,7 +147,7 @@ export function baseSignedUpWithDetailsQuery(wycNumber: number, minExpire: numbe
     .where(
       and(eq(signups.student, wycNumber), gte(lessons.expire, minExpire), eq(lessons.display, 1)),
     )
-    .orderBy(asc(lessons.calendarDate), asc(lessons.time))
+    .orderBy(asc(lessons.calendarDate))
 }
 
 export function baseLessonsSignedUpQuery(wycNumber: number, since?: string) {

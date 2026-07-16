@@ -1,8 +1,10 @@
 import { createFileRoute } from '@tanstack/react-router'
 import { LESSON_CATEGORIES } from '../db/constants'
+import { formatSessions } from '@/domains/lessons/format-sessions'
 import type { RichLesson } from '@/domains/lessons/schema'
 import { getPublicLessons } from '@/domains/lessons/server-fns'
 import { cn } from '@/lib/utils'
+import { RichText } from '@/components/ui/RichText'
 
 export const Route = createFileRoute('/lesson-list')({
   loader: () => getPublicLessons(),
@@ -94,6 +96,7 @@ function LessonCard({ entry, muted }: { entry: PublicLesson; muted?: boolean }) 
   const { lesson, enrolledCount } = entry
   const isFull = isLessonFull(entry)
   const hasTwo = !!lesson.instructor2Name
+  const sessionLines = formatSessions(lesson.sessions)
 
   return (
     <div
@@ -107,12 +110,11 @@ function LessonCard({ entry, muted }: { entry: PublicLesson; muted?: boolean }) 
         {/* Title, day/dates, time */}
         <div className="px-3 pt-2.5 pb-1 md:w-[35%] md:py-2.5">
           <div className="mb-1 text-base font-bold text-[#444]">{lesson.subtype}</div>
-          <div className="text-[13px] leading-relaxed text-[#444]">
-            {lesson.day} {lesson.dates}
-          </div>
-          {lesson.time && (
-            <div className="text-[13px] leading-relaxed text-[#444]">{lesson.time}</div>
-          )}
+          {sessionLines.map((line) => (
+            <div key={line} className="text-[13px] leading-relaxed text-[#444]">
+              {line}
+            </div>
+          ))}
         </div>
 
         {/* Instructor + Size: side by side on mobile, separate columns on desktop */}
@@ -152,7 +154,7 @@ function LessonCard({ entry, muted }: { entry: PublicLesson; muted?: boolean }) 
 
       {lesson.comments && (
         <div className="px-5 pt-1 pb-2.5 text-[13px] leading-relaxed text-[#444]">
-          {lesson.comments}
+          <RichText text={lesson.comments} />
         </div>
       )}
     </div>

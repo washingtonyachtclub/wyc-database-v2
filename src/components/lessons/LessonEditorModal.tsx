@@ -1,8 +1,9 @@
 import { useQuery } from '@tanstack/react-query'
 import { LESSON_CATEGORIES, TBD_WYC_NUMBER } from '../../db/constants'
+import { LessonSessionsField } from './LessonSessionsField'
 import { ErrorAlert } from '../ui/ErrorAlert'
 import type { LessonInsert } from '@/domains/lessons/schema'
-import { lessonInsertSchemaForQuarters } from '@/domains/lessons/schema'
+import { emptySessionInput, lessonInsertSchemaForQuarters } from '@/domains/lessons/schema'
 import { useMemo } from 'react'
 import { useAppForm } from '../../hooks/form'
 import { getClassTypesQueryOptions } from '@/domains/class-types/query-options'
@@ -15,10 +16,7 @@ import { Modal } from '../ui/Modal'
 const emptyDefaults = (expireDefault: number): LessonInsert => ({
   classTypeId: 1,
   subtype: '',
-  day: '',
-  time: '',
-  dates: '',
-  calendarDate: '',
+  sessions: [{ ...emptySessionInput }],
   instructor1: TBD_WYC_NUMBER,
   instructor2: null,
   comments: '',
@@ -97,38 +95,7 @@ export function LessonFormModal({ onClose, currentQuarter, onSuccess }: LessonFo
             children={(field) => <field.TextField label="Title" required />}
           />
 
-          <form.AppField
-            name="day"
-            children={(field) => <field.TextField label="Day of week" required />}
-          />
-
-          <form.AppField
-            name="time"
-            children={(field) => <field.TextField label="Time" required />}
-          />
-
-          <form.AppField
-            name="dates"
-            children={(field) => (
-              <field.TextField
-                label="Dates"
-                required
-                placeholder="March 7th, March 14th"
-                className="md:col-span-2"
-              />
-            )}
-          />
-
-          <form.AppField
-            name="calendarDate"
-            children={(field) => (
-              <field.TextField
-                label="Calendar Date (Latest Date if Multi-day)"
-                required
-                type="date"
-              />
-            )}
-          />
+          <LessonSessionsField form={form} />
 
           <form.AppField
             name="instructor1"

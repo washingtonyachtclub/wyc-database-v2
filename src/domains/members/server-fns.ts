@@ -1,6 +1,10 @@
 import { createServerFn } from '@tanstack/react-start'
 import { and, asc, count, desc, eq, gte, lte } from 'drizzle-orm'
-import { baseLessonsSignedUpQuery, baseLessonsTaughtQuery } from '@/domains/lessons/queries'
+import {
+  baseLessonsSignedUpQuery,
+  baseLessonsTaughtQuery,
+  fetchSessionsByLesson,
+} from '@/domains/lessons/queries'
 import { toRichLesson } from '@/domains/lessons/schema'
 import {
   fromMemberInsert,
@@ -285,7 +289,8 @@ export const getMemberLessonsTaught = createServerFn({ method: 'GET' })
   .handler(async ({ data: { wycNumber, since } }) => {
     await requireSelfOrPrivilege(wycNumber, 'db')
     const raw = await baseLessonsTaughtQuery(wycNumber, since)
-    return raw.map(toRichLesson)
+    const sessionsByLesson = await fetchSessionsByLesson(raw.map((r) => r.index))
+    return raw.map((row) => toRichLesson(row, sessionsByLesson.get(row.index) ?? []))
   })
 
 export const getMemberLessonsSignedUp = createServerFn({ method: 'GET' })
@@ -296,7 +301,8 @@ export const getMemberLessonsSignedUp = createServerFn({ method: 'GET' })
   .handler(async ({ data: { wycNumber, since } }) => {
     await requireSelfOrPrivilege(wycNumber, 'db')
     const raw = await baseLessonsSignedUpQuery(wycNumber, since)
-    return raw.map(toRichLesson)
+    const sessionsByLesson = await fetchSessionsByLesson(raw.map((r) => r.index))
+    return raw.map((row) => toRichLesson(row, sessionsByLesson.get(row.index) ?? []))
   })
 
 export const getDatabaseName = createServerFn({ method: 'GET' }).handler(async () => {

@@ -1,3 +1,6 @@
+import { formatSessions } from '@/domains/lessons/format-sessions'
+import type { LessonSession } from '@/domains/lessons/schema'
+
 // All email templates in one place so we remember to update them together.
 const SIGNATURE_NAME = 'Eshan Arora'
 const SIGNATURE_POSITION = 'Webmaster, WYC'
@@ -124,9 +127,7 @@ You can reset your password on the database if needed.`
 export type LessonEmailInfo = {
   type: string
   subtype: string
-  day: string
-  time: string
-  dates: string
+  sessions: LessonSession[]
   instructor1Name: string
   instructor1Email: string
   instructor2Name: string
@@ -134,13 +135,13 @@ export type LessonEmailInfo = {
 }
 
 function formatLessonInfo(lesson: LessonEmailInfo): string {
-  const lines = [
-    `Class: ${lesson.subtype}`,
-    `Day: ${lesson.day}`,
-    `Time: ${lesson.time}`,
-    `Dates: ${lesson.dates}`,
+  const sessionLines = formatSessions(lesson.sessions)
+  const lines = [`Class: ${lesson.subtype}`]
+  if (sessionLines.length === 1) lines.push(`When: ${sessionLines[0]}`)
+  else if (sessionLines.length > 1) lines.push('When:', ...sessionLines.map((l) => `  ${l}`))
+  lines.push(
     `Instructor: ${lesson.instructor1Name}${lesson.instructor1Email ? ` (${lesson.instructor1Email})` : ''}`,
-  ]
+  )
   if (lesson.instructor2Name) {
     lines.push(
       `Instructor: ${lesson.instructor2Name}${lesson.instructor2Email ? ` (${lesson.instructor2Email})` : ''}`,

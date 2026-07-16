@@ -1,5 +1,6 @@
 import { Button } from '@/components/ui/button'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
+import { formatSessions } from '@/domains/lessons/format-sessions'
 import { useSetLessonDisplayMutation } from '@/domains/lessons/query-options'
 import type { RichLessonWithEnrollment } from '@/domains/lessons/schema'
 import { AlertTriangle } from 'lucide-react'
@@ -34,12 +35,14 @@ function isFull(lesson: RichLessonWithEnrollment) {
 }
 
 const ROW_GRID =
-  'grid grid-cols-[auto_minmax(0,3fr)_minmax(0,1.5fr)_minmax(0,1.5fr)_minmax(0,2fr)_minmax(0,1fr)] gap-3'
+  'grid grid-cols-[auto_minmax(0,3fr)_minmax(0,3fr)_minmax(0,2fr)_minmax(0,1fr)] gap-3'
 
 function LessonRow({ lesson, onClick }: { lesson: RichLessonWithEnrollment; onClick: () => void }) {
   const warning = lessonWarning(lesson)
   const full = isFull(lesson)
   const setDisplayMutation = useSetLessonDisplayMutation()
+  // One line per session would break the grid, so this row stays single-line.
+  const when = formatSessions(lesson.sessions).join(', ')
 
   return (
     <div
@@ -72,9 +75,8 @@ function LessonRow({ lesson, onClick }: { lesson: RichLessonWithEnrollment; onCl
           <span className="ml-2 text-xs text-muted-foreground truncate">· {lesson.comments}</span>
         )}
       </div>
-      <div className="truncate text-foreground">{lesson.dates}</div>
-      <div className="truncate text-muted-foreground">
-        {[lesson.day, lesson.time].filter(Boolean).join(' · ')}
+      <div className="truncate text-foreground" title={when}>
+        {when}
       </div>
       <div className="truncate text-muted-foreground">
         {[lesson.instructor1Name, lesson.instructor2Name].filter(Boolean).join(', ')}
@@ -112,8 +114,7 @@ function RowHeader() {
     >
       <div className="w-4" />
       <div>Lesson</div>
-      <div>Dates</div>
-      <div>Time</div>
+      <div>When</div>
       <div>Instructor</div>
       <div className="text-right">Signed up</div>
     </div>

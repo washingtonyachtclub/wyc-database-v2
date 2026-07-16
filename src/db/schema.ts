@@ -192,10 +192,11 @@ export const lessons = mysqlTable(
     index: int('_index').autoincrement().notNull(),
     type: int(),
     subtype: varchar({ length: 80 }),
+    // `lesson_sessions` is the source of truth; these are kept only
+    // because they are the last record of the dates for the old lessons.
     day: varchar({ length: 80 }),
     time: varchar({ length: 80 }),
     dates: text(),
-    // you can use { mode: 'date' }, if you want to have Date as type for this column
     calendarDate: date('CalendarDate', { mode: 'string' }).notNull(),
     instructor1: int(),
     instructor2: int(),
@@ -205,6 +206,20 @@ export const lessons = mysqlTable(
     display: tinyint().default(0).notNull(),
   },
   (table) => [primaryKey({ columns: [table.index] })],
+)
+
+export const lessonSessions = mysqlTable(
+  'lesson_sessions',
+  {
+    index: int('_index').autoincrement().notNull(),
+    lessonId: int('lesson_id').notNull(),
+    startsAt: datetime('starts_at', { mode: 'string' }).notNull(),
+    // Inclusive: a Fri–Mon trip ends Mon.
+    endsAt: datetime('ends_at', { mode: 'string' }).notNull(),
+    // When set, the time components are filler
+    allDay: tinyint('all_day').default(0).notNull(),
+  },
+  (table) => [index('lesson_id_idx').on(table.lessonId), primaryKey({ columns: [table.index] })],
 )
 
 export const memcat = mysqlTable(

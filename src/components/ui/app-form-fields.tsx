@@ -37,7 +37,7 @@ export function TextField({
 }: {
   label: string
   required?: boolean
-  type?: 'text' | 'date' | 'email' | 'password'
+  type?: 'text' | 'date' | 'time' | 'email' | 'password'
   placeholder?: string
   className?: string
 }) {

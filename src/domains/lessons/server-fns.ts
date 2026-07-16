@@ -1,14 +1,31 @@
 import db from '@/db/index'
+import { isMembershipActive } from '@/db/membership-utils'
+import { withPagination, withSorting } from '@/db/query-helpers'
+import { lessonQuarter, lessonSessions, lessons, quarters, signups, wycDatabase } from '@/db/schema'
+import { enrollmentStatus, splitEnrollment } from '@/db/signup-utils'
 import type { LessonFilters } from '@/domains/lessons/filter-types'
+import { quarterMismatchError } from '@/domains/lessons/quarter-rules'
 import {
   baseLessonQuery,
   baseSignedUpWithDetailsQuery,
+  fetchLessonSessions,
+  fetchSessionsByLesson,
   lessonSortColumns,
   withLessonFilters,
 } from '@/domains/lessons/queries'
-import type { LessonInsert, LessonStudent, SignedUpLesson } from '@/domains/lessons/schema'
-import { fromLessonInsert, toRichLesson } from '@/domains/lessons/schema'
-import { quarterMismatchError } from '@/domains/lessons/quarter-rules'
+import type {
+  LessonInsert,
+  LessonSessionInput,
+  LessonStudent,
+  SignedUpLesson,
+} from '@/domains/lessons/schema'
+import {
+  byDateThenStart,
+  fromLessonInsert,
+  fromSessionInput,
+  lastSessionDate,
+  toRichLesson,
+} from '@/domains/lessons/schema'
 import {
   requireAuth,
   requireInstructorOrPrivilege,
@@ -19,10 +36,6 @@ import type { LessonEmailInfo } from '@/lib/email-templates'
 import { lessonEnrolledEmail, lessonWaitlistedEmail } from '@/lib/email-templates'
 import { createServerFn } from '@tanstack/react-start'
 import { and, asc, count, eq, gte, inArray, or } from 'drizzle-orm'
-import { isMembershipActive } from '@/db/membership-utils'
-import { withPagination, withSorting } from '@/db/query-helpers'
-import { lessonQuarter, lessons, quarters, signups, wycDatabase } from '@/db/schema'
-import { enrollmentStatus, splitEnrollment } from '@/db/signup-utils'
 
 export const getPublicLessons = createServerFn({ method: 'GET' }).handler(async () => {
   // No auth required — this is the public lesson list for the WordPress iframe
@@ -35,7 +48,7 @@ export const getPublicLessons = createServerFn({ method: 'GET' }).handler(async 
 
   const raw = await baseLessonQuery()
     .where(and(gte(lessons.expire, currentQuarter), eq(lessons.display, 1)))
-    .orderBy(asc(lessons.calendarDate), asc(lessons.time))
+    .orderBy(asc(lessons.calendarDate))
 
   const lessonIds = raw.map((r) => r.index)
 
@@ -50,10 +63,14 @@ export const getPublicLessons = createServerFn({ method: 'GET' }).handler(async 
     enrollmentCounts = new Map(counts.map((c) => [c.class, c.count]))
   }
 
-  return raw.map((row) => ({
-    lesson: toRichLesson(row),
-    enrolledCount: enrollmentCounts.get(row.index) ?? 0,
-  }))
+  const sessionsByLesson = await fetchSessionsByLesson(lessonIds)
+
+  return raw
+    .map((row) => ({
+      lesson: toRichLesson(row, sessionsByLesson.get(row.index) ?? []),
+      enrolledCount: enrollmentCounts.get(row.index) ?? 0,
+    }))
+    .sort((a, b) => byDateThenStart(a.lesson, b.lesson))
 })
 
 export const getQuarterLessons = createServerFn({ method: 'GET' }).handler(async () => {
@@ -62,7 +79,7 @@ export const getQuarterLessons = createServerFn({ method: 'GET' }).handler(async
 
   const raw = await baseLessonQuery()
     .where(gte(lessons.expire, currentQuarter))
-    .orderBy(asc(lessons.calendarDate), asc(lessons.time))
+    .orderBy(asc(lessons.calendarDate))
 
   const lessonIds = raw.map((r) => r.index)
   let enrollmentCounts = new Map<number, number>()
@@ -75,10 +92,14 @@ export const getQuarterLessons = createServerFn({ method: 'GET' }).handler(async
     enrollmentCounts = new Map(counts.map((c) => [c.class, c.count]))
   }
 
-  const data = raw.map((row) => ({
-    ...toRichLesson(row),
-    enrolledCount: enrollmentCounts.get(row.index) ?? 0,
-  }))
+  const sessionsByLesson = await fetchSessionsByLesson(lessonIds)
+
+  const data = raw
+    .map((row) => ({
+      ...toRichLesson(row, sessionsByLesson.get(row.index) ?? []),
+      enrolledCount: enrollmentCounts.get(row.index) ?? 0,
+    }))
+    .sort(byDateThenStart)
 
   return { data, currentQuarter, userId }
 })
@@ -117,7 +138,8 @@ export const getAllLessons = createServerFn({ method: 'GET' })
     withPagination(query, pageIndex, pageSize)
 
     const raw = await query
-    const data = raw.map(toRichLesson)
+    const sessionsByLesson = await fetchSessionsByLesson(raw.map((r) => r.index))
+    const data = raw.map((row) => toRichLesson(row, sessionsByLesson.get(row.index) ?? []))
 
     const countQuery = db.select({ count: count() }).from(lessons).$dynamic()
     withLessonFilters(countQuery, filters)
@@ -138,7 +160,7 @@ async function fetchLessonDetails(id: number) {
   const [lessonRow] = await baseLessonQuery().where(eq(lessons.index, id))
   if (!lessonRow) return null
 
-  const lesson = toRichLesson(lessonRow)
+  const lesson = toRichLesson(lessonRow, await fetchLessonSessions(id))
   const students = await db
     .select({
       wycNumber: wycDatabase.wycNumber,
@@ -175,15 +197,47 @@ export const getLessonById = createServerFn({ method: 'GET' })
     return fetchLessonDetails(id)
   })
 
+// Deltas rather than wipe-and-reinsert
+async function syncLessonSessions(lessonId: number, sessions: LessonSessionInput[]) {
+  const existing = await db
+    .select({ index: lessonSessions.index })
+    .from(lessonSessions)
+    .where(eq(lessonSessions.lessonId, lessonId))
+  const existingIds = new Set(existing.map((r) => r.index))
+
+  const keptIds = new Set(
+    sessions.map((s) => s.index).filter((id): id is number => id !== null && existingIds.has(id)),
+  )
+
+  const removedIds = [...existingIds].filter((id) => !keptIds.has(id))
+  if (removedIds.length > 0) {
+    await db.delete(lessonSessions).where(inArray(lessonSessions.index, removedIds))
+  }
+
+  for (const session of sessions) {
+    const values = { lessonId, ...fromSessionInput(session) }
+    if (session.index !== null && keptIds.has(session.index)) {
+      await db.update(lessonSessions).set(values).where(eq(lessonSessions.index, session.index))
+    } else {
+      await db.insert(lessonSessions).values(values)
+    }
+  }
+}
+
 export const createLesson = createServerFn({ method: 'POST' })
   .inputValidator((data: LessonInsert) => data)
   .handler(async ({ data }) => {
     await requirePrivilege('db', 'rtgs')
-    const mismatch = quarterMismatchError(data.calendarDate, data.expire, await fetchQuarterDates())
+    const mismatch = quarterMismatchError(
+      lastSessionDate(data.sessions),
+      data.expire,
+      await fetchQuarterDates(),
+    )
     if (mismatch) throw new Error(mismatch)
     const row = fromLessonInsert(data)
-    const id = await db.insert(lessons).values(row).$returningId()
-    return { success: true, id }
+    const [result] = await db.insert(lessons).values(row)
+    await syncLessonSessions(result.insertId, data.sessions)
+    return { success: true, id: result.insertId }
   })
 
 export const updateLesson = createServerFn({ method: 'POST' })
@@ -194,10 +248,15 @@ export const updateLesson = createServerFn({ method: 'POST' })
   .handler(async ({ data }) => {
     const { index, ...rest } = data
     await requireInstructorOrPrivilege(index, 'db', 'rtgs')
-    const mismatch = quarterMismatchError(rest.calendarDate, rest.expire, await fetchQuarterDates())
+    const mismatch = quarterMismatchError(
+      lastSessionDate(rest.sessions),
+      rest.expire,
+      await fetchQuarterDates(),
+    )
     if (mismatch) throw new Error(mismatch)
     const row = fromLessonInsert(rest)
     await db.update(lessons).set(row).where(eq(lessons.index, index))
+    await syncLessonSessions(index, rest.sessions)
     return { success: true, index }
   })
 
@@ -206,6 +265,7 @@ export const deleteLesson = createServerFn({ method: 'POST' })
   .handler(async ({ data: { index } }) => {
     await requirePrivilege('db', 'rtgs')
     await db.delete(signups).where(eq(signups.class, index))
+    await db.delete(lessonSessions).where(eq(lessonSessions.lessonId, index))
     await db.delete(lessons).where(eq(lessons.index, index))
     return { success: true }
   })
@@ -269,9 +329,7 @@ export const removeStudentFromLesson = createServerFn({ method: 'POST' })
         const lessonEmailInfo: LessonEmailInfo = {
           type: lesson.type,
           subtype: lesson.subtype,
-          day: lesson.day,
-          time: lesson.time,
-          dates: lesson.dates,
+          sessions: lesson.sessions,
           instructor1Name: lesson.instructor1Name,
           instructor1Email: instructorEmailMap.get(lesson.instructor1) ?? '',
           instructor2Name: lesson.instructor2Name,
@@ -321,9 +379,12 @@ export const getMyLessonsTaught = createServerFn({ method: 'GET' }).handler(asyn
         gte(lessons.expire, currentQuarter),
       ),
     )
-    .orderBy(asc(lessons.calendarDate), asc(lessons.time))
+    .orderBy(asc(lessons.calendarDate))
 
-  return raw.map(toRichLesson)
+  const sessionsByLesson = await fetchSessionsByLesson(raw.map((r) => r.index))
+  return raw
+    .map((row) => toRichLesson(row, sessionsByLesson.get(row.index) ?? []))
+    .sort(byDateThenStart)
 })
 
 export const getMySignedUpLessons = createServerFn({ method: 'GET' }).handler(async () => {
@@ -350,18 +411,22 @@ export const getMySignedUpLessons = createServerFn({ method: 'GET' }).handler(as
     signupsByLesson.set(s.class, arr)
   }
 
+  const sessionsByLesson = await fetchSessionsByLesson(lessonIds)
+
   // Map to SignedUpLesson with enrollment status
-  return mySignups.map((row): SignedUpLesson => {
-    const lesson = toRichLesson(row)
-    const indices = signupsByLesson.get(row.index) ?? []
-    const position = indices.indexOf(row.signupIndex)
-    return {
-      ...lesson,
-      status: enrollmentStatus(position, lesson.size),
-      instructor1Email: row.instructor1Email ?? '',
-      instructor2Email: row.instructor2Email ?? '',
-    }
-  })
+  return mySignups
+    .map((row): SignedUpLesson => {
+      const lesson = toRichLesson(row, sessionsByLesson.get(row.index) ?? [])
+      const indices = signupsByLesson.get(row.index) ?? []
+      const position = indices.indexOf(row.signupIndex)
+      return {
+        ...lesson,
+        status: enrollmentStatus(position, lesson.size),
+        instructor1Email: row.instructor1Email ?? '',
+        instructor2Email: row.instructor2Email ?? '',
+      }
+    })
+    .sort(byDateThenStart)
 })
 
 export const getLessonForSignup = createServerFn({ method: 'GET' })
@@ -372,7 +437,7 @@ export const getLessonForSignup = createServerFn({ method: 'GET' })
     const [lessonRow] = await baseLessonQuery().where(eq(lessons.index, id))
     if (!lessonRow) return null
 
-    const lesson = toRichLesson(lessonRow)
+    const lesson = toRichLesson(lessonRow, await fetchLessonSessions(id))
 
     if (!lesson.display) return null
 
@@ -421,7 +486,7 @@ export const enrollInLesson = createServerFn({ method: 'POST' })
       // Fetch lesson (rich query for email template)
       const [lessonRow] = await baseLessonQuery().where(eq(lessons.index, lessonIndex))
       if (!lessonRow) throw new Error('Lesson not found')
-      const lesson = toRichLesson(lessonRow)
+      const lesson = toRichLesson(lessonRow, await fetchLessonSessions(lessonIndex))
 
       // Membership must cover the lesson's own quarter, not just the current one
       const [member] = await db
@@ -488,9 +553,7 @@ export const enrollInLesson = createServerFn({ method: 'POST' })
         const lessonEmailInfo: LessonEmailInfo = {
           type: lesson.type,
           subtype: lesson.subtype,
-          day: lesson.day,
-          time: lesson.time,
-          dates: lesson.dates,
+          sessions: lesson.sessions,
           instructor1Name: lesson.instructor1Name,
           instructor1Email: instructorEmailMap.get(lesson.instructor1) ?? '',
           instructor2Name: lesson.instructor2Name,
