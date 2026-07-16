@@ -24,6 +24,12 @@ export function isLessonUpcoming(calendarDate: string): boolean {
   return calendarDate >= todayPacific
 }
 
+export function pacificDatePlusDays(days: number): string {
+  const d = new Date(`${getTodayPacificDateString()}T00:00:00Z`)
+  d.setUTCDate(d.getUTCDate() + days)
+  return d.toISOString().slice(0, 10)
+}
+
 // Whole days from today (Pacific) until the given YYYY-MM-DD date. Negative if the date is past.
 export function daysUntil(calendarDate: string): number {
   const ms =

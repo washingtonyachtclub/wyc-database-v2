@@ -31,6 +31,7 @@ import { Route as LessonListRouteImport } from './routes/lesson-list'
 import { Route as HonoraryRouteImport } from './routes/honorary'
 import { Route as ForgotPasswordRouteImport } from './routes/forgot-password'
 import { Route as ForbiddenRouteImport } from './routes/forbidden'
+import { Route as DoorCodesRouteImport } from './routes/door-codes'
 import { Route as DbDotcgiRouteImport } from './routes/db[.]cgi'
 import { Route as ClassTypesRouteImport } from './routes/class-types'
 import { Route as ChiefsRouteImport } from './routes/chiefs'
@@ -42,6 +43,7 @@ import { Route as SignupLessonIndexRouteImport } from './routes/signup.$lessonIn
 import { Route as RatingsRatingIndexRouteImport } from './routes/ratings_.$ratingIndex'
 import { Route as MembersWycNumberRouteImport } from './routes/members_.$wycNumber'
 import { Route as LessonsLessonIndexRouteImport } from './routes/lessons_.$lessonIndex'
+import { Route as ApiCronLessonRemindersRouteImport } from './routes/api.cron.lesson-reminders'
 
 const TestsRoute = TestsRouteImport.update({
   id: '/tests',
@@ -153,6 +155,11 @@ const ForbiddenRoute = ForbiddenRouteImport.update({
   path: '/forbidden',
   getParentRoute: () => rootRouteImport,
 } as any)
+const DoorCodesRoute = DoorCodesRouteImport.update({
+  id: '/door-codes',
+  path: '/door-codes',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const DbDotcgiRoute = DbDotcgiRouteImport.update({
   id: '/db.cgi',
   path: '/db.cgi',
@@ -208,6 +215,11 @@ const LessonsLessonIndexRoute = LessonsLessonIndexRouteImport.update({
   path: '/lessons/$lessonIndex',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiCronLessonRemindersRoute = ApiCronLessonRemindersRouteImport.update({
+  id: '/api/cron/lesson-reminders',
+  path: '/api/cron/lesson-reminders',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -217,6 +229,7 @@ export interface FileRoutesByFullPath {
   '/chiefs': typeof ChiefsRoute
   '/class-types': typeof ClassTypesRoute
   '/db.cgi': typeof DbDotcgiRoute
+  '/door-codes': typeof DoorCodesRoute
   '/forbidden': typeof ForbiddenRoute
   '/forgot-password': typeof ForgotPasswordRoute
   '/honorary': typeof HonoraryRoute
@@ -243,6 +256,7 @@ export interface FileRoutesByFullPath {
   '/members/$wycNumber': typeof MembersWycNumberRoute
   '/ratings/$ratingIndex': typeof RatingsRatingIndexRoute
   '/signup/$lessonIndex': typeof SignupLessonIndexRoute
+  '/api/cron/lesson-reminders': typeof ApiCronLessonRemindersRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -252,6 +266,7 @@ export interface FileRoutesByTo {
   '/chiefs': typeof ChiefsRoute
   '/class-types': typeof ClassTypesRoute
   '/db.cgi': typeof DbDotcgiRoute
+  '/door-codes': typeof DoorCodesRoute
   '/forbidden': typeof ForbiddenRoute
   '/forgot-password': typeof ForgotPasswordRoute
   '/honorary': typeof HonoraryRoute
@@ -278,6 +293,7 @@ export interface FileRoutesByTo {
   '/members/$wycNumber': typeof MembersWycNumberRoute
   '/ratings/$ratingIndex': typeof RatingsRatingIndexRoute
   '/signup/$lessonIndex': typeof SignupLessonIndexRoute
+  '/api/cron/lesson-reminders': typeof ApiCronLessonRemindersRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -288,6 +304,7 @@ export interface FileRoutesById {
   '/chiefs': typeof ChiefsRoute
   '/class-types': typeof ClassTypesRoute
   '/db.cgi': typeof DbDotcgiRoute
+  '/door-codes': typeof DoorCodesRoute
   '/forbidden': typeof ForbiddenRoute
   '/forgot-password': typeof ForgotPasswordRoute
   '/honorary': typeof HonoraryRoute
@@ -314,6 +331,7 @@ export interface FileRoutesById {
   '/members_/$wycNumber': typeof MembersWycNumberRoute
   '/ratings_/$ratingIndex': typeof RatingsRatingIndexRoute
   '/signup/$lessonIndex': typeof SignupLessonIndexRoute
+  '/api/cron/lesson-reminders': typeof ApiCronLessonRemindersRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -325,6 +343,7 @@ export interface FileRouteTypes {
     | '/chiefs'
     | '/class-types'
     | '/db.cgi'
+    | '/door-codes'
     | '/forbidden'
     | '/forgot-password'
     | '/honorary'
@@ -351,6 +370,7 @@ export interface FileRouteTypes {
     | '/members/$wycNumber'
     | '/ratings/$ratingIndex'
     | '/signup/$lessonIndex'
+    | '/api/cron/lesson-reminders'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -360,6 +380,7 @@ export interface FileRouteTypes {
     | '/chiefs'
     | '/class-types'
     | '/db.cgi'
+    | '/door-codes'
     | '/forbidden'
     | '/forgot-password'
     | '/honorary'
@@ -386,6 +407,7 @@ export interface FileRouteTypes {
     | '/members/$wycNumber'
     | '/ratings/$ratingIndex'
     | '/signup/$lessonIndex'
+    | '/api/cron/lesson-reminders'
   id:
     | '__root__'
     | '/'
@@ -395,6 +417,7 @@ export interface FileRouteTypes {
     | '/chiefs'
     | '/class-types'
     | '/db.cgi'
+    | '/door-codes'
     | '/forbidden'
     | '/forgot-password'
     | '/honorary'
@@ -421,6 +444,7 @@ export interface FileRouteTypes {
     | '/members_/$wycNumber'
     | '/ratings_/$ratingIndex'
     | '/signup/$lessonIndex'
+    | '/api/cron/lesson-reminders'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -431,6 +455,7 @@ export interface RootRouteChildren {
   ChiefsRoute: typeof ChiefsRoute
   ClassTypesRoute: typeof ClassTypesRoute
   DbDotcgiRoute: typeof DbDotcgiRoute
+  DoorCodesRoute: typeof DoorCodesRoute
   ForbiddenRoute: typeof ForbiddenRoute
   ForgotPasswordRoute: typeof ForgotPasswordRoute
   HonoraryRoute: typeof HonoraryRoute
@@ -457,6 +482,7 @@ export interface RootRouteChildren {
   MembersWycNumberRoute: typeof MembersWycNumberRoute
   RatingsRatingIndexRoute: typeof RatingsRatingIndexRoute
   SignupLessonIndexRoute: typeof SignupLessonIndexRoute
+  ApiCronLessonRemindersRoute: typeof ApiCronLessonRemindersRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -615,6 +641,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ForbiddenRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/door-codes': {
+      id: '/door-codes'
+      path: '/door-codes'
+      fullPath: '/door-codes'
+      preLoaderRoute: typeof DoorCodesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/db.cgi': {
       id: '/db.cgi'
       path: '/db.cgi'
@@ -692,6 +725,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof LessonsLessonIndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/cron/lesson-reminders': {
+      id: '/api/cron/lesson-reminders'
+      path: '/api/cron/lesson-reminders'
+      fullPath: '/api/cron/lesson-reminders'
+      preLoaderRoute: typeof ApiCronLessonRemindersRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
@@ -703,6 +743,7 @@ const rootRouteChildren: RootRouteChildren = {
   ChiefsRoute: ChiefsRoute,
   ClassTypesRoute: ClassTypesRoute,
   DbDotcgiRoute: DbDotcgiRoute,
+  DoorCodesRoute: DoorCodesRoute,
   ForbiddenRoute: ForbiddenRoute,
   ForgotPasswordRoute: ForgotPasswordRoute,
   HonoraryRoute: HonoraryRoute,
@@ -729,6 +770,7 @@ const rootRouteChildren: RootRouteChildren = {
   MembersWycNumberRoute: MembersWycNumberRoute,
   RatingsRatingIndexRoute: RatingsRatingIndexRoute,
   SignupLessonIndexRoute: SignupLessonIndexRoute,
+  ApiCronLessonRemindersRoute: ApiCronLessonRemindersRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

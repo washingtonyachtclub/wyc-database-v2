@@ -95,6 +95,9 @@ export function SidebarNav({ onNavigate }: { onNavigate?: () => void }) {
           >
             Renew Membership
           </Link>
+          <Link to="/door-codes" className={linkClass(location.pathname === '/door-codes')}>
+            Door Codes
+          </Link>
           <Link to="/set-password" className={linkClass(location.pathname === '/set-password')}>
             Set Password
           </Link>

@@ -8,6 +8,7 @@ import { quarterMismatchError } from '@/domains/lessons/quarter-rules'
 import {
   baseLessonQuery,
   baseSignedUpWithDetailsQuery,
+  fetchLessonEmailInfo,
   fetchLessonSessions,
   fetchSessionsByLesson,
   lessonSortColumns,
@@ -32,7 +33,6 @@ import {
   requirePrivilege,
 } from '@/lib/auth/auth-middleware'
 import { sendEmail } from '@/lib/email'
-import type { LessonEmailInfo } from '@/lib/email-templates'
 import { lessonEnrolledEmail, lessonWaitlistedEmail } from '@/lib/email-templates'
 import { createServerFn } from '@tanstack/react-start'
 import { and, asc, count, eq, gte, inArray, or } from 'drizzle-orm'
@@ -311,32 +311,8 @@ export const removeStudentFromLesson = createServerFn({ method: 'POST' })
     // Send promotion email (fire-and-forget)
     if (promotedStudent) {
       try {
-        const instructorIds = [lesson.instructor1, lesson.instructor2].filter(
-          (id): id is number => id != null && id !== 0,
-        )
-        const instructorEmails =
-          instructorIds.length > 0
-            ? await db
-                .select({ wycNumber: wycDatabase.wycNumber, email: wycDatabase.email })
-                .from(wycDatabase)
-                .where(inArray(wycDatabase.wycNumber, instructorIds))
-            : []
-        const instructorEmailMap = new Map(
-          instructorEmails.map((i) => [i.wycNumber, i.email ?? '']),
-        )
-
         const studentName = `${promotedStudent.first} ${promotedStudent.last}`.trim() || 'Member'
-        const lessonEmailInfo: LessonEmailInfo = {
-          type: lesson.type,
-          subtype: lesson.subtype,
-          sessions: lesson.sessions,
-          instructor1Name: lesson.instructor1Name,
-          instructor1Email: instructorEmailMap.get(lesson.instructor1) ?? '',
-          instructor2Name: lesson.instructor2Name,
-          instructor2Email: lesson.instructor2
-            ? (instructorEmailMap.get(lesson.instructor2) ?? '')
-            : '',
-        }
+        const lessonEmailInfo = await fetchLessonEmailInfo(lesson)
 
         await sendEmail({
           to: promotedStudent.email,
@@ -535,32 +511,8 @@ export const enrollInLesson = createServerFn({ method: 'POST' })
 
       // Send confirmation email (fire-and-forget — don't fail signup on email error)
       try {
-        const instructorIds = [lesson.instructor1, lesson.instructor2].filter(
-          (id): id is number => id != null && id !== 0,
-        )
-        const instructorEmails =
-          instructorIds.length > 0
-            ? await db
-                .select({ wycNumber: wycDatabase.wycNumber, email: wycDatabase.email })
-                .from(wycDatabase)
-                .where(inArray(wycDatabase.wycNumber, instructorIds))
-            : []
-        const instructorEmailMap = new Map(
-          instructorEmails.map((i) => [i.wycNumber, i.email ?? '']),
-        )
-
         const studentName = `${member.first ?? ''} ${member.last ?? ''}`.trim() || 'Member'
-        const lessonEmailInfo: LessonEmailInfo = {
-          type: lesson.type,
-          subtype: lesson.subtype,
-          sessions: lesson.sessions,
-          instructor1Name: lesson.instructor1Name,
-          instructor1Email: instructorEmailMap.get(lesson.instructor1) ?? '',
-          instructor2Name: lesson.instructor2Name,
-          instructor2Email: lesson.instructor2
-            ? (instructorEmailMap.get(lesson.instructor2) ?? '')
-            : '',
-        }
+        const lessonEmailInfo = await fetchLessonEmailInfo(lesson)
 
         const emailText =
           status === 'enrolled'

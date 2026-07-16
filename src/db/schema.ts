@@ -473,6 +473,20 @@ export const otpCodes = mysqlTable(
   ],
 )
 
+export const doorCodes = mysqlTable(
+  'door_codes',
+  {
+    index: int('_index').autoincrement().notNull(),
+    // Joins the row to its eligibility rule in door-codes/rules.ts.
+    slug: varchar('slug', { length: 32 }).notNull(),
+    name: varchar('name', { length: 64 }).notNull(),
+    code: varchar('code', { length: 32 }).default('').notNull(),
+    updatedAt: datetime('updated_at', { mode: 'string' }),
+    updatedBy: int('updated_by'),
+  },
+  (table) => [primaryKey({ columns: [table.index] }), unique('uq_door_codes_slug').on(table.slug)],
+)
+
 export const membershipPayments = mysqlTable(
   'membership_payments',
   {

@@ -2,7 +2,29 @@
 
 ## Code comments
 
-Keep comments concise and write them only when the code can't speak for itself (a non-obvious decision, a constraint, a gotcha). Don't narrate what the code already says. Never reference transient artifacts — planning docs, `CLAUDE.md`, chat decisions, "mirrors X" — since those drift; explain the reason inline instead.
+**The default is no comment.** Names, types, and structure carry the meaning; a comment is an admission they failed to. Assume any comment you are about to write is unnecessary until it survives the test below.
+
+Write one only for what a competent reader cannot recover by reading the code itself:
+
+- an external constraint (a vendor API cap, a schema quirk, a legacy column that lies about its name)
+- a decision with a live, plausible alternative, where the next person would otherwise "fix" it back
+- a gotcha that will actually bite someone
+
+Even then: **one line, at the thing it describes.** If it needs a paragraph, it belongs in `documentation/`.
+
+Signposting is the exception and is welcome: in a long procedural function, terse section markers (`// Duplicate check`, `// Insert signup`, `// Group signup indices by lesson`) give a reader the shape of the thing at a glance. Keep them to a few words. This licenses a label on a _step_, not a gloss on every line.
+
+Never write a comment that:
+
+- restates a single statement (`// Chunked sequentially` above a chunking loop)
+- argues that the code is correct, or justifies your approach — that's a PR description, not a file
+- repeats a constraint already stated where it's enforced (don't restate a helper's contract at every call site)
+- explains what a function does when the signature already says it (`/** Fetches instructor emails. */`)
+- reads as a note to a reviewer rather than to the next maintainer
+
+Never reference transient artifacts — planning docs, `CLAUDE.md`, chat decisions, "mirrors X", "replaces Y", "this is new" — since those drift; state the reason inline instead.
+
+Leave existing comments alone unless you're changing the code they describe. This section governs what you write, and is not a licence to strip comments from code you happen to be passing through.
 
 ## Writing documentation (`documentation/`)
 

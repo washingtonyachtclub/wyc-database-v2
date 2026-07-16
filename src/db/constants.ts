@@ -11,6 +11,9 @@ export const RATING_EXPIRY_MONTHS = 6
  */
 export const OFFICER_PAGE_TYPES = [1, 2, 5] as const
 
+/** pos_type._index for club officers (Commodore, Vice Commodore, Rear Commodore, Treasurer). */
+export const OFFICER_POS_TYPE = 1
+
 /**
  * Class type IDs grouped into display categories for the public lesson list
  * and the class type dropdown in lesson create/edit forms.

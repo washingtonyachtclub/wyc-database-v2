@@ -2,8 +2,9 @@ import { and, asc, desc, eq, gte, inArray, like, or, sql } from 'drizzle-orm'
 import { alias, type MySqlColumn, type MySqlSelect } from 'drizzle-orm/mysql-core'
 import db from '@/db/index'
 import type { LessonFilters } from './filter-types'
-import { toLessonSession, type LessonSession } from './schema'
+import { toLessonSession, type LessonSession, type RichLesson } from './schema'
 import { classType, lessonSessions, lessons, signups, wycDatabase } from '@/db/schema'
+import type { LessonEmailInfo } from '@/lib/email-templates'
 
 const instructor1Table = alias(wycDatabase, 'i1')
 const instructor2Table = alias(wycDatabase, 'i2')
@@ -64,6 +65,47 @@ export async function fetchSessionsByLesson(
 
 export async function fetchLessonSessions(lessonId: number): Promise<LessonSession[]> {
   return (await fetchSessionsByLesson([lessonId])).get(lessonId) ?? []
+}
+
+type InstructorRefs = { instructor1: number | null; instructor2: number | null }
+
+function instructorIdsOf(lesson: InstructorRefs): number[] {
+  return [lesson.instructor1, lesson.instructor2].filter(
+    (id): id is number => id != null && id !== 0,
+  )
+}
+
+export async function fetchInstructorEmails(ids: number[]): Promise<Map<number, string>> {
+  if (ids.length === 0) return new Map()
+  const rows = await db
+    .select({ wycNumber: wycDatabase.wycNumber, email: wycDatabase.email })
+    .from(wycDatabase)
+    .where(inArray(wycDatabase.wycNumber, ids))
+  return new Map(rows.map((r) => [r.wycNumber, r.email ?? '']))
+}
+
+export function toLessonEmailInfo(
+  lesson: RichLesson,
+  instructorEmails: Map<number, string>,
+): LessonEmailInfo {
+  return {
+    type: lesson.type,
+    subtype: lesson.subtype,
+    sessions: lesson.sessions,
+    instructor1Name: lesson.instructor1Name,
+    instructor1Email: instructorEmails.get(lesson.instructor1) ?? '',
+    instructor2Name: lesson.instructor2Name,
+    instructor2Email: lesson.instructor2 ? (instructorEmails.get(lesson.instructor2) ?? '') : '',
+  }
+}
+
+/** Batch the two steps yourself when building info for more than one lesson. */
+export async function fetchLessonEmailInfo(lesson: RichLesson): Promise<LessonEmailInfo> {
+  return toLessonEmailInfo(lesson, await fetchInstructorEmails(instructorIdsOf(lesson)))
+}
+
+export function allInstructorIds(lessons: InstructorRefs[]) {
+  return [...new Set(lessons.flatMap(instructorIdsOf))]
 }
 
 export function withLessonFilters<T extends MySqlSelect>(

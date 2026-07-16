@@ -150,6 +150,8 @@ function formatLessonInfo(lesson: LessonEmailInfo): string {
   return lines.join('\n')
 }
 
+const WHAT_TO_EXPECT = `Your instructor should contact you before your first class to tell you where to go and what to bring. In general, dinghy, catamaran, and keelboat classes meet at the Waterfront Activities Center near the canoe rentals, and windsurfing classes meet at Sail Sand Point. Be prepared to get wet — wear non-cotton clothing and bring a change of clothes.`
+
 // TODO: Subject lines should live alongside templates, not in server functions
 export function lessonEnrolledEmail(
   studentName: string,
@@ -168,7 +170,27 @@ ${formatLessonInfo(lesson)}
 
 If you need to drop this class, you can unenroll at database.washingtonyachtclub.org.
 
-Your instructor should contact you before your first class to tell you where to go and what to bring. In general, dinghy, catamaran, and keelboat classes meet at the Waterfront Activities Center near the canoe rentals, and windsurfing classes meet at Sail Sand Point. Be prepared to get wet — wear non-cotton clothing and bring a change of clothes.`
+${WHAT_TO_EXPECT}`
+}
+
+export const lessonReminderSubject = 'WYC - Your upcoming class'
+
+export function lessonReminderEmail(
+  studentName: string,
+  lesson: LessonEmailInfo,
+  daysAhead: number,
+): string {
+  const when = daysAhead === 0 ? 'today' : daysAhead === 1 ? 'tomorrow' : `in ${daysAhead} days`
+
+  return `Hello ${studentName},
+
+This is a reminder that your WYC class starts ${when}:
+
+${formatLessonInfo(lesson)}
+
+If you can no longer make it, please unenroll at database.washingtonyachtclub.org as soon as you can. Classes fill up, and dropping frees your spot for the next person on the waitlist.
+
+${WHAT_TO_EXPECT}`
 }
 
 export function lessonWaitlistedEmail(studentName: string, lesson: LessonEmailInfo): string {
