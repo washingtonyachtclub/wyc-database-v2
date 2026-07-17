@@ -28,6 +28,7 @@ export function AddQuarterModal({ onClose, onSuccess }: AddQuarterModalProps) {
   return (
     <Modal onClose={onClose} title="New Quarter">
       <form
+        noValidate
         onSubmit={(e) => {
           e.preventDefault()
           form.handleSubmit()

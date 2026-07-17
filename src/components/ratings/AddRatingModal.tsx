@@ -64,6 +64,7 @@ export function AddRatingModal({ onClose, onSuccess, currentUserWycNumber }: Add
   return (
     <Modal onClose={onClose} title="New Rating">
       <form
+        noValidate
         onSubmit={(e) => {
           e.preventDefault()
           form.handleSubmit()

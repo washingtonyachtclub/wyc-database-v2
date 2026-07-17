@@ -69,6 +69,7 @@ export function LessonFormModal({ onClose, currentQuarter, onSuccess }: LessonFo
   return (
     <Modal onClose={onClose} title="New Lesson">
       <form
+        noValidate
         onSubmit={(e) => {
           e.preventDefault()
           form.handleSubmit()
