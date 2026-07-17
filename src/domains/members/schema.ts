@@ -69,6 +69,9 @@ export type MemberRating = {
   date: string
   memberName: string
   examinerName: string
+  enteredBy: number
+  enteredByName: string
+  enteredAt: string
   comments: string
 }
 
@@ -125,6 +128,9 @@ export function toMemberRating(row: RatingQueryRow): MemberRating {
     date: str(row.date),
     memberName: fullName(row.memberFirst, row.memberLast),
     examinerName: fullName(row.examinerFirst, row.examinerLast),
+    enteredBy: num(row.enteredBy),
+    enteredByName: fullName(row.enteredByFirst, row.enteredByLast),
+    enteredAt: str(row.enteredAt),
     comments: str(row.comments),
   }
 }

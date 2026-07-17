@@ -440,6 +440,8 @@ export const wycRatings = mysqlTable(
     // you can use { mode: 'date' }, if you want to have Date as type for this column
     date: date({ mode: 'string' }),
     examiner: int(),
+    enteredBy: int('entered_by'),
+    enteredAt: timestamp('entered_at', { mode: 'string' }).defaultNow(),
     comments: varchar({ length: 255 }),
   },
   (table) => [primaryKey({ columns: [table.index] })],

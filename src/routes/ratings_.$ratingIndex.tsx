@@ -82,6 +82,23 @@ function RatingDetailPage() {
             </Link>
           </dd>
         </div>
+        <div>
+          <dt className="text-sm font-medium text-muted-foreground">Entered by</dt>
+          <dd className="text-sm">
+            {rating.enteredBy ? (
+              <Link
+                to="/members/$wycNumber"
+                params={{ wycNumber: String(rating.enteredBy) }}
+                className="underline"
+              >
+                {rating.enteredByName}
+              </Link>
+            ) : (
+              '—'
+            )}
+          </dd>
+        </div>
+        <InfoField label="Entered on" value={rating.enteredAt.slice(0, 16)} />
       </div>
 
       {(() => {

@@ -7,6 +7,7 @@ import { ratings, wycDatabase, wycRatings } from '@/db/schema'
 
 const memberTable = alias(wycDatabase, 'member')
 const examinerTable = alias(wycDatabase, 'examiner')
+const enteredByTable = alias(wycDatabase, 'entered_by')
 
 export const ratingSelectFields = {
   index: wycRatings.index,
@@ -21,6 +22,10 @@ export const ratingSelectFields = {
   memberLast: memberTable.last,
   examinerFirst: examinerTable.first,
   examinerLast: examinerTable.last,
+  enteredBy: wycRatings.enteredBy,
+  enteredByFirst: enteredByTable.first,
+  enteredByLast: enteredByTable.last,
+  enteredAt: wycRatings.enteredAt,
   comments: wycRatings.comments,
 }
 
@@ -33,6 +38,7 @@ export function baseMemberRatingsQuery(wycNumber: number) {
     .leftJoin(ratings, eq(ratings.index, wycRatings.rating))
     .leftJoin(memberTable, eq(wycRatings.member, memberTable.wycNumber))
     .leftJoin(examinerTable, eq(wycRatings.examiner, examinerTable.wycNumber))
+    .leftJoin(enteredByTable, eq(wycRatings.enteredBy, enteredByTable.wycNumber))
     .where(eq(wycRatings.member, wycNumber))
     .orderBy(desc(wycRatings.date))
 }
@@ -44,6 +50,7 @@ export function baseAllRatingsQuery() {
     .leftJoin(ratings, eq(ratings.index, wycRatings.rating))
     .leftJoin(memberTable, eq(wycRatings.member, memberTable.wycNumber))
     .leftJoin(examinerTable, eq(wycRatings.examiner, examinerTable.wycNumber))
+    .leftJoin(enteredByTable, eq(wycRatings.enteredBy, enteredByTable.wycNumber))
 }
 
 export function baseAllRatingsCountQuery() {
@@ -53,6 +60,7 @@ export function baseAllRatingsCountQuery() {
     .leftJoin(ratings, eq(ratings.index, wycRatings.rating))
     .leftJoin(memberTable, eq(wycRatings.member, memberTable.wycNumber))
     .leftJoin(examinerTable, eq(wycRatings.examiner, examinerTable.wycNumber))
+    .leftJoin(enteredByTable, eq(wycRatings.enteredBy, enteredByTable.wycNumber))
 }
 
 export const ratingSortColumns: Record<string, MySqlColumn> = {
@@ -103,6 +111,7 @@ export function baseRatingsGivenQuery(wycNumber: number, since?: string) {
     .leftJoin(ratings, eq(ratings.index, wycRatings.rating))
     .leftJoin(memberTable, eq(wycRatings.member, memberTable.wycNumber))
     .leftJoin(examinerTable, eq(wycRatings.examiner, examinerTable.wycNumber))
+    .leftJoin(enteredByTable, eq(wycRatings.enteredBy, enteredByTable.wycNumber))
     .where(and(...conditions))
     .orderBy(desc(wycRatings.date))
 }

@@ -93,9 +93,9 @@ export const updateRatingComments = createServerFn({ method: 'POST' })
 export const createRating = createServerFn({ method: 'POST' })
   .inputValidator((input: RatingInsertData) => input)
   .handler(async ({ data }) => {
-    await requirePrivilege('rtgs')
+    const userId = await requirePrivilege('rtgs')
     try {
-      await db.insert(wycRatings).values(data)
+      await db.insert(wycRatings).values({ ...data, enteredBy: userId })
       return { success: true }
     } catch (error) {
       console.error('Failed to create rating:', error)
