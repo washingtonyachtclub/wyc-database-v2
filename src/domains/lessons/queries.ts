@@ -90,6 +90,7 @@ export function toLessonEmailInfo(
 ): LessonEmailInfo {
   return {
     type: lesson.type,
+    typeId: lesson.classTypeId,
     subtype: lesson.subtype,
     sessions: lesson.sessions,
     instructor1Name: lesson.instructor1Name,

@@ -1,7 +1,6 @@
 import { formatSessions } from '@/domains/lessons/format-sessions'
 import type { LessonSession } from '@/domains/lessons/schema'
 
-// All email templates in one place so we remember to update them together.
 const SIGNATURE_NAME = 'Eshan Arora'
 const SIGNATURE_POSITION = 'Webmaster, WYC'
 
@@ -50,7 +49,7 @@ Your WYC Number is: ${member.wycNumber}
 To get started, go to database.washingtonyachtclub.org and use "Forgot Password" to set your password.
 
 Sign up for lessons at: washingtonyachtclub.org/lessons-events/sign-up-for-lessons
-Sign out a boat at: checkout.washingtonyachtclub.org
+Check out a boat at: checkout.washingtonyachtclub.org
 
 Want to start learning immediately? Check our guides: washingtonyachtclub.org/guides
 
@@ -126,6 +125,7 @@ You can reset your password on the database if needed.`
 
 export type LessonEmailInfo = {
   type: string
+  typeId: number
   subtype: string
   sessions: LessonSession[]
   instructor1Name: string
@@ -150,7 +150,16 @@ function formatLessonInfo(lesson: LessonEmailInfo): string {
   return lines.join('\n')
 }
 
-const WHAT_TO_EXPECT = `Your instructor should contact you before your first class to tell you where to go and what to bring. In general, dinghy, catamaran, and keelboat classes meet at the Waterfront Activities Center near the canoe rentals, and windsurfing classes meet at Sail Sand Point. Be prepared to get wet — wear non-cotton clothing and bring a change of clothes.`
+const PLEASE_UNENROLL = `If you can no longer make it, please unenroll at database.washingtonyachtclub.org/my-lessons as soon as you can. Classes fill up, and dropping frees your spot for the next person on the waitlist.`
+
+// class_type indices: NOV Dinghy Weekday (1), NOV Dinghy Weekend (2), Dinghy Sailing (10)
+const GUIDE_TYPE_IDS = new Set([1, 2, 10])
+
+const READ_THE_GUIDE = `If you haven't already, read our sailing guide at washingtonyachtclub.org/guides. It covers the basics of sailing and what to wear and bring.`
+
+function guideLine(lesson: LessonEmailInfo): string {
+  return GUIDE_TYPE_IDS.has(lesson.typeId) ? `\n\n${READ_THE_GUIDE}` : ''
+}
 
 // TODO: Subject lines should live alongside templates, not in server functions
 export function lessonEnrolledEmail(
@@ -168,9 +177,7 @@ ${intro}
 
 ${formatLessonInfo(lesson)}
 
-If you need to drop this class, you can unenroll at database.washingtonyachtclub.org.
-
-${WHAT_TO_EXPECT}`
+${PLEASE_UNENROLL}${guideLine(lesson)}`
 }
 
 export const lessonReminderSubject = 'WYC - Your upcoming class'
@@ -184,13 +191,11 @@ export function lessonReminderEmail(
 
   return `Hello ${studentName},
 
-This is a reminder that your WYC class starts ${when}:
+This is a reminder that your WYC lesson is ${when}:
 
 ${formatLessonInfo(lesson)}
 
-If you can no longer make it, please unenroll at database.washingtonyachtclub.org as soon as you can. Classes fill up, and dropping frees your spot for the next person on the waitlist.
-
-${WHAT_TO_EXPECT}`
+${PLEASE_UNENROLL}${guideLine(lesson)}`
 }
 
 export function lessonWaitlistedEmail(studentName: string, lesson: LessonEmailInfo): string {
@@ -202,5 +207,6 @@ ${formatLessonInfo(lesson)}
 
 If enough students drop the class, you will automatically be enrolled.
 
-If you need to drop this class, you can unenroll at database.washingtonyachtclub.org.`
+You can check your waitlist status or drop the class at database.washingtonyachtclub.org/my-lessons.
+`
 }
