@@ -159,8 +159,8 @@ function formatLessonInfo(lesson: LessonEmailInfo): string {
 
 const PLEASE_UNENROLL = `If you can no longer make it, please unenroll at database.washingtonyachtclub.org/my-lessons as soon as you can. Classes fill up, and dropping frees your spot for the next person on the waitlist.`
 
-// class_type indices: NOV Dinghy Weekday (1), NOV Dinghy Weekend (2), Dinghy Sailing (10)
-const GUIDE_TYPE_IDS = new Set([1, 2, 10])
+// class_type indices: NOV Dinghy Weekday (1), NOV Dinghy Weekend (2), Catamaran (3), Dinghy Sailing (10)
+const GUIDE_TYPE_IDS = new Set([1, 2, 3, 10])
 
 const READ_THE_GUIDE = `If you haven't already, read our sailing guide at washingtonyachtclub.org/guides. It covers the basics of sailing and what to wear and bring.`
 
