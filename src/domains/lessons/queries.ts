@@ -27,6 +27,8 @@ export const lessonTableSelectFields = {
   instructor2First: instructor2Table.first,
   instructor2Last: instructor2Table.last,
   comments: lessons.comments,
+  location: lessons.location,
+  locationUrl: lessons.locationUrl,
   size: lessons.size,
   expire: lessons.expire,
   display: lessons.display,
@@ -97,6 +99,8 @@ export function toLessonEmailInfo(
     instructor1Email: instructorEmails.get(lesson.instructor1) ?? '',
     instructor2Name: lesson.instructor2Name,
     instructor2Email: lesson.instructor2 ? (instructorEmails.get(lesson.instructor2) ?? '') : '',
+    location: lesson.location,
+    locationUrl: lesson.locationUrl,
   }
 }
 

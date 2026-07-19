@@ -1,3 +1,4 @@
+import { LessonLocationField, typeLocationDefault } from '@/components/lessons/LessonLocationField'
 import { LessonSessionsField } from '@/components/lessons/LessonSessionsField'
 import { CopyBox } from '@/components/ui/CopyBox'
 import { ErrorAlert } from '@/components/ui/ErrorAlert'
@@ -51,6 +52,8 @@ function lessonToDefaults(lesson: RichLesson): LessonInsert {
     instructor1: lesson.instructor1,
     instructor2: lesson.instructor2,
     comments: lesson.comments,
+    location: lesson.location,
+    locationUrl: lesson.locationUrl,
     size: lesson.size,
     expire: lesson.expire,
     display: lesson.display,
@@ -310,6 +313,15 @@ function LessonEditForm({ lesson }: { lesson: RichLesson }) {
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <form.AppField
           name="classTypeId"
+          listeners={{
+            onChange: ({ value }) => {
+              const next = typeLocationDefault(value ?? 0, form.getFieldValue('location'))
+              if (next) {
+                form.setFieldValue('location', next.name)
+                form.setFieldValue('locationUrl', next.url)
+              }
+            },
+          }}
           children={(field) => (
             <field.GroupedSelectField
               label="Type"
@@ -355,8 +367,16 @@ function LessonEditForm({ lesson }: { lesson: RichLesson }) {
 
         <form.AppField
           name="comments"
-          children={(field) => <field.TextAreaField label="Comments" className="md:col-span-2" />}
+          children={(field) => (
+            <field.TextAreaField
+              label="Comments"
+              className="md:col-span-2"
+              tooltip="Supports **bold**, *italics*, and ~~strikethrough~~"
+            />
+          )}
         />
+
+        <LessonLocationField form={form} />
 
         <div className="md:col-span-2 grid grid-cols-1 md:grid-cols-3 gap-4 items-end">
           <form.AppField

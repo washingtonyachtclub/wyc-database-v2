@@ -132,6 +132,8 @@ export type LessonEmailInfo = {
   instructor1Email: string
   instructor2Name: string
   instructor2Email: string
+  location: string
+  locationUrl: string
 }
 
 function formatLessonInfo(lesson: LessonEmailInfo): string {
@@ -139,6 +141,11 @@ function formatLessonInfo(lesson: LessonEmailInfo): string {
   const lines = [`Class: ${lesson.subtype}`]
   if (sessionLines.length === 1) lines.push(`When: ${sessionLines[0]}`)
   else if (sessionLines.length > 1) lines.push('When:', ...sessionLines.map((l) => `  ${l}`))
+  if (lesson.location) {
+    lines.push(
+      `Location: ${lesson.location}${lesson.locationUrl ? ` (${lesson.locationUrl})` : ''}`,
+    )
+  }
   lines.push(
     `Instructor: ${lesson.instructor1Name}${lesson.instructor1Email ? ` (${lesson.instructor1Email})` : ''}`,
   )

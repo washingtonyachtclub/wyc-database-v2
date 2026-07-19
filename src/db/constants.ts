@@ -54,6 +54,14 @@ export const LESSON_CATEGORIES = [
   },
 ] as const
 
+export const LESSON_LOCATION_PRESETS = [
+  { name: 'WAC', url: 'https://maps.google.com/?cid=3343180312568491478' },
+  { name: 'SSP', url: 'https://maps.google.com/?cid=1513604519883250295' },
+] as const
+
+/** class_type index for Windsurfing, which defaults to SSP rather than the WAC. */
+export const WINDSURFING_TYPE_ID = 12
+
 /**
  * Active holders of these positions may approve/deny dues-exemption requests.
  * pos `_index` values: 1000=Commodore, 1010=Vice Commodore, 2260=Webmaster.

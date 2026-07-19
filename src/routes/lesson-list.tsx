@@ -1,4 +1,5 @@
 import { createFileRoute } from '@tanstack/react-router'
+import { MapPin } from 'lucide-react'
 import { LESSON_CATEGORIES } from '../db/constants'
 import { formatSessions } from '@/domains/lessons/format-sessions'
 import type { RichLesson } from '@/domains/lessons/schema'
@@ -117,9 +118,9 @@ function LessonCard({ entry, muted }: { entry: PublicLesson; muted?: boolean }) 
           ))}
         </div>
 
-        {/* Instructor + Size: side by side on mobile, separate columns on desktop */}
+        {/* Instructor + Location + Size: side by side on mobile, separate columns on desktop */}
         <div className="flex flex-row md:w-[40%] md:flex-row">
-          <div className="w-1/2 px-3 pt-1 pb-1 md:w-1/2 md:py-2.5">
+          <div className="flex-1 px-3 pt-1 pb-1 md:py-2.5">
             <div className="text-[13px] leading-relaxed text-[#444]">
               {hasTwo ? 'Instructors:' : 'Instructor:'}
               <br />
@@ -133,7 +134,27 @@ function LessonCard({ entry, muted }: { entry: PublicLesson; muted?: boolean }) 
             </div>
           </div>
 
-          <div className="w-1/2 px-3 pt-1 pb-1 md:w-1/2 md:py-2.5">
+          {lesson.location && (
+            <div className="flex-1 px-3 pt-1 pb-1 md:py-2.5">
+              <div className="flex items-start gap-1 text-[13px] leading-relaxed text-[#444]">
+                <MapPin className="mt-[3px] h-3.5 w-3.5 shrink-0" />
+                {lesson.locationUrl ? (
+                  <a
+                    href={lesson.locationUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="font-bold text-[#00859b] underline"
+                  >
+                    {lesson.location}
+                  </a>
+                ) : (
+                  <span>{lesson.location}</span>
+                )}
+              </div>
+            </div>
+          )}
+
+          <div className="flex-1 px-3 pt-1 pb-1 md:py-2.5">
             <div className="text-[13px] leading-relaxed text-[#444]">
               {lesson.size > 0 && (
                 <>

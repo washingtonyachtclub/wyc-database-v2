@@ -32,13 +32,13 @@ export const getLessonByIdQueryOptions = (id: number) =>
     },
   })
 
-export function useCreateLessonMutation(opts: { onSuccess: () => void; onClose: () => void }) {
+export function useCreateLessonMutation(opts: { onSuccess?: () => void; onClose: () => void }) {
   const queryClient = useQueryClient()
   return useMutation({
     mutationFn: createLesson,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['lessons'] })
-      opts.onSuccess()
+      opts.onSuccess?.()
       opts.onClose()
     },
   })

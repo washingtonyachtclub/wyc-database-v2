@@ -311,9 +311,6 @@ function LessonsPage() {
         <LessonFormModal
           onClose={() => setIsLessonModalOpen(false)}
           currentQuarter={currentQuarter}
-          onSuccess={() => {
-            alert('Lesson saved successfully!')
-          }}
         />
       )}
     </div>

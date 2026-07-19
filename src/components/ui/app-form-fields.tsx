@@ -66,18 +66,28 @@ export function TextAreaField({
   required,
   rows = 3,
   className,
+  tooltip,
 }: {
   label: string
   required?: boolean
   rows?: number
   className?: string
+  tooltip?: string
 }) {
   const field = useFieldContext<string>()
   return (
     <div className={className}>
-      <Label htmlFor={field.name} className="mb-1">
+      <Label htmlFor={field.name} className="mb-1 flex items-center gap-1">
         {label}
         {required && ' *'}
+        {tooltip && (
+          <Tooltip>
+            <TooltipTrigger type="button" tabIndex={-1}>
+              <CircleHelp className="h-3.5 w-3.5 text-muted-foreground" />
+            </TooltipTrigger>
+            <TooltipContent>{tooltip}</TooltipContent>
+          </Tooltip>
+        )}
       </Label>
       <Textarea
         id={field.name}

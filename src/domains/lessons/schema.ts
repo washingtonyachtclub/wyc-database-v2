@@ -67,6 +67,8 @@ export const lessonInsertSchema = z.object({
   instructor1: z.number(),
   instructor2: z.number().nullable(),
   comments: z.string(),
+  location: z.string(),
+  locationUrl: z.string(),
   size: z.number({ error: 'Size is required' }).int(),
   expire: z.number({ error: 'Expire quarter is required' }),
   display: z.boolean(),
@@ -113,6 +115,8 @@ export type Lesson = {
   instructor1: number // wycNumber (FK)
   instructor2: number | null // wycNumber (FK)
   comments: string
+  location: string
+  locationUrl: string
   size: number
   expire: number // quarter index (FK)
   display: boolean
@@ -131,6 +135,8 @@ export type RichLesson = {
   instructor1Name: string
   instructor2Name: string
   comments: string
+  location: string
+  locationUrl: string
   size: number
   display: boolean
 }
@@ -232,6 +238,8 @@ export function toRichLesson(row: LessonQueryRow, sessions: LessonSession[]): Ri
     instructor1Name: fullName(row.instructor1First, row.instructor1Last) || '<Unknown>',
     instructor2Name: fullName(row.instructor2First, row.instructor2Last),
     comments: str(row.comments),
+    location: str(row.location),
+    locationUrl: str(row.locationUrl),
     size: num(row.size),
     display: row.display !== 0,
   }
@@ -246,6 +254,8 @@ export function fromLessonInsert(data: LessonInsert) {
     instructor1: data.instructor1,
     instructor2: data.instructor2,
     comments: data.comments,
+    location: data.location,
+    locationUrl: data.locationUrl,
     size: data.size,
     expire: data.expire,
     display: data.display ? 1 : 0,

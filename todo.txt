@@ -1,7 +1,10 @@
 # Important
 
-auto google calendar sync lessons
-auto email days before lesson
+- auto google calendar sync lessons (plan)
+- enforce 1 laser sign up per quarter?
+
+- execute password migration plan
+- new checkout page (in branch)
 
 ## backend
 - resolve any drizzle shchema.ts and actual schema mismatch. Make drizzle the source of truth?
@@ -10,7 +13,6 @@ auto email days before lesson
 ## bigger projects
 - automated IMA plus one matching
 - lesson sign up UI: compact view, sort by date (ignoring category) view, calendar view
-- new checkout page (good mobile UX)
 - overall better mobile UX (especially on non-admin pages)
 - linking discord roles with db roles (for auto sync of roles like chiefs, kb novice, etc)
 

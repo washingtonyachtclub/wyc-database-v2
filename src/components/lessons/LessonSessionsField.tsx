@@ -12,6 +12,8 @@ const lessonSessionsDefaults: LessonInsert = {
   instructor1: 0,
   instructor2: null,
   comments: '',
+  location: '',
+  locationUrl: '',
   size: 0,
   expire: 0,
   display: true,

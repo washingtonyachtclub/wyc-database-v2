@@ -1,6 +1,6 @@
 import { formatSessions } from '@/domains/lessons/format-sessions'
 import type { RichLesson } from '@/domains/lessons/schema'
-import { AlertTriangle } from 'lucide-react'
+import { AlertTriangle, MapPin } from 'lucide-react'
 import { isLessonUpcoming } from '../../lib/date-utils'
 import { RichText } from '../ui/RichText'
 
@@ -77,6 +77,24 @@ export function LessonCard({
                 <span className="font-medium">Instructor 2: </span>
                 <span>{lesson.instructor2Name}</span>
               </div>
+            )}
+          </div>
+        )}
+        {lesson.location && (
+          <div className="flex items-center gap-1 text-foreground">
+            <MapPin className="h-3.5 w-3.5 shrink-0" />
+            {lesson.locationUrl ? (
+              <a
+                href={lesson.locationUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="underline"
+                onClick={(e) => e.stopPropagation()}
+              >
+                {lesson.location}
+              </a>
+            ) : (
+              <span>{lesson.location}</span>
             )}
           </div>
         )}

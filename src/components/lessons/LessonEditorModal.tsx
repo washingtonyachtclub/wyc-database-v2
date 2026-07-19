@@ -1,5 +1,6 @@
 import { useQuery } from '@tanstack/react-query'
-import { LESSON_CATEGORIES, TBD_WYC_NUMBER } from '../../db/constants'
+import { LESSON_CATEGORIES, LESSON_LOCATION_PRESETS, TBD_WYC_NUMBER } from '../../db/constants'
+import { LessonLocationField, typeLocationDefault } from './LessonLocationField'
 import { LessonSessionsField } from './LessonSessionsField'
 import { ErrorAlert } from '../ui/ErrorAlert'
 import type { LessonInsert } from '@/domains/lessons/schema'
@@ -13,6 +14,8 @@ import { Button } from '../ui/button'
 import { MemberCombobox } from '../ui/MemberCombobox'
 import { Modal } from '../ui/Modal'
 
+const [WAC] = LESSON_LOCATION_PRESETS
+
 const emptyDefaults = (expireDefault: number): LessonInsert => ({
   classTypeId: 1,
   subtype: '',
@@ -20,6 +23,8 @@ const emptyDefaults = (expireDefault: number): LessonInsert => ({
   instructor1: TBD_WYC_NUMBER,
   instructor2: null,
   comments: '',
+  location: WAC.name,
+  locationUrl: WAC.url,
   size: 0,
   expire: expireDefault,
   display: true,
@@ -28,7 +33,7 @@ const emptyDefaults = (expireDefault: number): LessonInsert => ({
 type LessonFormModalProps = {
   onClose: () => void
   currentQuarter: number
-  onSuccess: () => void
+  onSuccess?: () => void
 }
 
 export function LessonFormModal({ onClose, currentQuarter, onSuccess }: LessonFormModalProps) {
@@ -81,6 +86,15 @@ export function LessonFormModal({ onClose, currentQuarter, onSuccess }: LessonFo
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <form.AppField
             name="classTypeId"
+            listeners={{
+              onChange: ({ value }) => {
+                const next = typeLocationDefault(value ?? 0, form.getFieldValue('location'))
+                if (next) {
+                  form.setFieldValue('location', next.name)
+                  form.setFieldValue('locationUrl', next.url)
+                }
+              },
+            }}
             children={(field) => (
               <field.GroupedSelectField
                 label="Type"
@@ -126,8 +140,16 @@ export function LessonFormModal({ onClose, currentQuarter, onSuccess }: LessonFo
 
           <form.AppField
             name="comments"
-            children={(field) => <field.TextAreaField label="Comments" className="md:col-span-2" />}
+            children={(field) => (
+              <field.TextAreaField
+                label="Comments"
+                className="md:col-span-2"
+                tooltip="Supports **bold**, *italics*, and ~~strikethrough~~"
+              />
+            )}
           />
+
+          <LessonLocationField form={form} />
 
           <form.AppField
             name="size"
