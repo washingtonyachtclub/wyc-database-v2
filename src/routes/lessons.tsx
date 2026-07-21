@@ -1,28 +1,31 @@
 import { ErrorAlert } from '@/components/ui/ErrorAlert'
-import { isDevEnvironment } from '@/lib/env'
-import type { RichLessonWithEnrollment } from '@/domains/lessons/schema'
-import type { LessonFilters } from '@/domains/lessons/filter-types'
-import { useQuery, useSuspenseQuery } from '@tanstack/react-query'
-import { createFileRoute, useNavigate } from '@tanstack/react-router'
-import { getCoreRowModel, getSortedRowModel, useReactTable } from '@tanstack/react-table'
-import { useMemo, useState } from 'react'
-import { z } from 'zod'
-import { columns } from '../components/lessons/columns'
-import { LessonFilterControls } from '../components/lessons/LessonFilterControls'
-import { LessonFormModal } from '../components/lessons/LessonEditorModal'
-import { LessonsByCategory } from '../components/lessons/LessonViews'
-import { PaginationControls } from '../components/members/PaginationControls'
-import { Button } from '../components/ui/button'
-import { Plus } from 'lucide-react'
-import { DataTable } from '../components/ui/DataTable'
-import { isLessonUpcoming } from '../lib/date-utils'
-import { requirePrivilegeForRoute } from '../lib/route-guards'
 import { getClassTypesQueryOptions } from '@/domains/class-types/query-options'
+import type { LessonFilters } from '@/domains/lessons/filter-types'
 import {
   getAllLessonsQueryOptions,
   getQuarterLessonsQueryOptions,
 } from '@/domains/lessons/query-options'
+import type { RichLessonWithEnrollment } from '@/domains/lessons/schema'
+import { resyncLessonCalendar } from '@/domains/lessons/server-fns'
 import { getQuartersQueryOptions } from '@/domains/quarters/query-options'
+import { isDevEnvironment } from '@/lib/env'
+import { cn } from '@/lib/utils'
+import { useQuery, useSuspenseQuery } from '@tanstack/react-query'
+import { createFileRoute, useNavigate } from '@tanstack/react-router'
+import { getCoreRowModel, getSortedRowModel, useReactTable } from '@tanstack/react-table'
+import { Plus, RefreshCw } from 'lucide-react'
+import { useMemo, useState } from 'react'
+import { z } from 'zod'
+import { columns } from '../components/lessons/columns'
+import { LessonFormModal } from '../components/lessons/LessonEditorModal'
+import { LessonFilterControls } from '../components/lessons/LessonFilterControls'
+import { LessonsByCategory } from '../components/lessons/LessonViews'
+import { PaginationControls } from '../components/members/PaginationControls'
+import { Button } from '../components/ui/button'
+import { DataTable } from '../components/ui/DataTable'
+import { isLessonUpcoming } from '../lib/date-utils'
+import { hasPrivilege } from '../lib/permissions'
+import { requirePrivilegeForRoute } from '../lib/route-guards'
 
 const lessonSearchSchema = z.object({
   pageIndex: z.number().catch(0),
@@ -89,6 +92,28 @@ function LessonsPage() {
   const [isLessonModalOpen, setIsLessonModalOpen] = useState(false)
   const [testError, setTestError] = useState<string | null>(null)
   const [testBoom, setTestBoom] = useState(false)
+
+  const { privileges } = Route.useRouteContext()
+  const hasPermissions = hasPrivilege(privileges, ['db'])
+  const [syncing, setSyncing] = useState(false)
+  const [syncMsg, setSyncMsg] = useState<string | null>(null)
+
+  async function handleSyncCalendar() {
+    setSyncing(true)
+    setSyncMsg(null)
+    try {
+      const res = await resyncLessonCalendar({ data: {} })
+      setSyncMsg(
+        res.success
+          ? `Synced ${res.synced} lessons to the calendar.`
+          : 'Calendar sync not configured.',
+      )
+    } catch {
+      setSyncMsg('Calendar sync failed. Try again.')
+    } finally {
+      setSyncing(false)
+    }
+  }
 
   const { data: classTypes = [] } = useQuery(getClassTypesQueryOptions())
   const { data: quarters = [] } = useQuery(getQuartersQueryOptions())
@@ -238,11 +263,18 @@ function LessonsPage() {
         </div>
       )}
 
-      <div className="flex justify-start">
-        <Button onClick={() => setIsLessonModalOpen(true)} className="mb-4">
+      <div className="mb-4 flex items-center gap-3">
+        <Button onClick={() => setIsLessonModalOpen(true)}>
           <Plus className="h-4 w-4" />
           New Lesson
         </Button>
+        {hasPermissions && (
+          <Button variant="outline" onClick={handleSyncCalendar} disabled={syncing}>
+            <RefreshCw className={cn('h-4 w-4', syncing && 'animate-spin')} />
+            {syncing ? 'Syncing…' : 'Sync calendar'}
+          </Button>
+        )}
+        {syncMsg && <span className="text-sm text-muted-foreground">{syncMsg}</span>}
       </div>
 
       {/* Lessons This Quarter */}

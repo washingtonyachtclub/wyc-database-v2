@@ -34,6 +34,7 @@ import {
 } from '@/lib/auth/auth-middleware'
 import { sendEmail } from '@/lib/email'
 import { lessonEnrolledEmail, lessonWaitlistedEmail } from '@/lib/email-templates'
+import { deleteSessionEvent, gcalEnabled, upsertSessionEvent } from '@/lib/gcal'
 import { createServerFn } from '@tanstack/react-start'
 import { and, asc, count, eq, gte, inArray, or } from 'drizzle-orm'
 
@@ -222,7 +223,63 @@ async function syncLessonSessions(lessonId: number, sessions: LessonSessionInput
       await db.insert(lessonSessions).values(values)
     }
   }
+
+  return { removedIds }
 }
+
+async function fetchCurrentQuarter(): Promise<number> {
+  const [row] = await db
+    .select({ quarter: lessonQuarter.quarter })
+    .from(lessonQuarter)
+    .where(eq(lessonQuarter.index, 1))
+    .limit(1)
+  return row.quarter
+}
+
+// Best-effort: a calendar failure must never break a lesson mutation. resyncLessonCalendar repairs.
+async function reconcileCalendar(lessonId: number, removedSessionIds: number[] = []) {
+  if (!gcalEnabled()) return
+  try {
+    for (const id of removedSessionIds) await deleteSessionEvent(id)
+
+    const [lessonRow] = await baseLessonQuery().where(eq(lessons.index, lessonId))
+    if (!lessonRow) return
+    const lesson = toRichLesson(lessonRow, await fetchLessonSessions(lessonId))
+
+    const inScope = lesson.display && lesson.expire >= (await fetchCurrentQuarter())
+    const cal = {
+      title: lesson.subtype || lesson.type || 'WYC Lesson',
+      location: lesson.location,
+    }
+    for (const session of lesson.sessions) {
+      if (inScope) await upsertSessionEvent(cal, session)
+      else await deleteSessionEvent(session.index)
+    }
+  } catch (err) {
+    console.error('Calendar sync failed for lesson', lessonId, err)
+  }
+}
+
+export const resyncLessonCalendar = createServerFn({ method: 'POST' })
+  .inputValidator((input: { lessonId?: number }) => input)
+  .handler(async ({ data }) => {
+    await requirePrivilege('db', 'rtgs')
+    if (!gcalEnabled()) return { success: false, synced: 0 }
+    // Backfill only pushes in-scope lessons. Deleting an out-of-scope lesson's events
+    // is the per-mutation path's job (hide/delete); blind-deleting every past lesson's
+    // never-created events here is thousands of wasted calls that blow the quota.
+    const ids =
+      data.lessonId != null
+        ? [data.lessonId]
+        : (
+            await db
+              .select({ id: lessons.index })
+              .from(lessons)
+              .where(and(eq(lessons.display, 1), gte(lessons.expire, await fetchCurrentQuarter())))
+          ).map((r) => r.id)
+    for (const id of ids) await reconcileCalendar(id)
+    return { success: true, synced: ids.length }
+  })
 
 export const createLesson = createServerFn({ method: 'POST' })
   .inputValidator((data: LessonInsert) => data)
@@ -237,6 +294,7 @@ export const createLesson = createServerFn({ method: 'POST' })
     const row = fromLessonInsert(data)
     const [result] = await db.insert(lessons).values(row)
     await syncLessonSessions(result.insertId, data.sessions)
+    await reconcileCalendar(result.insertId)
     return { success: true, id: result.insertId }
   })
 
@@ -256,7 +314,8 @@ export const updateLesson = createServerFn({ method: 'POST' })
     if (mismatch) throw new Error(mismatch)
     const row = fromLessonInsert(rest)
     await db.update(lessons).set(row).where(eq(lessons.index, index))
-    await syncLessonSessions(index, rest.sessions)
+    const { removedIds } = await syncLessonSessions(index, rest.sessions)
+    await reconcileCalendar(index, removedIds)
     return { success: true, index }
   })
 
@@ -264,9 +323,17 @@ export const deleteLesson = createServerFn({ method: 'POST' })
   .inputValidator((input: { index: number }) => input)
   .handler(async ({ data: { index } }) => {
     await requirePrivilege('db', 'rtgs')
+    const removed = await db
+      .select({ index: lessonSessions.index })
+      .from(lessonSessions)
+      .where(eq(lessonSessions.lessonId, index))
     await db.delete(signups).where(eq(signups.class, index))
     await db.delete(lessonSessions).where(eq(lessonSessions.lessonId, index))
     await db.delete(lessons).where(eq(lessons.index, index))
+    await reconcileCalendar(
+      index,
+      removed.map((r) => r.index),
+    )
     return { success: true }
   })
 
@@ -278,6 +345,7 @@ export const setLessonDisplay = createServerFn({ method: 'POST' })
       .update(lessons)
       .set({ display: display ? 1 : 0 })
       .where(eq(lessons.index, index))
+    await reconcileCalendar(index)
     return { success: true }
   })
 
