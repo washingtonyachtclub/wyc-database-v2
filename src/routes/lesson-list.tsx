@@ -178,6 +178,13 @@ function LessonCard({ entry, muted }: { entry: PublicLesson; muted?: boolean }) 
           <RichText text={lesson.comments} />
         </div>
       )}
+
+      {lesson.requirements && (
+        <div className="px-5 pt-2 pb-2.5 text-[13px] leading-relaxed text-[#444]">
+          <span className="font-bold">Requirements: </span>
+          {lesson.requirements}
+        </div>
+      )}
     </div>
   )
 }

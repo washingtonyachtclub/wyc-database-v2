@@ -201,6 +201,7 @@ export const lessons = mysqlTable(
     instructor1: int(),
     instructor2: int(),
     comments: blobAsText('comments'),
+    requirements: text(),
     location: varchar({ length: 80 }),
     locationUrl: varchar('location_url', { length: 255 }),
     size: int(),

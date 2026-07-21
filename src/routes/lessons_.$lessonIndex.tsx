@@ -52,6 +52,7 @@ function lessonToDefaults(lesson: RichLesson): LessonInsert {
     instructor1: lesson.instructor1,
     instructor2: lesson.instructor2,
     comments: lesson.comments,
+    requirements: lesson.requirements,
     location: lesson.location,
     locationUrl: lesson.locationUrl,
     size: lesson.size,
@@ -377,6 +378,11 @@ function LessonEditForm({ lesson }: { lesson: RichLesson }) {
         />
 
         <LessonLocationField form={form} />
+
+        <form.AppField
+          name="requirements"
+          children={(field) => <field.TextField label="Requirements (optional)" />}
+        />
 
         <div className="md:col-span-2 grid grid-cols-1 md:grid-cols-3 gap-4 items-end">
           <form.AppField

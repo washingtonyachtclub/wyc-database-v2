@@ -23,6 +23,7 @@ const emptyDefaults = (expireDefault: number): LessonInsert => ({
   instructor1: TBD_WYC_NUMBER,
   instructor2: null,
   comments: '',
+  requirements: '',
   location: WAC.name,
   locationUrl: WAC.url,
   size: 0,
@@ -154,6 +155,13 @@ export function LessonFormModal({ onClose, currentQuarter, onSuccess }: LessonFo
           <form.AppField
             name="size"
             children={(field) => <field.NumberField label="Size" required />}
+          />
+
+          <form.AppField
+            name="requirements"
+            children={(field) => (
+              <field.TextField label="Requirements (optional)" className="md:col-span-2" />
+            )}
           />
 
           <form.AppField

@@ -67,6 +67,7 @@ export const lessonInsertSchema = z.object({
   instructor1: z.number(),
   instructor2: z.number().nullable(),
   comments: z.string(),
+  requirements: z.string(),
   location: z.string(),
   locationUrl: z.string(),
   size: z.number({ error: 'Size is required' }).int(),
@@ -115,6 +116,7 @@ export type Lesson = {
   instructor1: number // wycNumber (FK)
   instructor2: number | null // wycNumber (FK)
   comments: string
+  requirements: string
   location: string
   locationUrl: string
   size: number
@@ -135,6 +137,7 @@ export type RichLesson = {
   instructor1Name: string
   instructor2Name: string
   comments: string
+  requirements: string
   location: string
   locationUrl: string
   size: number
@@ -238,6 +241,7 @@ export function toRichLesson(row: LessonQueryRow, sessions: LessonSession[]): Ri
     instructor1Name: fullName(row.instructor1First, row.instructor1Last) || '<Unknown>',
     instructor2Name: fullName(row.instructor2First, row.instructor2Last),
     comments: str(row.comments),
+    requirements: str(row.requirements),
     location: str(row.location),
     locationUrl: str(row.locationUrl),
     size: num(row.size),
@@ -254,6 +258,7 @@ export function fromLessonInsert(data: LessonInsert) {
     instructor1: data.instructor1,
     instructor2: data.instructor2,
     comments: data.comments,
+    requirements: data.requirements,
     location: data.location,
     locationUrl: data.locationUrl,
     size: data.size,

@@ -187,7 +187,7 @@ ${formatLessonInfo(lesson)}
 ${PLEASE_UNENROLL}${guideLine(lesson)}`
 }
 
-export const lessonReminderSubject = 'WYC - Your upcoming class'
+export const lessonReminderSubject = 'WYC - Your upcoming lesson'
 
 export function lessonReminderEmail(
   studentName: string,

@@ -27,6 +27,7 @@ export const lessonTableSelectFields = {
   instructor2First: instructor2Table.first,
   instructor2Last: instructor2Table.last,
   comments: lessons.comments,
+  requirements: lessons.requirements,
   location: lessons.location,
   locationUrl: lessons.locationUrl,
   size: lessons.size,
