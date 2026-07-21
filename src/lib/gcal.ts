@@ -25,6 +25,7 @@ export type CalendarSession = {
 export type CalendarLesson = {
   title: string
   location: string
+  colorId?: string // Google's fixed palette; unset = calendar default
 }
 
 let auth: GoogleAuth | undefined
@@ -77,6 +78,8 @@ function eventBody(lesson: CalendarLesson, session: CalendarSession) {
     id: sessionEventId(session.index),
     summary: lesson.title,
     location: lesson.location,
+    // Omit on non-work-parties so a PUT resets any prior color to the calendar default.
+    ...(lesson.colorId ? { colorId: lesson.colorId } : {}),
     ...timePoint,
   }
 }

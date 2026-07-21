@@ -1,3 +1,4 @@
+import { WORK_PARTY_TYPE_ID } from '@/db/constants'
 import db from '@/db/index'
 import { isMembershipActive } from '@/db/membership-utils'
 import { withPagination, withSorting } from '@/db/query-helpers'
@@ -250,6 +251,7 @@ async function reconcileCalendar(lessonId: number, removedSessionIds: number[] =
     const cal = {
       title: lesson.subtype || lesson.type || 'WYC Lesson',
       location: lesson.location,
+      colorId: lesson.classTypeId === WORK_PARTY_TYPE_ID ? '4' : undefined, // 4 = Flamingo
     }
     for (const session of lesson.sessions) {
       if (inScope) await upsertSessionEvent(cal, session)

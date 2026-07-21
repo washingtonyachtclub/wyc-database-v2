@@ -54,6 +54,8 @@ export const LESSON_CATEGORIES = [
   },
 ] as const
 
+export const WORK_PARTY_TYPE_ID = 9
+
 export const LESSON_LOCATION_PRESETS = [
   { name: 'WAC', url: 'https://maps.google.com/?cid=3343180312568491478' },
   { name: 'SSP', url: 'https://maps.google.com/?cid=1513604519883250295' },
