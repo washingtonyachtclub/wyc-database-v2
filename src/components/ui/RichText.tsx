@@ -5,7 +5,7 @@ import type { ReactNode } from 'react'
 // line. Non-greedy, so a stray marker pairs with the nearest one rather than swallowing
 // the description, and an unpaired marker just renders as itself. `**` before `*` so bold
 // wins over italic. No nesting.
-const TOKEN = /(\*\*[\s\S]+?\*\*|\*[\s\S]+?\*|~~[\s\S]+?~~)/
+export const RICH_TEXT_TOKEN = /(\*\*[\s\S]+?\*\*|\*[\s\S]+?\*|~~[\s\S]+?~~)/
 
 function renderToken(token: string, key: number): ReactNode {
   if (token.startsWith('**')) return <strong key={key}>{token.slice(2, -2)}</strong>
@@ -20,7 +20,7 @@ function renderToken(token: string, key: number): ReactNode {
  */
 export function RichText({ text, className }: { text: string; className?: string }) {
   // split() on a capturing group puts the tokens at the odd indices.
-  const parts = text.split(TOKEN)
+  const parts = text.split(RICH_TEXT_TOKEN)
   return (
     <span className={cn('whitespace-pre-line', className)}>
       {parts.map((part, i) => (i % 2 === 1 ? renderToken(part, i) : part))}

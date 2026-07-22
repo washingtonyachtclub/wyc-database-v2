@@ -1,3 +1,4 @@
+import { RICH_TEXT_TOKEN } from '@/components/ui/RichText'
 import { GoogleAuth } from 'google-auth-library'
 
 const CALENDAR_ID = process.env.GOOGLE_CALENDAR_ID ?? ''
@@ -25,6 +26,9 @@ export type CalendarSession = {
 export type CalendarLesson = {
   title: string
   location: string
+  comments: string
+  requirements: string
+  instructors: string[]
   colorId?: string // Google's fixed palette; unset = calendar default
 }
 
@@ -64,6 +68,38 @@ function nextDay(date: string): string {
   return d.toISOString().slice(0, 10)
 }
 
+function escapeHtml(text: string): string {
+  return text.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+}
+
+// Calendar renders the description as HTML, so the comment's rich-text markers become
+// tags and newlines become <br>. Of the tags used here, only b/i/s/br survive its sanitiser.
+function commentsHtml(comments: string): string {
+  return comments
+    .split(RICH_TEXT_TOKEN)
+    .map((part, i) => {
+      const escaped = escapeHtml(part)
+      if (i % 2 === 0) return escaped
+      if (escaped.startsWith('**')) return `<b>${escaped.slice(2, -2)}</b>`
+      if (escaped.startsWith('~~')) return `<s>${escaped.slice(2, -2)}</s>`
+      return `<i>${escaped.slice(1, -1)}</i>`
+    })
+    .join('')
+    .replace(/\n/g, '<br>')
+}
+
+function descriptionHtml(lesson: CalendarLesson): string {
+  const { instructors } = lesson
+  return [
+    lesson.comments && commentsHtml(lesson.comments),
+    instructors.length > 0 &&
+      `<b>Instructor${instructors.length > 1 ? 's' : ''}:</b> ${escapeHtml(instructors.join(', '))}`,
+    lesson.requirements && `<b>Requirements:</b> ${escapeHtml(lesson.requirements)}`,
+  ]
+    .filter(Boolean)
+    .join('<br><br>')
+}
+
 function eventBody(lesson: CalendarLesson, session: CalendarSession) {
   const timePoint = session.allDay
     ? {
@@ -78,7 +114,7 @@ function eventBody(lesson: CalendarLesson, session: CalendarSession) {
     id: sessionEventId(session.index),
     summary: lesson.title,
     location: lesson.location,
-    // Omit on non-work-parties so a PUT resets any prior color to the calendar default.
+    description: descriptionHtml(lesson),
     ...(lesson.colorId ? { colorId: lesson.colorId } : {}),
     ...timePoint,
   }

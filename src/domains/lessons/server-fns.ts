@@ -251,6 +251,11 @@ async function reconcileCalendar(lessonId: number, removedSessionIds: number[] =
     const cal = {
       title: lesson.subtype || lesson.type || 'WYC Lesson',
       location: lesson.location,
+      comments: lesson.comments,
+      requirements: lesson.requirements,
+      instructors: [lesson.instructor1Name, lesson.instructor2Name].filter(
+        (name) => name !== '' && name !== '<Unknown>',
+      ),
       colorId: lesson.classTypeId === WORK_PARTY_TYPE_ID ? '4' : undefined, // 4 = Flamingo
     }
     for (const session of lesson.sessions) {
