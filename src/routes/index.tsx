@@ -1,20 +1,13 @@
-import { createFileRoute } from '@tanstack/react-router'
-import { requirePrivilegeForRoute } from '../lib/route-guards'
+import { createFileRoute, redirect } from '@tanstack/react-router'
 
 export const Route = createFileRoute('/')({
   beforeLoad: ({ context }) => {
-    requirePrivilegeForRoute(context, '/')
+    if (!context.isAuthenticated || !context.user) {
+      throw redirect({ to: '/login' })
+    }
+    throw redirect({
+      to: '/members/$wycNumber',
+      params: { wycNumber: String(context.user.wycNumber) },
+    })
   },
-  component: HomePage,
 })
-
-function HomePage() {
-  return (
-    <div className="p-8">
-      <h1 className="text-4xl font-bold mb-4">Welcome to the new and improved database!</h1>
-      <p className="text-muted-foreground">
-        Send any questions, comments, or suggestions to the database admin.
-      </p>
-    </div>
-  )
-}
