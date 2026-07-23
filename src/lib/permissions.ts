@@ -9,8 +9,8 @@ export type Privilege = 'db' | 'rtgs'
  */
 export const routePermissions = {
   '/': [],
-  '/members': ['db'],
-  '/members/$wycNumber': ['db'], // own-profile exception handled in route beforeLoad
+  '/members': ['db', 'rtgs'], // rtgs sees the roster read-only; no email export
+  '/members/$wycNumber': ['db', 'rtgs'], // own-profile exception handled in route beforeLoad
   '/lessons': ['db', 'rtgs'],
   '/lessons/$lessonIndex': [], // auth only; server functions enforce per-lesson instructor-or-db access
   '/my-lessons': [],

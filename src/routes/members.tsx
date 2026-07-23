@@ -9,6 +9,8 @@ import { PaginationControls } from '../components/members/PaginationControls'
 import { DataTable } from '../components/ui/DataTable'
 import type { MemberFilters } from '@/domains/members/filter-types'
 import { requirePrivilegeForRoute } from '../lib/route-guards'
+import { hasPrivilege } from '../lib/permissions'
+import { useCurrentUser } from '@/lib/auth/auth-query-options'
 import { getCategoriesQueryOptions, getMembersQueryOptions } from '@/domains/members/query-options'
 import { getCurrentQuarterQueryOptions } from '@/domains/lessons/query-options'
 import { getQuartersQueryOptions } from '@/domains/quarters/query-options'
@@ -92,6 +94,8 @@ export const Route = createFileRoute('/members')({
 
 function App() {
   const navigate = useNavigate({ from: '/members' })
+  const { privileges } = useCurrentUser()
+  const hasDb = hasPrivilege(privileges, ['db'])
   const { wycId, name, category } = Route.useSearch()
   const { pageIndex, pageSize, filters, sorting } = Route.useLoaderDeps()
   const expireQtrFilter = filters?.expireQtrFilter
@@ -208,7 +212,7 @@ function App() {
         table={table}
         pageCount={pageCount}
         totalCount={totalCount}
-        actions={<CopyEmailsButton filters={filters} totalCount={totalCount} />}
+        actions={hasDb ? <CopyEmailsButton filters={filters} totalCount={totalCount} /> : undefined}
       />
       <DataTable table={table} />
       <PaginationControls table={table} pageCount={pageCount} totalCount={totalCount} />

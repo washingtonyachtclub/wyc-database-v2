@@ -81,7 +81,7 @@ export const createOfficer = createServerFn({ method: 'POST' })
 export const getMemberPositions = createServerFn({ method: 'GET' })
   .inputValidator((input: { wycNumber: number }) => ({ wycNumber: Number(input.wycNumber) }))
   .handler(async ({ data: { wycNumber } }) => {
-    await requireSelfOrPrivilege(wycNumber, 'db')
+    await requireSelfOrPrivilege(wycNumber, 'db', 'rtgs')
     const raw = await baseMemberPositionsQuery(wycNumber)
     return raw.map(toOfficer)
   })

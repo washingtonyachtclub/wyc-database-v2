@@ -1,16 +1,12 @@
-import { ErrorAlert } from '@/components/ui/ErrorAlert'
 import { MemberCheckoutsSection } from '@/components/members/MemberCheckoutsSection'
 import { MemberLessonsSection } from '@/components/members/MemberLessonsSection'
 import { MemberPositionsSection } from '@/components/members/MemberPositionsSection'
 import { MemberRatingsGivenSection } from '@/components/members/MemberRatingsGivenSection'
 import { MemberRatingsSection } from '@/components/members/MemberRatingsSection'
 import { Button } from '@/components/ui/button'
-import { MemberProfileUpdate, MemberProfileUpdateSchema } from '@/domains/members/schema'
-import type { Member } from '@/domains/members/schema'
-import { useAppForm } from '@/hooks/form'
+import { ErrorAlert } from '@/components/ui/ErrorAlert'
 import { isMembershipActive } from '@/db/membership-utils'
 import { getCurrentQuarterQueryOptions } from '@/domains/lessons/query-options'
-import { cn } from '@/lib/utils'
 import {
   getCategoriesQueryOptions,
   getMemberByIdQueryOptions,
@@ -18,11 +14,15 @@ import {
   getMemberLessonsTaughtQueryOptions,
   useUpdateMemberProfileMutation,
 } from '@/domains/members/query-options'
+import type { Member } from '@/domains/members/schema'
+import { MemberProfileUpdate, MemberProfileUpdateSchema } from '@/domains/members/schema'
 import { getQuartersQueryOptions } from '@/domains/quarters/query-options'
+import { useAppForm } from '@/hooks/form'
+import { useCurrentUser } from '@/lib/auth/auth-query-options'
+import { cn } from '@/lib/utils'
 import { useQuery, useSuspenseQuery } from '@tanstack/react-query'
 import { createFileRoute, redirect } from '@tanstack/react-router'
 import { Suspense, useMemo, useState } from 'react'
-import { useCurrentUser } from '@/lib/auth/auth-query-options'
 import { hasPrivilege } from '../lib/permissions'
 
 export const Route = createFileRoute('/members_/$wycNumber')({
@@ -31,7 +31,7 @@ export const Route = createFileRoute('/members_/$wycNumber')({
       throw redirect({ to: '/login' })
     }
     const isOwnProfile = context.user?.wycNumber === Number(params.wycNumber)
-    if (!isOwnProfile && !hasPrivilege(context.privileges, ['db'])) {
+    if (!isOwnProfile && !hasPrivilege(context.privileges, ['db', 'rtgs'])) {
       throw redirect({ to: '/forbidden' })
     }
   },
@@ -73,8 +73,10 @@ function ShowAllToggle({
 function MemberDetailPage() {
   const { wycNumber } = Route.useParams()
   const { data: member } = useSuspenseQuery(getMemberByIdQueryOptions(Number(wycNumber)))
-  const { privileges } = useCurrentUser()
+  const { user, privileges } = useCurrentUser()
   const hasDb = hasPrivilege(privileges, ['db'])
+  const isOwnProfile = user?.wycNumber === Number(wycNumber)
+  const canSeeContactInfo = hasDb || isOwnProfile
   const since = useTwelveMonthsAgo()
   const [isEditing, setIsEditing] = useState(false)
   const [showAllRatingsGiven, setShowAllRatingsGiven] = useState(false)
@@ -93,20 +95,11 @@ function MemberDetailPage() {
   return (
     <div className="p-4 space-y-8">
       <div>
-        <div className="flex items-center justify-between">
-          <h1 className="text-2xl font-bold">
-            WYC #{member.wycNumber} — {member.first} {member.last}
-          </h1>
-          {!isEditing && <Button onClick={() => setIsEditing(true)}>Edit Info</Button>}
-        </div>
+        <h1 className="text-2xl font-bold">
+          WYC #{member.wycNumber} — {member.first} {member.last}
+        </h1>
         <MemberExpireQuarter expireQtrIndex={member.expireQtrIndex} />
       </div>
-
-      {isEditing ? (
-        <MemberEditForm member={member} hasDb={hasDb} onCancel={() => setIsEditing(false)} />
-      ) : (
-        <MemberReadOnlyInfo member={member} />
-      )}
 
       <MemberRatingsSection wycNumber={member.wycNumber} />
       <Suspense fallback={<p className="text-muted-foreground">Loading...</p>}>
@@ -150,6 +143,29 @@ function MemberDetailPage() {
         />
       </Suspense>
       <MemberPositionsSection wycNumber={member.wycNumber} />
+
+      {canSeeContactInfo && (
+        <div>
+          <div className="flex items-center gap-2 mb-4">
+            <h2 className="text-xl font-semibold">Member Info</h2>
+            {!isEditing && (
+              <Button
+                variant="ghost"
+                size="sm"
+                className="text-sm h-auto py-0.5 px-2"
+                onClick={() => setIsEditing(true)}
+              >
+                Edit
+              </Button>
+            )}
+          </div>
+          {isEditing ? (
+            <MemberEditForm member={member} hasDb={hasDb} onCancel={() => setIsEditing(false)} />
+          ) : (
+            <MemberReadOnlyInfo member={member} />
+          )}
+        </div>
+      )}
     </div>
   )
 }

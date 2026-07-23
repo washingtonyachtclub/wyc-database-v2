@@ -97,6 +97,21 @@ export function toMember(row: typeof wycDatabase.$inferSelect): Member {
   }
 }
 
+/** Profile stripped of contact info, for viewers who may see sailing history but not PII. */
+export function toRedactedMember(row: typeof wycDatabase.$inferSelect): Member {
+  return {
+    ...toMember(row),
+    email: '',
+    streetAddress: '',
+    city: '',
+    state: '',
+    zipCode: '',
+    phone1: '',
+    phone2: '',
+    studentId: null,
+  }
+}
+
 export function toMemberTableRow(row: MemberQueryRow): MemberTableRow {
   return {
     wycNumber: row.wycNumber,

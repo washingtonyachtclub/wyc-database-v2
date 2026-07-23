@@ -11,6 +11,7 @@ import {
   toMember,
   toMemberRating,
   toMemberTableRow,
+  toRedactedMember,
 } from '@/domains/members/schema'
 import type { MemberFilters } from '@/domains/members/filter-types'
 import { baseMemberQuery, memberSortColumns, withMemberFilters } from '@/domains/members/queries'
@@ -47,7 +48,7 @@ export const getMembersTable = createServerFn({ method: 'GET' })
     },
   )
   .handler(async ({ data }) => {
-    await requirePrivilege('db')
+    await requirePrivilege('db', 'rtgs')
 
     try {
       const { pageIndex, pageSize, filters, sorting } = data
@@ -225,10 +226,11 @@ export const getAllMembersLite = createServerFn({ method: 'GET' }).handler(async
 export const getMemberById = createServerFn({ method: 'GET' })
   .inputValidator((input: { wycNumber: number }) => ({ wycNumber: Number(input.wycNumber) }))
   .handler(async ({ data: { wycNumber } }) => {
-    await requireSelfOrPrivilege(wycNumber, 'db')
+    const userId = await requireSelfOrPrivilege(wycNumber, 'db', 'rtgs')
     const [row] = await db.select().from(wycDatabase).where(eq(wycDatabase.wycNumber, wycNumber))
     if (!row) return null
-    return toMember(row)
+    const canSeeContactInfo = userId === wycNumber || (await sessionHasPrivilege('db'))
+    return canSeeContactInfo ? toMember(row) : toRedactedMember(row)
   })
 
 export const updateMemberProfile = createServerFn({ method: 'POST' })
@@ -265,7 +267,7 @@ export const updateMemberProfile = createServerFn({ method: 'POST' })
 export const getMemberRatings = createServerFn({ method: 'GET' })
   .inputValidator((input: { wycNumber: number }) => ({ wycNumber: Number(input.wycNumber) }))
   .handler(async ({ data: { wycNumber } }) => {
-    await requireSelfOrPrivilege(wycNumber, 'db')
+    await requireSelfOrPrivilege(wycNumber, 'db', 'rtgs')
     const raw = await baseMemberRatingsQuery(wycNumber)
     return raw.map(toMemberRating)
   })
@@ -276,7 +278,7 @@ export const getMemberRatingsGiven = createServerFn({ method: 'GET' })
     since: input.since,
   }))
   .handler(async ({ data: { wycNumber, since } }) => {
-    await requireSelfOrPrivilege(wycNumber, 'db')
+    await requireSelfOrPrivilege(wycNumber, 'db', 'rtgs')
     const raw = await baseRatingsGivenQuery(wycNumber, since)
     return raw.map(toMemberRating)
   })
@@ -287,7 +289,7 @@ export const getMemberLessonsTaught = createServerFn({ method: 'GET' })
     since: input.since,
   }))
   .handler(async ({ data: { wycNumber, since } }) => {
-    await requireSelfOrPrivilege(wycNumber, 'db')
+    await requireSelfOrPrivilege(wycNumber, 'db', 'rtgs')
     const raw = await baseLessonsTaughtQuery(wycNumber, since)
     const sessionsByLesson = await fetchSessionsByLesson(raw.map((r) => r.index))
     return raw.map((row) => toRichLesson(row, sessionsByLesson.get(row.index) ?? []))
@@ -299,7 +301,7 @@ export const getMemberLessonsSignedUp = createServerFn({ method: 'GET' })
     since: input.since,
   }))
   .handler(async ({ data: { wycNumber, since } }) => {
-    await requireSelfOrPrivilege(wycNumber, 'db')
+    await requireSelfOrPrivilege(wycNumber, 'db', 'rtgs')
     const raw = await baseLessonsSignedUpQuery(wycNumber, since)
     const sessionsByLesson = await fetchSessionsByLesson(raw.map((r) => r.index))
     return raw.map((row) => toRichLesson(row, sessionsByLesson.get(row.index) ?? []))

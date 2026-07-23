@@ -1,7 +1,7 @@
 # Important
 
-- auto google calendar sync lessons (plan)
 - enforce 1 laser sign up per quarter?
+- pwa manifest save website as app investigation?
 
 - execute password migration plan
 - new checkout page (in branch)

@@ -182,8 +182,8 @@ The `routePermissions` object in `permissions.ts` is the single source of truth 
 ```typescript
 export const routePermissions = {
   '/': [], // authenticated only
-  '/members': ['db'],
-  '/lessons': ['db'],
+  '/members': ['db', 'rtgs'],
+  '/lessons': ['db', 'rtgs'],
   '/my-lessons': [], // authenticated only
   '/ratings': ['rtgs'],
   '/officers': ['db'],
@@ -213,7 +213,22 @@ Server functions apply their own privilege checks independently of route guards.
 | `sessionHasPrivilege(...required)`                       | Non-throwing boolean check. Used for conditional logic within server functions.                                                                                                                           |
 | `optionalAuth()`                                         | Returns user ID or null. Does not throw.                                                                                                                                                                  |
 
-### 3. Sidebar Visibility
+### 3. Field-Level Redaction
+
+Route and server-function guards are all-or-nothing on a resource. Member profiles need a finer split, because `rtgs` covers every chief and every current-quarter instructor — a large group with a legitimate need to see sailing history but not personal contact details.
+
+`getMemberById` therefore returns one of two shapes for the same `Member` type:
+
+- **Full profile** — the viewer is looking at their own record, or holds `db`.
+- **Redacted profile** — everyone else with `rtgs`. `toRedactedMember()` blanks `email`, `phone1`, `phone2`, `streetAddress`, `city`, `state`, `zipCode`, and `studentId`. Name, WYC number, and expire quarter survive so the page header still renders.
+
+The profile route hides the contact block and the Edit button for the same viewers, so the redacted fields are never displayed as empty strings. The server-side redaction is the enforcement layer; the client-side hiding is presentation.
+
+The history sections (`getMemberRatings`, `getMemberRatingsGiven`, `getMemberLessonsTaught`, `getMemberLessonsSignedUp`, `getCheckouts`, `getMemberPositions`) accept `db` or `rtgs` unredacted.
+
+`getMemberEmails`, which backs the bulk email export on `/members`, remains `db`-only, and the button is hidden for `rtgs`. Writes (`updateMember`, `updateMemberProfile`) are unchanged: `rtgs` grants no edit access to anyone else's record.
+
+### 4. Sidebar Visibility
 
 **File**: `Sidebar.tsx`
 
