@@ -42,9 +42,11 @@ export const columns = [
     header: '',
     cell: ({ row, table }) => {
       const meta = table.options.meta as BoatTypeTableMeta | undefined
+      if (row.original.usageCount > 0) return null
       return (
         <button
           className="text-muted-foreground hover:text-destructive"
+          title="Delete"
           onClick={() => meta?.onDeleteClick(row.original.index, row.original.type)}
         >
           <X className="h-4 w-4" />

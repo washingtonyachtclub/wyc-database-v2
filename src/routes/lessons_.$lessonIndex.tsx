@@ -4,7 +4,7 @@ import { CopyBox } from '@/components/ui/CopyBox'
 import { ErrorAlert } from '@/components/ui/ErrorAlert'
 import { parsePhoneNumberFromString } from 'libphonenumber-js'
 import { LESSON_CATEGORIES, TBD_WYC_NUMBER } from '@/db/constants'
-import { getClassTypesQueryOptions } from '@/domains/class-types/query-options'
+import { getLessonTypesQueryOptions } from '@/domains/lesson-types/query-options'
 import {
   getLessonByIdQueryOptions,
   useDeleteLessonMutation,
@@ -259,7 +259,7 @@ function StudentList({
 
 function LessonEditForm({ lesson }: { lesson: RichLesson }) {
   const { data: quarters = [] } = useQuery(getQuartersQueryOptions())
-  const { data: classTypes = [] } = useQuery(getClassTypesQueryOptions())
+  const { data: classTypes = [] } = useQuery(getLessonTypesQueryOptions())
   const [saveMessage, setSaveMessage] = useState('')
 
   const updateMutation = useUpdateLessonMutation({

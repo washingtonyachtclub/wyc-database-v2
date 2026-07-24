@@ -18,22 +18,27 @@ export type Position = {
   typeId: number
   typeName: string
   active: boolean
+  usageCount: number
 }
 
 // --- Mappers ---
 
-export function toPosition(row: {
-  index: number
-  name: string | null
-  type: number | null
-  typeName: string | null
-  active: number
-}): Position {
+export function toPosition(
+  row: {
+    index: number
+    name: string | null
+    type: number | null
+    typeName: string | null
+    active: number
+  },
+  usageCount = 0,
+): Position {
   return {
     index: row.index,
     name: str(row.name),
     typeId: num(row.type),
     typeName: row.typeName ?? '<Unknown>',
     active: row.active !== 0,
+    usageCount,
   }
 }

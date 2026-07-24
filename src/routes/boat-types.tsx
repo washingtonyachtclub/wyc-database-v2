@@ -77,22 +77,13 @@ function BoatTypesPage() {
             { onSettled: () => setDeleteTarget(null) },
           )
         }}
-        title="ARE YOU SURE?"
+        title="Delete boat type?"
+        confirmLabels={[]}
         description={
-          <>
-            <p className="mb-2">
-              Deleting boat type <strong>{deleteTarget?.type}</strong> from the database is almost
-              always the wrong thing to do.
-            </p>
-            <p className="mb-2">
-              Deleting an item from the database denies the fact that the item ever existed. This
-              could affect checkouts, historical data, and any other records that reference this
-              boat type.
-            </p>
-            <p className="font-semibold">
-              You should probably only do this if you just created it by mistake.
-            </p>
-          </>
+          <p>
+            Delete boat type <strong>{deleteTarget?.type}</strong>? No checkouts reference it, so
+            this is safe to remove.
+          </p>
         }
       />
     </div>

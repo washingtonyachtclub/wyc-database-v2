@@ -33,7 +33,7 @@ export function SidebarNav({ onNavigate }: { onNavigate?: () => void }) {
   const supportTableItems = [
     { path: '/rating-types' as const, label: 'Rating Types' },
     { path: '/boat-types' as const, label: 'Boat Types' },
-    { path: '/class-types' as const, label: 'Lesson Types' },
+    { path: '/lesson-types' as const, label: 'Lesson Types' },
     { path: '/quarters' as const, label: 'Quarters' },
     { path: '/positions' as const, label: 'Positions' },
   ]

@@ -1,22 +1,22 @@
 import { ErrorAlert } from '../ui/ErrorAlert'
-import { classTypeInsertSchema } from '@/domains/class-types/schema'
+import { lessonTypeInsertSchema } from '@/domains/lesson-types/schema'
 import { useAppForm } from '../../hooks/form'
-import { useCreateClassTypeMutation } from '@/domains/class-types/query-options'
+import { useCreateLessonTypeMutation } from '@/domains/lesson-types/query-options'
 import { Button } from '../ui/button'
 import { Modal } from '../ui/Modal'
 
-type AddClassTypeModalProps = {
+type AddLessonTypeModalProps = {
   onClose: () => void
   onSuccess: () => void
 }
 
-export function AddClassTypeModal({ onClose, onSuccess }: AddClassTypeModalProps) {
-  const createMutation = useCreateClassTypeMutation({ onSuccess, onClose })
+export function AddLessonTypeModal({ onClose, onSuccess }: AddLessonTypeModalProps) {
+  const createMutation = useCreateLessonTypeMutation({ onSuccess, onClose })
 
   const form = useAppForm({
     defaultValues: { text: '' },
     validators: {
-      onSubmit: classTypeInsertSchema,
+      onSubmit: lessonTypeInsertSchema,
     },
     onSubmit: async ({ value }) => {
       await createMutation.mutateAsync({ data: value })

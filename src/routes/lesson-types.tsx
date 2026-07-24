@@ -1,13 +1,13 @@
-import { AddClassTypeModal } from '@/components/class-types/AddClassTypeModal'
-import { columns } from '@/components/class-types/columns'
-import type { ClassTypeTableMeta } from '@/components/class-types/columns'
+import { AddLessonTypeModal } from '@/components/lesson-types/AddLessonTypeModal'
+import { columns } from '@/components/lesson-types/columns'
+import type { LessonTypeTableMeta } from '@/components/lesson-types/columns'
 import { ConfirmDialog } from '@/components/ui/ConfirmDialog'
 import { Button } from '@/components/ui/button'
 import { DataTable } from '@/components/ui/DataTable'
 import {
-  getClassTypesQueryOptions,
-  useDeleteClassTypeMutation,
-} from '@/domains/class-types/query-options'
+  getLessonTypesQueryOptions,
+  useDeleteLessonTypeMutation,
+} from '@/domains/lesson-types/query-options'
 import { requirePrivilegeForRoute } from '@/lib/route-guards'
 import { useSuspenseQuery } from '@tanstack/react-query'
 import { createFileRoute } from '@tanstack/react-router'
@@ -15,14 +15,14 @@ import { getCoreRowModel, useReactTable } from '@tanstack/react-table'
 import { Plus } from 'lucide-react'
 import { useState } from 'react'
 
-export const Route = createFileRoute('/class-types')({
+export const Route = createFileRoute('/lesson-types')({
   beforeLoad: ({ context }) => {
-    requirePrivilegeForRoute(context, '/class-types')
+    requirePrivilegeForRoute(context, '/lesson-types')
   },
   loader: ({ context }) => {
-    return context.queryClient.ensureQueryData(getClassTypesQueryOptions())
+    return context.queryClient.ensureQueryData(getLessonTypesQueryOptions())
   },
-  component: ClassTypesPage,
+  component: LessonTypesPage,
 })
 
 type DeleteTarget = {
@@ -30,20 +30,20 @@ type DeleteTarget = {
   text: string
 }
 
-function ClassTypesPage() {
-  const { data: classTypes } = useSuspenseQuery(getClassTypesQueryOptions())
+function LessonTypesPage() {
+  const { data: lessonTypes } = useSuspenseQuery(getLessonTypesQueryOptions())
   const [isAddModalOpen, setIsAddModalOpen] = useState(false)
   const [deleteTarget, setDeleteTarget] = useState<DeleteTarget | null>(null)
-  const deleteMutation = useDeleteClassTypeMutation()
+  const deleteMutation = useDeleteLessonTypeMutation()
 
-  const tableMeta: ClassTypeTableMeta = {
+  const tableMeta: LessonTypeTableMeta = {
     onDeleteClick: (index, text) => {
       setDeleteTarget({ index, text })
     },
   }
 
   const table = useReactTable({
-    data: classTypes,
+    data: lessonTypes,
     columns,
     getCoreRowModel: getCoreRowModel(),
     meta: tableMeta,
@@ -58,11 +58,11 @@ function ClassTypesPage() {
         New Lesson Type
       </Button>
 
-      <p className="text-sm text-muted-foreground mb-2">{classTypes.length} lesson types</p>
+      <p className="text-sm text-muted-foreground mb-2">{lessonTypes.length} lesson types</p>
       <DataTable table={table} />
 
       {isAddModalOpen && (
-        <AddClassTypeModal onClose={() => setIsAddModalOpen(false)} onSuccess={() => {}} />
+        <AddLessonTypeModal onClose={() => setIsAddModalOpen(false)} onSuccess={() => {}} />
       )}
 
       <ConfirmDialog
@@ -75,21 +75,13 @@ function ClassTypesPage() {
             { onSettled: () => setDeleteTarget(null) },
           )
         }}
-        title="ARE YOU SURE?"
+        title="Delete lesson type?"
+        confirmLabels={[]}
         description={
-          <>
-            <p className="mb-2">
-              Deleting <strong>{deleteTarget?.text}</strong> from the database is almost always the
-              wrong thing to do.
-            </p>
-            <p className="mb-2">
-              If any lessons use this lesson type, those lessons will lose their type reference.
-              This could affect lesson records, signups, and historical data.
-            </p>
-            <p className="font-semibold">
-              You should probably only do this if you just created it by mistake.
-            </p>
-          </>
+          <p>
+            Delete <strong>{deleteTarget?.text}</strong>? No lessons use it, so this is safe to
+            remove.
+          </p>
         }
       />
     </div>

@@ -105,13 +105,15 @@ export const columns = [
           >
             <Pencil className="h-4 w-4" />
           </button>
-          <button
-            className={`text-muted-foreground hover:text-destructive focus:opacity-100 ${revealed}`}
-            onClick={() => meta.onDeleteClick(row.original.index, row.original.text)}
-            aria-label="Delete"
-          >
-            <X className="h-4 w-4" />
-          </button>
+          {row.original.usageCount === 0 && (
+            <button
+              className={`text-muted-foreground hover:text-destructive focus:opacity-100 ${revealed}`}
+              onClick={() => meta.onDeleteClick(row.original.index, row.original.text)}
+              aria-label="Delete"
+            >
+              <X className="h-4 w-4" />
+            </button>
+          )}
         </div>
       )
     },

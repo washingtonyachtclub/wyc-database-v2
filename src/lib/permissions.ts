@@ -24,7 +24,7 @@ export const routePermissions = {
   '/honorary': ['db'],
   '/boat-types': ['db'],
   '/checkouts': ['db', 'rtgs'],
-  '/class-types': ['db'],
+  '/lesson-types': ['db'],
   '/quarters': ['db'],
   '/positions': ['db'],
   '/ratings-examiners': ['db'],

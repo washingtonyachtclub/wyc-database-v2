@@ -21,16 +21,18 @@ export type RatingType = {
   type: string
   degree: number
   expires: boolean
+  usageCount: number
 }
 
 // --- Mappers ---
 
-export function toRatingType(row: typeof ratings.$inferSelect): RatingType {
+export function toRatingType(row: typeof ratings.$inferSelect, usageCount = 0): RatingType {
   return {
     index: row.index,
     text: str(row.text),
     type: row.type,
     degree: row.degree,
     expires: row.expires !== 0,
+    usageCount,
   }
 }

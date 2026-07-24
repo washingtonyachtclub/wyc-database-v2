@@ -16,10 +16,27 @@ export type RenewalReminder =
   | { state: 'dueSoon'; quarterName: string; days: number }
   | null
 
+async function getQuarterUsageCounts() {
+  const memberUsage = await db
+    .select({ q: wycDatabase.expireQtrIndex, n: count() })
+    .from(wycDatabase)
+    .groupBy(wycDatabase.expireQtrIndex)
+  const lessonUsage = await db
+    .select({ q: lessons.expire, n: count() })
+    .from(lessons)
+    .groupBy(lessons.expire)
+  const counts = new Map<number, number>()
+  for (const u of [...memberUsage, ...lessonUsage]) {
+    if (u.q != null) counts.set(u.q, (counts.get(u.q) ?? 0) + u.n)
+  }
+  return counts
+}
+
 export const getAllQuarters = createServerFn({ method: 'GET' }).handler(async () => {
   await requireAuth()
   const rows = await db.select().from(quarters).orderBy(desc(quarters.index))
-  return rows.map(toQuarter)
+  const counts = await getQuarterUsageCounts()
+  return rows.map((r) => toQuarter(r, counts.get(r.index) ?? 0))
 })
 
 export const createQuarter = createServerFn({ method: 'POST' })
@@ -168,6 +185,20 @@ export const deleteQuarter = createServerFn({ method: 'POST' })
   .inputValidator((input: { index: number }) => input)
   .handler(async ({ data: { index } }) => {
     await requirePrivilege('db')
+    const [{ n: memberN }] = await db
+      .select({ n: count() })
+      .from(wycDatabase)
+      .where(eq(wycDatabase.expireQtrIndex, index))
+    const [{ n: lessonN }] = await db
+      .select({ n: count() })
+      .from(lessons)
+      .where(eq(lessons.expire, index))
+    const total = memberN + lessonN
+    if (total > 0) {
+      throw new Error(
+        `Cannot delete: ${total} member/lesson record(s) still reference this quarter.`,
+      )
+    }
     try {
       await db.delete(quarters).where(eq(quarters.index, index))
       return { success: true }

@@ -1,5 +1,5 @@
 import { ErrorAlert } from '@/components/ui/ErrorAlert'
-import { getClassTypesQueryOptions } from '@/domains/class-types/query-options'
+import { getLessonTypesQueryOptions } from '@/domains/lesson-types/query-options'
 import type { LessonFilters } from '@/domains/lessons/filter-types'
 import {
   getAllLessonsQueryOptions,
@@ -115,7 +115,7 @@ function LessonsPage() {
     }
   }
 
-  const { data: classTypes = [] } = useQuery(getClassTypesQueryOptions())
+  const { data: classTypes = [] } = useQuery(getLessonTypesQueryOptions())
   const { data: quarters = [] } = useQuery(getQuartersQueryOptions())
   const { data: quarterData } = useQuery(getQuarterLessonsQueryOptions())
   const { data: allLessonsResponse } = useSuspenseQuery(

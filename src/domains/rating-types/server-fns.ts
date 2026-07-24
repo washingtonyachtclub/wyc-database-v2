@@ -1,8 +1,8 @@
 import { createServerFn } from '@tanstack/react-start'
-import { eq } from 'drizzle-orm'
+import { count, eq } from 'drizzle-orm'
 import { toRatingType } from '@/domains/rating-types/schema'
 import type { RatingTypeInsertData } from '@/domains/rating-types/schema'
-import { ratings } from '@/db/schema'
+import { ratings, wycRatings } from '@/db/schema'
 import db from '@/db/index'
 import { requirePrivilege } from '@/lib/auth/auth-middleware'
 
@@ -10,7 +10,12 @@ export const getAllRatingTypes = createServerFn({ method: 'GET' }).handler(async
   await requirePrivilege('rtgs')
   try {
     const raw = await db.select().from(ratings).orderBy(ratings.type, ratings.degree)
-    return raw.map(toRatingType)
+    const usage = await db
+      .select({ rating: wycRatings.rating, n: count() })
+      .from(wycRatings)
+      .groupBy(wycRatings.rating)
+    const counts = new Map(usage.map((u) => [u.rating, u.n]))
+    return raw.map((r) => toRatingType(r, counts.get(r.index) ?? 0))
   } catch (error) {
     console.error('Failed to fetch rating types:', error)
     throw new Error('Failed to fetch rating types')
@@ -32,6 +37,11 @@ export const deleteRatingType = createServerFn({ method: 'POST' })
   .inputValidator((input: { index: number }) => input)
   .handler(async ({ data: { index } }) => {
     await requirePrivilege('rtgs')
+    const [{ n }] = await db
+      .select({ n: count() })
+      .from(wycRatings)
+      .where(eq(wycRatings.rating, index))
+    if (n > 0) throw new Error(`Cannot delete: ${n} member rating(s) still use this type.`)
     try {
       await db.delete(ratings).where(eq(ratings.index, index))
       return { success: true }

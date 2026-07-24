@@ -126,22 +126,13 @@ function QuartersPage() {
             { onSettled: () => setDeleteTarget(null) },
           )
         }}
-        title="ARE YOU SURE?"
+        title="Delete quarter?"
+        confirmLabels={[]}
         description={
-          <>
-            <p className="mb-2">
-              Deleting quarter <strong>{deleteTarget?.text}</strong> from the database is almost
-              always the wrong thing to do.
-            </p>
-            <p className="mb-2">
-              If any lessons or member records reference this quarter, those records will lose their
-              quarter reference. This could affect lesson scheduling, member expiration tracking,
-              and historical data.
-            </p>
-            <p className="font-semibold">
-              You should probably only do this if you just created it by mistake.
-            </p>
-          </>
+          <p>
+            Delete quarter <strong>{deleteTarget?.text}</strong>? No members or lessons reference
+            it, so this is safe to remove.
+          </p>
         }
       />
     </div>

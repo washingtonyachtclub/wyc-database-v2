@@ -37,7 +37,7 @@ export const columns = [
     header: '',
     cell: ({ row, table }) => {
       const meta = table.options.meta as PositionTableMeta | undefined
-      const { index, name, active } = row.original
+      const { index, name, active, usageCount } = row.original
       return (
         <div className="flex items-center justify-end gap-2">
           <Button
@@ -53,12 +53,15 @@ export const columns = [
           >
             {active ? 'Mark Inactive' : 'Mark Active'}
           </Button>
-          <button
-            className="text-muted-foreground hover:text-destructive"
-            onClick={() => meta?.onDeleteClick(index, name)}
-          >
-            <X className="h-4 w-4" />
-          </button>
+          {usageCount === 0 && (
+            <button
+              className="text-muted-foreground hover:text-destructive"
+              title="Delete"
+              onClick={() => meta?.onDeleteClick(index, name)}
+            >
+              <X className="h-4 w-4" />
+            </button>
+          )}
         </div>
       )
     },

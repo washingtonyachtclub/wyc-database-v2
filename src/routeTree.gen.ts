@@ -27,13 +27,13 @@ import { Route as MembersRouteImport } from './routes/members'
 import { Route as MeetTheTeamRouteImport } from './routes/meet-the-team'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as LessonsRouteImport } from './routes/lessons'
+import { Route as LessonTypesRouteImport } from './routes/lesson-types'
 import { Route as LessonListRouteImport } from './routes/lesson-list'
 import { Route as HonoraryRouteImport } from './routes/honorary'
 import { Route as ForgotPasswordRouteImport } from './routes/forgot-password'
 import { Route as ForbiddenRouteImport } from './routes/forbidden'
 import { Route as DoorCodesRouteImport } from './routes/door-codes'
 import { Route as DbDotcgiRouteImport } from './routes/db[.]cgi'
-import { Route as ClassTypesRouteImport } from './routes/class-types'
 import { Route as ChiefsRouteImport } from './routes/chiefs'
 import { Route as CheckoutsRouteImport } from './routes/checkouts'
 import { Route as BoatTypesRouteImport } from './routes/boat-types'
@@ -135,6 +135,11 @@ const LessonsRoute = LessonsRouteImport.update({
   path: '/lessons',
   getParentRoute: () => rootRouteImport,
 } as any)
+const LessonTypesRoute = LessonTypesRouteImport.update({
+  id: '/lesson-types',
+  path: '/lesson-types',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const LessonListRoute = LessonListRouteImport.update({
   id: '/lesson-list',
   path: '/lesson-list',
@@ -163,11 +168,6 @@ const DoorCodesRoute = DoorCodesRouteImport.update({
 const DbDotcgiRoute = DbDotcgiRouteImport.update({
   id: '/db.cgi',
   path: '/db.cgi',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const ClassTypesRoute = ClassTypesRouteImport.update({
-  id: '/class-types',
-  path: '/class-types',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ChiefsRoute = ChiefsRouteImport.update({
@@ -227,13 +227,13 @@ export interface FileRoutesByFullPath {
   '/boat-types': typeof BoatTypesRoute
   '/checkouts': typeof CheckoutsRoute
   '/chiefs': typeof ChiefsRoute
-  '/class-types': typeof ClassTypesRoute
   '/db.cgi': typeof DbDotcgiRoute
   '/door-codes': typeof DoorCodesRoute
   '/forbidden': typeof ForbiddenRoute
   '/forgot-password': typeof ForgotPasswordRoute
   '/honorary': typeof HonoraryRoute
   '/lesson-list': typeof LessonListRoute
+  '/lesson-types': typeof LessonTypesRoute
   '/lessons': typeof LessonsRoute
   '/login': typeof LoginRoute
   '/meet-the-team': typeof MeetTheTeamRoute
@@ -264,13 +264,13 @@ export interface FileRoutesByTo {
   '/boat-types': typeof BoatTypesRoute
   '/checkouts': typeof CheckoutsRoute
   '/chiefs': typeof ChiefsRoute
-  '/class-types': typeof ClassTypesRoute
   '/db.cgi': typeof DbDotcgiRoute
   '/door-codes': typeof DoorCodesRoute
   '/forbidden': typeof ForbiddenRoute
   '/forgot-password': typeof ForgotPasswordRoute
   '/honorary': typeof HonoraryRoute
   '/lesson-list': typeof LessonListRoute
+  '/lesson-types': typeof LessonTypesRoute
   '/lessons': typeof LessonsRoute
   '/login': typeof LoginRoute
   '/meet-the-team': typeof MeetTheTeamRoute
@@ -302,13 +302,13 @@ export interface FileRoutesById {
   '/boat-types': typeof BoatTypesRoute
   '/checkouts': typeof CheckoutsRoute
   '/chiefs': typeof ChiefsRoute
-  '/class-types': typeof ClassTypesRoute
   '/db.cgi': typeof DbDotcgiRoute
   '/door-codes': typeof DoorCodesRoute
   '/forbidden': typeof ForbiddenRoute
   '/forgot-password': typeof ForgotPasswordRoute
   '/honorary': typeof HonoraryRoute
   '/lesson-list': typeof LessonListRoute
+  '/lesson-types': typeof LessonTypesRoute
   '/lessons': typeof LessonsRoute
   '/login': typeof LoginRoute
   '/meet-the-team': typeof MeetTheTeamRoute
@@ -341,13 +341,13 @@ export interface FileRouteTypes {
     | '/boat-types'
     | '/checkouts'
     | '/chiefs'
-    | '/class-types'
     | '/db.cgi'
     | '/door-codes'
     | '/forbidden'
     | '/forgot-password'
     | '/honorary'
     | '/lesson-list'
+    | '/lesson-types'
     | '/lessons'
     | '/login'
     | '/meet-the-team'
@@ -378,13 +378,13 @@ export interface FileRouteTypes {
     | '/boat-types'
     | '/checkouts'
     | '/chiefs'
-    | '/class-types'
     | '/db.cgi'
     | '/door-codes'
     | '/forbidden'
     | '/forgot-password'
     | '/honorary'
     | '/lesson-list'
+    | '/lesson-types'
     | '/lessons'
     | '/login'
     | '/meet-the-team'
@@ -415,13 +415,13 @@ export interface FileRouteTypes {
     | '/boat-types'
     | '/checkouts'
     | '/chiefs'
-    | '/class-types'
     | '/db.cgi'
     | '/door-codes'
     | '/forbidden'
     | '/forgot-password'
     | '/honorary'
     | '/lesson-list'
+    | '/lesson-types'
     | '/lessons'
     | '/login'
     | '/meet-the-team'
@@ -453,13 +453,13 @@ export interface RootRouteChildren {
   BoatTypesRoute: typeof BoatTypesRoute
   CheckoutsRoute: typeof CheckoutsRoute
   ChiefsRoute: typeof ChiefsRoute
-  ClassTypesRoute: typeof ClassTypesRoute
   DbDotcgiRoute: typeof DbDotcgiRoute
   DoorCodesRoute: typeof DoorCodesRoute
   ForbiddenRoute: typeof ForbiddenRoute
   ForgotPasswordRoute: typeof ForgotPasswordRoute
   HonoraryRoute: typeof HonoraryRoute
   LessonListRoute: typeof LessonListRoute
+  LessonTypesRoute: typeof LessonTypesRoute
   LessonsRoute: typeof LessonsRoute
   LoginRoute: typeof LoginRoute
   MeetTheTeamRoute: typeof MeetTheTeamRoute
@@ -613,6 +613,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof LessonsRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/lesson-types': {
+      id: '/lesson-types'
+      path: '/lesson-types'
+      fullPath: '/lesson-types'
+      preLoaderRoute: typeof LessonTypesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/lesson-list': {
       id: '/lesson-list'
       path: '/lesson-list'
@@ -653,13 +660,6 @@ declare module '@tanstack/react-router' {
       path: '/db.cgi'
       fullPath: '/db.cgi'
       preLoaderRoute: typeof DbDotcgiRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/class-types': {
-      id: '/class-types'
-      path: '/class-types'
-      fullPath: '/class-types'
-      preLoaderRoute: typeof ClassTypesRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/chiefs': {
@@ -741,13 +741,13 @@ const rootRouteChildren: RootRouteChildren = {
   BoatTypesRoute: BoatTypesRoute,
   CheckoutsRoute: CheckoutsRoute,
   ChiefsRoute: ChiefsRoute,
-  ClassTypesRoute: ClassTypesRoute,
   DbDotcgiRoute: DbDotcgiRoute,
   DoorCodesRoute: DoorCodesRoute,
   ForbiddenRoute: ForbiddenRoute,
   ForgotPasswordRoute: ForgotPasswordRoute,
   HonoraryRoute: HonoraryRoute,
   LessonListRoute: LessonListRoute,
+  LessonTypesRoute: LessonTypesRoute,
   LessonsRoute: LessonsRoute,
   LoginRoute: LoginRoute,
   MeetTheTeamRoute: MeetTheTeamRoute,

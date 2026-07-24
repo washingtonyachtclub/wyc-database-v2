@@ -20,15 +20,17 @@ export type Quarter = {
   text: string
   school: string
   endDate: string
+  usageCount: number
 }
 
 // --- Mappers ---
 
-export function toQuarter(row: typeof quarters.$inferSelect): Quarter {
+export function toQuarter(row: typeof quarters.$inferSelect, usageCount = 0): Quarter {
   return {
     index: row.index,
     text: str(row.text),
     school: str(row.school),
     endDate: str(row.endDate),
+    usageCount,
   }
 }

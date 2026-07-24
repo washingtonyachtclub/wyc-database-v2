@@ -19,15 +19,17 @@ export type BoatType = {
   type: string
   description: string
   fleet: string
+  usageCount: number
 }
 
 // --- Mappers ---
 
-export function toBoatType(row: typeof boatTypes.$inferSelect): BoatType {
+export function toBoatType(row: typeof boatTypes.$inferSelect, usageCount = 0): BoatType {
   return {
     index: row.index,
     type: str(row.type),
     description: row.description,
     fleet: row.fleet,
+    usageCount,
   }
 }

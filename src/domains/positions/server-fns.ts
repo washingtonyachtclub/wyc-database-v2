@@ -1,10 +1,26 @@
 import { createServerFn } from '@tanstack/react-start'
-import { eq } from 'drizzle-orm'
+import { count, eq } from 'drizzle-orm'
 import type { PositionInsertData } from './schema'
 import { toPosition } from './schema'
-import { positions, posType } from '@/db/schema'
+import { officers, positions, posPrivMap, posType } from '@/db/schema'
 import db from '@/db/index'
 import { requirePrivilege } from '@/lib/auth/auth-middleware'
+
+async function getPositionUsageCounts() {
+  const officerUsage = await db
+    .select({ position: officers.position, n: count() })
+    .from(officers)
+    .groupBy(officers.position)
+  const privUsage = await db
+    .select({ position: posPrivMap.position, n: count() })
+    .from(posPrivMap)
+    .groupBy(posPrivMap.position)
+  const counts = new Map<number, number>()
+  for (const u of [...officerUsage, ...privUsage]) {
+    if (u.position != null) counts.set(u.position, (counts.get(u.position) ?? 0) + u.n)
+  }
+  return counts
+}
 
 export const getAllPositions = createServerFn({ method: 'GET' }).handler(async () => {
   await requirePrivilege('db')
@@ -20,7 +36,8 @@ export const getAllPositions = createServerFn({ method: 'GET' }).handler(async (
       .from(positions)
       .leftJoin(posType, eq(positions.type, posType.index))
       .orderBy(positions.type, positions.sortorder)
-    return raw.map(toPosition)
+    const counts = await getPositionUsageCounts()
+    return raw.map((r) => toPosition(r, counts.get(r.index) ?? 0))
   } catch (error) {
     console.error('Failed to fetch positions:', error)
     throw new Error('Failed to fetch positions')
@@ -79,11 +96,23 @@ export const deletePosition = createServerFn({ method: 'POST' })
   .inputValidator((input: { index: number }) => input)
   .handler(async ({ data: { index } }) => {
     await requirePrivilege('db')
+    const [{ n: officerN }] = await db
+      .select({ n: count() })
+      .from(officers)
+      .where(eq(officers.position, index))
+    const [{ n: privN }] = await db
+      .select({ n: count() })
+      .from(posPrivMap)
+      .where(eq(posPrivMap.position, index))
+    const total = officerN + privN
+    if (total > 0) {
+      throw new Error(`Cannot delete: still referenced by ${total} officer/privilege record(s).`)
+    }
     try {
       await db.delete(positions).where(eq(positions.index, index))
       return { success: true }
     } catch (error) {
       console.error('Failed to delete position:', error)
-      throw new Error('Failed to delete position. It may be referenced by officer records.')
+      throw new Error('Failed to delete position')
     }
   })

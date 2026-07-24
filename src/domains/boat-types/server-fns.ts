@@ -1,8 +1,8 @@
 import { createServerFn } from '@tanstack/react-start'
-import { desc, eq } from 'drizzle-orm'
+import { count, desc, eq } from 'drizzle-orm'
 import type { BoatTypeInsertData } from '@/domains/boat-types/schema'
 import { toBoatType } from '@/domains/boat-types/schema'
-import { boatTypes } from '@/db/schema'
+import { boatTypes, checkouts } from '@/db/schema'
 import db from '@/db/index'
 import { requirePrivilege } from '@/lib/auth/auth-middleware'
 
@@ -10,7 +10,13 @@ export const getAllBoatTypes = createServerFn({ method: 'GET' }).handler(async (
   await requirePrivilege('db')
   try {
     const raw = await db.select().from(boatTypes).orderBy(desc(boatTypes.fleet), boatTypes.type)
-    return raw.map(toBoatType)
+    // checkouts.boat stores the boat_types index as a string
+    const usage = await db
+      .select({ boat: checkouts.boat, n: count() })
+      .from(checkouts)
+      .groupBy(checkouts.boat)
+    const counts = new Map(usage.map((u) => [u.boat, u.n]))
+    return raw.map((r) => toBoatType(r, counts.get(String(r.index)) ?? 0))
   } catch (error) {
     console.error('Failed to fetch boat types:', error)
     throw new Error('Failed to fetch boat types')
@@ -32,6 +38,11 @@ export const deleteBoatType = createServerFn({ method: 'POST' })
   .inputValidator((input: { index: number }) => input)
   .handler(async ({ data: { index } }) => {
     await requirePrivilege('db')
+    const [{ n }] = await db
+      .select({ n: count() })
+      .from(checkouts)
+      .where(eq(checkouts.boat, String(index)))
+    if (n > 0) throw new Error(`Cannot delete: ${n} checkout(s) still reference this boat type.`)
     try {
       await db.delete(boatTypes).where(eq(boatTypes.index, index))
       return { success: true }

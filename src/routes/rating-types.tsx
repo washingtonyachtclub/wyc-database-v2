@@ -38,6 +38,22 @@ type DeleteTarget = {
   text: string
 }
 
+function DeleteCell({ item, onDelete }: { item: RatingType; onDelete: () => void }) {
+  return (
+    <TableCell className="py-1.5 px-2 text-sm">
+      {item.usageCount === 0 && (
+        <button
+          className="text-muted-foreground hover:text-destructive"
+          title="Delete"
+          onClick={onDelete}
+        >
+          <X className="h-4 w-4" />
+        </button>
+      )}
+    </TableCell>
+  )
+}
+
 function RatingTypesPage() {
   const { data: ratingTypes } = useSuspenseQuery(getRatingTypesAllQueryOptions())
   const [isAddModalOpen, setIsAddModalOpen] = useState(false)
@@ -86,16 +102,12 @@ function RatingTypesPage() {
                           <TableRow className="bg-yellow-50 dark:bg-yellow-950/30">
                             <TableCell className="py-1.5 px-2 text-sm">{item.text}</TableCell>
                             <TableCell className="py-1.5 px-2 text-sm">{item.degree}</TableCell>
-                            <TableCell className="py-1.5 px-2 text-sm">
-                              <button
-                                className="text-muted-foreground hover:text-destructive"
-                                onClick={() =>
-                                  setDeleteTarget({ index: item.index, text: item.text })
-                                }
-                              >
-                                <X className="h-4 w-4" />
-                              </button>
-                            </TableCell>
+                            <DeleteCell
+                              item={item}
+                              onDelete={() =>
+                                setDeleteTarget({ index: item.index, text: item.text })
+                              }
+                            />
                           </TableRow>
                         </TooltipTrigger>
                         <TooltipContent>Expires</TooltipContent>
@@ -105,14 +117,10 @@ function RatingTypesPage() {
                     <TableRow key={item.index}>
                       <TableCell className="py-1.5 px-2 text-sm">{item.text}</TableCell>
                       <TableCell className="py-1.5 px-2 text-sm">{item.degree}</TableCell>
-                      <TableCell className="py-1.5 px-2 text-sm">
-                        <button
-                          className="text-muted-foreground hover:text-destructive"
-                          onClick={() => setDeleteTarget({ index: item.index, text: item.text })}
-                        >
-                          <X className="h-4 w-4" />
-                        </button>
-                      </TableCell>
+                      <DeleteCell
+                        item={item}
+                        onDelete={() => setDeleteTarget({ index: item.index, text: item.text })}
+                      />
                     </TableRow>
                   ),
                 )}
@@ -136,21 +144,13 @@ function RatingTypesPage() {
             { onSettled: () => setDeleteTarget(null) },
           )
         }}
-        title="ARE YOU SURE?"
+        title="Delete rating type?"
+        confirmLabels={[]}
         description={
-          <>
-            <p className="mb-2">
-              Deleting rating type <strong>{deleteTarget?.text}</strong> from the database is almost
-              always the wrong thing to do.
-            </p>
-            <p className="mb-2">
-              If any members have this rating, those rating records will lose their type reference.
-              This could affect member ratings, historical data, and rating reports.
-            </p>
-            <p className="font-semibold">
-              You should probably only do this if you just created it by mistake.
-            </p>
-          </>
+          <p>
+            Delete rating type <strong>{deleteTarget?.text}</strong>? No member ratings use it, so
+            this is safe. Most likely it was just created by mistake.
+          </p>
         }
       />
     </div>

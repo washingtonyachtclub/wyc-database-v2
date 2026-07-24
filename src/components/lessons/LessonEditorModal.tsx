@@ -7,7 +7,7 @@ import type { LessonInsert } from '@/domains/lessons/schema'
 import { emptySessionInput, lessonInsertSchemaForQuarters } from '@/domains/lessons/schema'
 import { useMemo } from 'react'
 import { useAppForm } from '../../hooks/form'
-import { getClassTypesQueryOptions } from '@/domains/class-types/query-options'
+import { getLessonTypesQueryOptions } from '@/domains/lesson-types/query-options'
 import { useCreateLessonMutation } from '@/domains/lessons/query-options'
 import { getQuartersQueryOptions } from '@/domains/quarters/query-options'
 import { Button } from '../ui/button'
@@ -39,7 +39,7 @@ type LessonFormModalProps = {
 
 export function LessonFormModal({ onClose, currentQuarter, onSuccess }: LessonFormModalProps) {
   const { data: quarters = [] } = useQuery(getQuartersQueryOptions())
-  const { data: classTypes = [] } = useQuery(getClassTypesQueryOptions())
+  const { data: classTypes = [] } = useQuery(getLessonTypesQueryOptions())
 
   const defaultQuarter = quarters.find((q) => q.index === currentQuarter) ?? quarters[0]
 
