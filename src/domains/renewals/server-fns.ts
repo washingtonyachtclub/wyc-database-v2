@@ -9,7 +9,7 @@ import {
 } from '@/db/schema'
 import { requireAuth, requirePrivilege } from '@/lib/auth/auth-middleware'
 import { sendEmail } from '@/lib/email'
-import { returningMemberEmail } from '@/lib/email-templates'
+import { returningMemberEmail } from '@/lib/emails/membership'
 import { SQUARE_LOCATION_ID, squareClient } from '@/lib/square'
 import { createServerFn } from '@tanstack/react-start'
 import { and, eq } from 'drizzle-orm'

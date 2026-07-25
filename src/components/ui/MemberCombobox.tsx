@@ -39,12 +39,13 @@ export function MemberCombobox({
   const MAX_RESULTS = 50
 
   const trimmedSearch = search.trim()
+  const searchTokens = trimmedSearch.toLowerCase().split(/\s+/)
   const filteredMembers =
     trimmedSearch.length < MIN_SEARCH_LENGTH
       ? []
       : members.filter((m) => {
           const full = `${m.first} ${m.last} ${m.wycNumber}`.toLowerCase()
-          return full.includes(trimmedSearch.toLowerCase())
+          return searchTokens.every((token) => full.includes(token))
         })
 
   const displayedMembers = filteredMembers.slice(0, MAX_RESULTS)

@@ -4,7 +4,7 @@ import db from '@/db/index'
 import type { LessonFilters } from './filter-types'
 import { toLessonSession, type LessonSession, type RichLesson } from './schema'
 import { classType, lessonSessions, lessons, signups, wycDatabase } from '@/db/schema'
-import type { LessonEmailInfo } from '@/lib/email-templates'
+import type { LessonEmailInfo } from '@/lib/emails/lessons'
 
 const instructor1Table = alias(wycDatabase, 'i1')
 const instructor2Table = alias(wycDatabase, 'i2')

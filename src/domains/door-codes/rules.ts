@@ -1,5 +1,3 @@
-import { getExpiryDate } from '@/lib/rating-expiry'
-
 /** `ratings.type` values. */
 export type RatingType = 'Cat' | 'DH' | 'KB' | 'SB' | 'SH' | 'lake' | 'rig' | 'whaler' | 'written'
 
@@ -20,7 +18,6 @@ export const DOOR_CODE_RULES = {
       { type: 'DH', minDegree: 1 },
       { type: 'SH', minDegree: 1 },
       { type: 'KB', minDegree: 1 },
-      // The whaler rating only exists at degree 0, so this means "has a whaler rating".
       { type: 'whaler', minDegree: 0 },
     ],
     label: 'Dinghy Novice or above',
@@ -34,7 +31,7 @@ export const DOOR_CODE_RULES = {
       { type: 'DH', minDegree: 2 },
       { type: 'KB', minDegree: 1 },
     ],
-    label: 'Dinghy Intermediate or above / KB Novice or above',
+    label: 'DH Intermediate or above / KB Novice or above',
   },
   keelboat: {
     requires: [{ type: 'KB', minDegree: 1 }],
@@ -48,28 +45,18 @@ export function ruleForSlug(slug: string): DoorCodeRule | null {
   return DOOR_CODE_RULES[slug as DoorCodeSlug] ?? null
 }
 
-export type HeldRating = {
-  type: string
-  degree: number
-  expires: boolean
-  date: string
-}
+/** Expired ratings must already be filtered out — use `getActiveMemberRatings`. */
+export type ActiveRating = { type: string; degree: number }
 
-function isUnexpired(rating: HeldRating, today: string): boolean {
-  if (!rating.expires) return true
-  if (!rating.date) return false
-  return getExpiryDate(rating.date) >= today
-}
-
-/** Whether any unexpired held rating satisfies the rule. */
-export function satisfiesRule(
-  rule: DoorCodeRule,
-  ratings: HeldRating[],
-  today = new Date().toISOString().slice(0, 10),
-): boolean {
-  return ratings.some(
-    (r) =>
-      isUnexpired(r, today) &&
-      rule.requires.some((req) => r.type === req.type && r.degree >= req.minDegree),
+export function satisfiesRule(rule: DoorCodeRule, ratings: ActiveRating[]): boolean {
+  return ratings.some((r) =>
+    rule.requires.some((req) => r.type === req.type && r.degree >= req.minDegree),
   )
+}
+
+const ALL_SLUGS = Object.keys(DOOR_CODE_RULES) as DoorCodeSlug[]
+
+/** Every door the ratings satisfy. Diffing this across a rating change yields what just unlocked. */
+export function unlockedSlugs(ratings: ActiveRating[]): DoorCodeSlug[] {
+  return ALL_SLUGS.filter((slug) => satisfiesRule(DOOR_CODE_RULES[slug], ratings))
 }

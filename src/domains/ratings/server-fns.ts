@@ -6,9 +6,13 @@ import type { RatingInsertData } from '@/domains/ratings/schema'
 import {
   baseAllRatingsCountQuery,
   baseAllRatingsQuery,
+  getActiveMemberRatings,
   ratingSortColumns,
   withRatingFilters,
 } from '@/domains/ratings/queries'
+import { notifyDoorUnlocks } from '@/domains/door-codes/notify'
+import type { DoorCodeSlug } from '@/domains/door-codes/rules'
+import { unlockedSlugs } from '@/domains/door-codes/rules'
 import { withPagination, withSorting } from '@/db/query-helpers'
 import { ratings, wycRatings } from '@/db/schema'
 import db from '@/db/index'
@@ -94,13 +98,22 @@ export const createRating = createServerFn({ method: 'POST' })
   .inputValidator((input: RatingInsertData) => input)
   .handler(async ({ data }) => {
     const userId = await requirePrivilege('rtgs')
+
+    let before: DoorCodeSlug[] = []
     try {
+      before = unlockedSlugs(await getActiveMemberRatings(data.member))
       await db.insert(wycRatings).values({ ...data, enteredBy: userId })
-      return { success: true }
     } catch (error) {
       console.error('Failed to create rating:', error)
       throw new Error('Failed to create rating')
     }
+
+    const { emailSent, emailSimulated } = await notifyDoorUnlocks({
+      wycNumber: data.member,
+      ratingIndex: data.rating,
+      before,
+    })
+    return { success: true, emailSent, emailSimulated }
   })
 
 export const deleteRating = createServerFn({ method: 'POST' })

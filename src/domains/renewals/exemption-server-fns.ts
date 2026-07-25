@@ -10,7 +10,7 @@ import {
 } from '@/db/schema'
 import { requireAuth } from '@/lib/auth/auth-middleware'
 import { sendEmail } from '@/lib/email'
-import { returningMemberEmail } from '@/lib/email-templates'
+import { returningMemberEmail } from '@/lib/emails/membership'
 import { createServerFn } from '@tanstack/react-start'
 import { and, desc, eq, inArray } from 'drizzle-orm'
 import { computeRenewal } from './compute-renewal'

@@ -4,21 +4,14 @@ import { OFFICER_POS_TYPE } from '@/db/constants'
 import db from '@/db/index'
 import { fullName } from '@/db/mapper-utils'
 import { isMembershipActive } from '@/db/membership-utils'
-import {
-  doorCodes,
-  lessonQuarter,
-  officers,
-  positions,
-  ratings,
-  wycDatabase,
-  wycRatings,
-} from '@/db/schema'
+import { doorCodes, lessonQuarter, officers, positions, wycDatabase } from '@/db/schema'
 import { requireAuth } from '@/lib/auth/auth-middleware'
 import { hasPrivilege } from '@/lib/permissions'
 import { useAppSession } from '@/lib/auth/session'
 import type { DoorCodeEntry, DoorCodeUpdateData } from './schema'
 import { doorCodeUpdateSchema } from './schema'
-import type { HeldRating } from './rules'
+import { getActiveMemberRatings } from '@/domains/ratings/queries'
+import type { ActiveRating } from './rules'
 import { ruleForSlug, satisfiesRule } from './rules'
 
 async function isOfficer(wycNumber: number): Promise<boolean> {
@@ -54,26 +47,6 @@ async function getCurrentQuarter(): Promise<number> {
   return row.quarter
 }
 
-async function getHeldRatings(wycNumber: number): Promise<HeldRating[]> {
-  const rows = await db
-    .select({
-      type: ratings.type,
-      degree: ratings.degree,
-      expires: ratings.expires,
-      date: wycRatings.date,
-    })
-    .from(wycRatings)
-    .innerJoin(ratings, eq(wycRatings.rating, ratings.index))
-    .where(eq(wycRatings.member, wycNumber))
-
-  return rows.map((r) => ({
-    type: r.type,
-    degree: r.degree,
-    expires: r.expires !== 0,
-    date: r.date ?? '',
-  }))
-}
-
 /** Codes the caller has not earned are never serialized, so the client cannot leak them. */
 export const getMyDoorCodes = createServerFn({ method: 'GET' }).handler(async () => {
   const wycNumber = await requireAuth()
@@ -85,7 +58,7 @@ export const getMyDoorCodes = createServerFn({ method: 'GET' }).handler(async ()
     ])
 
     const unlockAll = canEdit
-    let held: HeldRating[] = []
+    let held: ActiveRating[] = []
     let membershipActive = true
 
     if (!unlockAll) {
@@ -98,7 +71,7 @@ export const getMyDoorCodes = createServerFn({ method: 'GET' }).handler(async ()
         getCurrentQuarter(),
       ])
       membershipActive = member != null && isMembershipActive(member.expireQtrIndex, currentQuarter)
-      held = membershipActive ? await getHeldRatings(wycNumber) : []
+      held = membershipActive ? await getActiveMemberRatings(wycNumber) : []
     }
 
     const editorIds = [...new Set(rows.map((r) => r.updatedBy).filter((id) => id !== null))]

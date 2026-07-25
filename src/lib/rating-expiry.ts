@@ -10,6 +10,15 @@ export function getExpiryDate(ratingDate: string): string {
   return `${year}-${month}-${day}`
 }
 
+export function isRatingActive(
+  rating: { expires: boolean; date: string },
+  today = new Date().toISOString().slice(0, 10),
+): boolean {
+  if (!rating.expires) return true
+  if (!rating.date) return false
+  return getExpiryDate(rating.date) >= today
+}
+
 export function getExpiryInfo(rating: MemberRating): string | null {
   if (!rating.ratingExpires) return null
   if (!rating.date) return null

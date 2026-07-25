@@ -11,7 +11,7 @@ import {
 import { toRichLesson } from '@/domains/lessons/schema'
 import { pacificDatePlusDays } from '@/lib/date-utils'
 import { sendEmailBatch, type BatchMessage } from '@/lib/email'
-import { lessonReminderEmail, lessonReminderSubject } from '@/lib/email-templates'
+import { lessonReminderEmail, lessonReminderSubject } from '@/lib/emails/lessons'
 import { isDevEnvironment } from '@/lib/env'
 import { and, asc, eq, inArray, sql } from 'drizzle-orm'
 

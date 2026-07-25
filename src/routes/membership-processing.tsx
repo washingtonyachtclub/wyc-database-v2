@@ -24,7 +24,7 @@ import {
 import { getQuartersQueryOptions } from '@/domains/quarters/query-options'
 import { createMember, markEntryProcessed } from '@/domains/members/server-fns'
 import { isDevEnvironment } from '@/lib/env'
-import { newMemberEmailFallback } from '@/lib/email-templates'
+import { newMemberEmailFallback } from '@/lib/emails/membership'
 import { cn } from '@/lib/utils'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { createFileRoute } from '@tanstack/react-router'

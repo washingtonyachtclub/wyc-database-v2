@@ -5,7 +5,7 @@ import { wycDatabase } from '@/db/schema'
 import { hashPasswordArgon2, hashPasswordLegacy } from '@/lib/auth/auth'
 import { requireAuth } from '@/lib/auth/auth-middleware'
 import { sendEmail } from './email'
-import { passwordResetEmail, wycNumberLookupEmail } from './email-templates'
+import { passwordResetEmail, wycNumberLookupEmail } from './emails/auth'
 import { generatePassphrase } from './generate-passphrase'
 
 export const setPasswordServerFn = createServerFn({ method: 'POST' })

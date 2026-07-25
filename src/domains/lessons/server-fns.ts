@@ -34,7 +34,7 @@ import {
   requirePrivilege,
 } from '@/lib/auth/auth-middleware'
 import { sendEmail } from '@/lib/email'
-import { lessonEnrolledEmail, lessonWaitlistedEmail } from '@/lib/email-templates'
+import { lessonEnrolledEmail, lessonWaitlistedEmail } from '@/lib/emails/lessons'
 import { deleteSessionEvent, gcalEnabled, upsertSessionEvent } from '@/lib/gcal'
 import { createServerFn } from '@tanstack/react-start'
 import { and, asc, count, eq, gte, inArray, or } from 'drizzle-orm'

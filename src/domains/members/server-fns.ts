@@ -29,7 +29,7 @@ import {
 import { hashPasswordArgon2, hashPasswordLegacy } from '@/lib/auth/auth'
 import { sendEmail } from '@/lib/email'
 import { generatePassphrase } from '@/lib/generate-passphrase'
-import { newMemberEmail } from '@/lib/email-templates'
+import { newMemberEmail } from '@/lib/emails/membership'
 
 export const getMembersTable = createServerFn({ method: 'GET' })
   .inputValidator(

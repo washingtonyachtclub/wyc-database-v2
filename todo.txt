@@ -1,6 +1,5 @@
 # Important
 
-- enforce 1 laser sign up per quarter?
 - pwa manifest save website as app investigation?
 
 - execute password migration plan
@@ -8,7 +7,7 @@
 
 ## backend
 - resolve any drizzle shchema.ts and actual schema mismatch. Make drizzle the source of truth?
-- add admin role to control pages: privileges, dues exempt approvals, chiefs, maybe others
+- migrate class_types to make more sense (Laser, FJ, etc)
 
 ## bigger projects
 - automated IMA plus one matching
@@ -22,7 +21,7 @@
 - better ratings viewing: de-duping expired novices, showing only highest earned rating per category, etc
 - apple pay on membership dues payment
 - required lesson confirmation 1 week before lesson, after 4 days move them to waitlist
-- create featured lessons, pin to top of lesson list
+- create featured lessons, pin to top of lesson kkkkklist
 - LLM prompt -> filter parameters / direct read query on DB
 - dev tool: indicator for last prod -> db sync
 - automate the stuff in maintenance.md

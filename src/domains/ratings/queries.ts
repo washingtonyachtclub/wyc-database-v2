@@ -1,9 +1,10 @@
+import db from '@/db/index'
+import { ratings, wycDatabase, wycRatings } from '@/db/schema'
+import { isRatingActive } from '@/lib/rating-expiry'
 import { and, count, desc, eq, gte, lte } from 'drizzle-orm'
 import type { MySqlColumn, MySqlSelect } from 'drizzle-orm/mysql-core'
 import { alias } from 'drizzle-orm/mysql-core'
-import db from '@/db/index'
 import type { RatingFilters } from './filter-types'
-import { ratings, wycDatabase, wycRatings } from '@/db/schema'
 
 const memberTable = alias(wycDatabase, 'member')
 const examinerTable = alias(wycDatabase, 'examiner')
@@ -97,6 +98,41 @@ export function withRatingFilters<T extends MySqlSelect>(
   }
 
   return qb
+}
+
+export type ActiveMemberRating = {
+  type: string
+  degree: number
+  text: string
+  date: string
+}
+
+export async function getActiveMemberRatings(
+  wycNumber: number,
+  today?: string,
+): Promise<ActiveMemberRating[]> {
+  const rows = await db
+    .select({
+      type: ratings.type,
+      degree: ratings.degree,
+      text: ratings.text,
+      expires: ratings.expires,
+      date: wycRatings.date,
+    })
+    .from(wycRatings)
+    .innerJoin(ratings, eq(wycRatings.rating, ratings.index))
+    .where(eq(wycRatings.member, wycNumber))
+
+  return rows
+    .map((r) => ({
+      type: r.type,
+      degree: r.degree,
+      text: r.text ?? '',
+      expires: r.expires !== 0,
+      date: r.date ?? '',
+    }))
+    .filter((r) => isRatingActive(r, today))
+    .map(({ type, degree, text, date }) => ({ type, degree, text, date }))
 }
 
 export function baseRatingsGivenQuery(wycNumber: number, since?: string) {

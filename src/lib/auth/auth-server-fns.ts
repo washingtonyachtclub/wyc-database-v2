@@ -4,7 +4,7 @@ import db from '@/db/index'
 import { lessonQuarter, lessons, officers, posPrivMap, privs, wycDatabase } from '@/db/schema'
 import { hashPasswordArgon2, verifyPasswordDual } from '@/lib/auth/auth'
 import { sendEmail } from '@/lib/email'
-import { loginOtpEmail } from '@/lib/email-templates'
+import { loginOtpEmail } from '@/lib/emails/auth'
 import { isDevEnvironment } from '../env'
 import { hasPrivilege, type Privilege } from '../permissions'
 import {
