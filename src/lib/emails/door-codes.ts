@@ -17,7 +17,6 @@ export function doorUnlockedEmail({
   ratingName: string
   doorName: string
   slug: DoorCodeSlug
-  membershipActive: boolean
 }): string {
   const congrats = ratingName
     ? `Congratulations on your ${ratingName} rating!`

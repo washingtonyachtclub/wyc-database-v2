@@ -1,6 +1,5 @@
 import db from '@/db/index'
-import { isMembershipActive } from '@/db/membership-utils'
-import { doorCodes, lessonQuarter, ratings, wycDatabase } from '@/db/schema'
+import { doorCodes, ratings, wycDatabase } from '@/db/schema'
 import type { BatchMessage } from '@/lib/email'
 import { sendEmailBatch } from '@/lib/email'
 import { doorUnlockedEmail, doorUnlockedSubject } from '@/lib/emails/door-codes'
@@ -31,13 +30,9 @@ export async function notifyDoorUnlocks({
     const newly = after.filter((slug) => !before.includes(slug))
     if (newly.length === 0) return NO_EMAIL
 
-    const [[member], [ratingRow], doors, [quarterRow]] = await Promise.all([
+    const [[member], [ratingRow], doors] = await Promise.all([
       db
-        .select({
-          first: wycDatabase.first,
-          email: wycDatabase.email,
-          expireQtrIndex: wycDatabase.expireQtrIndex,
-        })
+        .select({ first: wycDatabase.first, email: wycDatabase.email })
         .from(wycDatabase)
         .where(eq(wycDatabase.wycNumber, wycNumber))
         .limit(1),
@@ -47,17 +42,11 @@ export async function notifyDoorUnlocks({
         .where(eq(ratings.index, ratingIndex))
         .limit(1),
       db.select().from(doorCodes).where(inArray(doorCodes.slug, newly)),
-      db
-        .select({ quarter: lessonQuarter.quarter })
-        .from(lessonQuarter)
-        .where(eq(lessonQuarter.index, 1))
-        .limit(1),
     ])
 
     const to = member?.email?.trim() ?? ''
     if (!to) return NO_EMAIL
 
-    const membershipActive = isMembershipActive(member.expireQtrIndex, quarterRow.quarter)
     const ratingName = ratingRow?.text?.trim() ?? ''
     const doorNames = new Map(doors.map((d) => [d.slug, d.name]))
 
@@ -74,7 +63,6 @@ export async function notifyDoorUnlocks({
             ratingName,
             doorName,
             slug,
-            membershipActive,
           }),
         }
       })
