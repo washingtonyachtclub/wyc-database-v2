@@ -11,6 +11,64 @@ export function normalizeTextAnswer(value: string) {
     .replace(/[^a-z0-9]+/g, '')
 }
 
+function getEditDistance(left: string, right: string) {
+  const distances = Array.from({ length: left.length + 1 }, () =>
+    Array.from({ length: right.length + 1 }, () => 0),
+  )
+
+  for (let leftIndex = 0; leftIndex <= left.length; leftIndex += 1) {
+    distances[leftIndex][0] = leftIndex
+  }
+  for (let rightIndex = 0; rightIndex <= right.length; rightIndex += 1) {
+    distances[0][rightIndex] = rightIndex
+  }
+
+  for (let leftIndex = 1; leftIndex <= left.length; leftIndex += 1) {
+    for (let rightIndex = 1; rightIndex <= right.length; rightIndex += 1) {
+      const substitutionCost = left[leftIndex - 1] === right[rightIndex - 1] ? 0 : 1
+      distances[leftIndex][rightIndex] = Math.min(
+        distances[leftIndex - 1][rightIndex] + 1,
+        distances[leftIndex][rightIndex - 1] + 1,
+        distances[leftIndex - 1][rightIndex - 1] + substitutionCost,
+      )
+
+      if (
+        leftIndex > 1 &&
+        rightIndex > 1 &&
+        left[leftIndex - 1] === right[rightIndex - 2] &&
+        left[leftIndex - 2] === right[rightIndex - 1]
+      ) {
+        distances[leftIndex][rightIndex] = Math.min(
+          distances[leftIndex][rightIndex],
+          distances[leftIndex - 2][rightIndex - 2] + 1,
+        )
+      }
+    }
+  }
+
+  return distances[left.length][right.length]
+}
+
+function getMaximumEditDistance(length: number) {
+  if (length <= 4) return 0
+  if (length <= 7) return 1
+  if (length <= 12) return 2
+  return 3
+}
+
+export function isTextAnswerAccepted(answer: string, acceptedAnswer: string) {
+  const normalizedAnswer = normalizeTextAnswer(answer)
+  const normalizedAcceptedAnswer = normalizeTextAnswer(acceptedAnswer)
+  if (normalizedAnswer === normalizedAcceptedAnswer) return true
+
+  const maximumEditDistance = getMaximumEditDistance(normalizedAcceptedAnswer.length)
+  if (Math.abs(normalizedAnswer.length - normalizedAcceptedAnswer.length) > maximumEditDistance) {
+    return false
+  }
+
+  return getEditDistance(normalizedAnswer, normalizedAcceptedAnswer) <= maximumEditDistance
+}
+
 export function isDevelopmentAnswer(answer: TestAnswer | undefined) {
   const values = Array.isArray(answer) ? answer : [answer]
   return (
@@ -29,9 +87,8 @@ export function isQuestionCorrect(question: TestQuestion, answer: TestAnswer | u
   if (!isQuestionAnswered(question, answer)) return false
 
   if (question.type === 'text') {
-    const normalized = normalizeTextAnswer(answer as string)
-    return question.acceptedAnswers.some(
-      (acceptedAnswer) => normalizeTextAnswer(acceptedAnswer) === normalized,
+    return question.acceptedAnswers.some((acceptedAnswer) =>
+      isTextAnswerAccepted(answer as string, acceptedAnswer),
     )
   }
 

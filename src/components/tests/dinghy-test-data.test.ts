@@ -1,7 +1,12 @@
 import { describe, expect, it } from 'vitest'
 
 import { dinghyNoviceTest } from './dinghy-test-data'
-import { isQuestionCorrect, scoreTest, type TestAnswers } from './dinghy-test-utils'
+import {
+  isQuestionCorrect,
+  isTextAnswerAccepted,
+  scoreTest,
+  type TestAnswers,
+} from './dinghy-test-utils'
 
 describe('dinghyNoviceTest', () => {
   it('contains the exact active 77-question test in source order', () => {
@@ -40,6 +45,15 @@ describe('Dinghy test scoring', () => {
     expect(isQuestionCorrect(firstQuestion, 'CENTER-BOARD')).toBe(true)
     expect(isQuestionCorrect(firstQuestion, 'dagger board')).toBe(true)
     expect(isQuestionCorrect(firstQuestion, 'rudder')).toBe(false)
+  })
+
+  it('accepts close misspellings without accepting different sailing terms', () => {
+    expect(isTextAnswerAccepted('centerbord', 'centerboard')).toBe(true)
+    expect(isTextAnswerAccepted('tillre', 'tiller')).toBe(true)
+    expect(isTextAnswerAccepted('mainshet', 'mainsheet')).toBe(true)
+    expect(isTextAnswerAccepted('mask', 'mast')).toBe(false)
+    expect(isTextAnswerAccepted('rudder', 'tiller')).toBe(false)
+    expect(isTextAnswerAccepted('close reach', 'close hauled')).toBe(false)
   })
 
   it('accepts devtest for local development testing', () => {
