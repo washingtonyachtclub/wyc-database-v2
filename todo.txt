@@ -1,11 +1,15 @@
 # Important
 
+- sail locker mode, infinite sessions when not sail locker computer 
+- boat maintenance onboarding page with linear invite link
+- consider how to differentiate vibed and non-vibed parts of codebase
+
 - pwa manifest save website as app investigation?
 - hyperlink support in lesson desc. + display lesson formatting on individual sign up page
 - autohide lessons after calendar date (can't derive display from dates bc future lessons sometimes displayed and sometimes not)
 - make unlimited class size option. Can be represented 0 in db but checkbox in UI. Don't allow <= 0 class sizes. Change sign up / email UX to not include waitlists and stuff
-- boat maintenance onboarding page with linear invite link
 - boat status page derived from linear out of service tags
+- email student when admin removes from lesson
 
 - new checkout page (in branch)
 
@@ -18,7 +22,11 @@
 - lesson sign up UI: compact view, sort by date (ignoring category) view, calendar view
 - overall better mobile UX (especially on non-admin pages)
 - linking discord roles with db roles (for auto sync of roles like chiefs, kb novice, etc)
-- member dashboard: current wind, boats you can take out, boat statuses (linked to linear), etc
+- rebrand to member portal
+	- Dashboard: current wind, boats you can take out, boat statuses (linked to linear), club calendar, upcoming lessons, etc
+	- design refresh
+	- marketing
+	- one-stop shop for all things a member could need
 
 # Less Important
 - image hosting for chiefs / officers
