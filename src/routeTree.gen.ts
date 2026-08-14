@@ -37,7 +37,7 @@ import { Route as DbDotcgiRouteImport } from './routes/db[.]cgi'
 import { Route as ChiefsRouteImport } from './routes/chiefs'
 import { Route as CheckoutsRouteImport } from './routes/checkouts'
 import { Route as BoatTypesRouteImport } from './routes/boat-types'
-import { Route as BoatMaintenanceTrackerRouteImport } from './routes/boat-maintenance-tracker'
+import { Route as MaintenanceTrackerRouteImport } from './routes/maintenance-tracker'
 import { Route as ApproveExemptionsRouteImport } from './routes/approve-exemptions'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as SignupLessonIndexRouteImport } from './routes/signup.$lessonIndex'
@@ -186,9 +186,9 @@ const BoatTypesRoute = BoatTypesRouteImport.update({
   path: '/boat-types',
   getParentRoute: () => rootRouteImport,
 } as any)
-const BoatMaintenanceTrackerRoute = BoatMaintenanceTrackerRouteImport.update({
-  id: '/boat-maintenance-tracker',
-  path: '/boat-maintenance-tracker',
+const MaintenanceTrackerRoute = MaintenanceTrackerRouteImport.update({
+  id: '/maintenance-tracker',
+  path: '/maintenance-tracker',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ApproveExemptionsRoute = ApproveExemptionsRouteImport.update({
@@ -230,7 +230,7 @@ const ApiCronLessonRemindersRoute = ApiCronLessonRemindersRouteImport.update({
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/approve-exemptions': typeof ApproveExemptionsRoute
-  '/boat-maintenance-tracker': typeof BoatMaintenanceTrackerRoute
+  '/maintenance-tracker': typeof MaintenanceTrackerRoute
   '/boat-types': typeof BoatTypesRoute
   '/checkouts': typeof CheckoutsRoute
   '/chiefs': typeof ChiefsRoute
@@ -268,7 +268,7 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/approve-exemptions': typeof ApproveExemptionsRoute
-  '/boat-maintenance-tracker': typeof BoatMaintenanceTrackerRoute
+  '/maintenance-tracker': typeof MaintenanceTrackerRoute
   '/boat-types': typeof BoatTypesRoute
   '/checkouts': typeof CheckoutsRoute
   '/chiefs': typeof ChiefsRoute
@@ -307,7 +307,7 @@ export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/approve-exemptions': typeof ApproveExemptionsRoute
-  '/boat-maintenance-tracker': typeof BoatMaintenanceTrackerRoute
+  '/maintenance-tracker': typeof MaintenanceTrackerRoute
   '/boat-types': typeof BoatTypesRoute
   '/checkouts': typeof CheckoutsRoute
   '/chiefs': typeof ChiefsRoute
@@ -347,7 +347,7 @@ export interface FileRouteTypes {
   fullPaths:
     | '/'
     | '/approve-exemptions'
-    | '/boat-maintenance-tracker'
+    | '/maintenance-tracker'
     | '/boat-types'
     | '/checkouts'
     | '/chiefs'
@@ -385,7 +385,7 @@ export interface FileRouteTypes {
   to:
     | '/'
     | '/approve-exemptions'
-    | '/boat-maintenance-tracker'
+    | '/maintenance-tracker'
     | '/boat-types'
     | '/checkouts'
     | '/chiefs'
@@ -423,7 +423,7 @@ export interface FileRouteTypes {
     | '__root__'
     | '/'
     | '/approve-exemptions'
-    | '/boat-maintenance-tracker'
+    | '/maintenance-tracker'
     | '/boat-types'
     | '/checkouts'
     | '/chiefs'
@@ -462,7 +462,7 @@ export interface FileRouteTypes {
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   ApproveExemptionsRoute: typeof ApproveExemptionsRoute
-  BoatMaintenanceTrackerRoute: typeof BoatMaintenanceTrackerRoute
+  MaintenanceTrackerRoute: typeof MaintenanceTrackerRoute
   BoatTypesRoute: typeof BoatTypesRoute
   CheckoutsRoute: typeof CheckoutsRoute
   ChiefsRoute: typeof ChiefsRoute
@@ -696,11 +696,11 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof BoatTypesRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/boat-maintenance-tracker': {
-      id: '/boat-maintenance-tracker'
-      path: '/boat-maintenance-tracker'
-      fullPath: '/boat-maintenance-tracker'
-      preLoaderRoute: typeof BoatMaintenanceTrackerRouteImport
+    '/maintenance-tracker': {
+      id: '/maintenance-tracker'
+      path: '/maintenance-tracker'
+      fullPath: '/maintenance-tracker'
+      preLoaderRoute: typeof MaintenanceTrackerRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/approve-exemptions': {
@@ -758,7 +758,7 @@ declare module '@tanstack/react-router' {
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   ApproveExemptionsRoute: ApproveExemptionsRoute,
-  BoatMaintenanceTrackerRoute: BoatMaintenanceTrackerRoute,
+  MaintenanceTrackerRoute: MaintenanceTrackerRoute,
   BoatTypesRoute: BoatTypesRoute,
   CheckoutsRoute: CheckoutsRoute,
   ChiefsRoute: ChiefsRoute,

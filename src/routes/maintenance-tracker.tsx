@@ -1,20 +1,20 @@
 import { requirePrivilegeForRoute } from '@/lib/route-guards'
 import { createFileRoute } from '@tanstack/react-router'
 
-export const Route = createFileRoute('/boat-maintenance-tracker')({
+export const Route = createFileRoute('/maintenance-tracker')({
   beforeLoad: ({ context }) => {
-    requirePrivilegeForRoute(context, '/boat-maintenance-tracker')
+    requirePrivilegeForRoute(context, '/maintenance-tracker')
   },
   head: () => ({
     meta: [
-      { title: 'Boat Maintenance Tracker | Washington Yacht Club' },
+      { title: 'Maintenance Tracker | Washington Yacht Club' },
       {
         name: 'description',
         content: 'A quick guide to tracking Washington Yacht Club maintenance work in Linear.',
       },
     ],
   }),
-  component: BoatMaintenanceTrackerPage,
+  component: MaintenanceTrackerPage,
 })
 
 const linearInviteUrl =
@@ -23,12 +23,12 @@ const linearInviteUrl =
 const appStoreUrl = 'https://apps.apple.com/app/linear-mobile/id1645587184'
 const playStoreUrl = 'https://play.google.com/store/apps/details?id=app.linear'
 
-function BoatMaintenanceTrackerPage() {
+function MaintenanceTrackerPage() {
   return (
     <article className="mx-auto max-w-5xl px-4 py-8 sm:px-6 lg:py-12">
       <header className="mb-10">
         <h1 className="mb-3 text-3xl font-bold tracking-tight sm:text-4xl">
-          Boat Maintenance Tracker
+          Maintenance Tracker
         </h1>
         <p className="text-lg text-muted-foreground">
           Linear is our shared hub for tracking club maintenance work.
@@ -56,7 +56,7 @@ function BoatMaintenanceTrackerPage() {
             assignee, boat/fleet label, and discussion together.
           </p>
           <img
-            src="/boat-maintenance-tracker/issue-anatomy.png"
+            src="/maintenance-tracker/issue-anatomy.png"
             alt="Annotated Linear issue showing its status, priority, assignee, boat or fleet label, and discussion"
             className="w-full rounded-lg border shadow-sm"
           />
@@ -68,7 +68,7 @@ function BoatMaintenanceTrackerPage() {
             To see the board, navigate to <strong>Your Teams → Maintenance → Issues</strong>.
           </p>
           <img
-            src="/boat-maintenance-tracker/board.png"
+            src="/maintenance-tracker/board.png"
             alt="Linear maintenance board with the Issues tab and create button highlighted"
             loading="lazy"
             className="w-full rounded-lg border shadow-sm"
@@ -111,7 +111,7 @@ function BoatMaintenanceTrackerPage() {
             and any other notifications you do not want.
           </p>
           <img
-            src="/boat-maintenance-tracker/notifications.png"
+            src="/maintenance-tracker/notifications.png"
             alt="Linear notification settings with Notifications and Invite accepted highlighted"
             loading="lazy"
             className="w-full rounded-lg border shadow-sm"
