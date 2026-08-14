@@ -39,6 +39,7 @@ export function SidebarNav({ onNavigate }: { onNavigate?: () => void }) {
   ]
 
   const toolsItems = [
+    { path: '/boat-maintenance-tracker' as const, label: 'Boat Maintenance Tracker' },
     { path: '/membership-processing' as const, label: 'Membership Processing' },
     { path: '/membership-stats' as const, label: 'Membership Stats' },
     { path: '/set-current-quarter' as const, label: 'Set Current Quarter' },

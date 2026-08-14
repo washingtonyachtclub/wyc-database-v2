@@ -1,6 +1,10 @@
+import { requirePrivilegeForRoute } from '@/lib/route-guards'
 import { createFileRoute } from '@tanstack/react-router'
 
 export const Route = createFileRoute('/boat-maintenance-tracker')({
+  beforeLoad: ({ context }) => {
+    requirePrivilegeForRoute(context, '/boat-maintenance-tracker')
+  },
   head: () => ({
     meta: [
       { title: 'Boat Maintenance Tracker | Washington Yacht Club' },
@@ -72,23 +76,23 @@ function BoatMaintenanceTrackerPage() {
 
           <ul className="list-disc space-y-2 pl-6">
             <li>
-              Anyone can create an issue! Discuss in Discord or with a fleet captain first if
-              you&apos;re unsure.
+              Anyone can create an issue! Discuss in Discord or with a fleet captain first if you’re
+              unsure.
             </li>
             <li>
-              Even if you&apos;re the only person working on something, it&apos;s still helpful to
-              create an issue and document it:
+              Look for issues you want to pick up. Comment in the thread, reach out to the reporter,
+              or assign yourself if you’re confident you can do it.
+            </li>
+            <li>
+              Even if you’re the only person working on something, it’s still helpful to create an
+              issue and document it:
               <ul className="mt-2 list-disc space-y-1 pl-6">
                 <li>
                   Future maintainers can use your resources and learnings for similar repairs.
                 </li>
                 <li>Collaboration is easy if it becomes needed.</li>
-                <li>Other people see the awesome work you&apos;re doing!</li>
+                <li>Other people see the awesome work you’re doing!</li>
               </ul>
-            </li>
-            <li>
-              Look for issues you want to pick up. Comment in the thread, reach out to the reporter,
-              or assign yourself if you&apos;re confident you can do it.
             </li>
           </ul>
 
@@ -142,8 +146,8 @@ function BoatMaintenanceTrackerPage() {
       </section>
 
       <p className="mt-10 rounded-lg bg-muted p-5 text-lg font-medium">
-        You don&apos;t need to be an expert! It is everyone&apos;s responsibility to report issues,
-        pick up tasks they can do, and make the club better :)
+        You don’t need to be an expert! It is everyone’s responsibility to report issues, pick up
+        tasks they can do, and make the club better :)
       </p>
     </article>
   )
