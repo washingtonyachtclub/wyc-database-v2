@@ -25,6 +25,7 @@ import { Route as MembershipStatsRouteImport } from './routes/membership-stats'
 import { Route as MembershipProcessingRouteImport } from './routes/membership-processing'
 import { Route as MembersRouteImport } from './routes/members'
 import { Route as MeetTheTeamRouteImport } from './routes/meet-the-team'
+import { Route as MaintenanceTrackerRouteImport } from './routes/maintenance-tracker'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as LessonsRouteImport } from './routes/lessons'
 import { Route as LessonTypesRouteImport } from './routes/lesson-types'
@@ -37,7 +38,6 @@ import { Route as DbDotcgiRouteImport } from './routes/db[.]cgi'
 import { Route as ChiefsRouteImport } from './routes/chiefs'
 import { Route as CheckoutsRouteImport } from './routes/checkouts'
 import { Route as BoatTypesRouteImport } from './routes/boat-types'
-import { Route as MaintenanceTrackerRouteImport } from './routes/maintenance-tracker'
 import { Route as ApproveExemptionsRouteImport } from './routes/approve-exemptions'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as SignupLessonIndexRouteImport } from './routes/signup.$lessonIndex'
@@ -126,6 +126,11 @@ const MeetTheTeamRoute = MeetTheTeamRouteImport.update({
   path: '/meet-the-team',
   getParentRoute: () => rootRouteImport,
 } as any)
+const MaintenanceTrackerRoute = MaintenanceTrackerRouteImport.update({
+  id: '/maintenance-tracker',
+  path: '/maintenance-tracker',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const LoginRoute = LoginRouteImport.update({
   id: '/login',
   path: '/login',
@@ -186,11 +191,6 @@ const BoatTypesRoute = BoatTypesRouteImport.update({
   path: '/boat-types',
   getParentRoute: () => rootRouteImport,
 } as any)
-const MaintenanceTrackerRoute = MaintenanceTrackerRouteImport.update({
-  id: '/maintenance-tracker',
-  path: '/maintenance-tracker',
-  getParentRoute: () => rootRouteImport,
-} as any)
 const ApproveExemptionsRoute = ApproveExemptionsRouteImport.update({
   id: '/approve-exemptions',
   path: '/approve-exemptions',
@@ -230,7 +230,6 @@ const ApiCronLessonRemindersRoute = ApiCronLessonRemindersRouteImport.update({
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/approve-exemptions': typeof ApproveExemptionsRoute
-  '/maintenance-tracker': typeof MaintenanceTrackerRoute
   '/boat-types': typeof BoatTypesRoute
   '/checkouts': typeof CheckoutsRoute
   '/chiefs': typeof ChiefsRoute
@@ -243,6 +242,7 @@ export interface FileRoutesByFullPath {
   '/lesson-types': typeof LessonTypesRoute
   '/lessons': typeof LessonsRoute
   '/login': typeof LoginRoute
+  '/maintenance-tracker': typeof MaintenanceTrackerRoute
   '/meet-the-team': typeof MeetTheTeamRoute
   '/members': typeof MembersRoute
   '/membership-processing': typeof MembershipProcessingRoute
@@ -268,7 +268,6 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/approve-exemptions': typeof ApproveExemptionsRoute
-  '/maintenance-tracker': typeof MaintenanceTrackerRoute
   '/boat-types': typeof BoatTypesRoute
   '/checkouts': typeof CheckoutsRoute
   '/chiefs': typeof ChiefsRoute
@@ -281,6 +280,7 @@ export interface FileRoutesByTo {
   '/lesson-types': typeof LessonTypesRoute
   '/lessons': typeof LessonsRoute
   '/login': typeof LoginRoute
+  '/maintenance-tracker': typeof MaintenanceTrackerRoute
   '/meet-the-team': typeof MeetTheTeamRoute
   '/members': typeof MembersRoute
   '/membership-processing': typeof MembershipProcessingRoute
@@ -307,7 +307,6 @@ export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/approve-exemptions': typeof ApproveExemptionsRoute
-  '/maintenance-tracker': typeof MaintenanceTrackerRoute
   '/boat-types': typeof BoatTypesRoute
   '/checkouts': typeof CheckoutsRoute
   '/chiefs': typeof ChiefsRoute
@@ -320,6 +319,7 @@ export interface FileRoutesById {
   '/lesson-types': typeof LessonTypesRoute
   '/lessons': typeof LessonsRoute
   '/login': typeof LoginRoute
+  '/maintenance-tracker': typeof MaintenanceTrackerRoute
   '/meet-the-team': typeof MeetTheTeamRoute
   '/members': typeof MembersRoute
   '/membership-processing': typeof MembershipProcessingRoute
@@ -347,7 +347,6 @@ export interface FileRouteTypes {
   fullPaths:
     | '/'
     | '/approve-exemptions'
-    | '/maintenance-tracker'
     | '/boat-types'
     | '/checkouts'
     | '/chiefs'
@@ -360,6 +359,7 @@ export interface FileRouteTypes {
     | '/lesson-types'
     | '/lessons'
     | '/login'
+    | '/maintenance-tracker'
     | '/meet-the-team'
     | '/members'
     | '/membership-processing'
@@ -385,7 +385,6 @@ export interface FileRouteTypes {
   to:
     | '/'
     | '/approve-exemptions'
-    | '/maintenance-tracker'
     | '/boat-types'
     | '/checkouts'
     | '/chiefs'
@@ -398,6 +397,7 @@ export interface FileRouteTypes {
     | '/lesson-types'
     | '/lessons'
     | '/login'
+    | '/maintenance-tracker'
     | '/meet-the-team'
     | '/members'
     | '/membership-processing'
@@ -423,7 +423,6 @@ export interface FileRouteTypes {
     | '__root__'
     | '/'
     | '/approve-exemptions'
-    | '/maintenance-tracker'
     | '/boat-types'
     | '/checkouts'
     | '/chiefs'
@@ -436,6 +435,7 @@ export interface FileRouteTypes {
     | '/lesson-types'
     | '/lessons'
     | '/login'
+    | '/maintenance-tracker'
     | '/meet-the-team'
     | '/members'
     | '/membership-processing'
@@ -462,7 +462,6 @@ export interface FileRouteTypes {
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   ApproveExemptionsRoute: typeof ApproveExemptionsRoute
-  MaintenanceTrackerRoute: typeof MaintenanceTrackerRoute
   BoatTypesRoute: typeof BoatTypesRoute
   CheckoutsRoute: typeof CheckoutsRoute
   ChiefsRoute: typeof ChiefsRoute
@@ -475,6 +474,7 @@ export interface RootRouteChildren {
   LessonTypesRoute: typeof LessonTypesRoute
   LessonsRoute: typeof LessonsRoute
   LoginRoute: typeof LoginRoute
+  MaintenanceTrackerRoute: typeof MaintenanceTrackerRoute
   MeetTheTeamRoute: typeof MeetTheTeamRoute
   MembersRoute: typeof MembersRoute
   MembershipProcessingRoute: typeof MembershipProcessingRoute
@@ -612,6 +612,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof MeetTheTeamRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/maintenance-tracker': {
+      id: '/maintenance-tracker'
+      path: '/maintenance-tracker'
+      fullPath: '/maintenance-tracker'
+      preLoaderRoute: typeof MaintenanceTrackerRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/login': {
       id: '/login'
       path: '/login'
@@ -696,13 +703,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof BoatTypesRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/maintenance-tracker': {
-      id: '/maintenance-tracker'
-      path: '/maintenance-tracker'
-      fullPath: '/maintenance-tracker'
-      preLoaderRoute: typeof MaintenanceTrackerRouteImport
-      parentRoute: typeof rootRouteImport
-    }
     '/approve-exemptions': {
       id: '/approve-exemptions'
       path: '/approve-exemptions'
@@ -758,7 +758,6 @@ declare module '@tanstack/react-router' {
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   ApproveExemptionsRoute: ApproveExemptionsRoute,
-  MaintenanceTrackerRoute: MaintenanceTrackerRoute,
   BoatTypesRoute: BoatTypesRoute,
   CheckoutsRoute: CheckoutsRoute,
   ChiefsRoute: ChiefsRoute,
@@ -771,6 +770,7 @@ const rootRouteChildren: RootRouteChildren = {
   LessonTypesRoute: LessonTypesRoute,
   LessonsRoute: LessonsRoute,
   LoginRoute: LoginRoute,
+  MaintenanceTrackerRoute: MaintenanceTrackerRoute,
   MeetTheTeamRoute: MeetTheTeamRoute,
   MembersRoute: MembersRoute,
   MembershipProcessingRoute: MembershipProcessingRoute,
