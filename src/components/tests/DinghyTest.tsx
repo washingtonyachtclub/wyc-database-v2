@@ -1,11 +1,10 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import {
   ArrowLeft,
   ArrowRight,
   Check,
   CircleCheck,
   CircleX,
-  Clock3,
   Flag,
   ListChecks,
   RotateCcw,
@@ -23,163 +22,321 @@ import {
   getCorrectAnswerText,
   isQuestionAnswered,
   isQuestionCorrect,
+  PASSING_PERCENTAGE,
   scoreTest,
+  type TestAnswer,
   type TestAnswers,
 } from './dinghy-test-utils'
 
-const STORAGE_KEY = 'wyc-dinghy-novice-test-draft-v1'
-type TestView = 'taking' | 'review' | 'results'
+const STORAGE_KEY = 'wyc-dinghy-novice-test-draft-v2'
 
-export function DinghyTest() {
+type TestMode = 'practice' | 'final'
+type TestStage = 'catalog' | 'mode' | 'taking' | 'review' | 'results'
+type TestAttempt = {
+  testId: string
+  mode: TestMode
+  memberWycNumber: number
+  examinerWycNumber: number | null
+}
+
+export function DinghyTest({ memberWycNumber }: { memberWycNumber: number }) {
   const questions = dinghyNoviceTest.questions
   const [answers, setAnswers] = useState<TestAnswers>({})
+  const [attempt, setAttempt] = useState<TestAttempt | null>(null)
   const [currentIndex, setCurrentIndex] = useState(0)
-  const [view, setView] = useState<TestView>('taking')
+  const [stage, setStage] = useState<TestStage>('catalog')
+  const [returnToReview, setReturnToReview] = useState(false)
   const [draftLoaded, setDraftLoaded] = useState(false)
 
   useEffect(() => {
     try {
       const savedDraft = window.localStorage.getItem(STORAGE_KEY)
       if (savedDraft) {
-        const parsed = JSON.parse(savedDraft) as { answers?: TestAnswers; currentIndex?: number }
-        setAnswers(parsed.answers ?? {})
-        setCurrentIndex(Math.min(Math.max(parsed.currentIndex ?? 0, 0), questions.length - 1))
+        const parsed = JSON.parse(savedDraft) as {
+          answers?: TestAnswers
+          attempt?: TestAttempt
+          currentIndex?: number
+        }
+        if (parsed.attempt?.memberWycNumber === memberWycNumber) {
+          setAnswers(parsed.answers ?? {})
+          setAttempt(parsed.attempt)
+          setCurrentIndex(Math.min(Math.max(parsed.currentIndex ?? 0, 0), questions.length - 1))
+          setStage('taking')
+        }
       }
     } catch (error) {
       console.warn('Unable to restore the saved Dinghy test draft', error)
     } finally {
       setDraftLoaded(true)
     }
-  }, [questions.length])
+  }, [memberWycNumber, questions.length])
 
   useEffect(() => {
-    if (!draftLoaded || view === 'results') return
-    window.localStorage.setItem(STORAGE_KEY, JSON.stringify({ answers, currentIndex }))
-  }, [answers, currentIndex, draftLoaded, view])
+    if (!draftLoaded || !attempt || (stage !== 'taking' && stage !== 'review')) return
+    window.localStorage.setItem(STORAGE_KEY, JSON.stringify({ answers, attempt, currentIndex }))
+  }, [answers, attempt, currentIndex, draftLoaded, stage])
 
   const answeredCount = useMemo(
-    () => questions.filter((question) => isQuestionAnswered(question, answers[question.id])).length,
+    () =>
+      questions.filter((question, index) => isQuestionAnswered(question, answers[index])).length,
     [answers, questions],
   )
-  const currentQuestion = questions[currentIndex]
-  const fillWithDevAnswer = () => {
-    setAnswers(
-      Object.fromEntries(
-        questions.map((question) => [
-          question.id,
-          question.type === 'multiple' ? ['devtest'] : 'devtest',
-        ]),
-      ),
-    )
+
+  const startTest = (mode: TestMode, examinerWycNumber: number | null) => {
+    setAnswers({})
+    setAttempt({
+      testId: dinghyNoviceTest.id,
+      mode,
+      memberWycNumber,
+      examinerWycNumber,
+    })
+    setCurrentIndex(0)
+    setReturnToReview(false)
+    setStage('taking')
   }
 
-  const goToQuestion = (index: number) => {
+  const fillWithDevAnswer = () => {
+    setAnswers(Object.fromEntries(questions.map((_, index) => [index, 'devtest'])))
+  }
+
+  const goToQuestion = (index: number, fromReview = false) => {
     setCurrentIndex(index)
-    setView('taking')
-    window.scrollTo({ top: 0, behavior: 'smooth' })
+    setReturnToReview(fromReview)
+    setStage('taking')
   }
 
   const submitTest = () => {
-    setView('results')
+    setStage('results')
+    setReturnToReview(false)
     window.localStorage.removeItem(STORAGE_KEY)
-    window.scrollTo({ top: 0, behavior: 'smooth' })
   }
 
-  const restartTest = () => {
+  const resetAttempt = (nextStage: TestStage) => {
     setAnswers({})
+    setAttempt(null)
     setCurrentIndex(0)
-    setView('taking')
+    setReturnToReview(false)
+    setStage(nextStage)
     window.localStorage.removeItem(STORAGE_KEY)
-    window.scrollTo({ top: 0, behavior: 'smooth' })
   }
+
+  if (stage === 'catalog') {
+    return <TestCatalog onSelect={() => setStage('mode')} />
+  }
+
+  if (stage === 'mode') {
+    return (
+      <ModeSelection
+        memberWycNumber={memberWycNumber}
+        onBack={() => setStage('catalog')}
+        onStart={startTest}
+      />
+    )
+  }
+
+  if (!attempt) return null
+
+  const currentQuestion = questions[currentIndex]
 
   return (
     <div className="mx-auto max-w-7xl px-4 py-5 sm:px-6 sm:py-8 lg:px-8">
-      <TestHeader answeredCount={answeredCount} onFillWithDevAnswer={fillWithDevAnswer} />
+      <TestHeader answeredCount={answeredCount} attempt={attempt} onFill={fillWithDevAnswer} />
 
-      {view === 'taking' && (
+      {stage === 'taking' && (
         <div className="grid items-start gap-6 xl:grid-cols-[minmax(0,1fr)_18rem]">
           <QuestionCard
-            answers={answers}
+            answer={answers[currentIndex]}
             currentIndex={currentIndex}
-            onAnswer={setAnswers}
+            onAnswer={(answer) => setAnswers((current) => ({ ...current, [currentIndex]: answer }))}
+            onBackToReview={returnToReview ? () => setStage('review') : undefined}
             onNext={() => {
               if (currentIndex === questions.length - 1) {
-                setView('review')
-                window.scrollTo({ top: 0, behavior: 'smooth' })
+                setReturnToReview(false)
+                setStage('review')
               } else {
-                goToQuestion(currentIndex + 1)
+                goToQuestion(currentIndex + 1, returnToReview)
               }
             }}
-            onPrevious={() => goToQuestion(currentIndex - 1)}
+            onPrevious={() => goToQuestion(currentIndex - 1, returnToReview)}
             question={currentQuestion}
             total={questions.length}
           />
           <QuestionNavigator
             answers={answers}
             currentIndex={currentIndex}
-            onSelect={goToQuestion}
+            onSelect={(index) => goToQuestion(index, returnToReview)}
             questions={questions}
           />
         </div>
       )}
 
-      {view === 'review' && (
+      {stage === 'review' && (
         <ReviewScreen
           answers={answers}
-          onBack={() => goToQuestion(currentIndex)}
-          onSelectQuestion={goToQuestion}
+          onSelectQuestion={(index) => goToQuestion(index, true)}
           onSubmit={submitTest}
           questions={questions}
         />
       )}
 
-      {view === 'results' && (
-        <ResultsScreen answers={answers} onRestart={restartTest} questions={questions} />
+      {stage === 'results' && (
+        <ResultsScreen
+          answers={answers}
+          attempt={attempt}
+          onChooseTest={() => resetAttempt('catalog')}
+          onRetake={() => resetAttempt('mode')}
+          questions={questions}
+        />
       )}
     </div>
   )
 }
 
+function TestCatalog({ onSelect }: { onSelect: () => void }) {
+  return (
+    <main className="mx-auto max-w-5xl px-4 py-8 sm:px-6 lg:px-8">
+      <div className="mb-8">
+        <div className="mb-3 flex items-center gap-2 text-sm font-medium text-primary">
+          <Sailboat aria-hidden="true" className="h-4 w-4" />
+          Written tests
+        </div>
+        <h1 className="text-3xl font-bold tracking-tight">Choose a test</h1>
+        <p className="mt-2 text-muted-foreground">
+          Select a written test, then choose whether to practice or take a proctored final test.
+        </p>
+      </div>
+
+      <section className="rounded-xl border bg-card p-6 shadow-sm sm:p-8">
+        <div className="flex flex-col gap-6 sm:flex-row sm:items-center sm:justify-between">
+          <div>
+            <p className="text-sm font-medium text-primary">Available now</p>
+            <h2 className="mt-1 text-2xl font-bold">{dinghyNoviceTest.title}</h2>
+            <p className="mt-2 max-w-2xl text-muted-foreground">{dinghyNoviceTest.description}</p>
+            <p className="mt-4 text-sm font-medium">
+              {dinghyNoviceTest.questions.length} questions
+            </p>
+          </div>
+          <Button className="min-h-11 shrink-0" onClick={onSelect} type="button">
+            Choose test
+            <ArrowRight aria-hidden="true" />
+          </Button>
+        </div>
+      </section>
+    </main>
+  )
+}
+
+function ModeSelection({
+  memberWycNumber,
+  onBack,
+  onStart,
+}: {
+  memberWycNumber: number
+  onBack: () => void
+  onStart: (mode: TestMode, examinerWycNumber: number | null) => void
+}) {
+  const [examinerInput, setExaminerInput] = useState('')
+  const [examinerError, setExaminerError] = useState('')
+
+  const startFinal = () => {
+    const examinerWycNumber = Number(examinerInput)
+    if (!Number.isInteger(examinerWycNumber) || examinerWycNumber <= 0) {
+      setExaminerError('Enter the WYC ID of the examiner who is present.')
+      return
+    }
+    onStart('final', examinerWycNumber)
+  }
+
+  return (
+    <main className="mx-auto max-w-5xl px-4 py-8 sm:px-6 lg:px-8">
+      <Button onClick={onBack} type="button" variant="ghost">
+        <ArrowLeft aria-hidden="true" />
+        All tests
+      </Button>
+      <div className="mt-6">
+        <p className="text-sm font-medium text-primary">{dinghyNoviceTest.title}</p>
+        <h1 className="mt-1 text-3xl font-bold tracking-tight">Choose a mode</h1>
+        <p className="mt-2 text-muted-foreground">Taking as WYC #{memberWycNumber}</p>
+      </div>
+
+      <div className="mt-8 grid gap-5 md:grid-cols-2">
+        <section className="flex flex-col rounded-xl border bg-card p-6 shadow-sm">
+          <h2 className="text-xl font-bold">Practice</h2>
+          <p className="mt-2 flex-1 text-muted-foreground">
+            Take the complete test and review the correct answers after submitting.
+          </p>
+          <Button className="mt-6 min-h-11" onClick={() => onStart('practice', null)} type="button">
+            Start practice
+          </Button>
+        </section>
+
+        <section className="flex flex-col rounded-xl border bg-card p-6 shadow-sm">
+          <h2 className="text-xl font-bold">Final test</h2>
+          <p className="mt-2 text-muted-foreground">
+            A Ratings Examiner or Chief must be physically present while you take the test.
+          </p>
+          <div className="mt-5">
+            <Label htmlFor="examiner-wyc-number">Examiner WYC ID</Label>
+            <Input
+              aria-describedby={examinerError ? 'examiner-error' : undefined}
+              aria-invalid={Boolean(examinerError)}
+              className="mt-2"
+              id="examiner-wyc-number"
+              inputMode="numeric"
+              onChange={(event) => {
+                setExaminerInput(event.target.value)
+                setExaminerError('')
+              }}
+              onKeyDown={(event) => {
+                if (event.key === 'Enter') startFinal()
+              }}
+              value={examinerInput}
+            />
+            {examinerError && (
+              <p className="mt-2 text-sm text-destructive" id="examiner-error">
+                {examinerError}
+              </p>
+            )}
+          </div>
+          <Button className="mt-6 min-h-11" onClick={startFinal} type="button">
+            Start final test
+          </Button>
+        </section>
+      </div>
+    </main>
+  )
+}
+
 function TestHeader({
   answeredCount,
-  onFillWithDevAnswer,
+  attempt,
+  onFill,
 }: {
   answeredCount: number
-  onFillWithDevAnswer: () => void
+  attempt: TestAttempt
+  onFill: () => void
 }) {
   return (
     <>
       <div className="mb-6 sm:mb-8">
         <div className="mb-3 flex items-center gap-2 text-sm font-medium text-primary">
           <Sailboat aria-hidden="true" className="h-4 w-4" />
-          Written tests
+          {attempt.mode === 'practice' ? 'Practice' : 'Final test'}
         </div>
         <h1 className="text-3xl font-bold tracking-tight">{dinghyNoviceTest.title}</h1>
         <p className="mt-2 max-w-2xl text-muted-foreground">{dinghyNoviceTest.description}</p>
         {isDevEnvironment() && (
-          <Button
-            className="mt-4"
-            onClick={onFillWithDevAnswer}
-            size="sm"
-            type="button"
-            variant="outline"
-          >
+          <Button className="mt-4" onClick={onFill} size="sm" type="button" variant="outline">
             Fill with devtest
           </Button>
         )}
       </div>
 
-      <div className="mb-6 grid gap-3 sm:grid-cols-3">
+      <div className="mb-6 grid gap-3 sm:grid-cols-2">
         <TestDetail
           icon={<ListChecks aria-hidden="true" />}
           label="Questions"
           value={String(dinghyNoviceTest.questions.length)}
-        />
-        <TestDetail
-          icon={<Clock3 aria-hidden="true" />}
-          label="Estimated time"
-          value={dinghyNoviceTest.estimatedMinutes}
         />
         <TestDetail
           icon={<Check aria-hidden="true" />}
@@ -192,84 +349,99 @@ function TestHeader({
 }
 
 function QuestionCard({
-  answers,
+  answer,
   currentIndex,
   onAnswer,
+  onBackToReview,
   onNext,
   onPrevious,
   question,
   total,
 }: {
-  answers: TestAnswers
+  answer: TestAnswer | undefined
   currentIndex: number
-  onAnswer: React.Dispatch<React.SetStateAction<TestAnswers>>
+  onAnswer: (answer: TestAnswer) => void
+  onBackToReview?: () => void
   onNext: () => void
   onPrevious: () => void
   question: TestQuestion
   total: number
 }) {
-  const answer = answers[question.id]
+  const answerChoicesRef = useRef<HTMLDivElement>(null)
   const isAnswered = isQuestionAnswered(question, answer)
-  const positionProgress = ((currentIndex + 1) / total) * 100
 
-  const setAnswer = (nextAnswer: string | string[]) => {
-    onAnswer((current) => ({ ...current, [question.id]: nextAnswer }))
+  const selectOption = (optionIndex: number) => {
+    if (question.type === 'text') return
+    if (question.type === 'multiple') {
+      const selected = new Set(Array.isArray(answer) ? answer : [])
+      if (selected.has(optionIndex)) selected.delete(optionIndex)
+      else selected.add(optionIndex)
+      onAnswer([...selected])
+      return
+    }
+    onAnswer(optionIndex)
   }
 
-  const toggleMultipleAnswer = (optionId: string) => {
-    const selected = new Set(Array.isArray(answer) ? answer : [])
-    if (selected.has(optionId)) selected.delete(optionId)
-    else selected.add(optionId)
-    setAnswer([...selected])
-  }
+  useEffect(() => {
+    const handleKeyDown = (event: KeyboardEvent) => {
+      const target = event.target as HTMLElement | null
+      const isTextInput =
+        target instanceof HTMLInputElement || target instanceof HTMLTextAreaElement
+
+      if (event.key === 'Enter' && target?.tagName !== 'BUTTON') {
+        event.preventDefault()
+        onNext()
+        return
+      }
+
+      if (
+        question.type === 'text' ||
+        isTextInput ||
+        event.altKey ||
+        event.ctrlKey ||
+        event.metaKey
+      ) {
+        return
+      }
+
+      const letterIndex = event.key.toLowerCase().charCodeAt(0) - 97
+      if (event.key.length === 1 && letterIndex >= 0 && letterIndex < question.options.length) {
+        event.preventDefault()
+        selectOption(letterIndex)
+        answerChoicesRef.current?.querySelectorAll('button')[letterIndex]?.focus()
+        return
+      }
+
+      if (!['ArrowDown', 'ArrowRight', 'ArrowUp', 'ArrowLeft'].includes(event.key)) return
+      event.preventDefault()
+      const buttons = [...(answerChoicesRef.current?.querySelectorAll('button') ?? [])]
+      const focusedIndex = buttons.findIndex((button) => button === document.activeElement)
+      const selectedIndex = typeof answer === 'number' ? answer : 0
+      const currentOptionIndex = focusedIndex >= 0 ? focusedIndex : selectedIndex
+      const direction = event.key === 'ArrowDown' || event.key === 'ArrowRight' ? 1 : -1
+      const nextIndex =
+        (currentOptionIndex + direction + question.options.length) % question.options.length
+      buttons[nextIndex]?.focus()
+      if (question.type === 'single') onAnswer(nextIndex)
+    }
+
+    document.addEventListener('keydown', handleKeyDown)
+    return () => document.removeEventListener('keydown', handleKeyDown)
+  }, [answer, onAnswer, onNext, question])
 
   return (
     <section className="overflow-hidden rounded-xl border bg-card shadow-sm">
-      <div className="border-b bg-muted/40 px-5 py-4 sm:px-8">
-        <div className="mb-3 flex flex-col gap-1 text-sm sm:flex-row sm:items-center sm:justify-between sm:gap-4">
-          <span className="font-semibold">
-            Question {currentIndex + 1} of {total}
-          </span>
-          <span className="text-right text-muted-foreground">{question.category}</span>
-        </div>
-        <div
-          aria-label={`Test position: question ${currentIndex + 1} of ${total}`}
-          aria-valuemax={total}
-          aria-valuemin={1}
-          aria-valuenow={currentIndex + 1}
-          className="h-2 overflow-hidden rounded-full bg-primary/10"
-          role="progressbar"
-        >
-          <div
-            className="h-full rounded-full bg-primary transition-[width]"
-            style={{ width: `${positionProgress}%` }}
-          />
-        </div>
-      </div>
-
-      <div className="px-5 py-7 sm:px-8 sm:py-9">
-        <p className="mb-2 text-sm font-medium text-muted-foreground">{question.title}</p>
-        <h2 className="break-words text-xl font-semibold leading-8 sm:text-2xl">
-          {question.prompt}
-        </h2>
-
-        {question.image && (
-          <div className="mt-6 overflow-hidden rounded-lg border bg-white p-3">
-            <img
-              alt={question.image.alt}
-              className="mx-auto max-h-[32rem] w-auto max-w-full object-contain"
-              src={question.image.src}
-            />
-          </div>
-        )}
-
+      <QuestionHeading currentIndex={currentIndex} question={question} total={total} />
+      <QuestionContent question={question}>
         <AnswerField
           answer={answer}
-          onAnswer={setAnswer}
-          onToggle={toggleMultipleAnswer}
+          answerChoicesRef={answerChoicesRef}
+          onAnswer={onAnswer}
+          onSelectOption={selectOption}
           question={question}
+          questionIndex={currentIndex}
         />
-      </div>
+      </QuestionContent>
 
       <div className="flex flex-col-reverse gap-3 border-t bg-muted/20 px-5 py-4 sm:flex-row sm:items-center sm:justify-between sm:gap-4 sm:px-8">
         <Button
@@ -282,9 +454,20 @@ function QuestionCard({
           <ArrowLeft aria-hidden="true" />
           Previous
         </Button>
-        <p aria-live="polite" className="hidden text-sm text-muted-foreground sm:block">
-          {isAnswered ? 'Answer saved' : 'You can skip this question and return later'}
-        </p>
+        {onBackToReview ? (
+          <Button
+            className="min-h-11 w-full sm:w-auto"
+            onClick={onBackToReview}
+            type="button"
+            variant="outline"
+          >
+            Back to review
+          </Button>
+        ) : (
+          <p aria-live="polite" className="hidden text-sm text-muted-foreground sm:block">
+            {isAnswered ? 'Answer saved' : 'Not answered'}
+          </p>
+        )}
         <Button className="min-h-11 w-full sm:w-auto" onClick={onNext} type="button">
           {currentIndex === total - 1 ? 'Review answers' : 'Next'}
           {currentIndex === total - 1 ? (
@@ -298,26 +481,91 @@ function QuestionCard({
   )
 }
 
-function AnswerField({
-  answer,
-  onAnswer,
-  onToggle,
+function QuestionHeading({
+  currentIndex,
+  question,
+  total,
+}: {
+  currentIndex: number
+  question: TestQuestion
+  total: number
+}) {
+  const positionProgress = ((currentIndex + 1) / total) * 100
+
+  return (
+    <div className="border-b bg-muted/40 px-5 py-4 sm:px-8">
+      <div className="mb-3 flex flex-col gap-1 text-sm sm:flex-row sm:items-center sm:justify-between sm:gap-4">
+        <span className="font-semibold">
+          Question {currentIndex + 1} of {total}
+        </span>
+        <span className="text-right text-muted-foreground">{question.category}</span>
+      </div>
+      <div
+        aria-label={`Test position: question ${currentIndex + 1} of ${total}`}
+        aria-valuemax={total}
+        aria-valuemin={1}
+        aria-valuenow={currentIndex + 1}
+        className="h-2 overflow-hidden rounded-full bg-primary/10"
+        role="progressbar"
+      >
+        <div
+          className="h-full rounded-full bg-primary transition-[width]"
+          style={{ width: `${positionProgress}%` }}
+        />
+      </div>
+    </div>
+  )
+}
+
+function QuestionContent({
+  children,
   question,
 }: {
-  answer: string | string[] | undefined
-  onAnswer: (answer: string | string[]) => void
-  onToggle: (optionId: string) => void
+  children: React.ReactNode
   question: TestQuestion
+}) {
+  return (
+    <div className="px-5 py-7 sm:px-8 sm:py-9">
+      <p className="mb-2 text-sm font-medium text-muted-foreground">{question.title}</p>
+      <h2 className="break-words text-xl font-semibold leading-8 sm:text-2xl">{question.prompt}</h2>
+      {question.image && (
+        <div className="mt-6 overflow-hidden rounded-lg border bg-white p-3">
+          <img
+            alt={question.image.alt}
+            className="mx-auto max-h-[32rem] w-auto max-w-full object-contain"
+            src={question.image.src}
+          />
+        </div>
+      )}
+      {children}
+    </div>
+  )
+}
+
+function AnswerField({
+  answer,
+  answerChoicesRef,
+  onAnswer,
+  onSelectOption,
+  question,
+  questionIndex,
+}: {
+  answer: TestAnswer | undefined
+  answerChoicesRef: React.RefObject<HTMLDivElement | null>
+  onAnswer: (answer: TestAnswer) => void
+  onSelectOption: (optionIndex: number) => void
+  question: TestQuestion
+  questionIndex: number
 }) {
   if (question.type === 'text') {
     return (
       <div className="mt-7">
-        <Label className="mb-2 block text-sm font-medium" htmlFor={`answer-${question.id}`}>
+        <Label className="mb-2 block text-sm font-medium" htmlFor={`answer-${questionIndex}`}>
           Your answer
         </Label>
         <Input
           autoComplete="off"
-          id={`answer-${question.id}`}
+          id={`answer-${questionIndex}`}
           onChange={(event) => onAnswer(event.target.value)}
           placeholder={question.placeholder}
           value={typeof answer === 'string' ? answer : ''}
@@ -327,7 +575,9 @@ function AnswerField({
   }
 
   const isMultiple = question.type === 'multiple'
-  const selectedIds = new Set(Array.isArray(answer) ? answer : answer ? [answer] : [])
+  const selectedIndices = new Set(
+    Array.isArray(answer) ? answer : typeof answer === 'number' ? [answer] : [],
+  )
 
   return (
     <div className="mt-7">
@@ -337,11 +587,11 @@ function AnswerField({
       <div
         aria-label="Answer choices"
         className="grid gap-3"
+        ref={answerChoicesRef}
         role={isMultiple ? 'group' : 'radiogroup'}
       >
-        {question.options.map((option, index) => {
-          const isSelected = selectedIds.has(option.id)
-
+        {question.options.map((option, optionIndex) => {
+          const isSelected = selectedIndices.has(optionIndex)
           return (
             <Button
               aria-checked={isSelected}
@@ -350,8 +600,8 @@ function AnswerField({
                 isSelected &&
                   'border-primary bg-primary/5 text-foreground ring-2 ring-primary/20 hover:bg-primary/10',
               )}
-              key={option.id}
-              onClick={() => (isMultiple ? onToggle(option.id) : onAnswer(option.id))}
+              key={optionIndex}
+              onClick={() => onSelectOption(optionIndex)}
               role={isMultiple ? 'checkbox' : 'radio'}
               type="button"
               variant="outline"
@@ -366,7 +616,7 @@ function AnswerField({
                     : 'border-input bg-background text-muted-foreground',
                 )}
               >
-                {isSelected && isMultiple ? <Check /> : String.fromCharCode(65 + index)}
+                {isSelected && isMultiple ? <Check /> : String.fromCharCode(65 + optionIndex)}
               </span>
               <span>{option.label}</span>
             </Button>
@@ -388,8 +638,9 @@ function QuestionNavigator({
   onSelect: (index: number) => void
   questions: readonly TestQuestion[]
 }) {
-  const answeredCount = questions.filter((question) =>
-    isQuestionAnswered(question, answers[question.id]),
+  const categories = groupQuestionIndicesByCategory(questions)
+  const answeredCount = questions.filter((question, index) =>
+    isQuestionAnswered(question, answers[index]),
   ).length
 
   return (
@@ -400,51 +651,54 @@ function QuestionNavigator({
           {answeredCount}/{questions.length}
         </span>
       </div>
-      <div className="mt-4 grid grid-cols-5 gap-2 min-[400px]:grid-cols-6 sm:grid-cols-7 xl:grid-cols-5">
-        {questions.map((question, index) => {
-          const answered = isQuestionAnswered(question, answers[question.id])
-          const active = index === currentIndex
-
-          return (
-            <Button
-              aria-label={`Question ${index + 1}${answered ? ', answered' : ', unanswered'}`}
-              className={cn(
-                'h-11 w-full p-0 shadow-none',
-                active && 'ring-2 ring-primary ring-offset-2',
-              )}
-              key={question.id}
-              onClick={() => onSelect(index)}
-              type="button"
-              variant={answered ? 'default' : 'outline'}
-            >
-              {index + 1}
-            </Button>
-          )
-        })}
+      <div className="mt-4 space-y-4">
+        {categories.map(([category, indices]) => (
+          <section key={category}>
+            <h3 className="mb-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+              {category}
+            </h3>
+            <div className="grid grid-cols-5 gap-2 min-[400px]:grid-cols-6 sm:grid-cols-7 xl:grid-cols-5">
+              {indices.map((index) => {
+                const answered = isQuestionAnswered(questions[index], answers[index])
+                return (
+                  <Button
+                    aria-label={`Question ${index + 1}, ${answered ? 'answered' : 'unanswered'}`}
+                    className={cn(
+                      'h-11 w-full p-0 shadow-none',
+                      index === currentIndex && 'ring-2 ring-primary ring-offset-2',
+                    )}
+                    key={index}
+                    onClick={() => onSelect(index)}
+                    type="button"
+                    variant={answered ? 'default' : 'outline'}
+                  >
+                    {index + 1}
+                  </Button>
+                )
+              })}
+            </div>
+          </section>
+        ))}
       </div>
-      <p className="mt-4 text-xs leading-5 text-muted-foreground">
-        Filled numbers are answered. Your progress is saved in this browser.
-      </p>
     </aside>
   )
 }
 
 function ReviewScreen({
   answers,
-  onBack,
   onSelectQuestion,
   onSubmit,
   questions,
 }: {
   answers: TestAnswers
-  onBack: () => void
   onSelectQuestion: (index: number) => void
   onSubmit: () => void
   questions: readonly TestQuestion[]
 }) {
-  const unanswered = questions.filter(
-    (question) => !isQuestionAnswered(question, answers[question.id]),
-  )
+  const unansweredCount = questions.filter(
+    (question, index) => !isQuestionAnswered(question, answers[index]),
+  ).length
+  const categories = groupQuestionIndicesByCategory(questions)
 
   return (
     <section className="rounded-xl border bg-card p-5 shadow-sm sm:p-8">
@@ -453,44 +707,56 @@ function ReviewScreen({
           <p className="text-sm font-medium text-primary">Final check</p>
           <h2 className="mt-1 text-2xl font-bold">Review your answers</h2>
           <p className="mt-2 text-muted-foreground">
-            {unanswered.length === 0
+            {unansweredCount === 0
               ? 'Every question has an answer. Submit when you are ready.'
-              : `${unanswered.length} question${unanswered.length === 1 ? ' is' : 's are'} unanswered. Unanswered questions score as incorrect.`}
+              : `${unansweredCount} question${unansweredCount === 1 ? ' is' : 's are'} unanswered. Unanswered questions score as incorrect.`}
           </p>
         </div>
-        <div className="flex flex-col gap-3 sm:flex-row">
-          <Button
-            className="min-h-11 w-full sm:w-auto"
-            onClick={onBack}
-            type="button"
-            variant="outline"
-          >
-            <ArrowLeft aria-hidden="true" />
-            Back to test
-          </Button>
-          <Button className="min-h-11 w-full sm:w-auto" onClick={onSubmit} type="button">
-            <Flag aria-hidden="true" />
-            {unanswered.length > 0 ? `Submit with ${unanswered.length} unanswered` : 'Submit test'}
-          </Button>
-        </div>
+        <Button className="min-h-11" onClick={onSubmit} type="button">
+          <Flag aria-hidden="true" />
+          {unansweredCount > 0 ? `Submit with ${unansweredCount} unanswered` : 'Submit test'}
+        </Button>
       </div>
 
-      <div className="mt-8 grid grid-cols-4 gap-2 sm:grid-cols-8 lg:grid-cols-11">
-        {questions.map((question, index) => {
-          const answered = isQuestionAnswered(question, answers[question.id])
-          return (
-            <Button
-              aria-label={`Go to question ${index + 1}, ${answered ? 'answered' : 'unanswered'}`}
-              className="h-11 w-full p-0 shadow-none"
-              key={question.id}
-              onClick={() => onSelectQuestion(index)}
-              type="button"
-              variant={answered ? 'default' : 'outline'}
-            >
-              {index + 1}
-            </Button>
-          )
-        })}
+      <div className="mt-8 space-y-8">
+        {categories.map(([category, indices]) => (
+          <section key={category}>
+            <h3 className="text-lg font-bold">{category}</h3>
+            <div className="mt-3 grid gap-3 lg:grid-cols-2">
+              {indices.map((index) => {
+                const answered = isQuestionAnswered(questions[index], answers[index])
+                return (
+                  <Button
+                    className="h-auto min-h-16 justify-start whitespace-normal px-4 py-3 text-left shadow-none"
+                    key={index}
+                    onClick={() => onSelectQuestion(index)}
+                    type="button"
+                    variant="outline"
+                  >
+                    <span className="flex min-w-0 items-start gap-3">
+                      <span
+                        className={cn(
+                          'flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-sm font-semibold',
+                          answered
+                            ? 'bg-primary text-primary-foreground'
+                            : 'border border-input bg-background text-muted-foreground',
+                        )}
+                      >
+                        {index + 1}
+                      </span>
+                      <span className="min-w-0">
+                        <span className="line-clamp-2 font-medium">{questions[index].prompt}</span>
+                        <span className="mt-1 block text-xs text-muted-foreground">
+                          {answered ? 'Answered' : 'Not answered'}
+                        </span>
+                      </span>
+                    </span>
+                  </Button>
+                )
+              })}
+            </div>
+          </section>
+        ))}
       </div>
     </section>
   )
@@ -498,90 +764,133 @@ function ReviewScreen({
 
 function ResultsScreen({
   answers,
-  onRestart,
+  attempt,
+  onChooseTest,
+  onRetake,
   questions,
 }: {
   answers: TestAnswers
-  onRestart: () => void
+  attempt: TestAttempt
+  onChooseTest: () => void
+  onRetake: () => void
   questions: readonly TestQuestion[]
 }) {
   const score = scoreTest(questions, answers)
-  const incorrectQuestions = questions.filter(
-    (question) => !isQuestionCorrect(question, answers[question.id]),
-  )
+  const orderedQuestionIndices = questions
+    .map((question, index) => ({ correct: isQuestionCorrect(question, answers[index]), index }))
+    .sort((left, right) => Number(left.correct) - Number(right.correct) || left.index - right.index)
 
   return (
     <div className="space-y-6">
       <section className="rounded-xl border bg-card px-5 py-10 text-center shadow-sm sm:px-8">
-        <span className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-primary/10 text-primary">
-          <Flag aria-hidden="true" className="h-7 w-7" />
+        <span
+          className={cn(
+            'mx-auto flex h-14 w-14 items-center justify-center rounded-full',
+            score.passed ? 'bg-primary/10 text-primary' : 'bg-destructive/10 text-destructive',
+          )}
+        >
+          {score.passed ? (
+            <CircleCheck aria-hidden="true" className="h-7 w-7" />
+          ) : (
+            <CircleX aria-hidden="true" className="h-7 w-7" />
+          )}
         </span>
-        <p className="mt-5 text-sm font-medium text-primary">Test submitted</p>
-        <h2 className="mt-1 text-3xl font-bold">{score.percentage}%</h2>
-        <p className="mt-2 text-lg">
-          {score.correct} of {score.total} questions correct
+        <p className="mt-5 text-sm font-medium text-muted-foreground">
+          {attempt.mode === 'practice' ? 'Practice complete' : 'Final test submitted'}
         </p>
-        <p className="mx-auto mt-2 max-w-xl text-sm text-muted-foreground">
-          This frontend calculates your score locally. The official passing cutoff and recorded test
-          attempt will be connected with the backend.
+        <h2 className={cn('mt-1 text-3xl font-bold', !score.passed && 'text-destructive')}>
+          {score.passed ? 'Passed' : 'Not passed'}
+        </h2>
+        <p className="mt-3 text-2xl font-semibold">{score.percentage}%</p>
+        <p className="mt-1 text-muted-foreground">
+          {score.correct} of {score.total} correct · {PASSING_PERCENTAGE}% required to pass
         </p>
-        <Button className="mt-6" onClick={onRestart} type="button" variant="outline">
-          <RotateCcw aria-hidden="true" />
-          Retake test
-        </Button>
+        <div className="mt-6 flex flex-col justify-center gap-3 sm:flex-row">
+          <Button onClick={onRetake} type="button" variant="outline">
+            <RotateCcw aria-hidden="true" />
+            Retake test
+          </Button>
+          <Button onClick={onChooseTest} type="button" variant="outline">
+            Choose another test
+          </Button>
+        </div>
       </section>
 
       <section className="rounded-xl border bg-card p-5 shadow-sm sm:p-8">
         <h2 className="text-xl font-bold">Answer review</h2>
         <p className="mt-1 text-muted-foreground">
-          {incorrectQuestions.length === 0
-            ? 'Perfect score—every answer is correct.'
-            : `${incorrectQuestions.length} answer${incorrectQuestions.length === 1 ? ' needs' : 's need'} review.`}
+          Questions needing review appear first, followed by correct answers.
         </p>
-
-        <div className="mt-6 space-y-4">
-          {questions.map((question) => {
-            const correct = isQuestionCorrect(question, answers[question.id])
-            return (
-              <article className="rounded-lg border p-4" key={question.id}>
-                <div className="flex gap-3">
-                  {correct ? (
-                    <CircleCheck
-                      aria-hidden="true"
-                      className="mt-0.5 h-5 w-5 shrink-0 text-primary"
-                    />
-                  ) : (
-                    <CircleX
-                      aria-hidden="true"
-                      className="mt-0.5 h-5 w-5 shrink-0 text-destructive"
-                    />
-                  )}
-                  <div className="min-w-0">
-                    <p className="text-sm font-medium text-muted-foreground">
-                      Question {question.number} · {question.category}
-                    </p>
-                    <h3 className="mt-1 font-semibold">{question.prompt}</h3>
-                    <dl className="mt-3 grid gap-2 text-sm">
-                      <div>
-                        <dt className="font-medium text-muted-foreground">Your answer</dt>
-                        <dd>{getAnswerText(question, answers[question.id])}</dd>
-                      </div>
-                      {!correct && (
-                        <div>
-                          <dt className="font-medium text-muted-foreground">Correct answer</dt>
-                          <dd>{getCorrectAnswerText(question)}</dd>
-                        </div>
-                      )}
-                    </dl>
-                  </div>
-                </div>
-              </article>
-            )
-          })}
+        <div className="mt-6 space-y-5">
+          {orderedQuestionIndices.map(({ correct, index }) => (
+            <ReadOnlyQuestionCard
+              answer={answers[index]}
+              correct={correct}
+              key={index}
+              question={questions[index]}
+              questionIndex={index}
+              revealCorrectAnswer={attempt.mode === 'practice'}
+              total={questions.length}
+            />
+          ))}
         </div>
       </section>
     </div>
   )
+}
+
+function ReadOnlyQuestionCard({
+  answer,
+  correct,
+  question,
+  questionIndex,
+  revealCorrectAnswer,
+  total,
+}: {
+  answer: TestAnswer | undefined
+  correct: boolean
+  question: TestQuestion
+  questionIndex: number
+  revealCorrectAnswer: boolean
+  total: number
+}) {
+  return (
+    <article className="overflow-hidden rounded-xl border bg-card shadow-sm">
+      <QuestionHeading currentIndex={questionIndex} question={question} total={total} />
+      <QuestionContent question={question}>
+        <div className="mt-7 rounded-lg border p-4">
+          <div className="flex items-center gap-2 font-semibold">
+            {correct ? (
+              <CircleCheck aria-hidden="true" className="h-5 w-5 text-primary" />
+            ) : (
+              <CircleX aria-hidden="true" className="h-5 w-5 text-destructive" />
+            )}
+            {correct ? 'Correct' : 'Incorrect'}
+          </div>
+          <dl className="mt-4 grid gap-3 text-sm">
+            <div>
+              <dt className="font-medium text-muted-foreground">Your answer</dt>
+              <dd className="mt-1">{getAnswerText(question, answer)}</dd>
+            </div>
+            {revealCorrectAnswer && !correct && (
+              <div>
+                <dt className="font-medium text-muted-foreground">Correct answer</dt>
+                <dd className="mt-1">{getCorrectAnswerText(question)}</dd>
+              </div>
+            )}
+          </dl>
+        </div>
+      </QuestionContent>
+    </article>
+  )
+}
+
+function groupQuestionIndicesByCategory(questions: readonly TestQuestion[]) {
+  const groups = new Map<string, number[]>()
+  questions.forEach((question, index) => {
+    groups.set(question.category, [...(groups.get(question.category) ?? []), index])
+  })
+  return [...groups.entries()]
 }
 
 function TestDetail({

@@ -8,18 +8,44 @@ import {
   type TestAnswers,
 } from './dinghy-test-utils'
 
+function completeAnswerKey(): TestAnswers {
+  return Object.fromEntries(
+    dinghyNoviceTest.questions.map((question, questionIndex) => {
+      if (question.type === 'text') return [questionIndex, question.acceptedAnswers[0]]
+      if (question.type === 'multiple') {
+        return [
+          questionIndex,
+          question.options.flatMap((option, optionIndex) => (option.correct ? [optionIndex] : [])),
+        ]
+      }
+      return [questionIndex, question.options.findIndex((option) => option.correct)]
+    }),
+  )
+}
+
 describe('dinghyNoviceTest', () => {
-  it('contains the exact active 77-question test in source order', () => {
+  it('contains the current 77 questions in display order', () => {
     expect(dinghyNoviceTest.questions).toHaveLength(77)
-    expect(dinghyNoviceTest.questions[0].sourceId).toBe('154')
-    expect(dinghyNoviceTest.questions[30].sourceId).toBe('14')
-    expect(dinghyNoviceTest.questions[76].sourceId).toBe('60')
-    expect(dinghyNoviceTest.questions.map((question) => question.number)).toEqual(
-      Array.from({ length: 77 }, (_, index) => index + 1),
-    )
+    expect(dinghyNoviceTest.questions[0].prompt).toContain('sailboat part A')
+    expect(dinghyNoviceTest.questions[30].prompt).toBe('Club dinghies may be sailed:')
+    expect(dinghyNoviceTest.questions[76].prompt).toContain('The channel is busy')
   })
 
-  it('supports every question type present in the active test', () => {
+  it('contains complete question and answer data', () => {
+    for (const question of dinghyNoviceTest.questions) {
+      expect(question.title.trim()).not.toBe('')
+      expect(question.category.trim()).not.toBe('')
+      expect(question.prompt.trim()).not.toBe('')
+      if (question.type === 'text') {
+        expect(question.acceptedAnswers.length).toBeGreaterThan(0)
+      } else {
+        expect(question.options.length).toBeGreaterThan(1)
+        expect(question.options.some((option) => option.correct)).toBe(true)
+      }
+    }
+  })
+
+  it('supports every question type present in the current test', () => {
     const typeCounts = dinghyNoviceTest.questions.reduce<Record<string, number>>(
       (counts, question) => ({ ...counts, [question.type]: (counts[question.type] ?? 0) + 1 }),
       {},
@@ -47,6 +73,10 @@ describe('Dinghy test scoring', () => {
     expect(isQuestionCorrect(firstQuestion, 'rudder')).toBe(false)
   })
 
+  it('accepts hiking stick for question 4', () => {
+    expect(isQuestionCorrect(dinghyNoviceTest.questions[3], 'hiking stick')).toBe(true)
+  })
+
   it('accepts close misspellings without accepting different sailing terms', () => {
     expect(isTextAnswerAccepted('centerbord', 'centerboard')).toBe(true)
     expect(isTextAnswerAccepted('tillre', 'tiller')).toBe(true)
@@ -60,38 +90,37 @@ describe('Dinghy test scoring', () => {
     expect(isQuestionCorrect(dinghyNoviceTest.questions[0], 'devtest')).toBe(true)
   })
 
-  it('requires the exact correct set for the multi-select damage question', () => {
-    const damageQuestion = dinghyNoviceTest.questions.find((question) => question.sourceId === '41')
-    if (!damageQuestion || damageQuestion.type !== 'multiple') {
-      throw new Error('Damage question is missing')
-    }
+  it('requires the exact correct set for the multi-select question', () => {
+    const question = dinghyNoviceTest.questions[57]
+    if (question.type !== 'multiple') throw new Error('Multi-select question is missing')
 
-    const correctIds = damageQuestion.options
-      .filter((option) => option.correct)
-      .map((option) => option.id)
+    const correctIndices = question.options.flatMap((option, index) =>
+      option.correct ? [index] : [],
+    )
 
-    expect(isQuestionCorrect(damageQuestion, correctIds)).toBe(true)
-    expect(isQuestionCorrect(damageQuestion, correctIds.slice(0, 1))).toBe(false)
+    expect(isQuestionCorrect(question, correctIndices)).toBe(true)
+    expect(isQuestionCorrect(question, correctIndices.slice(0, 1))).toBe(false)
+  })
+
+  it('uses an exact 90 percent passing cutoff', () => {
+    const passingAnswers = completeAnswerKey()
+    const failingAnswers = completeAnswerKey()
+    for (let index = 0; index < 7; index += 1) delete passingAnswers[index]
+    for (let index = 0; index < 8; index += 1) delete failingAnswers[index]
+
+    expect(scoreTest(dinghyNoviceTest.questions, passingAnswers).passed).toBe(true)
+    expect(scoreTest(dinghyNoviceTest.questions, failingAnswers)).toMatchObject({
+      percentage: 90,
+      passed: false,
+    })
   })
 
   it('can produce a complete 100 percent answer key', () => {
-    const answers = Object.fromEntries(
-      dinghyNoviceTest.questions.map((question) => {
-        if (question.type === 'text') return [question.id, question.acceptedAnswers[0]]
-        if (question.type === 'multiple') {
-          return [
-            question.id,
-            question.options.filter((option) => option.correct).map((option) => option.id),
-          ]
-        }
-        return [question.id, question.options.find((option) => option.correct)?.id ?? '']
-      }),
-    ) as TestAnswers
-
-    expect(scoreTest(dinghyNoviceTest.questions, answers)).toEqual({
+    expect(scoreTest(dinghyNoviceTest.questions, completeAnswerKey())).toEqual({
       correct: 77,
       total: 77,
       percentage: 100,
+      passed: true,
     })
   })
 })

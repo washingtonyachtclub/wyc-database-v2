@@ -1,8 +1,10 @@
 import { isDevEnvironment } from '@/lib/env'
 import type { TestQuestion } from './dinghy-test-data'
 
-export type TestAnswer = string | string[]
-export type TestAnswers = Record<string, TestAnswer>
+export const PASSING_PERCENTAGE = 90
+
+export type TestAnswer = string | number | number[]
+export type TestAnswers = Partial<Record<number, TestAnswer>>
 
 export function normalizeTextAnswer(value: string) {
   return value
@@ -72,14 +74,16 @@ export function isTextAnswerAccepted(answer: string, acceptedAnswer: string) {
 export function isDevelopmentAnswer(answer: TestAnswer | undefined) {
   const values = Array.isArray(answer) ? answer : [answer]
   return (
-    isDevEnvironment() && values.some((value) => normalizeTextAnswer(value ?? '') === 'devtest')
+    isDevEnvironment() &&
+    values.some((value) => typeof value === 'string' && normalizeTextAnswer(value) === 'devtest')
   )
 }
 
 export function isQuestionAnswered(question: TestQuestion, answer: TestAnswer | undefined) {
   if (isDevelopmentAnswer(answer)) return true
+  if (question.type === 'text') return typeof answer === 'string' && answer.trim().length > 0
   if (question.type === 'multiple') return Array.isArray(answer) && answer.length > 0
-  return typeof answer === 'string' && answer.trim().length > 0
+  return typeof answer === 'number'
 }
 
 export function isQuestionCorrect(question: TestQuestion, answer: TestAnswer | undefined) {
@@ -93,24 +97,31 @@ export function isQuestionCorrect(question: TestQuestion, answer: TestAnswer | u
   }
 
   if (question.type === 'single') {
-    return question.options.some((option) => option.id === answer && option.correct)
+    return question.options[answer as number]?.correct === true
   }
 
-  const selectedIds = new Set(answer as string[])
-  const correctIds = question.options.filter((option) => option.correct).map((option) => option.id)
+  const selectedIndices = new Set(answer as number[])
+  const correctIndices = question.options.flatMap((option, index) =>
+    option.correct ? [index] : [],
+  )
 
-  return selectedIds.size === correctIds.length && correctIds.every((id) => selectedIds.has(id))
+  return (
+    selectedIndices.size === correctIndices.length &&
+    correctIndices.every((index) => selectedIndices.has(index))
+  )
 }
 
 export function scoreTest(questions: readonly TestQuestion[], answers: TestAnswers) {
-  const correct = questions.filter((question) =>
-    isQuestionCorrect(question, answers[question.id]),
+  const correct = questions.filter((question, index) =>
+    isQuestionCorrect(question, answers[index]),
   ).length
+  const percentage = Math.round((correct / questions.length) * 100)
 
   return {
     correct,
     total: questions.length,
-    percentage: Math.round((correct / questions.length) * 100),
+    percentage,
+    passed: (correct / questions.length) * 100 >= PASSING_PERCENTAGE,
   }
 }
 
@@ -119,9 +130,9 @@ export function getAnswerText(question: TestQuestion, answer: TestAnswer | undef
   if (!isQuestionAnswered(question, answer)) return 'Not answered'
   if (question.type === 'text') return answer as string
 
-  const selectedIds = new Set(Array.isArray(answer) ? answer : [answer])
+  const selectedIndices = new Set(Array.isArray(answer) ? answer : [answer as number])
   return question.options
-    .filter((option) => selectedIds.has(option.id))
+    .filter((_, index) => selectedIndices.has(index))
     .map((option) => option.label)
     .join('; ')
 }

@@ -10,5 +10,8 @@ export const Route = createFileRoute('/tests')({
 })
 
 function TestsPage() {
-  return <DinghyTest />
+  const { user } = Route.useRouteContext()
+  if (!user) return null
+
+  return <DinghyTest memberWycNumber={user.wycNumber} />
 }
