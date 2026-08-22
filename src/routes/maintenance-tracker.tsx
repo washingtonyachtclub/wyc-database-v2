@@ -63,7 +63,8 @@ function MaintenanceTrackerPage() {
         <section className="space-y-4">
           <h3 className="text-xl font-semibold">Board View</h3>
           <p>
-            To see the board, navigate to <strong>Your Teams → Maintenance → Issues</strong>.
+            To see the board, navigate to <strong>Your Teams &gt; Maintenance &gt; Issues</strong>.{' '}
+            Create new issues with the button in the top left.
           </p>
           <img
             src="/maintenance-tracker/board.png"
@@ -140,6 +141,32 @@ function MaintenanceTrackerPage() {
               Android
             </a>
           </p>
+          <div className="mx-auto grid max-w-2xl grid-cols-2 gap-3 sm:gap-4">
+            <img
+              src="/maintenance-tracker/mobile-home.png"
+              alt="Linear mobile inbox with the navigation menu button highlighted"
+              loading="lazy"
+              className="w-full rounded-lg border shadow-sm"
+            />
+            <img
+              src="/maintenance-tracker/mobile-teams.png"
+              alt="Linear mobile navigation menu with Teams highlighted"
+              loading="lazy"
+              className="w-full rounded-lg border shadow-sm"
+            />
+            <img
+              src="/maintenance-tracker/mobile-issues.png"
+              alt="Linear mobile Maintenance team with Issues highlighted"
+              loading="lazy"
+              className="w-full rounded-lg border shadow-sm"
+            />
+            <img
+              src="/maintenance-tracker/mobile-tracker.png"
+              alt="Linear mobile Maintenance Issues tracker"
+              loading="lazy"
+              className="w-full rounded-lg border shadow-sm"
+            />
+          </div>
         </section>
       </section>
 
