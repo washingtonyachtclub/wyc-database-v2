@@ -11,9 +11,21 @@ import {
   Sailboat,
 } from 'lucide-react'
 
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from '@/components/ui/alert-dialog'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
 import { isDevEnvironment } from '@/lib/env'
 import { cn } from '@/lib/utils'
 import { dinghyNoviceTest, type TestQuestion } from './dinghy-test-data'
@@ -140,7 +152,12 @@ export function DinghyTest({ memberWycNumber }: { memberWycNumber: number }) {
 
   return (
     <div className="mx-auto max-w-7xl px-4 py-5 sm:px-6 sm:py-8 lg:px-8">
-      <TestHeader answeredCount={answeredCount} attempt={attempt} onFill={fillWithDevAnswer} />
+      <TestHeader
+        answeredCount={answeredCount}
+        attempt={attempt}
+        onExit={stage === 'taking' || stage === 'review' ? () => resetAttempt('mode') : undefined}
+        onFill={fillWithDevAnswer}
+      />
 
       {stage === 'taking' && (
         <div className="grid items-start gap-6 xl:grid-cols-[minmax(0,1fr)_18rem]">
@@ -196,30 +213,32 @@ function TestCatalog({ onSelect }: { onSelect: () => void }) {
   return (
     <main className="mx-auto max-w-5xl px-4 py-8 sm:px-6 lg:px-8">
       <div className="mb-8">
-        <div className="mb-3 flex items-center gap-2 text-sm font-medium text-primary">
-          <Sailboat aria-hidden="true" className="h-4 w-4" />
-          Written tests
-        </div>
-        <h1 className="text-3xl font-bold tracking-tight">Choose a test</h1>
-        <p className="mt-2 text-muted-foreground">
-          Select a written test, then choose whether to practice or take a proctored final test.
-        </p>
+        <h1 className="text-3xl font-bold tracking-tight">Written Tests</h1>
       </div>
 
       <section className="rounded-xl border bg-card p-6 shadow-sm sm:p-8">
         <div className="flex flex-col gap-6 sm:flex-row sm:items-center sm:justify-between">
           <div>
-            <p className="text-sm font-medium text-primary">Available now</p>
-            <h2 className="mt-1 text-2xl font-bold">{dinghyNoviceTest.title}</h2>
+            <h2 className="text-2xl font-bold">{dinghyNoviceTest.title}</h2>
             <p className="mt-2 max-w-2xl text-muted-foreground">{dinghyNoviceTest.description}</p>
             <p className="mt-4 text-sm font-medium">
               {dinghyNoviceTest.questions.length} questions
             </p>
           </div>
-          <Button className="min-h-11 shrink-0" onClick={onSelect} type="button">
-            Choose test
-            <ArrowRight aria-hidden="true" />
-          </Button>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button
+                aria-label={`Choose ${dinghyNoviceTest.title}`}
+                className="min-h-11 min-w-11 shrink-0"
+                onClick={onSelect}
+                size="icon"
+                type="button"
+              >
+                <ArrowRight aria-hidden="true" />
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent>Choose test</TooltipContent>
+          </Tooltip>
         </div>
       </section>
     </main>
@@ -310,21 +329,25 @@ function ModeSelection({
 function TestHeader({
   answeredCount,
   attempt,
+  onExit,
   onFill,
 }: {
   answeredCount: number
   attempt: TestAttempt
+  onExit?: () => void
   onFill: () => void
 }) {
   return (
     <>
       <div className="mb-6 sm:mb-8">
-        <div className="mb-3 flex items-center gap-2 text-sm font-medium text-primary">
-          <Sailboat aria-hidden="true" className="h-4 w-4" />
-          {attempt.mode === 'practice' ? 'Practice' : 'Final test'}
+        <div className="mb-3 flex items-center justify-between gap-4">
+          <div className="flex items-center gap-2 text-sm font-medium text-primary">
+            <Sailboat aria-hidden="true" className="h-4 w-4" />
+            {attempt.mode === 'practice' ? 'Practice' : 'Final test'}
+          </div>
+          {onExit && <ExitAttemptButton onExit={onExit} />}
         </div>
         <h1 className="text-3xl font-bold tracking-tight">{dinghyNoviceTest.title}</h1>
-        <p className="mt-2 max-w-2xl text-muted-foreground">{dinghyNoviceTest.description}</p>
         {isDevEnvironment() && (
           <Button className="mt-4" onClick={onFill} size="sm" type="button" variant="outline">
             Fill with devtest
@@ -345,6 +368,33 @@ function TestHeader({
         />
       </div>
     </>
+  )
+}
+
+function ExitAttemptButton({ onExit }: { onExit: () => void }) {
+  return (
+    <AlertDialog>
+      <AlertDialogTrigger asChild>
+        <Button size="sm" type="button" variant="outline">
+          Exit attempt
+        </Button>
+      </AlertDialogTrigger>
+      <AlertDialogContent>
+        <AlertDialogHeader>
+          <AlertDialogTitle>Exit this attempt?</AlertDialogTitle>
+          <AlertDialogDescription>Your answers will be discarded.</AlertDialogDescription>
+        </AlertDialogHeader>
+        <AlertDialogFooter>
+          <AlertDialogCancel>Cancel</AlertDialogCancel>
+          <AlertDialogAction
+            className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            onClick={onExit}
+          >
+            Exit attempt
+          </AlertDialogAction>
+        </AlertDialogFooter>
+      </AlertDialogContent>
+    </AlertDialog>
   )
 }
 
@@ -776,9 +826,20 @@ function ResultsScreen({
   questions: readonly TestQuestion[]
 }) {
   const score = scoreTest(questions, answers)
-  const orderedQuestionIndices = questions
-    .map((question, index) => ({ correct: isQuestionCorrect(question, answers[index]), index }))
-    .sort((left, right) => Number(left.correct) - Number(right.correct) || left.index - right.index)
+  const scoredQuestionIndices = questions.map((question, index) => ({
+    correct: isQuestionCorrect(question, answers[index]),
+    index,
+  }))
+  const answerSections = [
+    {
+      title: 'Incorrect Answers',
+      questions: scoredQuestionIndices.filter(({ correct }) => !correct),
+    },
+    {
+      title: 'Correct Answers',
+      questions: scoredQuestionIndices.filter(({ correct }) => correct),
+    },
+  ]
 
   return (
     <div className="space-y-6">
@@ -818,21 +879,28 @@ function ResultsScreen({
 
       <section className="rounded-xl border bg-card p-5 shadow-sm sm:p-8">
         <h2 className="text-xl font-bold">Answer review</h2>
-        <p className="mt-1 text-muted-foreground">
-          Questions needing review appear first, followed by correct answers.
-        </p>
-        <div className="mt-6 space-y-5">
-          {orderedQuestionIndices.map(({ correct, index }) => (
-            <ReadOnlyQuestionCard
-              answer={answers[index]}
-              correct={correct}
-              key={index}
-              question={questions[index]}
-              questionIndex={index}
-              revealCorrectAnswer={attempt.mode === 'practice'}
-              total={questions.length}
-            />
-          ))}
+        <div className="mt-6 space-y-8">
+          {answerSections.map(
+            (section) =>
+              section.questions.length > 0 && (
+                <section key={section.title}>
+                  <h3 className="text-lg font-bold">{section.title}</h3>
+                  <div className="mt-4 space-y-5">
+                    {section.questions.map(({ correct, index }) => (
+                      <ReadOnlyQuestionCard
+                        answer={answers[index]}
+                        correct={correct}
+                        key={index}
+                        question={questions[index]}
+                        questionIndex={index}
+                        revealCorrectAnswer={attempt.mode === 'practice'}
+                        total={questions.length}
+                      />
+                    ))}
+                  </div>
+                </section>
+              ),
+          )}
         </div>
       </section>
     </div>
