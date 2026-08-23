@@ -100,12 +100,17 @@ export function useCreateManualCheckoutMutation(opts: { onSuccess: () => void })
   })
 }
 
-export function useCheckInMutation(opts?: { onSuccess?: () => void | Promise<void> }) {
+export function useCheckInMutation(opts?: {
+  onSuccess?: () => void | Promise<void>
+  invalidateOnSuccess?: boolean
+}) {
   const queryClient = useQueryClient()
   return useMutation({
     mutationFn: checkInBoat,
     onSuccess: async () => {
-      await queryClient.invalidateQueries({ queryKey: ['checkouts'] })
+      if (opts?.invalidateOnSuccess !== false) {
+        await queryClient.invalidateQueries({ queryKey: ['checkouts'] })
+      }
       await opts?.onSuccess?.()
     },
   })

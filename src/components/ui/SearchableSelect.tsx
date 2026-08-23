@@ -11,6 +11,15 @@ import {
   CommandList,
 } from './command'
 import { Popover, PopoverContent, PopoverTrigger } from './popover'
+import {
+  Select,
+  SelectContent,
+  SelectGroup,
+  SelectItem,
+  SelectLabel,
+  SelectTrigger,
+  SelectValue,
+} from './select'
 
 export type SearchableSelectOption = {
   value: string
@@ -69,60 +78,90 @@ export function SearchableSelect({
   )
 
   return (
-    <Popover
-      modal
-      open={open}
-      onOpenChange={(nextOpen) => {
-        setOpen(nextOpen)
-        if (!nextOpen) setSearch('')
-      }}
-    >
-      <PopoverTrigger asChild>
-        <Button
-          type="button"
-          variant="outline"
-          role="combobox"
-          aria-expanded={open}
-          disabled={disabled}
-          onBlur={onBlur}
-          className={cn(
-            'w-full justify-between font-normal',
-            !selected && 'text-muted-foreground',
-            className,
-          )}
-        >
-          <span className="truncate">{selected?.label ?? placeholder}</span>
-          <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
-        </Button>
-      </PopoverTrigger>
-      <PopoverContent
-        className="w-[var(--radix-popover-trigger-width)] min-w-56 p-0"
-        align="start"
-        sideOffset={-36}
-      >
-        <Command>
-          <CommandInput
-            autoFocus
-            value={search}
-            onValueChange={setSearch}
-            placeholder={searchPlaceholder}
-            className="h-9"
-          />
-          <CommandList
-            className="max-h-64 touch-pan-y overscroll-contain overflow-y-auto"
-            onWheel={(event) => event.stopPropagation()}
-          >
-            <CommandEmpty>{emptyMessage}</CommandEmpty>
+    <>
+      <div className="select-control-mobile">
+        <Select value={value ?? ''} onValueChange={onValueChange} disabled={disabled}>
+          <SelectTrigger className={cn('h-11', className)} onBlur={onBlur}>
+            <SelectValue placeholder={placeholder} />
+          </SelectTrigger>
+          <SelectContent>
             {groups
               ? groups.map((group) => (
-                  <CommandGroup key={group.label} heading={group.label}>
-                    {group.options.map(renderOption)}
-                  </CommandGroup>
+                  <SelectGroup key={group.label}>
+                    <SelectLabel>{group.label}</SelectLabel>
+                    {group.options.map((option) => (
+                      <SelectItem key={option.value} value={option.value} className="py-2.5 pl-6">
+                        {option.label}
+                      </SelectItem>
+                    ))}
+                  </SelectGroup>
                 ))
-              : options?.map(renderOption)}
-          </CommandList>
-        </Command>
-      </PopoverContent>
-    </Popover>
+              : options?.map((option) => (
+                  <SelectItem key={option.value} value={option.value} className="py-2.5">
+                    {option.label}
+                  </SelectItem>
+                ))}
+          </SelectContent>
+        </Select>
+      </div>
+
+      <div className="select-control-desktop">
+        <Popover
+          modal
+          open={open}
+          onOpenChange={(nextOpen) => {
+            setOpen(nextOpen)
+            if (!nextOpen) setSearch('')
+          }}
+        >
+          <PopoverTrigger asChild>
+            <Button
+              type="button"
+              variant="outline"
+              role="combobox"
+              aria-expanded={open}
+              disabled={disabled}
+              onBlur={onBlur}
+              className={cn(
+                'w-full justify-between font-normal',
+                !selected && 'text-muted-foreground',
+                className,
+              )}
+            >
+              <span className="truncate">{selected?.label ?? placeholder}</span>
+              <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+            </Button>
+          </PopoverTrigger>
+          <PopoverContent
+            className="w-[var(--radix-popover-trigger-width)] min-w-56 p-0"
+            align="start"
+            sideOffset={-36}
+          >
+            <Command>
+              <CommandInput
+                autoFocus
+                value={search}
+                onValueChange={setSearch}
+                placeholder={searchPlaceholder}
+                className="h-9"
+              />
+              <CommandList
+                className="max-h-64 touch-pan-y overscroll-contain overflow-y-auto"
+                onWheel={(event) => event.stopPropagation()}
+              >
+                <CommandEmpty>{emptyMessage}</CommandEmpty>
+                {groups
+                  ? groups.map((group) => (
+                      <CommandGroup key={group.label} heading={group.label}>
+                        {group.options.map(renderOption)}
+                      </CommandGroup>
+                    ))
+                  : options?.map(renderOption)}
+              </CommandList>
+            </Command>
+          </PopoverContent>
+        </Popover>
+      </div>
+    </>
   )
 }
