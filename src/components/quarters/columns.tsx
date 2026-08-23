@@ -1,6 +1,7 @@
 import { createColumnHelper } from '@tanstack/react-table'
 import { Check, Pencil, X } from 'lucide-react'
 import { Input } from '@/components/ui/input'
+import { DatePicker } from '@/components/ui/DatePicker'
 import type { Quarter } from '@/domains/quarters/schema'
 
 export type QuarterDraft = { text: string; school: string; endDate: string }
@@ -29,6 +30,14 @@ function editableCell(field: keyof QuarterDraft, inputType: 'text' | 'date') {
     const meta = table.options.meta as QuarterTableMeta | undefined
     const isEditing = meta?.editingIndex === row.original.index
     if (meta && isEditing) {
+      if (inputType === 'date') {
+        return (
+          <DatePicker
+            value={meta.draft[field]}
+            onChange={(value) => meta.onDraftChange(field, value ?? '')}
+          />
+        )
+      }
       return (
         <Input
           type={inputType}

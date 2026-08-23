@@ -1,4 +1,4 @@
-import { ChevronLeft, ChevronRight } from 'lucide-react'
+import { ChevronDown, ChevronLeft, ChevronRight, ChevronUp } from 'lucide-react'
 import { DayPicker, getDefaultClassNames } from 'react-day-picker'
 import { cn } from '@/lib/utils'
 import { buttonVariants } from './button'
@@ -21,7 +21,13 @@ export function Calendar({
         months: cn(defaults.months, 'relative'),
         month: cn(defaults.month, 'space-y-4'),
         month_caption: cn(defaults.month_caption, 'flex justify-center h-9 items-center'),
-        caption_label: cn(defaults.caption_label, 'text-sm font-medium'),
+        caption_label: cn(defaults.caption_label, 'flex items-center gap-1 text-sm font-medium'),
+        dropdowns: cn(defaults.dropdowns, 'flex items-center gap-1'),
+        dropdown_root: cn(
+          defaults.dropdown_root,
+          'relative flex items-center rounded-md border border-input px-2 py-1',
+        ),
+        dropdown: cn(defaults.dropdown, 'absolute inset-0 z-10 cursor-pointer opacity-0'),
         nav: cn(defaults.nav, 'absolute inset-x-0 top-0 flex items-center justify-between'),
         button_previous: cn(
           buttonVariants({ variant: 'outline' }),
@@ -51,12 +57,13 @@ export function Calendar({
         ...classNames,
       }}
       components={{
-        Chevron: ({ orientation, className: chevronClass }) =>
-          orientation === 'left' ? (
-            <ChevronLeft className={cn('h-4 w-4', chevronClass)} />
-          ) : (
-            <ChevronRight className={cn('h-4 w-4', chevronClass)} />
-          ),
+        Chevron: ({ orientation, className: chevronClass }) => {
+          const iconClass = cn('h-4 w-4', chevronClass)
+          if (orientation === 'left') return <ChevronLeft className={iconClass} />
+          if (orientation === 'right') return <ChevronRight className={iconClass} />
+          if (orientation === 'up') return <ChevronUp className={iconClass} />
+          return <ChevronDown className={iconClass} />
+        },
       }}
       {...props}
     />

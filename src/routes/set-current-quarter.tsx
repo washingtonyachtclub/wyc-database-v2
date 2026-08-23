@@ -2,13 +2,7 @@ import { Button } from '@/components/ui/button'
 import { Checkbox } from '@/components/ui/checkbox'
 import { ConfirmDialog } from '@/components/ui/ConfirmDialog'
 import { Label } from '@/components/ui/label'
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select'
+import { SearchableSelect } from '@/components/ui/SearchableSelect'
 import { getCurrentQuarterQueryOptions } from '@/domains/lessons/query-options'
 import {
   getQuarterChangeImpactQueryOptions,
@@ -138,24 +132,19 @@ function SetCurrentQuarterPage() {
           {/* Quarter selection */}
           <div className="space-y-2">
             <label className="text-sm font-medium">Select new quarter</label>
-            <Select
+            <SearchableSelect
               value={String(effectiveSelection)}
               onValueChange={(value) => {
                 setSelectedQuarter(Number(value))
                 setSuccessMessage(null)
               }}
-            >
-              <SelectTrigger className="w-64">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                {selectableQuarters.map((q) => (
-                  <SelectItem key={q.index} value={String(q.index)}>
-                    {q.school || q.text || `Quarter ${q.index}`}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+              className="w-64"
+              searchPlaceholder="Search quarters..."
+              options={selectableQuarters.map((quarter) => ({
+                value: String(quarter.index),
+                label: quarter.school || quarter.text || `Quarter ${quarter.index}`,
+              }))}
+            />
           </div>
 
           {/* Impact preview */}

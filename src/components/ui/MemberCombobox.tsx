@@ -78,7 +78,7 @@ export function MemberCombobox({
           {required && ' *'}
         </Label>
       )}
-      <Popover open={open} onOpenChange={setOpen}>
+      <Popover modal open={open} onOpenChange={setOpen}>
         <PopoverTrigger asChild>
           <Button
             variant="outline"
@@ -96,8 +96,16 @@ export function MemberCombobox({
 
         <PopoverContent className="w-[var(--radix-popover-trigger-width)] p-0" align="start">
           <Command shouldFilter={false}>
-            <CommandInput value={search} onValueChange={setSearch} placeholder={placeholder} />
-            <CommandList className="max-h-60">
+            <CommandInput
+              autoFocus
+              value={search}
+              onValueChange={setSearch}
+              placeholder={placeholder}
+            />
+            <CommandList
+              className="max-h-60 touch-pan-y overscroll-contain overflow-y-auto"
+              onWheel={(event) => event.stopPropagation()}
+            >
               {trimmedSearch.length < MIN_SEARCH_LENGTH ? (
                 <div className="py-6 text-center text-sm text-muted-foreground">
                   Type at least {MIN_SEARCH_LENGTH} characters to search...
