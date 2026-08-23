@@ -1,14 +1,8 @@
 import { useState } from 'react'
 import { Button } from '@/components/ui/button'
+import { GroupedSelect } from '@/components/ui/GroupedSelect'
 import { Label } from '@/components/ui/label'
 import { MemberCombobox, type MemberLite } from '@/components/ui/MemberCombobox'
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select'
 import type { CheckoutQualification } from '@/domains/checkouts/schema'
 import { cn } from '@/lib/utils'
 
@@ -17,7 +11,7 @@ type QualificationMode = 'supervised' | 'unsupervised' | null
 type CheckoutQualificationFieldProps = {
   value: CheckoutQualification
   onChange: (value: CheckoutQualification) => void
-  ratings: { index: number; text: string }[]
+  ratings: { index: number; text: string; type: string }[]
   members: MemberLite[]
   excludeSupervisor?: number[]
   error?: string
@@ -41,6 +35,16 @@ export function CheckoutQualificationField({
   const [mode, setMode] = useState<QualificationMode>(() => initialMode(value))
   const supervisorMembers = members.filter(
     (member) => !excludeSupervisor.includes(member.wycNumber),
+  )
+  const ratingGroups = Object.values(
+    ratings.reduce<Record<string, { label: string; options: { value: number; label: string }[] }>>(
+      (groups, rating) => {
+        groups[rating.type] ??= { label: rating.type || '<No Type>', options: [] }
+        groups[rating.type].options.push({ value: rating.index, label: rating.text })
+        return groups
+      },
+      {},
+    ),
   )
 
   const selectMode = (nextMode: Exclude<QualificationMode, null>) => {
@@ -144,28 +148,17 @@ export function CheckoutQualificationField({
 
           <div className={cn('mt-4', mode !== 'unsupervised' && 'opacity-40')}>
             <Label className="mb-1">Relevant rating *</Label>
-            <Select
+            <GroupedSelect
               disabled={mode !== 'unsupervised'}
               value={
-                !value.supervised && value.relevantRatingId > 0
-                  ? String(value.relevantRatingId)
-                  : ''
+                !value.supervised && value.relevantRatingId > 0 ? value.relevantRatingId : null
               }
               onValueChange={(rating) =>
-                onChange({ supervised: false, relevantRatingId: Number(rating) })
+                onChange({ supervised: false, relevantRatingId: rating ?? 0 })
               }
-            >
-              <SelectTrigger className="bg-background">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                {ratings.map((rating) => (
-                  <SelectItem key={rating.index} value={String(rating.index)}>
-                    {rating.text}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+              groups={ratingGroups}
+              triggerClassName="bg-background"
+            />
           </div>
         </div>
       </div>

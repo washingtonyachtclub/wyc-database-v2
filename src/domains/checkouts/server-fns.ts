@@ -136,17 +136,17 @@ export const getWindHistory = createServerFn({ method: 'GET' }).handler(async ()
     stationId: WIND_STATION_ID,
     format: 'json',
     units: 'e',
-    date: pacificDate.replaceAll('-', ''),
     numericPrecision: 'decimal',
     apiKey: WEATHER_UNDERGROUND_API_KEY,
   })
 
   try {
-    const response = await fetch(`https://api.weather.com/v2/pws/history/all?${params}`)
+    const response = await fetch(`https://api.weather.com/v2/pws/observations/all/1day?${params}`)
     if (!response.ok) throw new Error(`Weather service returned ${response.status}`)
     const parsed = windHistoryResponseSchema.parse(await response.json())
 
     const readings = parsed.observations.flatMap((observation) => {
+      if (!observation.obsTimeLocal.startsWith(pacificDate)) return []
       const time = observation.obsTimeLocal.slice(11, 16)
       const [hours, minutes] = time.split(':').map(Number)
       const { windspeedAvg, windgustAvg } = observation.imperial
@@ -247,11 +247,17 @@ export const getCheckoutCards = createServerFn({ method: 'GET' }).handler(async 
 
 async function getRatingsForMember(wycNumber: number) {
   const rows = await db
-    .selectDistinct({ index: ratings.index, text: ratings.text })
+    .selectDistinct({
+      index: ratings.index,
+      text: ratings.text,
+      type: ratings.type,
+      degree: ratings.degree,
+    })
     .from(wycRatings)
     .innerJoin(ratings, eq(wycRatings.rating, ratings.index))
     .where(eq(wycRatings.member, wycNumber))
-  return rows.map((row) => ({ index: row.index, text: str(row.text) }))
+    .orderBy(ratings.type, ratings.degree)
+  return rows.map((row) => ({ index: row.index, text: str(row.text), type: row.type }))
 }
 
 export const getMyRatings = createServerFn({ method: 'GET' }).handler(async () => {
@@ -263,18 +269,6 @@ export const getMyRatings = createServerFn({ method: 'GET' }).handler(async () =
     throw new Error('Failed to fetch ratings')
   }
 })
-
-export const getCheckoutRatings = createServerFn({ method: 'GET' })
-  .inputValidator((input) => z.object({ wycNumber: z.number().int().min(1) }).parse(input))
-  .handler(async ({ data: { wycNumber } }) => {
-    await requirePrivilege('db')
-    try {
-      return await getRatingsForMember(wycNumber)
-    } catch (error) {
-      console.error('Failed to fetch checkout ratings:', error)
-      throw new Error('Failed to fetch ratings')
-    }
-  })
 
 export const getCheckoutFormBoatTypes = createServerFn({ method: 'GET' }).handler(async () => {
   await requireAuth()

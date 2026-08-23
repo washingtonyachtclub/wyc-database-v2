@@ -24,8 +24,8 @@ export function WindHistoryChart() {
     0,
     ...(data?.readings.flatMap((reading) => [reading.windKnots, reading.gustKnots]) ?? []),
   )
-  const yMax = Math.max(20, Math.ceil(maxReading / 5) * 5)
-  const yTicks = Array.from({ length: yMax / 5 + 1 }, (_, index) => index * 5)
+  const yMax = maxReading <= 16 ? 16 : Math.ceil(maxReading / 5) * 5
+  const yTicks = Array.from({ length: Math.floor(yMax / 5) + 1 }, (_, index) => index * 5)
   const point = (minute: number, knots: number) =>
     `${LEFT + (minute / 1440) * PLOT_WIDTH},${TOP + PLOT_HEIGHT - (knots / yMax) * PLOT_HEIGHT}`
   const windPoints = data?.readings
@@ -118,7 +118,7 @@ export function WindHistoryChart() {
               y1={TOP + PLOT_HEIGHT - (7 / yMax) * PLOT_HEIGHT}
               y2={TOP + PLOT_HEIGHT - (7 / yMax) * PLOT_HEIGHT}
               className="stroke-muted-foreground"
-              strokeWidth="2"
+              strokeWidth="1.5"
               strokeDasharray="8 6"
             />
             <line
@@ -127,7 +127,7 @@ export function WindHistoryChart() {
               y1={TOP + PLOT_HEIGHT - (15 / yMax) * PLOT_HEIGHT}
               y2={TOP + PLOT_HEIGHT - (15 / yMax) * PLOT_HEIGHT}
               className="stroke-foreground"
-              strokeWidth="2"
+              strokeWidth="1.5"
               strokeDasharray="8 6"
             />
             <text
@@ -150,7 +150,7 @@ export function WindHistoryChart() {
               points={windPoints}
               fill="none"
               className="stroke-primary"
-              strokeWidth="3"
+              strokeWidth="2"
               strokeLinejoin="round"
               strokeLinecap="round"
             />
@@ -158,7 +158,7 @@ export function WindHistoryChart() {
               points={gustPoints}
               fill="none"
               className="stroke-destructive"
-              strokeWidth="3"
+              strokeWidth="2"
               strokeLinejoin="round"
               strokeLinecap="round"
             />

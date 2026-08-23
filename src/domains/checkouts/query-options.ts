@@ -9,7 +9,6 @@ import {
   getCheckoutCards,
   getCheckoutFormBoatTypes,
   getCheckoutMembers,
-  getCheckoutRatings,
   getCheckouts,
   getMyRatings,
   getWindHistory,
@@ -77,14 +76,6 @@ export const getWindHistoryQueryOptions = () =>
     queryFn: getWindHistory,
     staleTime: 5 * 60 * 1000,
     refetchInterval: 5 * 60 * 1000,
-  })
-
-export const getCheckoutRatingsQueryOptions = (wycNumber: number) =>
-  queryOptions({
-    queryKey: ['checkouts', 'ratings', wycNumber],
-    queryFn: () => getCheckoutRatings({ data: { wycNumber } }),
-    enabled: wycNumber > 0,
-    staleTime: 5 * 60 * 1000,
   })
 
 export function useCreateCheckoutMutation(opts: { onSuccess: () => void | Promise<void> }) {

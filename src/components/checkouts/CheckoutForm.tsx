@@ -1,5 +1,6 @@
 import { useQuery } from '@tanstack/react-query'
-import { Plus, X } from 'lucide-react'
+import { ChevronDown, Plus, X } from 'lucide-react'
+import { useState } from 'react'
 import { formErrorMessage } from '@/components/ui/app-form-fields'
 import {
   getCheckoutFormBoatTypesQueryOptions,
@@ -22,6 +23,8 @@ import { ErrorAlert } from '../ui/ErrorAlert'
 import { Label } from '../ui/label'
 import { CheckoutQualificationField } from './CheckoutQualificationField'
 import { MemberMultiCombobox } from './MemberMultiCombobox'
+
+const PRIMARY_DESTINATIONS = DESTINATIONS.slice(0, 2)
 
 function pad(n: number) {
   return String(n).padStart(2, '0')
@@ -49,6 +52,7 @@ export function CheckoutForm({
   skipperWycNumber: number
   onSuccess: () => void | Promise<void>
 }) {
+  const [showMoreDestinations, setShowMoreDestinations] = useState(false)
   const { data: boatTypes = [] } = useQuery(getCheckoutFormBoatTypesQueryOptions())
   const { data: myRatings = [] } = useQuery(getMyRatingsQueryOptions())
   const { data: members = [] } = useQuery(getCheckoutMembersQueryOptions())
@@ -112,11 +116,12 @@ export function CheckoutForm({
       <form.AppField name="destination">
         {(field) => {
           const error = formErrorMessage(field.state.meta.errors)
+          const visibleDestinations = showMoreDestinations ? DESTINATIONS : PRIMARY_DESTINATIONS
           return (
             <div>
               <Label className="mb-1">Destination *</Label>
               <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
-                {DESTINATIONS.map((destination) => {
+                {visibleDestinations.map((destination) => {
                   const selected = field.state.value === destination
                   return (
                     <Button
@@ -136,6 +141,18 @@ export function CheckoutForm({
                     </Button>
                   )
                 })}
+                {!showMoreDestinations && (
+                  <Button
+                    type="button"
+                    variant="outline"
+                    className="h-9 border-dashed text-muted-foreground sm:col-span-2"
+                    aria-expanded="false"
+                    onClick={() => setShowMoreDestinations(true)}
+                  >
+                    <ChevronDown className="h-4 w-4" />
+                    More destinations
+                  </Button>
+                )}
               </div>
               {error && <p className="mt-1 text-sm text-destructive">{error}</p>}
             </div>

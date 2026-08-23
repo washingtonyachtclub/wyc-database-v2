@@ -3,18 +3,11 @@ import { cn } from '@/lib/utils'
 import { useFieldContext, useFormContext } from '../../hooks/form-context'
 import { Button } from './button'
 import { Checkbox } from './checkbox'
+import { GroupedSelect, type GroupedSelectGroup } from './GroupedSelect'
 import { Input } from './input'
 import { Label } from './label'
 import { Tooltip, TooltipContent, TooltipTrigger } from './tooltip'
-import {
-  Select,
-  SelectContent,
-  SelectGroup,
-  SelectItem,
-  SelectLabel,
-  SelectTrigger,
-  SelectValue,
-} from './select'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './select'
 import { Textarea } from './textarea'
 
 // --- Shared helpers ---
@@ -197,7 +190,7 @@ export function GroupedSelectField({
   label: string
   required?: boolean
   placeholder?: string
-  groups: { label: string; options: { value: number; label: string }[] }[]
+  groups: GroupedSelectGroup[]
   tooltip?: string
   className?: string
 }) {
@@ -216,26 +209,13 @@ export function GroupedSelectField({
           </Tooltip>
         )}
       </Label>
-      <Select
-        value={field.state.value != null ? String(field.state.value) : ''}
-        onValueChange={(value) => field.handleChange(value === '' ? null : Number(value))}
-      >
-        <SelectTrigger onBlur={field.handleBlur}>
-          <SelectValue placeholder={placeholder} />
-        </SelectTrigger>
-        <SelectContent>
-          {groups.map((group) => (
-            <SelectGroup key={group.label}>
-              <SelectLabel>{group.label}</SelectLabel>
-              {group.options.map((opt) => (
-                <SelectItem key={opt.value} value={String(opt.value)} className="pl-6">
-                  {opt.label}
-                </SelectItem>
-              ))}
-            </SelectGroup>
-          ))}
-        </SelectContent>
-      </Select>
+      <GroupedSelect
+        value={field.state.value}
+        onValueChange={field.handleChange}
+        groups={groups}
+        placeholder={placeholder}
+        onBlur={field.handleBlur}
+      />
       <FieldError errors={field.state.meta.errors} />
     </div>
   )

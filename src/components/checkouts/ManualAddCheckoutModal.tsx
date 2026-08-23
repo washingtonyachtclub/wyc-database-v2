@@ -17,7 +17,6 @@ import { formErrorMessage } from '@/components/ui/app-form-fields'
 import {
   getCheckoutBoatTypesQueryOptions,
   getCheckoutMembersQueryOptions,
-  getCheckoutRatingsQueryOptions,
   useCreateManualCheckoutMutation,
 } from '@/domains/checkouts/query-options'
 import {
@@ -28,6 +27,7 @@ import {
   type ManualCheckoutInsert,
   manualCheckoutInsertSchema,
 } from '@/domains/checkouts/schema'
+import { getRatingTypesQueryOptions } from '@/domains/ratings/query-options'
 import { useAppForm } from '@/hooks/form'
 import { CheckoutQualificationField } from './CheckoutQualificationField'
 import { MemberMultiCombobox } from './MemberMultiCombobox'
@@ -40,7 +40,7 @@ export function ManualAddCheckoutModal({ onClose }: ManualAddCheckoutModalProps)
   const [skipperWycNumber, setSkipperWycNumber] = useState(0)
   const { data: boatTypes = [] } = useQuery(getCheckoutBoatTypesQueryOptions())
   const { data: members = [] } = useQuery(getCheckoutMembersQueryOptions())
-  const { data: ratings = [] } = useQuery(getCheckoutRatingsQueryOptions(skipperWycNumber))
+  const { data: ratings = [] } = useQuery(getRatingTypesQueryOptions())
   const createCheckout = useCreateManualCheckoutMutation({ onSuccess: onClose })
 
   const form = useAppForm({
@@ -149,7 +149,7 @@ export function ManualAddCheckoutModal({ onClose }: ManualAddCheckoutModalProps)
                   }
                 >
                   <SelectTrigger onBlur={field.handleBlur}>
-                    <SelectValue placeholder="Where did they go?" />
+                    <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
                     {DESTINATIONS.map((destination) => (
