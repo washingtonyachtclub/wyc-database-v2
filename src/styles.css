@@ -48,26 +48,6 @@
   }
 }
 
-@layer utilities {
-  .select-control-mobile {
-    display: block;
-  }
-
-  .select-control-desktop {
-    display: none;
-  }
-
-  @media (min-width: 48rem) and (hover: hover) and (pointer: fine) {
-    .select-control-mobile {
-      display: none;
-    }
-
-    .select-control-desktop {
-      display: block;
-    }
-  }
-}
-
 @layer base {
   * {
     @apply border-border;

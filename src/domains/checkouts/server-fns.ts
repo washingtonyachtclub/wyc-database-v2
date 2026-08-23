@@ -1,5 +1,5 @@
 import { createServerFn } from '@tanstack/react-start'
-import { and, desc, eq, inArray, isNotNull, isNull, sql } from 'drizzle-orm'
+import { and, desc, eq, gte, inArray, isNotNull, isNull, like, or, sql } from 'drizzle-orm'
 import { z } from 'zod'
 import db from '@/db/index'
 import { fullName, str } from '@/db/mapper-utils'
@@ -9,6 +9,7 @@ import {
   checkouts,
   crew,
   guests,
+  lessonQuarter,
   memcat,
   quarters,
   ratings,
@@ -284,8 +285,65 @@ export const getCheckoutFormBoatTypes = createServerFn({ method: 'GET' }).handle
   }
 })
 
-export const getCheckoutMembers = createServerFn({ method: 'GET' }).handler(async () => {
+export const getCheckoutFormMembers = createServerFn({ method: 'GET' }).handler(async () => {
   await requireAuth()
+  try {
+    const [currentQuarter] = await db
+      .select({ index: lessonQuarter.quarter })
+      .from(lessonQuarter)
+      .where(eq(lessonQuarter.index, 1))
+      .limit(1)
+    if (!currentQuarter) throw new Error('Current quarter not found')
+
+    return await db
+      .select({
+        wycNumber: wycDatabase.wycNumber,
+        first: wycDatabase.first,
+        last: wycDatabase.last,
+      })
+      .from(wycDatabase)
+      .where(gte(wycDatabase.expireQtrIndex, currentQuarter.index))
+      .orderBy(desc(wycDatabase.expireQtrIndex), wycDatabase.first, wycDatabase.last)
+  } catch (error) {
+    console.error('Failed to fetch members for checkout form:', error)
+    throw new Error('Failed to fetch members')
+  }
+})
+
+export const searchCheckoutMembers = createServerFn({ method: 'GET' })
+  .inputValidator((input) => z.object({ query: z.string().trim().min(2).max(80) }).parse(input))
+  .handler(async ({ data: { query } }) => {
+    await requireAuth()
+    try {
+      const numericQuery = /^\d+$/.test(query)
+      const conditions = numericQuery
+        ? eq(wycDatabase.wycNumber, Number(query))
+        : and(
+            ...query.split(/\s+/).map((token) => {
+              const escaped = token.replace(/[\\%_]/g, '\\$&')
+              const pattern = `%${escaped}%`
+              return or(like(wycDatabase.first, pattern), like(wycDatabase.last, pattern))
+            }),
+          )
+
+      return await db
+        .select({
+          wycNumber: wycDatabase.wycNumber,
+          first: wycDatabase.first,
+          last: wycDatabase.last,
+        })
+        .from(wycDatabase)
+        .where(conditions)
+        .orderBy(desc(wycDatabase.expireQtrIndex), wycDatabase.first, wycDatabase.last)
+        .limit(30)
+    } catch (error) {
+      console.error('Failed to search checkout members:', error)
+      throw new Error('Failed to search members')
+    }
+  })
+
+export const getCheckoutMembers = createServerFn({ method: 'GET' }).handler(async () => {
+  await requirePrivilege('db')
   try {
     return await db
       .select({
@@ -296,7 +354,7 @@ export const getCheckoutMembers = createServerFn({ method: 'GET' }).handler(asyn
       .from(wycDatabase)
       .orderBy(desc(wycDatabase.expireQtrIndex), wycDatabase.first, wycDatabase.last)
   } catch (error) {
-    console.error('Failed to fetch members for checkout form:', error)
+    console.error('Failed to fetch members for manual checkout:', error)
     throw new Error('Failed to fetch members')
   }
 })

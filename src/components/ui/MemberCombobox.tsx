@@ -1,21 +1,25 @@
 'use client'
 
 import { Check, ChevronsUpDown } from 'lucide-react'
-import { useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { getAllMembersLiteQueryOptions } from '@/domains/members/query-options'
+import { useDesktopSelectControl } from '@/hooks/use-desktop-select-control'
 import { cn } from '../../lib/utils'
 import { Button } from './button'
 import { Command, CommandEmpty, CommandInput, CommandItem, CommandList } from './command'
+import { Input } from './input'
 import { Label } from './label'
+import { Modal } from './Modal'
 import { Popover, PopoverContent, PopoverTrigger } from './popover'
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './select'
 
 export type MemberLite = { wycNumber: number; first: string | null; last: string | null }
 
 type MemberComboboxProps = {
   value: number | null
   onChange: (wycNumber: number | null) => void
+  onSelectMember?: (member: MemberLite) => void
+  searchAllMembers?: (query: string) => Promise<MemberLite[]>
   label?: string
   placeholder?: string
   disabled?: boolean
@@ -26,9 +30,14 @@ type MemberComboboxProps = {
   exactWycNumberSearch?: boolean
 }
 
+const MIN_SEARCH_LENGTH = 2
+const MAX_RESULTS = 50
+
 export function MemberCombobox({
   value,
   onChange,
+  onSelectMember,
+  searchAllMembers,
   label,
   placeholder = 'Search for a member...',
   disabled = false,
@@ -39,7 +48,11 @@ export function MemberCombobox({
   exactWycNumberSearch = false,
 }: MemberComboboxProps) {
   const [open, setOpen] = useState(false)
+  const [mobileSearchOpen, setMobileSearchOpen] = useState(false)
+  const [searchingAllMembers, setSearchingAllMembers] = useState(false)
   const [search, setSearch] = useState('')
+  const [debouncedSearch, setDebouncedSearch] = useState('')
+  const desktopControl = useDesktopSelectControl()
 
   const { data: fetched = [] } = useQuery({
     ...getAllMembersLiteQueryOptions(),
@@ -47,33 +60,124 @@ export function MemberCombobox({
   })
   const members = membersProp ?? fetched
 
-  const selectedMember = value != null ? members.find((m) => m.wycNumber === value) : null
+  useEffect(() => {
+    const timeout = window.setTimeout(() => setDebouncedSearch(search.trim()), 250)
+    return () => window.clearTimeout(timeout)
+  }, [search])
+
+  const trimmedSearch = search.trim()
+  const selectedMember = value != null ? members.find((member) => member.wycNumber === value) : null
   const selectedLabel = selectedMember
     ? `${selectedMember.first ?? ''} ${selectedMember.last ?? ''}`.trim()
     : null
-
-  const MIN_SEARCH_LENGTH = 2
-  const MAX_RESULTS = 50
-
-  const trimmedSearch = search.trim()
   const searchTokens = trimmedSearch.toLowerCase().split(/\s+/)
   const isWycNumberSearch = exactWycNumberSearch && /^\d+$/.test(trimmedSearch)
-  const filteredMembers =
+  const localMatches =
     trimmedSearch.length < MIN_SEARCH_LENGTH
       ? []
-      : members.filter((m) => {
-          if (isWycNumberSearch) return String(m.wycNumber) === trimmedSearch
-          const fullName = `${m.first ?? ''} ${m.last ?? ''}`.toLowerCase()
-          const searchable = exactWycNumberSearch ? fullName : `${fullName} ${m.wycNumber}`
+      : members.filter((member) => {
+          if (isWycNumberSearch) return String(member.wycNumber) === trimmedSearch
+          const fullName = `${member.first ?? ''} ${member.last ?? ''}`.toLowerCase()
+          const searchable = exactWycNumberSearch ? fullName : `${fullName} ${member.wycNumber}`
           return searchTokens.every((token) => searchable.includes(token))
         })
+  const remoteSearchEnabled =
+    searchAllMembers !== undefined &&
+    debouncedSearch.length >= MIN_SEARCH_LENGTH &&
+    debouncedSearch === trimmedSearch &&
+    (searchingAllMembers || localMatches.length === 0) &&
+    (open || mobileSearchOpen)
+  const {
+    data: remoteMembers = [],
+    isFetching: remoteSearchFetching,
+    isError: remoteSearchFailed,
+  } = useQuery({
+    queryKey: ['checkout-member-search', debouncedSearch],
+    queryFn: () => searchAllMembers!(debouncedSearch),
+    enabled: remoteSearchEnabled,
+    staleTime: 60_000,
+  })
+  const currentRemoteMembers = remoteSearchEnabled ? remoteMembers : []
+  const matchingMembers = useMemo(() => {
+    const seen = new Set<number>()
+    return [...localMatches, ...currentRemoteMembers].filter((member) => {
+      if (seen.has(member.wycNumber)) return false
+      seen.add(member.wycNumber)
+      return true
+    })
+  }, [currentRemoteMembers, localMatches])
+  const displayedMembers = matchingMembers.slice(0, MAX_RESULTS)
+  const hasMore = matchingMembers.length > MAX_RESULTS
+  const waitingForRemoteSearch =
+    searchAllMembers !== undefined &&
+    trimmedSearch.length >= MIN_SEARCH_LENGTH &&
+    (debouncedSearch !== trimmedSearch || (remoteSearchEnabled && remoteSearchFetching))
 
-  const displayedMembers = filteredMembers.slice(0, MAX_RESULTS)
-  const hasMore = filteredMembers.length > MAX_RESULTS
-  const memberLabel = (member: MemberLite) => {
-    const name = `${member.first ?? ''} ${member.last ?? ''}`.trim()
-    return showWycNumbers ? `${name} (${member.wycNumber})` : name
+  const chooseMember = (member: MemberLite) => {
+    onSelectMember?.(member)
+    onChange(member.wycNumber)
+    setSearch('')
+    setSearchingAllMembers(false)
+    setOpen(false)
+    setMobileSearchOpen(false)
   }
+
+  const memberResult = (member: MemberLite) => {
+    const isSelected = member.wycNumber === value
+    const displayName = `${member.first ?? ''} ${member.last ?? ''}`.trim()
+    const displayWycNumber =
+      showWycNumbers || (isWycNumberSearch && trimmedSearch === String(member.wycNumber))
+    return (
+      <CommandItem
+        key={member.wycNumber}
+        value={String(member.wycNumber)}
+        onSelect={() => chooseMember(member)}
+      >
+        <Check className={cn('h-4 w-4 shrink-0', isSelected ? 'opacity-100' : 'opacity-0')} />
+        <span>
+          {displayName}
+          {displayWycNumber && <span className="text-muted-foreground"> ({member.wycNumber})</span>}
+        </span>
+      </CommandItem>
+    )
+  }
+
+  const resultList = (
+    <>
+      {displayedMembers.length === 0 && !waitingForRemoteSearch && !remoteSearchFailed && (
+        <CommandEmpty>No members found.</CommandEmpty>
+      )}
+      {displayedMembers.map(memberResult)}
+      {waitingForRemoteSearch && (
+        <div className="px-3 py-3 text-center text-sm text-muted-foreground">
+          Searching all members...
+        </div>
+      )}
+      {remoteSearchFailed && (
+        <div className="px-3 py-3 text-center text-sm text-destructive">
+          Could not search all members.
+        </div>
+      )}
+      {searchAllMembers &&
+        trimmedSearch.length >= MIN_SEARCH_LENGTH &&
+        localMatches.length > 0 &&
+        !searchingAllMembers && (
+          <Button
+            type="button"
+            variant="ghost"
+            className="h-10 w-full justify-center rounded-none border-t text-sm"
+            onClick={() => setSearchingAllMembers(true)}
+          >
+            Search all members
+          </Button>
+        )}
+      {hasMore && (
+        <div className="mt-1 border-t px-2 py-2 text-center text-xs text-muted-foreground">
+          {matchingMembers.length - MAX_RESULTS} more — keep typing to narrow down
+        </div>
+      )}
+    </>
+  )
 
   return (
     <div>
@@ -83,30 +187,19 @@ export function MemberCombobox({
           {required && ' *'}
         </Label>
       )}
-      <div className="select-control-mobile">
-        <Select
-          value={value != null ? String(value) : ''}
-          onValueChange={(nextValue) => onChange(Number(nextValue))}
-          disabled={disabled}
+
+      {desktopControl ? (
+        <Popover
+          modal
+          open={open}
+          onOpenChange={(nextOpen) => {
+            setOpen(nextOpen)
+            if (!nextOpen) {
+              setSearch('')
+              setSearchingAllMembers(false)
+            }
+          }}
         >
-          <SelectTrigger className="h-11">
-            <SelectValue placeholder={placeholder} />
-          </SelectTrigger>
-          <SelectContent>
-            {members.map((member) => (
-              <SelectItem
-                key={member.wycNumber}
-                value={String(member.wycNumber)}
-                className="py-2.5"
-              >
-                {memberLabel(member)}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-      </div>
-      <div className="select-control-desktop">
-        <Popover modal open={open} onOpenChange={setOpen}>
           <PopoverTrigger asChild>
             <Button
               variant="outline"
@@ -139,53 +232,60 @@ export function MemberCombobox({
                     Type at least {MIN_SEARCH_LENGTH} characters to search...
                   </div>
                 ) : (
-                  <>
-                    <CommandEmpty>No members found.</CommandEmpty>
-
-                    {displayedMembers.map((member) => {
-                      const isSelected = member.wycNumber === value
-                      const displayName = `${member.first ?? ''} ${member.last ?? ''}`.trim()
-                      const displayWycNumber =
-                        showWycNumbers ||
-                        (isWycNumberSearch && trimmedSearch === String(member.wycNumber))
-                      return (
-                        <CommandItem
-                          key={member.wycNumber}
-                          value={String(member.wycNumber)}
-                          onSelect={() => {
-                            onChange(member.wycNumber)
-                            setSearch('')
-                            setOpen(false)
-                          }}
-                        >
-                          <Check
-                            className={cn(
-                              'h-4 w-4 shrink-0',
-                              isSelected ? 'opacity-100' : 'opacity-0',
-                            )}
-                          />
-                          <span>
-                            {displayName}
-                            {displayWycNumber && (
-                              <span className="text-muted-foreground"> ({member.wycNumber})</span>
-                            )}
-                          </span>
-                        </CommandItem>
-                      )
-                    })}
-
-                    {hasMore && (
-                      <div className="px-2 py-2 text-xs text-muted-foreground text-center border-t mt-1">
-                        {filteredMembers.length - MAX_RESULTS} more — keep typing to narrow down
-                      </div>
-                    )}
-                  </>
+                  resultList
                 )}
               </CommandList>
             </Command>
           </PopoverContent>
         </Popover>
-      </div>
+      ) : (
+        <>
+          <Button
+            variant="outline"
+            type="button"
+            disabled={disabled}
+            className={cn(
+              'h-11 w-full justify-between font-normal',
+              !selectedLabel && 'text-muted-foreground',
+            )}
+            onClick={() => setMobileSearchOpen(true)}
+          >
+            <span className="truncate">{selectedLabel ?? placeholder}</span>
+            <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+          </Button>
+          {mobileSearchOpen && (
+            <Modal
+              title="Search members"
+              onClose={() => {
+                setMobileSearchOpen(false)
+                setSearch('')
+                setSearchingAllMembers(false)
+              }}
+            >
+              <Input
+                autoFocus
+                type="search"
+                value={search}
+                onChange={(event) => setSearch(event.target.value)}
+                placeholder="Name or WYC number"
+                className="h-11 text-base"
+              />
+              <Command shouldFilter={false}>
+                <CommandList className="max-h-[min(24rem,55dvh)] touch-pan-y overscroll-contain overflow-y-auto">
+                  {trimmedSearch.length < MIN_SEARCH_LENGTH ? (
+                    <div className="py-6 text-center text-sm text-muted-foreground">
+                      Type at least {MIN_SEARCH_LENGTH} characters to search...
+                    </div>
+                  ) : (
+                    resultList
+                  )}
+                </CommandList>
+              </Command>
+            </Modal>
+          )}
+        </>
+      )}
+
       {error && <p className="mt-1 text-sm text-destructive">{error}</p>}
     </div>
   )

@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
 import { Button } from '@/components/ui/button'
 import { GroupedSelect } from '@/components/ui/GroupedSelect'
 import { Label } from '@/components/ui/label'
@@ -14,6 +14,8 @@ type CheckoutQualificationFieldProps = {
   ratings: { index: number; text: string; type: string }[]
   members: MemberLite[]
   excludeSupervisor?: number[]
+  searchAllMembers?: (query: string) => Promise<MemberLite[]>
+  onSelectMember?: (member: MemberLite) => void
   error?: string
   showWycNumbers?: boolean
 }
@@ -29,12 +31,15 @@ export function CheckoutQualificationField({
   ratings,
   members,
   excludeSupervisor = [],
+  searchAllMembers,
+  onSelectMember,
   error,
   showWycNumbers = true,
 }: CheckoutQualificationFieldProps) {
   const [mode, setMode] = useState<QualificationMode>(() => initialMode(value))
-  const supervisorMembers = members.filter(
-    (member) => !excludeSupervisor.includes(member.wycNumber),
+  const supervisorMembers = useMemo(
+    () => members.filter((member) => !excludeSupervisor.includes(member.wycNumber)),
+    [excludeSupervisor, members],
   )
   const ratingGroups = Object.values(
     ratings.reduce<Record<string, { label: string; options: { value: number; label: string }[] }>>(
@@ -105,6 +110,8 @@ export function CheckoutQualificationField({
                 onChange({ supervised: true, supervisorWycNumber: supervisorWycNumber ?? 0 })
               }
               members={supervisorMembers}
+              searchAllMembers={searchAllMembers}
+              onSelectMember={onSelectMember}
               placeholder="Select a member"
               showWycNumbers={showWycNumbers}
               exactWycNumberSearch={!showWycNumbers}

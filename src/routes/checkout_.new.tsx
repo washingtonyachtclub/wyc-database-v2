@@ -3,6 +3,11 @@ import { CheckoutBetaBanner } from '@/components/checkouts/CheckoutBetaBanner'
 import { CheckoutForm } from '@/components/checkouts/CheckoutForm'
 import { WindHistoryChart } from '@/components/checkouts/WindHistoryChart'
 import { Button } from '@/components/ui/button'
+import {
+  getCheckoutFormBoatTypesQueryOptions,
+  getCheckoutFormMembersQueryOptions,
+  getMyRatingsQueryOptions,
+} from '@/domains/checkouts/query-options'
 import { useLogoutMutation } from '@/lib/auth/auth-query-options'
 
 export const Route = createFileRoute('/checkout_/new')({
@@ -14,6 +19,12 @@ export const Route = createFileRoute('/checkout_/new')({
       })
     }
   },
+  loader: ({ context }) =>
+    Promise.all([
+      context.queryClient.ensureQueryData(getCheckoutFormBoatTypesQueryOptions()),
+      context.queryClient.ensureQueryData(getMyRatingsQueryOptions()),
+      context.queryClient.ensureQueryData(getCheckoutFormMembersQueryOptions()),
+    ]),
   head: () => ({ meta: [{ title: 'Check Out a Boat | WYC' }] }),
   component: NewCheckoutPage,
 })

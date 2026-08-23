@@ -8,6 +8,7 @@ import {
   getCheckoutBoatTypes,
   getCheckoutCards,
   getCheckoutFormBoatTypes,
+  getCheckoutFormMembers,
   getCheckoutMembers,
   getCheckouts,
   getMyRatings,
@@ -67,6 +68,13 @@ export const getCheckoutMembersQueryOptions = () =>
   queryOptions({
     queryKey: ['checkouts', 'members'],
     queryFn: getCheckoutMembers,
+    staleTime: 5 * 60 * 1000,
+  })
+
+export const getCheckoutFormMembersQueryOptions = () =>
+  queryOptions({
+    queryKey: ['checkouts', 'form-members'],
+    queryFn: getCheckoutFormMembers,
     staleTime: 5 * 60 * 1000,
   })
 

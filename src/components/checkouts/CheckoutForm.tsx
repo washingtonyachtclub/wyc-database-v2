@@ -1,13 +1,15 @@
 import { useQuery } from '@tanstack/react-query'
 import { ChevronDown, Plus, X } from 'lucide-react'
-import { useState } from 'react'
+import { useCallback, useMemo, useState } from 'react'
 import { formErrorMessage } from '@/components/ui/app-form-fields'
+import type { MemberLite } from '@/components/ui/MemberCombobox'
 import {
   getCheckoutFormBoatTypesQueryOptions,
-  getCheckoutMembersQueryOptions,
+  getCheckoutFormMembersQueryOptions,
   getMyRatingsQueryOptions,
   useCreateCheckoutMutation,
 } from '@/domains/checkouts/query-options'
+import { searchCheckoutMembers } from '@/domains/checkouts/server-fns'
 import {
   type CheckoutInsert,
   checkoutInsertSchema,
@@ -53,9 +55,10 @@ export function CheckoutForm({
   onSuccess: () => void | Promise<void>
 }) {
   const [showMoreDestinations, setShowMoreDestinations] = useState(false)
+  const [additionalMembers, setAdditionalMembers] = useState<MemberLite[]>([])
   const { data: boatTypes = [] } = useQuery(getCheckoutFormBoatTypesQueryOptions())
   const { data: myRatings = [] } = useQuery(getMyRatingsQueryOptions())
-  const { data: members = [] } = useQuery(getCheckoutMembersQueryOptions())
+  const { data: members = [] } = useQuery(getCheckoutFormMembersQueryOptions())
   const createCheckout = useCreateCheckoutMutation({ onSuccess })
 
   const form = useAppForm({
@@ -66,16 +69,37 @@ export function CheckoutForm({
     },
   })
 
-  const boatGroups = Object.values(
-    boatTypes.reduce<
-      Record<string, { label: string; options: { value: number; label: string }[] }>
-    >((acc, boat) => {
-      const fleet = boat.fleet || 'Other'
-      acc[fleet] ??= { label: fleet, options: [] }
-      acc[fleet].options.push({ value: boat.index, label: boat.type || `Boat ${boat.index}` })
-      return acc
-    }, {}),
+  const boatGroups = useMemo(
+    () =>
+      Object.values(
+        boatTypes.reduce<
+          Record<string, { label: string; options: { value: number; label: string }[] }>
+        >((acc, boat) => {
+          const fleet = boat.fleet || 'Other'
+          acc[fleet] ??= { label: fleet, options: [] }
+          acc[fleet].options.push({ value: boat.index, label: boat.type || `Boat ${boat.index}` })
+          return acc
+        }, {}),
+      ),
+    [boatTypes],
   )
+  const excludedMembers = useMemo(() => [skipperWycNumber], [skipperWycNumber])
+  const selectableMembers = useMemo(() => {
+    const byWycNumber = new Map(members.map((member) => [member.wycNumber, member]))
+    for (const member of additionalMembers) byWycNumber.set(member.wycNumber, member)
+    return [...byWycNumber.values()]
+  }, [additionalMembers, members])
+  const searchAllMembers = useCallback(
+    (query: string) => searchCheckoutMembers({ data: { query } }),
+    [],
+  )
+  const rememberMember = useCallback((member: MemberLite) => {
+    setAdditionalMembers((current) =>
+      current.some((candidate) => candidate.wycNumber === member.wycNumber)
+        ? current
+        : [...current, member],
+    )
+  }, [])
 
   return (
     <form
@@ -105,8 +129,10 @@ export function CheckoutForm({
             value={field.state.value}
             onChange={field.handleChange}
             ratings={myRatings}
-            members={members}
-            excludeSupervisor={[skipperWycNumber]}
+            members={selectableMembers}
+            excludeSupervisor={excludedMembers}
+            searchAllMembers={searchAllMembers}
+            onSelectMember={rememberMember}
             error={formErrorMessage(field.state.meta.errors)}
             showWycNumbers={false}
           />
@@ -184,8 +210,10 @@ export function CheckoutForm({
           <MemberMultiCombobox
             value={field.state.value}
             onChange={field.handleChange}
-            members={members}
-            exclude={[skipperWycNumber]}
+            members={selectableMembers}
+            exclude={excludedMembers}
+            searchAllMembers={searchAllMembers}
+            onSelectMember={rememberMember}
             error={formErrorMessage(field.state.meta.errors)}
             showWycNumbers={false}
           />
