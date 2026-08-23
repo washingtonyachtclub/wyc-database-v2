@@ -1,4 +1,4 @@
-import { createFileRoute, Link, redirect, useNavigate } from '@tanstack/react-router'
+import { createFileRoute, Link, redirect, useRouter } from '@tanstack/react-router'
 import { useState } from 'react'
 import { Button } from '../components/ui/button'
 import { Input } from '../components/ui/input'
@@ -14,9 +14,9 @@ export const Route = createFileRoute('/login')({
     const redirectTo = search.redirect as string | undefined
     return redirectTo ? { redirect: redirectTo } : {}
   },
-  beforeLoad: ({ context }) => {
+  beforeLoad: ({ context, search }) => {
     if (context.isAuthenticated) {
-      throw redirect({ to: '/' })
+      throw redirect({ to: search.redirect ?? '/' })
     }
   },
   component: LoginPage,
@@ -26,9 +26,9 @@ type Mode = 'password' | 'email'
 type EmailStep = 'request' | 'verify'
 
 function LoginPage() {
-  const navigate = useNavigate()
-  const { redirect: redirectTo } = Route.useSearch()
+  const router = useRouter()
   const [mode, setMode] = useState<Mode>('password')
+  const finishAuthentication = () => router.invalidate()
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-muted px-4 py-12 sm:px-6 lg:px-8">
@@ -46,15 +46,13 @@ function LoginPage() {
 
           {mode === 'password' ? (
             <PasswordForm
-              redirectTo={redirectTo}
               onSwitchMode={() => setMode('email')}
-              navigate={navigate}
+              onAuthenticated={finishAuthentication}
             />
           ) : (
             <EmailOtpFlow
-              redirectTo={redirectTo}
               onSwitchMode={() => setMode('password')}
-              navigate={navigate}
+              onAuthenticated={finishAuthentication}
             />
           )}
         </div>
@@ -64,13 +62,11 @@ function LoginPage() {
 }
 
 function PasswordForm({
-  redirectTo,
   onSwitchMode,
-  navigate,
+  onAuthenticated,
 }: {
-  redirectTo: string | undefined
   onSwitchMode: () => void
-  navigate: ReturnType<typeof useNavigate>
+  onAuthenticated: () => Promise<void>
 }) {
   const loginMutation = useLoginMutation()
   const [wycNumber, setWycNumber] = useState('')
@@ -88,7 +84,7 @@ function PasswordForm({
       })
 
       if (result.success) {
-        await navigate({ to: redirectTo ?? '/' })
+        await onAuthenticated()
       } else {
         setError(result.message || 'Login failed')
       }
@@ -161,13 +157,11 @@ function PasswordForm({
 }
 
 function EmailOtpFlow({
-  redirectTo,
   onSwitchMode,
-  navigate,
+  onAuthenticated,
 }: {
-  redirectTo: string | undefined
   onSwitchMode: () => void
-  navigate: ReturnType<typeof useNavigate>
+  onAuthenticated: () => Promise<void>
 }) {
   const requestMutation = useRequestEmailOtpMutation()
   const verifyMutation = useVerifyEmailOtpMutation()
@@ -205,7 +199,7 @@ function EmailOtpFlow({
         code,
       })
       if (result.success) {
-        await navigate({ to: redirectTo ?? '/' })
+        await onAuthenticated()
       } else {
         setError(result.message || 'Invalid or expired code')
       }

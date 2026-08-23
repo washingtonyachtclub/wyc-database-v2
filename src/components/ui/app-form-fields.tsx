@@ -19,9 +19,26 @@ import { Textarea } from './textarea'
 
 // --- Shared helpers ---
 
-function FieldError({ errors }: { errors: Array<any> }) {
-  if (errors.length === 0) return null
-  const message = typeof errors[0] === 'string' ? errors[0] : (errors[0]?.message ?? '')
+export function formErrorMessage(error: unknown): string | undefined {
+  if (typeof error === 'string') return error
+  if (Array.isArray(error)) {
+    for (const item of error) {
+      const message = formErrorMessage(item)
+      if (message) return message
+    }
+  }
+  if (error && typeof error === 'object') {
+    if ('message' in error && typeof error.message === 'string') return error.message
+    for (const value of Object.values(error)) {
+      const message = formErrorMessage(value)
+      if (message) return message
+    }
+  }
+  return undefined
+}
+
+function FieldError({ errors }: { errors: Array<unknown> }) {
+  const message = formErrorMessage(errors)
   if (!message) return null
   return <p className="text-sm text-destructive mt-1">{message}</p>
 }
@@ -37,7 +54,7 @@ export function TextField({
 }: {
   label: string
   required?: boolean
-  type?: 'text' | 'date' | 'time' | 'email' | 'password'
+  type?: 'text' | 'date' | 'time' | 'datetime-local' | 'email' | 'password'
   placeholder?: string
   className?: string
 }) {
