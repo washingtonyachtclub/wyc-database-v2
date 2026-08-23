@@ -99,9 +99,6 @@ export function SidebarNav({ onNavigate }: { onNavigate?: () => void }) {
           <Link to="/door-codes" className={linkClass(location.pathname === '/door-codes')}>
             Door Codes
           </Link>
-          <Link to="/set-password" className={linkClass(location.pathname === '/set-password')}>
-            Set Password
-          </Link>
         </>
       )}
       {visibleAdminItems.length > 0 && (

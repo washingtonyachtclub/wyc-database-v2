@@ -3,7 +3,7 @@ import { lessons } from '@/db/schema'
 import db from '@/db/index'
 import { hasPrivilege } from '../permissions'
 import type { Privilege } from '../permissions'
-import { useAppSession } from './session'
+import { useRefreshedAppSession } from './session'
 
 /**
  * Middleware function to require authentication.
@@ -11,7 +11,7 @@ import { useAppSession } from './session'
  * Returns the user ID if authenticated.
  */
 export async function requireAuth(): Promise<number> {
-  const session = await useAppSession()
+  const session = await useRefreshedAppSession()
   const sessionData = session.data
 
   if (!sessionData.userId) {
@@ -27,7 +27,7 @@ export async function requireAuth(): Promise<number> {
  * Returns the user ID if authorized. Throws if not authenticated or missing privilege.
  */
 export async function requirePrivilege(...required: Privilege[]): Promise<number> {
-  const session = await useAppSession()
+  const session = await useRefreshedAppSession()
   const sessionData = session.data
 
   if (!sessionData.userId) {
@@ -53,7 +53,7 @@ export async function requireSelfOrPrivilege(
   targetWycNumber: number,
   ...required: Privilege[]
 ): Promise<number> {
-  const session = await useAppSession()
+  const session = await useRefreshedAppSession()
   const sessionData = session.data
 
   if (!sessionData.userId) {
@@ -81,7 +81,7 @@ export async function requireSelfOrPrivilege(
  * Does not throw — returns a boolean. Requires an active session.
  */
 export async function sessionHasPrivilege(...required: Privilege[]): Promise<boolean> {
-  const session = await useAppSession()
+  const session = await useRefreshedAppSession()
   const userPrivs = session.data.privileges ?? []
   return hasPrivilege(userPrivs, required)
 }
@@ -95,7 +95,7 @@ export async function requireInstructorOrPrivilege(
   lessonIndex: number,
   ...required: Privilege[]
 ): Promise<number> {
-  const session = await useAppSession()
+  const session = await useRefreshedAppSession()
   const sessionData = session.data
 
   if (!sessionData.userId) {
@@ -131,7 +131,7 @@ export async function requireInstructorOrPrivilege(
  * Returns user ID if authenticated, null otherwise.
  */
 export async function optionalAuth(): Promise<number | null> {
-  const session = await useAppSession()
+  const session = await useRefreshedAppSession()
   const sessionData = session.data
 
   return sessionData.userId ?? null

@@ -1,12 +1,12 @@
-import { isDevEnvironment } from '@/lib/env'
 import { getDatabaseName } from '@/domains/members/server-fns'
 import { getDatabaseAdmin } from '@/domains/officers/server-fns'
-import { hasPrivilege } from '@/lib/permissions'
-import { useQuery } from '@tanstack/react-query'
-import { Link, useLocation, useRouter } from '@tanstack/react-router'
-import { useState } from 'react'
-import { Menu } from 'lucide-react'
 import { useCurrentUser, useLogoutMutation } from '@/lib/auth/auth-query-options'
+import { isDevEnvironment } from '@/lib/env'
+import { hasPrivilege } from '@/lib/permissions'
+import { useQuery, useQueryClient } from '@tanstack/react-query'
+import { Link, useLocation, useRouter } from '@tanstack/react-router'
+import { Menu, Settings } from 'lucide-react'
+import { useEffect, useState } from 'react'
 import { AdminContactModal } from './AdminContactModal'
 import { DevPrivilegeEmulator } from './DevPrivilegeEmulator'
 import { SidebarNav } from './Sidebar'
@@ -17,8 +17,10 @@ const isDevApp = isDevEnvironment()
 
 export default function Header() {
   const router = useRouter()
+  const queryClient = useQueryClient()
   const location = useLocation()
-  const { user, isAuthenticated, privileges, realPrivileges } = useCurrentUser()
+  const { user, isAuthenticated, privileges, realPrivileges, sailLockerMode, sessionExpiresAt } =
+    useCurrentUser()
   const logoutMutation = useLogoutMutation()
   const [showAdminModal, setShowAdminModal] = useState(false)
   const [sheetOpen, setSheetOpen] = useState(false)
@@ -33,6 +35,31 @@ export default function Header() {
     queryFn: () => getDatabaseAdmin(),
     staleTime: Infinity,
   })
+
+  useEffect(() => {
+    if (!isAuthenticated || !sailLockerMode || !sessionExpiresAt) {
+      return
+    }
+
+    const expireSession = async () => {
+      queryClient.clear()
+      await router.invalidate()
+      await router.navigate({
+        to: '/login',
+        search: { redirect: '/' },
+        replace: true,
+      })
+    }
+
+    const remaining = sessionExpiresAt - Date.now()
+    if (remaining <= 0) {
+      void expireSession()
+      return
+    }
+
+    const timeout = window.setTimeout(() => void expireSession(), remaining)
+    return () => window.clearTimeout(timeout)
+  }, [isAuthenticated, queryClient, router, sailLockerMode, sessionExpiresAt])
 
   const handleLogout = async () => {
     try {
@@ -87,6 +114,12 @@ export default function Header() {
                 {isDevApp && hasPrivilege(realPrivileges ?? privileges, ['db']) && (
                   <DevPrivilegeEmulator />
                 )}
+                <Button asChild variant="ghost" size="icon">
+                  <Link to="/settings">
+                    <Settings />
+                    <span className="sr-only">Settings</span>
+                  </Link>
+                </Button>
                 <span className="hidden sm:inline text-sm font-semibold text-muted-foreground">
                   {user.first} {user.last} ({user.wycNumber})
                 </span>
@@ -116,6 +149,12 @@ export default function Header() {
           </div>
         </div>
       </div>
+      {sailLockerMode && (
+        <div className="border-t bg-muted/60 px-4 py-2 text-center text-sm text-muted-foreground">
+          <span className="font-medium text-foreground">Sail Locker Computer</span>
+          {' · '}Please log out when you are finished.
+        </div>
+      )}
       {showAdminModal && adminData && (
         <AdminContactModal
           onClose={() => setShowAdminModal(false)}

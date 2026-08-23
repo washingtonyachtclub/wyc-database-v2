@@ -7,7 +7,7 @@ import { isMembershipActive } from '@/db/membership-utils'
 import { doorCodes, lessonQuarter, officers, positions, wycDatabase } from '@/db/schema'
 import { requireAuth } from '@/lib/auth/auth-middleware'
 import { hasPrivilege } from '@/lib/permissions'
-import { useAppSession } from '@/lib/auth/session'
+import { useRefreshedAppSession } from '@/lib/auth/session'
 import type { DoorCodeEntry, DoorCodeUpdateData } from './schema'
 import { doorCodeUpdateSchema } from './schema'
 import { getActiveMemberRatings } from '@/domains/ratings/queries'
@@ -33,7 +33,7 @@ async function isOfficer(wycNumber: number): Promise<boolean> {
 
 /** db privilege or an active officer position. */
 async function canEditDoorCodes(wycNumber: number): Promise<boolean> {
-  const session = await useAppSession()
+  const session = await useRefreshedAppSession()
   if (hasPrivilege(session.data.privileges ?? [], ['db'])) return true
   return isOfficer(wycNumber)
 }

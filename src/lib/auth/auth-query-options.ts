@@ -31,10 +31,9 @@ export const useLoginMutation = () => {
     mutationFn: async (data: { wycNumber: number; password: string }) => {
       return await loginServerFn({ data })
     },
-    onSuccess: (data: LoginResponse) => {
+    onSuccess: async (data: LoginResponse) => {
       if (data.success) {
-        // Invalidate and refetch current user
-        queryClient.invalidateQueries({
+        await queryClient.invalidateQueries({
           queryKey: ['auth', 'currentUser'],
         })
       }
@@ -63,9 +62,9 @@ export const useVerifyEmailOtpMutation = () => {
     mutationFn: async (data: { wycNumber: number; code: string }) => {
       return await verifyEmailOtpServerFn({ data })
     },
-    onSuccess: (data: VerifyOtpResponse) => {
+    onSuccess: async (data: VerifyOtpResponse) => {
       if (data.success) {
-        queryClient.invalidateQueries({ queryKey: ['auth', 'currentUser'] })
+        await queryClient.invalidateQueries({ queryKey: ['auth', 'currentUser'] })
       }
     },
   })
@@ -102,6 +101,8 @@ export const useCurrentUser = () => {
     isAuthenticated: query.data?.isValid ?? false,
     privileges: query.data?.privileges ?? [],
     realPrivileges: query.data?.realPrivileges,
+    sailLockerMode: query.data?.sailLockerMode ?? false,
+    sessionExpiresAt: query.data?.sessionExpiresAt,
     isLoading: query.isLoading,
     isError: query.isError,
   }
