@@ -14,6 +14,7 @@ import {
 import { Button } from '@/components/ui/button'
 import { Checkbox } from '@/components/ui/checkbox'
 import { Plus } from 'lucide-react'
+import { activeStatusRowClassName } from '@/components/ui/ActiveStatus'
 import { DataTable } from '@/components/ui/DataTable'
 import { Label } from '@/components/ui/label'
 import type { ExaminerFilters } from '@/domains/examiners/queries'
@@ -126,7 +127,10 @@ function RatingsExaminersPage() {
       </div>
 
       <p className="text-sm text-muted-foreground mb-2">{examiners.length} examiners</p>
-      <DataTable table={table} />
+      <DataTable
+        table={table}
+        rowClassName={(row) => activeStatusRowClassName(row.original.active)}
+      />
 
       {isAddModalOpen && (
         <AddExaminerModal onClose={() => setIsAddModalOpen(false)} onSuccess={() => {}} />

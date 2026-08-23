@@ -51,7 +51,7 @@ export function SearchableSelect({
   const [open, setOpen] = useState(false)
   const [search, setSearch] = useState('')
   const desktopControl = useDesktopSelectControl()
-  const allOptions = options ?? groups?.flatMap((group) => group.options) ?? []
+  const allOptions = [...(options ?? []), ...(groups?.flatMap((group) => group.options) ?? [])]
   const selected = allOptions.find((option) => option.value === value)
 
   const choose = (nextValue: string) => {
@@ -116,13 +116,12 @@ export function SearchableSelect({
             onWheel={(event) => event.stopPropagation()}
           >
             <CommandEmpty>{emptyMessage}</CommandEmpty>
-            {groups
-              ? groups.map((group) => (
-                  <CommandGroup key={group.label} heading={group.label}>
-                    {group.options.map(renderOption)}
-                  </CommandGroup>
-                ))
-              : options?.map(renderOption)}
+            {options?.map(renderOption)}
+            {groups?.map((group) => (
+              <CommandGroup key={group.label} heading={group.label}>
+                {group.options.map(renderOption)}
+              </CommandGroup>
+            ))}
           </CommandList>
         </Command>
       </PopoverContent>
@@ -139,21 +138,20 @@ export function SearchableSelect({
       <option value="" disabled>
         {placeholder}
       </option>
-      {groups
-        ? groups.map((group) => (
-            <optgroup key={group.label} label={group.label}>
-              {group.options.map((option) => (
-                <option key={option.value} value={option.value}>
-                  {option.label}
-                </option>
-              ))}
-            </optgroup>
-          ))
-        : options?.map((option) => (
+      {options?.map((option) => (
+        <option key={option.value} value={option.value}>
+          {option.label}
+        </option>
+      ))}
+      {groups?.map((group) => (
+        <optgroup key={group.label} label={group.label}>
+          {group.options.map((option) => (
             <option key={option.value} value={option.value}>
               {option.label}
             </option>
           ))}
+        </optgroup>
+      ))}
     </NativeSelect>
   )
 }

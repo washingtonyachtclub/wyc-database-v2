@@ -14,6 +14,7 @@ import {
   SelectValue,
 } from '@/components/ui/select'
 import { formErrorMessage } from '@/components/ui/app-form-fields'
+import { boatTypeGroups } from '@/domains/boat-types/order'
 import {
   getCheckoutBoatTypesQueryOptions,
   getCheckoutMembersQueryOptions,
@@ -54,19 +55,7 @@ export function ManualAddCheckoutModal({ onClose }: ManualAddCheckoutModalProps)
     },
   })
 
-  const boatGroups = Object.values(
-    boatTypes.reduce<
-      Record<string, { label: string; options: { value: number; label: string }[] }>
-    >((acc, boat) => {
-      const fleet = boat.fleet || 'Other'
-      acc[fleet] ??= { label: fleet, options: [] }
-      acc[fleet].options.push({
-        value: boat.index,
-        label: `${boat.type || `Boat ${boat.index}`}${boat.active ? '' : ' (inactive)'}`,
-      })
-      return acc
-    }, {}),
-  )
+  const boatGroups = boatTypeGroups(boatTypes, true)
 
   return (
     <Modal onClose={onClose} title="Manual Boat Checkout">

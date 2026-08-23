@@ -4,6 +4,7 @@ import { z } from 'zod'
 import db from '@/db/index'
 import { fullName, str } from '@/db/mapper-utils'
 import { withPagination, withSorting } from '@/db/query-helpers'
+import { compareBoatTypes } from '@/domains/boat-types/order'
 import {
   boatTypes,
   checkouts,
@@ -97,7 +98,7 @@ export const getAllCheckouts = createServerFn({ method: 'GET' })
 export const getCheckoutBoatTypes = createServerFn({ method: 'GET' }).handler(async () => {
   await requirePrivilege('db', 'rtgs')
   try {
-    return await db
+    const rows = await db
       .select({
         index: boatTypes.index,
         type: boatTypes.type,
@@ -105,7 +106,7 @@ export const getCheckoutBoatTypes = createServerFn({ method: 'GET' }).handler(as
         active: boatTypes.active,
       })
       .from(boatTypes)
-      .orderBy(boatTypes.fleet, boatTypes.type)
+    return rows.sort(compareBoatTypes)
   } catch (error) {
     console.error('Failed to fetch boat types for checkouts:', error)
     throw new Error('Failed to fetch boat types')
@@ -274,11 +275,11 @@ export const getMyRatings = createServerFn({ method: 'GET' }).handler(async () =
 export const getCheckoutFormBoatTypes = createServerFn({ method: 'GET' }).handler(async () => {
   await requireAuth()
   try {
-    return await db
+    const rows = await db
       .select({ index: boatTypes.index, type: boatTypes.type, fleet: boatTypes.fleet })
       .from(boatTypes)
       .where(eq(boatTypes.active, 1))
-      .orderBy(boatTypes.fleet, boatTypes.type)
+    return rows.sort(compareBoatTypes)
   } catch (error) {
     console.error('Failed to fetch boat types for checkout form:', error)
     throw new Error('Failed to fetch boat types')

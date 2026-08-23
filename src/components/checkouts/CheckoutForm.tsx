@@ -3,6 +3,7 @@ import { ChevronDown, Plus, X } from 'lucide-react'
 import { useCallback, useMemo, useState } from 'react'
 import { formErrorMessage } from '@/components/ui/app-form-fields'
 import type { MemberLite } from '@/components/ui/MemberCombobox'
+import { boatTypeGroups } from '@/domains/boat-types/order'
 import {
   getCheckoutFormBoatTypesQueryOptions,
   getCheckoutFormMembersQueryOptions,
@@ -69,20 +70,7 @@ export function CheckoutForm({
     },
   })
 
-  const boatGroups = useMemo(
-    () =>
-      Object.values(
-        boatTypes.reduce<
-          Record<string, { label: string; options: { value: number; label: string }[] }>
-        >((acc, boat) => {
-          const fleet = boat.fleet || 'Other'
-          acc[fleet] ??= { label: fleet, options: [] }
-          acc[fleet].options.push({ value: boat.index, label: boat.type || `Boat ${boat.index}` })
-          return acc
-        }, {}),
-      ),
-    [boatTypes],
-  )
+  const boatGroups = useMemo(() => boatTypeGroups(boatTypes), [boatTypes])
   const excludedMembers = useMemo(() => [skipperWycNumber], [skipperWycNumber])
   const selectableMembers = useMemo(() => {
     const byWycNumber = new Map(members.map((member) => [member.wycNumber, member]))
