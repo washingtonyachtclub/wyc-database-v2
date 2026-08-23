@@ -69,11 +69,14 @@ export function CheckoutCard({
                 ? `${checkout.boatName || 'Boat'} checked in`
                 : `Check in the ${checkout.boatName || 'boat'}`}
             </AlertDialogTitle>
-            <AlertDialogDescription className="text-base">
-              {checkIn.isSuccess
-                ? 'The check-in is complete. Submit a damage report if anything needs attention.'
-                : 'Confirm that the boat has been returned.'}
-            </AlertDialogDescription>
+            {checkIn.isSuccess && (
+              <AlertDialogDescription className="text-base">
+                The check-in is complete. Submit a damage report if anything needs attention.
+              </AlertDialogDescription>
+            )}
+            {!checkIn.isSuccess && (
+              <AlertDialogDescription className="sr-only">Confirm check-in.</AlertDialogDescription>
+            )}
           </AlertDialogHeader>
           <ErrorAlert error={checkIn.error?.message} action="Checking in boat" />
           {checkIn.isSuccess ? (

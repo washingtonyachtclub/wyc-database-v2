@@ -1,7 +1,7 @@
 'use client'
 
 import { Check, ChevronsUpDown } from 'lucide-react'
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { getAllMembersLiteQueryOptions } from '@/domains/members/query-options'
 import { useDesktopSelectControl } from '@/hooks/use-desktop-select-control'
@@ -52,6 +52,7 @@ export function MemberCombobox({
   const [searchingAllMembers, setSearchingAllMembers] = useState(false)
   const [search, setSearch] = useState('')
   const [debouncedSearch, setDebouncedSearch] = useState('')
+  const mobileSearchInputRef = useRef<HTMLInputElement>(null)
   const desktopControl = useDesktopSelectControl()
 
   const { data: fetched = [] } = useQuery({
@@ -132,6 +133,10 @@ export function MemberCombobox({
         key={member.wycNumber}
         value={String(member.wycNumber)}
         onSelect={() => chooseMember(member)}
+        className={cn(
+          !desktopControl &&
+            'min-h-12 rounded-md border bg-background px-3 py-3 text-base shadow-sm',
+        )}
       >
         <Check className={cn('h-4 w-4 shrink-0', isSelected ? 'opacity-100' : 'opacity-0')} />
         <span>
@@ -256,31 +261,40 @@ export function MemberCombobox({
           {mobileSearchOpen && (
             <Modal
               title="Search members"
+              contentClassName="h-[min(32rem,calc(100dvh-2rem))] max-w-[calc(100%-2rem)] grid-rows-[auto_minmax(0,1fr)] overflow-hidden p-5 duration-0 data-[state=open]:animate-none data-[state=closed]:animate-none sm:max-w-md"
+              overlayClassName="duration-0 data-[state=open]:animate-none data-[state=closed]:animate-none"
+              onOpenAutoFocus={(event) => {
+                event.preventDefault()
+                mobileSearchInputRef.current?.focus({ preventScroll: true })
+              }}
+              onCloseAutoFocus={(event) => event.preventDefault()}
               onClose={() => {
                 setMobileSearchOpen(false)
                 setSearch('')
                 setSearchingAllMembers(false)
               }}
             >
-              <Input
-                autoFocus
-                type="search"
-                value={search}
-                onChange={(event) => setSearch(event.target.value)}
-                placeholder="Name or WYC number"
-                className="h-11 text-base"
-              />
-              <Command shouldFilter={false}>
-                <CommandList className="max-h-[min(24rem,55dvh)] touch-pan-y overscroll-contain overflow-y-auto">
-                  {trimmedSearch.length < MIN_SEARCH_LENGTH ? (
-                    <div className="py-6 text-center text-sm text-muted-foreground">
-                      Type at least {MIN_SEARCH_LENGTH} characters to search...
-                    </div>
-                  ) : (
-                    resultList
-                  )}
-                </CommandList>
-              </Command>
+              <div className="flex min-h-0 flex-col gap-3">
+                <Input
+                  ref={mobileSearchInputRef}
+                  type="search"
+                  value={search}
+                  onChange={(event) => setSearch(event.target.value)}
+                  placeholder="Name or WYC number"
+                  className="h-11 shrink-0 text-base"
+                />
+                <Command shouldFilter={false} className="min-h-0 flex-1 border">
+                  <CommandList className="max-h-none flex-1 touch-pan-y space-y-2 overscroll-contain overflow-y-auto p-2">
+                    {trimmedSearch.length < MIN_SEARCH_LENGTH ? (
+                      <div className="py-8 text-center text-base text-muted-foreground">
+                        Type at least {MIN_SEARCH_LENGTH} characters to search...
+                      </div>
+                    ) : (
+                      resultList
+                    )}
+                  </CommandList>
+                </Command>
+              </div>
             </Modal>
           )}
         </>
