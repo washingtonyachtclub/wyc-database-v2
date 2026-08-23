@@ -157,7 +157,7 @@ The current quarter value comes from `lesson_quarter` (a single-row config table
 
 ## How Privileges Are Loaded
 
-Privileges are resolved once at login by `loadUserPrivileges()` in `auth-server-fns.ts`:
+Privileges are resolved at login and refreshed hourly by `loadUserPrivileges()` in `identity.ts`:
 
 1. **Position-based query**: `SELECT DISTINCT privs.name` from the `officers -> pos_priv_map -> privs` join chain, filtered to `officers.active = 1` and the logged-in member. Results are filtered to only `'db'` and `'rtgs'`.
 
@@ -165,7 +165,7 @@ Privileges are resolved once at login by `loadUserPrivileges()` in `auth-server-
 
 3. **Session storage**: The resulting `Privilege[]` array (e.g., `['db']`, `['rtgs']`, `['db', 'rtgs']`, or `[]`) is stored in the encrypted HTTP-only session cookie alongside the user info.
 
-Privileges are **not refreshed mid-session**. If someone is added to or removed from a position, or becomes an instructor, they need to log out and back in for the change to take effect.
+The encrypted session records when its identity data was refreshed. Authorization middleware reloads stale privileges before using them, so position and instructor changes take effect within one hour without a new login.
 
 ---
 
@@ -257,13 +257,14 @@ An empty required array (`[]`) means "any authenticated user" — no specific pr
 
 ## Key Files
 
-| File                            | Purpose                                                                  |
-| ------------------------------- | ------------------------------------------------------------------------ |
-| `src/db/schema.ts`              | Drizzle schema for `officers`, `positions`, `posPrivMap`, `privs` tables |
-| `src/lib/permissions.ts`        | `Privilege` type, `routePermissions` registry, `hasPrivilege()`          |
-| `src/lib/auth-middleware.ts`    | Server-side privilege check functions                                    |
-| `src/lib/auth-server-fns.ts`    | `loadUserPrivileges()`, login/logout, dev impersonation tools            |
-| `src/lib/route-guards.ts`       | `requirePrivilegeForRoute()` for route `beforeLoad` hooks                |
-| `src/lib/session.ts`            | Session type definition and cookie configuration                         |
-| `src/lib/auth-query-options.ts` | React Query hooks for current user/privileges                            |
-| `src/components/Sidebar.tsx`    | Privilege-filtered navigation                                            |
+| File                                 | Purpose                                                                  |
+| ------------------------------------ | ------------------------------------------------------------------------ |
+| `src/db/schema.ts`                   | Drizzle schema for `officers`, `positions`, `posPrivMap`, `privs` tables |
+| `src/lib/permissions.ts`             | `Privilege` type, `routePermissions` registry, `hasPrivilege()`          |
+| `src/lib/auth/auth-middleware.ts`    | Server-side privilege check functions                                    |
+| `src/lib/auth/identity.ts`           | Member and privilege loading                                             |
+| `src/lib/auth/auth-server-fns.ts`    | Login, logout, and dev impersonation tools                               |
+| `src/lib/route-guards.ts`            | `requirePrivilegeForRoute()` for route `beforeLoad` hooks                |
+| `src/lib/auth/session.ts`            | Session type definition, cookie configuration, and hourly refresh        |
+| `src/lib/auth/auth-query-options.ts` | React Query hooks for current user and privileges                        |
+| `src/components/Sidebar.tsx`         | Privilege-filtered navigation                                            |

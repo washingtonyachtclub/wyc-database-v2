@@ -88,7 +88,7 @@ function PasswordForm({
       })
 
       if (result.success) {
-        navigate({ to: redirectTo ?? '/' })
+        await navigate({ to: redirectTo ?? '/' })
       } else {
         setError(result.message || 'Login failed')
       }
@@ -205,7 +205,7 @@ function EmailOtpFlow({
         code,
       })
       if (result.success) {
-        navigate({ to: redirectTo ?? '/' })
+        await navigate({ to: redirectTo ?? '/' })
       } else {
         setError(result.message || 'Invalid or expired code')
       }

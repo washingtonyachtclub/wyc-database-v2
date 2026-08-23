@@ -1,12 +1,14 @@
 import { createServerFn } from '@tanstack/react-start'
-import { and, count, eq, gte, or } from 'drizzle-orm'
+import { eq } from 'drizzle-orm'
 import db from '@/db/index'
-import { lessonQuarter, lessons, officers, posPrivMap, privs, wycDatabase } from '@/db/schema'
+import { wycDatabase } from '@/db/schema'
 import { hashPasswordArgon2, verifyPasswordDual } from '@/lib/auth/auth'
 import { sendEmail } from '@/lib/email'
 import { loginOtpEmail } from '@/lib/emails/auth'
 import { isDevEnvironment } from '../env'
 import { hasPrivilege, type Privilege } from '../permissions'
+import { isSailLockerMode } from './device-mode'
+import { loadUserPrivileges, type AuthUser } from './identity'
 import {
   checkRequestRateLimit,
   consumeOtp,
@@ -15,14 +17,14 @@ import {
   maskEmail,
   OTP_CODE_TTL_MS,
 } from './otp'
-import { useAppSession, type SessionData } from './session'
+import {
+  createAuthenticatedSessionData,
+  useAppSession,
+  useRefreshedAppSession,
+  type SessionData,
+} from './session'
 
-export type AuthUser = {
-  wycNumber: number
-  first: string | null
-  last: string | null
-  email: string | null
-}
+export type { AuthUser } from './identity'
 
 export type LoginResponse = {
   success: boolean
@@ -40,6 +42,8 @@ export type CurrentUserResponse = {
   user?: AuthUser
   privileges?: Privilege[]
   realPrivileges?: Privilege[]
+  sailLockerMode: boolean
+  sessionExpiresAt?: number
 }
 
 export type RequestOtpResponse = {
@@ -52,50 +56,6 @@ export type VerifyOtpResponse = {
   success: boolean
   message: string
   user?: AuthUser
-}
-
-/**
- * Load a user's privileges from the officers → positions → pos_priv_map → privs chain,
- * plus the dynamic "instr" check against the lessons table.
- */
-async function loadUserPrivileges(wycNumber: number): Promise<Privilege[]> {
-  // 1. Get privileges from officer positions
-  const privRows = await db
-    .selectDistinct({ name: privs.name })
-    .from(officers)
-    .innerJoin(posPrivMap, eq(officers.position, posPrivMap.position))
-    .innerJoin(privs, eq(posPrivMap.priv, privs.index))
-    .where(and(eq(officers.member, wycNumber), eq(officers.active, 1)))
-
-  const userPrivileges: Privilege[] = privRows
-    .map((r) => r.name?.trim())
-    .filter((name): name is Privilege => name === 'db' || name === 'rtgs')
-
-  // 2. Dynamic "rtgs" grant — instructors for current-or-later-quarter lessons get ratings access
-  const quarterRow = await db
-    .select({ quarter: lessonQuarter.quarter })
-    .from(lessonQuarter)
-    .where(eq(lessonQuarter.index, 1))
-    .limit(1)
-
-  if (quarterRow.length > 0) {
-    const currentQtr = quarterRow[0].quarter
-    const instrRows = await db
-      .select({ n: count() })
-      .from(lessons)
-      .where(
-        and(
-          or(eq(lessons.instructor1, wycNumber), eq(lessons.instructor2, wycNumber)),
-          gte(lessons.expire, currentQtr),
-        ),
-      )
-
-    if (instrRows[0].n > 0 && !userPrivileges.includes('rtgs')) {
-      userPrivileges.push('rtgs')
-    }
-  }
-
-  return userPrivileges
 }
 
 /**
@@ -166,11 +126,7 @@ export const loginServerFn = createServerFn({ method: 'POST' })
       }
       const privileges = await loadUserPrivileges(user.wycNumber)
 
-      await session.update({
-        userId: user.wycNumber,
-        user: userData,
-        privileges,
-      })
+      await session.update(createAuthenticatedSessionData(userData, privileges))
 
       return {
         success: true,
@@ -325,11 +281,7 @@ export const verifyEmailOtpServerFn = createServerFn({ method: 'POST' })
       const privileges = await loadUserPrivileges(userRow.wycNumber)
 
       const session = await useAppSession()
-      await session.update({
-        userId: userRow.wycNumber,
-        user: userData,
-        privileges,
-      })
+      await session.update(createAuthenticatedSessionData(userData, privileges))
 
       return {
         success: true,
@@ -369,13 +321,16 @@ export const logoutServerFn = createServerFn({ method: 'POST' }).handler(async (
  * Validates session and returns user info if authenticated
  */
 export const getCurrentUserServerFn = createServerFn({ method: 'GET' }).handler(async () => {
+  const sailLockerMode = isSailLockerMode()
+
   try {
-    const session = await useAppSession()
+    const session = await useRefreshedAppSession()
     const sessionData = session.data
 
     if (!sessionData.userId || !sessionData.user) {
       return {
         isValid: false,
+        sailLockerMode,
       } satisfies CurrentUserResponse
     }
 
@@ -384,11 +339,14 @@ export const getCurrentUserServerFn = createServerFn({ method: 'GET' }).handler(
       user: sessionData.user,
       privileges: sessionData.privileges ?? [],
       realPrivileges: sessionData.realIdentity?.privileges,
+      sailLockerMode,
+      sessionExpiresAt: sessionData.expiresAt,
     } satisfies CurrentUserResponse
   } catch (error: any) {
     console.error('Get current user error:', error)
     return {
       isValid: false,
+      sailLockerMode,
     } satisfies CurrentUserResponse
   }
 })
@@ -424,6 +382,7 @@ export const setDevPrivilegesServerFn = createServerFn({ method: 'POST' })
       await session.update({
         ...sessionData,
         privileges: restoredPrivileges,
+        privilegesRefreshedAt: Date.now(),
         realIdentity: undefined,
       } satisfies SessionData)
       return { privileges: restoredPrivileges }
@@ -477,6 +436,7 @@ export const setDevMemberServerFn = createServerFn({ method: 'POST' })
         userId: sessionData.realIdentity.userId,
         user: sessionData.realIdentity.user,
         privileges: realPrivileges,
+        privilegesRefreshedAt: Date.now(),
         realIdentity: undefined,
       } satisfies SessionData)
       return { user: sessionData.realIdentity.user, privileges: realPrivileges }
@@ -517,6 +477,7 @@ export const setDevMemberServerFn = createServerFn({ method: 'POST' })
       userId: targetRow.wycNumber,
       user: targetUser,
       privileges: targetPrivileges,
+      privilegesRefreshedAt: Date.now(),
       realIdentity,
     } satisfies SessionData)
 

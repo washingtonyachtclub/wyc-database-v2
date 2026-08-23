@@ -10,6 +10,7 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as TestsRouteImport } from './routes/tests'
+import { Route as SettingsRouteImport } from './routes/settings'
 import { Route as SetPasswordRouteImport } from './routes/set-password'
 import { Route as SetCurrentQuarterRouteImport } from './routes/set-current-quarter'
 import { Route as RenewMembershipRouteImport } from './routes/renew-membership'
@@ -49,6 +50,11 @@ import { Route as ApiCronLessonRemindersRouteImport } from './routes/api.cron.le
 const TestsRoute = TestsRouteImport.update({
   id: '/tests',
   path: '/tests',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const SettingsRoute = SettingsRouteImport.update({
+  id: '/settings',
+  path: '/settings',
   getParentRoute: () => rootRouteImport,
 } as any)
 const SetPasswordRoute = SetPasswordRouteImport.update({
@@ -258,6 +264,7 @@ export interface FileRoutesByFullPath {
   '/renew-membership': typeof RenewMembershipRoute
   '/set-current-quarter': typeof SetCurrentQuarterRoute
   '/set-password': typeof SetPasswordRoute
+  '/settings': typeof SettingsRoute
   '/tests': typeof TestsRoute
   '/lessons/$lessonIndex': typeof LessonsLessonIndexRoute
   '/members/$wycNumber': typeof MembersWycNumberRoute
@@ -296,6 +303,7 @@ export interface FileRoutesByTo {
   '/renew-membership': typeof RenewMembershipRoute
   '/set-current-quarter': typeof SetCurrentQuarterRoute
   '/set-password': typeof SetPasswordRoute
+  '/settings': typeof SettingsRoute
   '/tests': typeof TestsRoute
   '/lessons/$lessonIndex': typeof LessonsLessonIndexRoute
   '/members/$wycNumber': typeof MembersWycNumberRoute
@@ -335,6 +343,7 @@ export interface FileRoutesById {
   '/renew-membership': typeof RenewMembershipRoute
   '/set-current-quarter': typeof SetCurrentQuarterRoute
   '/set-password': typeof SetPasswordRoute
+  '/settings': typeof SettingsRoute
   '/tests': typeof TestsRoute
   '/lessons_/$lessonIndex': typeof LessonsLessonIndexRoute
   '/members_/$wycNumber': typeof MembersWycNumberRoute
@@ -375,6 +384,7 @@ export interface FileRouteTypes {
     | '/renew-membership'
     | '/set-current-quarter'
     | '/set-password'
+    | '/settings'
     | '/tests'
     | '/lessons/$lessonIndex'
     | '/members/$wycNumber'
@@ -413,6 +423,7 @@ export interface FileRouteTypes {
     | '/renew-membership'
     | '/set-current-quarter'
     | '/set-password'
+    | '/settings'
     | '/tests'
     | '/lessons/$lessonIndex'
     | '/members/$wycNumber'
@@ -451,6 +462,7 @@ export interface FileRouteTypes {
     | '/renew-membership'
     | '/set-current-quarter'
     | '/set-password'
+    | '/settings'
     | '/tests'
     | '/lessons_/$lessonIndex'
     | '/members_/$wycNumber'
@@ -490,6 +502,7 @@ export interface RootRouteChildren {
   RenewMembershipRoute: typeof RenewMembershipRoute
   SetCurrentQuarterRoute: typeof SetCurrentQuarterRoute
   SetPasswordRoute: typeof SetPasswordRoute
+  SettingsRoute: typeof SettingsRoute
   TestsRoute: typeof TestsRoute
   LessonsLessonIndexRoute: typeof LessonsLessonIndexRoute
   MembersWycNumberRoute: typeof MembersWycNumberRoute
@@ -505,6 +518,13 @@ declare module '@tanstack/react-router' {
       path: '/tests'
       fullPath: '/tests'
       preLoaderRoute: typeof TestsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/settings': {
+      id: '/settings'
+      path: '/settings'
+      fullPath: '/settings'
+      preLoaderRoute: typeof SettingsRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/set-password': {
@@ -786,6 +806,7 @@ const rootRouteChildren: RootRouteChildren = {
   RenewMembershipRoute: RenewMembershipRoute,
   SetCurrentQuarterRoute: SetCurrentQuarterRoute,
   SetPasswordRoute: SetPasswordRoute,
+  SettingsRoute: SettingsRoute,
   TestsRoute: TestsRoute,
   LessonsLessonIndexRoute: LessonsLessonIndexRoute,
   MembersWycNumberRoute: MembersWycNumberRoute,

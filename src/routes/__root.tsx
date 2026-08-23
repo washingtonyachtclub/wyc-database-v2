@@ -16,8 +16,8 @@ import { TooltipProvider } from '../components/ui/tooltip'
 import { Analytics } from '@vercel/analytics/react'
 import appCss from '../styles.css?url'
 
-import { getCurrentUserServerFn } from '@/lib/auth/auth-server-fns'
-import type { AuthUser } from '@/lib/auth/auth-server-fns'
+import { getCurrentUserQueryOptions } from '@/lib/auth/auth-query-options'
+import type { AuthUser } from '@/lib/auth/identity'
 import type { QueryClient } from '@tanstack/react-query'
 import type { Privilege } from '../lib/permissions'
 
@@ -26,16 +26,19 @@ interface MyRouterContext {
   user: AuthUser | null
   isAuthenticated: boolean
   privileges: Privilege[]
+  sailLockerMode: boolean
+  sessionExpiresAt?: number
 }
 
 export const Route = createRootRouteWithContext<MyRouterContext>()({
-  beforeLoad: async () => {
-    // Fetch current user to populate context
-    const authResult = await getCurrentUserServerFn()
+  beforeLoad: async ({ context }) => {
+    const authResult = await context.queryClient.ensureQueryData(getCurrentUserQueryOptions())
     return {
       user: authResult.isValid ? authResult.user : null,
       isAuthenticated: authResult.isValid,
       privileges: authResult.privileges ?? [],
+      sailLockerMode: authResult.sailLockerMode,
+      sessionExpiresAt: authResult.sessionExpiresAt,
     }
   },
   head: () => ({
