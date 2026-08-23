@@ -3,6 +3,7 @@ import { useCurrentUser } from '@/lib/auth/auth-query-options'
 import { useQuery } from '@tanstack/react-query'
 import { Link, useLocation } from '@tanstack/react-router'
 import { ExternalLink } from 'lucide-react'
+import type { ReactNode } from 'react'
 import type { ProtectedRoute } from '../lib/permissions'
 import { hasPrivilege, routePermissions } from '../lib/permissions'
 
@@ -37,6 +38,14 @@ export const toolsItems = [
   { path: '/tests' as const, label: 'Tests' },
 ]
 
+function SidebarSectionHeading({ children }: { children: ReactNode }) {
+  return (
+    <h3 className="mx-2 mb-1 mt-4 border-b border-border px-2 pb-2 text-xs font-extrabold uppercase tracking-[0.16em] text-foreground">
+      {children}
+    </h3>
+  )
+}
+
 export function SidebarNav({ onNavigate }: { onNavigate?: () => void }) {
   const location = useLocation()
   const { user, privileges } = useCurrentUser()
@@ -68,9 +77,7 @@ export function SidebarNav({ onNavigate }: { onNavigate?: () => void }) {
     <nav className="space-y-1" onClick={onNavigate}>
       {myProfilePath && (
         <>
-          <h3 className="px-4 py-2 text-sm font-bold uppercase tracking-wider text-muted-foreground">
-            General
-          </h3>
+          <SidebarSectionHeading>General</SidebarSectionHeading>
           <Link
             to="/members/$wycNumber"
             params={{ wycNumber: String(user!.wycNumber) }}
@@ -95,11 +102,7 @@ export function SidebarNav({ onNavigate }: { onNavigate?: () => void }) {
           </Link>
         </>
       )}
-      {visibleAdminItems.length > 0 && (
-        <h3 className="px-4 pt-4 pb-2 text-sm font-bold uppercase tracking-wider text-muted-foreground">
-          Admin
-        </h3>
-      )}
+      {visibleAdminItems.length > 0 && <SidebarSectionHeading>Admin</SidebarSectionHeading>}
       {visibleAdminItems.map((item) => {
         const isActive =
           (location.pathname === item.path || location.pathname.startsWith(item.path + '/')) &&
@@ -110,9 +113,7 @@ export function SidebarNav({ onNavigate }: { onNavigate?: () => void }) {
           </Link>
         )
       })}
-      <h3 className="px-4 pt-4 pb-2 text-sm font-bold uppercase tracking-wider text-muted-foreground">
-        Tools
-      </h3>
+      <SidebarSectionHeading>Tools</SidebarSectionHeading>
       {visibleToolsItems.map((item) => {
         const isActive =
           location.pathname === item.path || location.pathname.startsWith(item.path + '/')
@@ -140,9 +141,7 @@ export function SidebarNav({ onNavigate }: { onNavigate?: () => void }) {
         <ExternalLink className="h-3.5 w-3.5 text-muted-foreground" />
       </a>
       {visiblePeopleManagementItems.length > 0 && (
-        <h3 className="px-4 pt-4 pb-2 text-sm font-bold uppercase tracking-wider text-muted-foreground">
-          People Management
-        </h3>
+        <SidebarSectionHeading>People Management</SidebarSectionHeading>
       )}
       {visiblePeopleManagementItems.map((item) => {
         const isActive =
@@ -154,9 +153,7 @@ export function SidebarNav({ onNavigate }: { onNavigate?: () => void }) {
         )
       })}
       {visibleSupportTableItems.length > 0 && (
-        <h3 className="px-4 pt-4 pb-2 text-sm font-bold uppercase tracking-wider text-muted-foreground">
-          Support Tables
-        </h3>
+        <SidebarSectionHeading>Support Tables</SidebarSectionHeading>
       )}
       {visibleSupportTableItems.map((item) => {
         const isActive =

@@ -1,4 +1,4 @@
-import { Button } from '@/components/ui/button'
+import { ActiveStatus, ActiveStatusButton } from '@/components/ui/ActiveStatus'
 import type { Position } from '@/domains/positions/schema'
 import { createColumnHelper } from '@tanstack/react-table'
 import { X } from 'lucide-react'
@@ -24,12 +24,7 @@ export const columns = [
   }),
   columnHelper.accessor('active', {
     header: 'Status',
-    cell: (info) =>
-      info.getValue() ? (
-        <span className="text-sm">Active</span>
-      ) : (
-        <span className="text-sm text-muted-foreground">Inactive</span>
-      ),
+    cell: (info) => <ActiveStatus active={info.getValue()} />,
     enableSorting: false,
   }),
   columnHelper.display({
@@ -40,19 +35,11 @@ export const columns = [
       const { index, name, active, usageCount } = row.original
       return (
         <div className="flex items-center justify-end gap-2">
-          <Button
-            variant="outline"
-            size="sm"
+          <ActiveStatusButton
+            active={active}
             disabled={meta?.isToggling}
-            className={
-              active
-                ? 'bg-yellow-100 text-yellow-800 hover:bg-yellow-200 border-yellow-300'
-                : undefined
-            }
             onClick={() => meta?.onToggleActive(index, active)}
-          >
-            {active ? 'Mark Inactive' : 'Mark Active'}
-          </Button>
+          />
           {usageCount === 0 && (
             <button
               className="text-muted-foreground hover:text-destructive"

@@ -4,7 +4,14 @@ import {
   deleteBoatType,
   getAllBoatTypes,
   getDistinctBoatFleetNames,
+  setBoatTypeActive,
+  updateBoatType,
 } from './server-fns'
+
+function invalidateBoatTypeQueries(queryClient: ReturnType<typeof useQueryClient>) {
+  queryClient.invalidateQueries({ queryKey: ['boat-types'] })
+  queryClient.invalidateQueries({ queryKey: ['checkouts'] })
+}
 
 export const getBoatTypesAllQueryOptions = () =>
   queryOptions({
@@ -23,7 +30,7 @@ export function useDeleteBoatTypeMutation() {
   return useMutation({
     mutationFn: deleteBoatType,
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['boat-types'] })
+      invalidateBoatTypeQueries(queryClient)
     },
   })
 }
@@ -33,9 +40,30 @@ export function useCreateBoatTypeMutation(opts: { onSuccess: () => void; onClose
   return useMutation({
     mutationFn: createBoatType,
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['boat-types'] })
+      invalidateBoatTypeQueries(queryClient)
       opts.onSuccess()
       opts.onClose()
+    },
+  })
+}
+
+export function useUpdateBoatTypeMutation(opts?: { onSuccess?: () => void }) {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: updateBoatType,
+    onSuccess: () => {
+      invalidateBoatTypeQueries(queryClient)
+      opts?.onSuccess?.()
+    },
+  })
+}
+
+export function useSetBoatTypeActiveMutation() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: setBoatTypeActive,
+    onSuccess: () => {
+      invalidateBoatTypeQueries(queryClient)
     },
   })
 }

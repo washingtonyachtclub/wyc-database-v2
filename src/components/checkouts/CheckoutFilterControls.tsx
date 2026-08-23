@@ -1,20 +1,13 @@
 import type { CheckoutFilters } from '@/domains/checkouts/filter-types'
+import { boatTypeGroups, fleetOptions } from '@/domains/boat-types/order'
 import { cn } from '@/lib/utils'
 import { Button } from '../ui/button'
 import { DatePicker } from '../ui/DatePicker'
 import { Label } from '../ui/label'
 import { MemberCombobox } from '../ui/MemberCombobox'
 import { SearchableSelect } from '../ui/SearchableSelect'
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select'
 
 const ALL = '__all__'
-
-const FLEET_OPTIONS = [
-  { value: 'SH', label: 'Single-Handed' },
-  { value: 'DH', label: 'Double-Handed' },
-  { value: 'KB', label: 'Keelboat' },
-  { value: 'Cat', label: 'Catamaran' },
-]
 
 export function CheckoutFilterControls({
   boatId,
@@ -31,7 +24,12 @@ export function CheckoutFilterControls({
   memberWycNumber?: number
   since?: string
   until?: string
-  boatTypes: Array<{ index: number; type: string | null; fleet: string }>
+  boatTypes: Array<{
+    index: number
+    type: string | null
+    fleet: string
+    active: number
+  }>
   onFilterChange: (changes: Partial<CheckoutFilters>) => void
   onClearFilters: () => void
 }) {
@@ -44,49 +42,41 @@ export function CheckoutFilterControls({
 
   const activeClass = 'bg-primary/10 border-primary'
   const inactiveClass = 'bg-background border-border'
+  const boatGroups = boatTypeGroups(boatTypes, true).map((group) => ({
+    label: group.label,
+    options: group.options.map((option) => ({
+      value: String(option.value),
+      label: option.label,
+    })),
+  }))
+  const fleets = fleetOptions(boatTypes)
 
   return (
     <div className="mb-4 p-4 border-2 rounded-lg bg-muted/50">
       <div className="flex flex-wrap items-end gap-4">
-        <div>
-          <Label className="mb-1">Boat</Label>
+        <div className="w-48">
+          <Label className="mb-1 block">Boat</Label>
           <SearchableSelect
             value={boatId !== undefined ? String(boatId) : ALL}
             onValueChange={(value) =>
               onFilterChange({ boatId: value === ALL ? undefined : Number(value) })
             }
-            className={cn('w-48 border-2', boatId !== undefined ? activeClass : inactiveClass)}
+            className={cn('border-2', boatId !== undefined ? activeClass : inactiveClass)}
             searchPlaceholder="Search boats..."
-            options={[
-              { value: ALL, label: 'All Boats' },
-              ...boatTypes.map((boatType) => ({
-                value: String(boatType.index),
-                label: boatType.type || `Boat ${boatType.index}`,
-              })),
-            ]}
+            options={[{ value: ALL, label: 'All Boats' }]}
+            groups={boatGroups}
           />
         </div>
 
-        <div>
-          <Label className="mb-1">Fleet</Label>
-          <Select
+        <div className="w-40">
+          <Label className="mb-1 block">Fleet</Label>
+          <SearchableSelect
             value={fleet ?? ALL}
             onValueChange={(value) => onFilterChange({ fleet: value === ALL ? undefined : value })}
-          >
-            <SelectTrigger
-              className={cn('border-2 w-40', fleet !== undefined ? activeClass : inactiveClass)}
-            >
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value={ALL}>All Fleets</SelectItem>
-              {FLEET_OPTIONS.map((f) => (
-                <SelectItem key={f.value} value={f.value}>
-                  {f.label}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+            className={cn('border-2', fleet !== undefined ? activeClass : inactiveClass)}
+            searchPlaceholder="Search fleets..."
+            options={[{ value: ALL, label: 'All Fleets' }, ...fleets]}
+          />
         </div>
 
         <div className="w-64">
