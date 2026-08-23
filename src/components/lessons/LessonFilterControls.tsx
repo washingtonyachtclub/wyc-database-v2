@@ -1,5 +1,4 @@
 import { useEffect, useState } from 'react'
-import { Check, ChevronDown } from 'lucide-react'
 import {
   EXPIRE_QTR_MODES,
   parseExpireQtrMode,
@@ -8,10 +7,9 @@ import {
 import type { LessonFilters } from '@/domains/lessons/filter-types'
 import { Input } from '../ui/input'
 import { Button } from '../ui/button'
-import { Command, CommandItem, CommandList } from '../ui/command'
 import { Label } from '../ui/label'
 import { MemberCombobox } from '../ui/MemberCombobox'
-import { Popover, PopoverContent, PopoverTrigger } from '../ui/popover'
+import { SearchableSelect } from '../ui/SearchableSelect'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select'
 import { cn } from '@/lib/utils'
 
@@ -63,28 +61,26 @@ export function LessonFilterControls({
       <div className="flex flex-wrap items-end gap-4">
         <div>
           <Label className="mb-1">Type</Label>
-          <Select
+          <SearchableSelect
             value={classTypeId !== undefined ? String(classTypeId) : ALL}
             onValueChange={(value) =>
               onFilterChange({
                 classTypeId: value === ALL ? undefined : Number(value),
               })
             }
-          >
-            <SelectTrigger
-              className={cn('border-2', classTypeId !== undefined ? activeClass : inactiveClass)}
-            >
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value={ALL}>All Types</SelectItem>
-              {classTypes.map((ct) => (
-                <SelectItem key={ct.index} value={String(ct.index)}>
-                  {ct.text || `Type ${ct.index}`}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+            className={cn(
+              'min-w-48 border-2',
+              classTypeId !== undefined ? activeClass : inactiveClass,
+            )}
+            searchPlaceholder="Search lesson types..."
+            options={[
+              { value: ALL, label: 'All Types' },
+              ...classTypes.map((classType) => ({
+                value: String(classType.index),
+                label: classType.text || `Type ${classType.index}`,
+              })),
+            ]}
+          />
         </div>
 
         <div>
@@ -197,64 +193,19 @@ function QuarterPicker({
   inactiveClass: string
   onChange: (quarter: number | null) => void
 }) {
-  const [open, setOpen] = useState(false)
-
-  const selectedLabel =
-    value != null
-      ? quarters.find((q) => q.index === value)?.school ||
-        quarters.find((q) => q.index === value)?.text ||
-        `Quarter ${value}`
-      : 'All Quarters'
-
   return (
-    <Popover open={open} onOpenChange={setOpen}>
-      <PopoverTrigger asChild>
-        <Button
-          variant="outline"
-          className={cn(
-            'justify-between font-normal border-2',
-            isActive ? activeClass : inactiveClass,
-          )}
-        >
-          {selectedLabel}
-          <ChevronDown className="ml-2 h-4 w-4 opacity-50" />
-        </Button>
-      </PopoverTrigger>
-      <PopoverContent className="w-[var(--radix-popover-trigger-width)] p-0" align="start">
-        <Command>
-          <CommandList className="max-h-60">
-            <CommandItem
-              onSelect={() => {
-                onChange(null)
-                setOpen(false)
-              }}
-            >
-              <Check
-                className={cn('h-4 w-4 shrink-0', value == null ? 'opacity-100' : 'opacity-0')}
-              />
-              All Quarters
-            </CommandItem>
-            {quarters.map((qtr) => (
-              <CommandItem
-                key={qtr.index}
-                value={String(qtr.index)}
-                onSelect={() => {
-                  onChange(qtr.index)
-                  setOpen(false)
-                }}
-              >
-                <Check
-                  className={cn(
-                    'h-4 w-4 shrink-0',
-                    value === qtr.index ? 'opacity-100' : 'opacity-0',
-                  )}
-                />
-                {qtr.school || qtr.text || `Quarter ${qtr.index}`}
-              </CommandItem>
-            ))}
-          </CommandList>
-        </Command>
-      </PopoverContent>
-    </Popover>
+    <SearchableSelect
+      value={value == null ? ALL : String(value)}
+      onValueChange={(nextValue) => onChange(nextValue === ALL ? null : Number(nextValue))}
+      className={cn('min-w-48 border-2', isActive ? activeClass : inactiveClass)}
+      searchPlaceholder="Search quarters..."
+      options={[
+        { value: ALL, label: 'All Quarters' },
+        ...quarters.map((quarter) => ({
+          value: String(quarter.index),
+          label: quarter.school || quarter.text || `Quarter ${quarter.index}`,
+        })),
+      ]}
+    />
   )
 }

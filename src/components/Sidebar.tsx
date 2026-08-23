@@ -6,6 +6,37 @@ import { ExternalLink } from 'lucide-react'
 import type { ProtectedRoute } from '../lib/permissions'
 import { hasPrivilege, routePermissions } from '../lib/permissions'
 
+export const adminItems = [
+  { path: '/members' as const, label: 'Members' },
+  { path: '/lessons' as const, label: 'Lessons' },
+  { path: '/ratings' as const, label: 'Ratings' },
+  { path: '/checkouts' as const, label: 'Checkouts' },
+]
+
+export const peopleManagementItems = [
+  { path: '/officers' as const, label: 'Officers & Positions' },
+  { path: '/ratings-examiners' as const, label: 'Ratings Examiners' },
+  { path: '/chiefs' as const, label: 'Chiefs' },
+  { path: '/privileges' as const, label: 'Privileges' },
+  { path: '/honorary' as const, label: 'Honorary' },
+]
+
+export const supportTableItems = [
+  { path: '/rating-types' as const, label: 'Rating Types' },
+  { path: '/boat-types' as const, label: 'Boat Types' },
+  { path: '/lesson-types' as const, label: 'Lesson Types' },
+  { path: '/quarters' as const, label: 'Quarters' },
+  { path: '/positions' as const, label: 'Positions' },
+]
+
+export const toolsItems = [
+  { path: '/maintenance-tracker' as const, label: 'Maintenance Tracker' },
+  { path: '/membership-processing' as const, label: 'Membership Processing' },
+  { path: '/membership-stats' as const, label: 'Membership Stats' },
+  { path: '/set-current-quarter' as const, label: 'Set Current Quarter' },
+  { path: '/tests' as const, label: 'Tests' },
+]
+
 export function SidebarNav({ onNavigate }: { onNavigate?: () => void }) {
   const location = useLocation()
   const { user, privileges } = useCurrentUser()
@@ -14,37 +45,6 @@ export function SidebarNav({ onNavigate }: { onNavigate?: () => void }) {
     enabled: Boolean(user),
   })
   const isExemptionApprover = approver?.isApprover ?? false
-
-  const adminItems = [
-    { path: '/members' as const, label: 'Members' },
-    { path: '/lessons' as const, label: 'Lessons' },
-    { path: '/ratings' as const, label: 'Ratings' },
-    { path: '/checkouts' as const, label: 'Checkouts' },
-  ]
-
-  const peopleManagementItems = [
-    { path: '/officers' as const, label: 'Officers & Positions' },
-    { path: '/ratings-examiners' as const, label: 'Ratings Examiners' },
-    { path: '/chiefs' as const, label: 'Chiefs' },
-    { path: '/privileges' as const, label: 'Privileges' },
-    { path: '/honorary' as const, label: 'Honorary' },
-  ]
-
-  const supportTableItems = [
-    { path: '/rating-types' as const, label: 'Rating Types' },
-    { path: '/boat-types' as const, label: 'Boat Types' },
-    { path: '/lesson-types' as const, label: 'Lesson Types' },
-    { path: '/quarters' as const, label: 'Quarters' },
-    { path: '/positions' as const, label: 'Positions' },
-  ]
-
-  const toolsItems = [
-    { path: '/maintenance-tracker' as const, label: 'Maintenance Tracker' },
-    { path: '/membership-processing' as const, label: 'Membership Processing' },
-    { path: '/membership-stats' as const, label: 'Membership Stats' },
-    { path: '/set-current-quarter' as const, label: 'Set Current Quarter' },
-    { path: '/tests' as const, label: 'Tests' },
-  ]
 
   const filterVisible = (items: { path: ProtectedRoute; label: string }[]) =>
     items.filter((item) => {

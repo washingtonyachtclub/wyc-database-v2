@@ -4,6 +4,7 @@ import { Button } from '../ui/button'
 import { DatePicker } from '../ui/DatePicker'
 import { Label } from '../ui/label'
 import { MemberCombobox } from '../ui/MemberCombobox'
+import { SearchableSelect } from '../ui/SearchableSelect'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select'
 
 const ALL = '__all__'
@@ -49,26 +50,21 @@ export function CheckoutFilterControls({
       <div className="flex flex-wrap items-end gap-4">
         <div>
           <Label className="mb-1">Boat</Label>
-          <Select
+          <SearchableSelect
             value={boatId !== undefined ? String(boatId) : ALL}
             onValueChange={(value) =>
               onFilterChange({ boatId: value === ALL ? undefined : Number(value) })
             }
-          >
-            <SelectTrigger
-              className={cn('border-2 w-48', boatId !== undefined ? activeClass : inactiveClass)}
-            >
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value={ALL}>All Boats</SelectItem>
-              {boatTypes.map((bt) => (
-                <SelectItem key={bt.index} value={String(bt.index)}>
-                  {bt.type || `Boat ${bt.index}`}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+            className={cn('w-48 border-2', boatId !== undefined ? activeClass : inactiveClass)}
+            searchPlaceholder="Search boats..."
+            options={[
+              { value: ALL, label: 'All Boats' },
+              ...boatTypes.map((boatType) => ({
+                value: String(boatType.index),
+                label: boatType.type || `Boat ${boatType.index}`,
+              })),
+            ]}
+          />
         </div>
 
         <div>

@@ -1,5 +1,6 @@
 import { CalendarIcon } from 'lucide-react'
 import * as React from 'react'
+import { useNativeDateTimeInput } from '@/hooks/use-native-date-time-input'
 import { cn } from '@/lib/utils'
 import { Button } from './button'
 import { Calendar } from './calendar'
@@ -7,13 +8,19 @@ import { Input } from './input'
 import { Label } from './label'
 import { Popover, PopoverContent, PopoverTrigger } from './popover'
 
-// Build the Date in local time; new Date('2026-07-08') parses as UTC and can shift the day.
 function parseYmd(value: string | undefined): Date | undefined {
   if (!value) return undefined
-  const [y, m, d] = value.split('-').map(Number)
-  if (!y || !m || !d) return undefined
+  const match = value.match(/^(\d{4})-(\d{2})-(\d{2})$/)
+  if (!match) return undefined
+  const [, year, month, day] = match
+  const y = Number(year)
+  const m = Number(month)
+  const d = Number(day)
   const date = new Date(y, m - 1, d)
-  return Number.isNaN(date.getTime()) ? undefined : date
+  if (date.getFullYear() !== y || date.getMonth() !== m - 1 || date.getDate() !== d) {
+    return undefined
+  }
+  return date
 }
 
 function toYmd(date: Date): string {
@@ -23,15 +30,27 @@ function toYmd(date: Date): string {
   return `${y}-${m}-${d}`
 }
 
-// Auto-format keystrokes into YYYY-MM-DD: keep digits only and insert dashes after
-// the year and month, so the user never types the separators. Dashes are only added
-// ahead of a filled group, so backspacing over one doesn't get re-inserted.
-function maskYmd(raw: string): string {
+function toDisplayDate(value: string | undefined): string {
+  const date = parseYmd(value)
+  if (!date) return value ?? ''
+  return `${String(date.getMonth() + 1).padStart(2, '0')}/${String(date.getDate()).padStart(2, '0')}/${date.getFullYear()}`
+}
+
+function maskDate(raw: string): string {
   const digits = raw.replace(/\D/g, '').slice(0, 8)
-  const parts = [digits.slice(0, 4)]
-  if (digits.length > 4) parts.push(digits.slice(4, 6))
-  if (digits.length > 6) parts.push(digits.slice(6, 8))
-  return parts.join('-')
+  const parts = [digits.slice(0, 2)]
+  if (digits.length > 2) parts.push(digits.slice(2, 4))
+  if (digits.length > 4) parts.push(digits.slice(4, 8))
+  return parts.join('/')
+}
+
+function parseDisplayDate(value: string): Date | undefined {
+  const ymd = parseYmd(value)
+  if (ymd) return ymd
+  const match = value.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/)
+  if (!match) return undefined
+  const [, month, day, year] = match
+  return parseYmd(`${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')}`)
 }
 
 export function DatePicker({
@@ -39,21 +58,29 @@ export function DatePicker({
   onChange,
   label,
   className,
-  placeholder = 'YYYY-MM-DD',
+  placeholder = 'MM/DD/YYYY',
+  id,
+  required,
+  onBlur,
 }: {
   value: string | undefined
   onChange: (value: string | undefined) => void
   label?: string
   className?: string
   placeholder?: string
+  id?: string
+  required?: boolean
+  onBlur?: () => void
 }) {
   const [open, setOpen] = React.useState(false)
-  // Local text state so partial typing (e.g. "2026-07") isn't wiped by the controlled
-  // value on every keystroke; committed to onChange only when it parses.
-  const [text, setText] = React.useState(value ?? '')
+  const [text, setText] = React.useState(toDisplayDate(value))
+  const [invalid, setInvalid] = React.useState(false)
+  const nativeInput = useNativeDateTimeInput()
 
   React.useEffect(() => {
-    setText(value ?? '')
+    if (invalid) return
+    setText(toDisplayDate(value))
+    setInvalid(false)
   }, [value])
 
   const commitText = (raw: string) => {
@@ -62,31 +89,66 @@ export function DatePicker({
       onChange(undefined)
       return
     }
-    const parsed = parseYmd(trimmed)
+    const parsed = parseDisplayDate(trimmed)
     if (parsed) {
+      setInvalid(false)
+      setText(toDisplayDate(toYmd(parsed)))
       onChange(toYmd(parsed))
     } else {
-      setText(value ?? '')
+      setInvalid(true)
+      onChange(undefined)
     }
   }
 
   const selected = parseYmd(value)
+
+  if (nativeInput) {
+    return (
+      <div>
+        {label && (
+          <Label htmlFor={id} className="mb-1">
+            {label}
+          </Label>
+        )}
+        <Input
+          id={id}
+          type="date"
+          value={value ?? ''}
+          required={required}
+          className={className}
+          onChange={(event) => onChange(event.target.value || undefined)}
+          onBlur={onBlur}
+        />
+      </div>
+    )
+  }
 
   return (
     <div>
       {label && <Label className="mb-1">{label}</Label>}
       <div className="relative">
         <Input
+          id={id}
           type="text"
           inputMode="numeric"
+          autoComplete="off"
           placeholder={placeholder}
-          className={cn('pr-9', className)}
+          maxLength={10}
+          required={required}
+          aria-invalid={invalid}
+          className={cn('pr-9', invalid && 'border-destructive', className)}
           value={text}
-          onChange={(e) => setText(maskYmd(e.target.value))}
-          onBlur={(e) => commitText(e.target.value)}
+          onChange={(e) => {
+            setText(maskDate(e.target.value))
+            setInvalid(false)
+          }}
+          onBlur={(e) => {
+            commitText(e.target.value)
+            onBlur?.()
+          }}
           onKeyDown={(e) => {
             if (e.key === 'Enter') {
-              commitText(text)
+              e.preventDefault()
               e.currentTarget.blur()
             }
           }}
@@ -107,6 +169,9 @@ export function DatePicker({
               mode="single"
               selected={selected}
               defaultMonth={selected}
+              captionLayout="dropdown"
+              startMonth={new Date(1900, 0)}
+              endMonth={new Date(new Date().getFullYear() + 10, 11)}
               onSelect={(date) => {
                 onChange(date ? toYmd(date) : undefined)
                 setOpen(false)
@@ -115,6 +180,7 @@ export function DatePicker({
           </PopoverContent>
         </Popover>
       </div>
+      {invalid && <p className="mt-1 text-sm text-destructive">Enter a valid date.</p>}
     </div>
   )
 }

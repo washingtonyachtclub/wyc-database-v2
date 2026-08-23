@@ -8,6 +8,7 @@ import { Link, useLocation, useRouter } from '@tanstack/react-router'
 import { Menu, Settings } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import { AdminContactModal } from './AdminContactModal'
+import { QuickSwitcher } from './QuickSwitcher'
 import { DevPrivilegeEmulator } from './DevPrivilegeEmulator'
 import { SidebarNav } from './Sidebar'
 import { Button } from './ui/button'
@@ -80,8 +81,13 @@ export default function Header() {
   return (
     <header className="bg-background shadow border-b">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-        <div className="flex h-16 items-center justify-between">
+        <div className="flex h-16 items-center justify-between md:grid md:grid-cols-[1fr_auto_1fr] md:gap-4">
           <div className="flex items-center gap-2">
+            {isDevApp && dbName && (
+              <span className="hidden mr-1 rounded bg-yellow-200 px-2 py-0.5 text-xs font-semibold text-yellow-900">
+                Database: {dbName}
+              </span>
+            )}
             {/* Hamburger — mobile only, non-bare pages */}
             {!isBarePage && isAuthenticated && (
               <Sheet open={sheetOpen} onOpenChange={setSheetOpen}>
@@ -105,17 +111,17 @@ export default function Header() {
               <img src="/favicon.png" alt="WYC" className="h-6 w-6" />
               WYC Database
             </Link>
-            {isDevApp && dbName && (
-              <span className="ml-3 rounded bg-yellow-200 px-2 py-0.5 text-xs font-semibold text-yellow-900">
-                Database: {dbName}
-              </span>
-            )}
           </div>
-          <div className="flex items-center gap-4">
+          <div className="hidden md:block">
+            {!isBarePage && isAuthenticated && <QuickSwitcher />}
+          </div>
+          <div className="flex items-center gap-4 md:justify-self-end">
             {isAuthenticated && user ? (
               <>
                 {isDevApp && hasPrivilege(realPrivileges ?? privileges, ['db']) && (
-                  <DevPrivilegeEmulator />
+                  <div className="hidden">
+                    <DevPrivilegeEmulator />
+                  </div>
                 )}
                 <Button asChild variant="ghost" size="icon">
                   <Link to="/settings">

@@ -3,9 +3,11 @@ import { cn } from '@/lib/utils'
 import { useFieldContext, useFormContext } from '../../hooks/form-context'
 import { Button } from './button'
 import { Checkbox } from './checkbox'
-import { GroupedSelect, type GroupedSelectGroup } from './GroupedSelect'
+import { DatePicker } from './DatePicker'
 import { Input } from './input'
 import { Label } from './label'
+import { SearchableSelect } from './SearchableSelect'
+import { TimePicker } from './TimePicker'
 import { Tooltip, TooltipContent, TooltipTrigger } from './tooltip'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './select'
 import { Textarea } from './textarea'
@@ -52,12 +54,24 @@ export function TextField({
   className?: string
 }) {
   const field = useFieldContext<string>()
-  return (
-    <div className={className}>
-      <Label htmlFor={field.name} className="mb-1">
-        {label}
-        {required && ' *'}
-      </Label>
+  const input =
+    type === 'date' ? (
+      <DatePicker
+        id={field.name}
+        value={field.state.value}
+        required={required}
+        onBlur={field.handleBlur}
+        onChange={(value) => field.handleChange(value ?? '')}
+      />
+    ) : type === 'time' ? (
+      <TimePicker
+        id={field.name}
+        value={field.state.value}
+        required={required}
+        onBlur={field.handleBlur}
+        onChange={field.handleChange}
+      />
+    ) : (
       <Input
         id={field.name}
         type={type}
@@ -66,6 +80,15 @@ export function TextField({
         onBlur={field.handleBlur}
         onChange={(e) => field.handleChange(e.target.value)}
       />
+    )
+
+  return (
+    <div className={className}>
+      <Label htmlFor={field.name} className="mb-1">
+        {label}
+        {required && ' *'}
+      </Label>
+      {input}
       <FieldError errors={field.state.meta.errors} />
     </div>
   )
@@ -159,21 +182,16 @@ export function SelectField({
         {label}
         {required && ' *'}
       </Label>
-      <Select
-        value={field.state.value != null ? String(field.state.value) : ''}
-        onValueChange={(value) => field.handleChange(value === '' ? null : Number(value))}
-      >
-        <SelectTrigger onBlur={field.handleBlur}>
-          <SelectValue placeholder={placeholder} />
-        </SelectTrigger>
-        <SelectContent>
-          {options.map((opt) => (
-            <SelectItem key={opt.value} value={String(opt.value)}>
-              {opt.label}
-            </SelectItem>
-          ))}
-        </SelectContent>
-      </Select>
+      <SearchableSelect
+        value={field.state.value != null ? String(field.state.value) : null}
+        onValueChange={(value) => field.handleChange(Number(value))}
+        onBlur={field.handleBlur}
+        placeholder={placeholder}
+        options={options.map((option) => ({
+          value: String(option.value),
+          label: option.label,
+        }))}
+      />
       <FieldError errors={field.state.meta.errors} />
     </div>
   )
@@ -190,7 +208,7 @@ export function GroupedSelectField({
   label: string
   required?: boolean
   placeholder?: string
-  groups: GroupedSelectGroup[]
+  groups: { label: string; options: { value: number; label: string }[] }[]
   tooltip?: string
   className?: string
 }) {
@@ -209,12 +227,18 @@ export function GroupedSelectField({
           </Tooltip>
         )}
       </Label>
-      <GroupedSelect
-        value={field.state.value}
-        onValueChange={field.handleChange}
-        groups={groups}
-        placeholder={placeholder}
+      <SearchableSelect
+        value={field.state.value != null ? String(field.state.value) : null}
+        onValueChange={(value) => field.handleChange(Number(value))}
         onBlur={field.handleBlur}
+        placeholder={placeholder}
+        groups={groups.map((group) => ({
+          label: group.label,
+          options: group.options.map((option) => ({
+            value: String(option.value),
+            label: option.label,
+          })),
+        }))}
       />
       <FieldError errors={field.state.meta.errors} />
     </div>

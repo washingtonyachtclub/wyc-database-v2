@@ -8,6 +8,7 @@ import {
   getCheckoutBoatTypes,
   getCheckoutCards,
   getCheckoutFormBoatTypes,
+  getCheckoutFormMembers,
   getCheckoutMembers,
   getCheckouts,
   getMyRatings,
@@ -70,6 +71,13 @@ export const getCheckoutMembersQueryOptions = () =>
     staleTime: 5 * 60 * 1000,
   })
 
+export const getCheckoutFormMembersQueryOptions = () =>
+  queryOptions({
+    queryKey: ['checkouts', 'form-members'],
+    queryFn: getCheckoutFormMembers,
+    staleTime: 5 * 60 * 1000,
+  })
+
 export const getWindHistoryQueryOptions = () =>
   queryOptions({
     queryKey: ['checkouts', 'wind-history'],
@@ -100,12 +108,17 @@ export function useCreateManualCheckoutMutation(opts: { onSuccess: () => void })
   })
 }
 
-export function useCheckInMutation(opts?: { onSuccess?: () => void | Promise<void> }) {
+export function useCheckInMutation(opts?: {
+  onSuccess?: () => void | Promise<void>
+  invalidateOnSuccess?: boolean
+}) {
   const queryClient = useQueryClient()
   return useMutation({
     mutationFn: checkInBoat,
     onSuccess: async () => {
-      await queryClient.invalidateQueries({ queryKey: ['checkouts'] })
+      if (opts?.invalidateOnSuccess !== false) {
+        await queryClient.invalidateQueries({ queryKey: ['checkouts'] })
+      }
       await opts?.onSuccess?.()
     },
   })

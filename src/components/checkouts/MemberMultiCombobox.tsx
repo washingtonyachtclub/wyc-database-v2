@@ -1,4 +1,5 @@
 import { X } from 'lucide-react'
+import { useMemo } from 'react'
 import { Button } from '@/components/ui/button'
 import { Label } from '@/components/ui/label'
 import { MemberCombobox, type MemberLite } from '@/components/ui/MemberCombobox'
@@ -8,6 +9,8 @@ type MemberMultiComboboxProps = {
   onChange: (value: number[]) => void
   members: MemberLite[]
   exclude?: number[]
+  searchAllMembers?: (query: string) => Promise<MemberLite[]>
+  onSelectMember?: (member: MemberLite) => void
   error?: string
   showWycNumbers?: boolean
 }
@@ -17,11 +20,16 @@ export function MemberMultiCombobox({
   onChange,
   members,
   exclude = [],
+  searchAllMembers,
+  onSelectMember,
   error,
   showWycNumbers = true,
 }: MemberMultiComboboxProps) {
-  const unavailable = new Set([...value, ...exclude])
-  const availableMembers = members.filter((member) => !unavailable.has(member.wycNumber))
+  const unavailable = useMemo(() => new Set([...value, ...exclude]), [exclude, value])
+  const availableMembers = useMemo(
+    () => members.filter((member) => !unavailable.has(member.wycNumber)),
+    [members, unavailable],
+  )
 
   return (
     <div>
@@ -32,6 +40,8 @@ export function MemberMultiCombobox({
           if (wycNumber && !unavailable.has(wycNumber)) onChange([...value, wycNumber])
         }}
         members={availableMembers}
+        searchAllMembers={searchAllMembers}
+        onSelectMember={onSelectMember}
         placeholder="Add a crew member..."
         showWycNumbers={showWycNumbers}
         exactWycNumberSearch={!showWycNumbers}

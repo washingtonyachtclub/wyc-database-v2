@@ -16,13 +16,7 @@ import { Plus } from 'lucide-react'
 import { Checkbox } from '@/components/ui/checkbox'
 import { DataTable } from '@/components/ui/DataTable'
 import { Label } from '@/components/ui/label'
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select'
+import { SearchableSelect } from '@/components/ui/SearchableSelect'
 import {
   getChiefsQueryOptions,
   getChiefTypesQueryOptions,
@@ -121,7 +115,7 @@ function ChiefsPage() {
         <div className="flex flex-wrap items-end gap-4">
           <div>
             <Label className="mb-1">Chief Type</Label>
-            <Select
+            <SearchableSelect
               value={chiefType !== undefined ? String(chiefType) : ALL}
               onValueChange={(value) =>
                 navigate({
@@ -133,21 +127,19 @@ function ChiefsPage() {
                   resetScroll: false,
                 })
               }
-            >
-              <SelectTrigger
-                className={cn('border-2', chiefType !== undefined ? activeClass : inactiveClass)}
-              >
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value={ALL}>All Chief Types</SelectItem>
-                {chiefTypes.map((ct) => (
-                  <SelectItem key={ct.index} value={String(ct.index)}>
-                    {ct.name || `Position ${ct.index}`}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+              className={cn(
+                'min-w-48 border-2',
+                chiefType !== undefined ? activeClass : inactiveClass,
+              )}
+              searchPlaceholder="Search chief types..."
+              options={[
+                { value: ALL, label: 'All Chief Types' },
+                ...chiefTypes.map((chiefTypeOption) => ({
+                  value: String(chiefTypeOption.index),
+                  label: chiefTypeOption.name || `Position ${chiefTypeOption.index}`,
+                })),
+              ]}
+            />
           </div>
 
           <div className="flex items-center gap-2 pb-1">

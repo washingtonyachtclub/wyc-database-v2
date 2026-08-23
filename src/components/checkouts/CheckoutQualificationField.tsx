@@ -1,8 +1,8 @@
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
 import { Button } from '@/components/ui/button'
-import { GroupedSelect } from '@/components/ui/GroupedSelect'
 import { Label } from '@/components/ui/label'
 import { MemberCombobox, type MemberLite } from '@/components/ui/MemberCombobox'
+import { SearchableSelect } from '@/components/ui/SearchableSelect'
 import type { CheckoutQualification } from '@/domains/checkouts/schema'
 import { cn } from '@/lib/utils'
 
@@ -14,6 +14,8 @@ type CheckoutQualificationFieldProps = {
   ratings: { index: number; text: string; type: string }[]
   members: MemberLite[]
   excludeSupervisor?: number[]
+  searchAllMembers?: (query: string) => Promise<MemberLite[]>
+  onSelectMember?: (member: MemberLite) => void
   error?: string
   showWycNumbers?: boolean
 }
@@ -29,12 +31,15 @@ export function CheckoutQualificationField({
   ratings,
   members,
   excludeSupervisor = [],
+  searchAllMembers,
+  onSelectMember,
   error,
   showWycNumbers = true,
 }: CheckoutQualificationFieldProps) {
   const [mode, setMode] = useState<QualificationMode>(() => initialMode(value))
-  const supervisorMembers = members.filter(
-    (member) => !excludeSupervisor.includes(member.wycNumber),
+  const supervisorMembers = useMemo(
+    () => members.filter((member) => !excludeSupervisor.includes(member.wycNumber)),
+    [excludeSupervisor, members],
   )
   const ratingGroups = Object.values(
     ratings.reduce<Record<string, { label: string; options: { value: number; label: string }[] }>>(
@@ -105,6 +110,8 @@ export function CheckoutQualificationField({
                 onChange({ supervised: true, supervisorWycNumber: supervisorWycNumber ?? 0 })
               }
               members={supervisorMembers}
+              searchAllMembers={searchAllMembers}
+              onSelectMember={onSelectMember}
               placeholder="Select a member"
               showWycNumbers={showWycNumbers}
               exactWycNumberSearch={!showWycNumbers}
@@ -148,16 +155,26 @@ export function CheckoutQualificationField({
 
           <div className={cn('mt-4', mode !== 'unsupervised' && 'opacity-40')}>
             <Label className="mb-1">Relevant rating *</Label>
-            <GroupedSelect
+            <SearchableSelect
               disabled={mode !== 'unsupervised'}
               value={
-                !value.supervised && value.relevantRatingId > 0 ? value.relevantRatingId : null
+                !value.supervised && value.relevantRatingId > 0
+                  ? String(value.relevantRatingId)
+                  : null
               }
               onValueChange={(rating) =>
-                onChange({ supervised: false, relevantRatingId: rating ?? 0 })
+                onChange({ supervised: false, relevantRatingId: Number(rating) })
               }
-              groups={ratingGroups}
-              triggerClassName="bg-background"
+              groups={ratingGroups.map((group) => ({
+                label: group.label,
+                options: group.options.map((option) => ({
+                  value: String(option.value),
+                  label: option.label,
+                })),
+              }))}
+              placeholder="Select a rating"
+              searchPlaceholder="Search ratings..."
+              className="bg-background"
             />
           </div>
         </div>

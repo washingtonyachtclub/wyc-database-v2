@@ -30,7 +30,7 @@ export const LessonSessionsField = withForm({
             <Label className="mb-1">Sessions *</Label>
             <div className="space-y-2">
               {sessionsField.state.value.map((_, i) => (
-                <div key={i} className="rounded-md border p-3">
+                <div key={i} className="relative rounded-md border p-3">
                   {/*
                     An array field only subscribes to the array's length, so it won't
                     re-render when a checkbox in one of its rows flips. Which inputs a
@@ -43,36 +43,30 @@ export const LessonSessionsField = withForm({
                     })}
                   >
                     {({ allDay, multiDay }) => (
-                      <div className="flex items-start gap-2">
+                      <div className="grid grid-cols-1 gap-2 pr-10 sm:grid-cols-2">
                         <form.AppField name={`sessions[${i}].date`}>
                           {(field) => (
                             <field.TextField
                               label={multiDay ? 'Start date' : 'Date'}
                               type="date"
-                              className="flex-1"
+                              className={multiDay ? undefined : 'sm:col-span-2'}
                             />
                           )}
                         </form.AppField>
 
                         {multiDay && (
                           <form.AppField name={`sessions[${i}].endDate`}>
-                            {(field) => (
-                              <field.TextField label="End date" type="date" className="flex-1" />
-                            )}
+                            {(field) => <field.TextField label="End date" type="date" />}
                           </form.AppField>
                         )}
 
                         {!allDay && (
                           <>
                             <form.AppField name={`sessions[${i}].startTime`}>
-                              {(field) => (
-                                <field.TextField label="Start" type="time" className="flex-1" />
-                              )}
+                              {(field) => <field.TextField label="Start" type="time" />}
                             </form.AppField>
                             <form.AppField name={`sessions[${i}].endTime`}>
-                              {(field) => (
-                                <field.TextField label="End" type="time" className="flex-1" />
-                              )}
+                              {(field) => <field.TextField label="End" type="time" />}
                             </form.AppField>
                           </>
                         )}
@@ -82,7 +76,7 @@ export const LessonSessionsField = withForm({
                           variant="ghost"
                           size="sm"
                           aria-label="Remove session"
-                          className="mt-6 h-9 w-9 p-0 text-muted-foreground hover:text-destructive"
+                          className="absolute right-3 top-3 h-9 w-9 p-0 text-muted-foreground hover:text-destructive"
                           onClick={() => sessionsField.removeValue(i)}
                         >
                           <X className="h-4 w-4" />
