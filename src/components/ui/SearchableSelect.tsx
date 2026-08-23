@@ -129,7 +129,7 @@ export function SearchableSelect({
     </Popover>
   ) : (
     <NativeSelect
-      value={value ?? ''}
+      value={selected?.value ?? ''}
       onChange={(event) => onValueChange(event.target.value)}
       onBlur={onBlur}
       disabled={disabled}

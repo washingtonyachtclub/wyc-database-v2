@@ -67,11 +67,11 @@ export function CheckoutCard({
             <AlertDialogTitle className="text-2xl">
               {checkIn.isSuccess
                 ? `${checkout.boatName || 'Boat'} checked in`
-                : `Check in the ${checkout.boatName || 'boat'}`}
+                : `Check in the ${checkout.boatName || 'boat'}?`}
             </AlertDialogTitle>
             {checkIn.isSuccess && (
               <AlertDialogDescription className="text-base">
-                The check-in is complete. Submit a damage report if anything needs attention.
+                Submit a damage report if anything needs attention.
               </AlertDialogDescription>
             )}
             {!checkIn.isSuccess && (
@@ -81,15 +81,7 @@ export function CheckoutCard({
           <ErrorAlert error={checkIn.error?.message} action="Checking in boat" />
           {checkIn.isSuccess ? (
             <AlertDialogFooter className="gap-2">
-              <Button
-                variant="outline"
-                className="h-11 px-6 text-base"
-                disabled={finishing}
-                onClick={() => void finishCheckIn()}
-              >
-                Done
-              </Button>
-              <Button asChild className="h-11 px-6 text-base">
+              <Button asChild variant="outline" className="h-11 px-6 text-base">
                 <a
                   href="https://damage.washingtonyachtclub.org"
                   target="_blank"
@@ -98,6 +90,13 @@ export function CheckoutCard({
                 >
                   Submit Damage Report
                 </a>
+              </Button>
+              <Button
+                className="h-11 px-6 text-base"
+                disabled={finishing}
+                onClick={() => void finishCheckIn()}
+              >
+                Done
               </Button>
             </AlertDialogFooter>
           ) : (

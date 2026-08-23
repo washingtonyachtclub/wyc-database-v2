@@ -146,7 +146,7 @@ export const DESTINATIONS = [
 
 export const guestInputSchema = z.object({
   name: z.string().trim().min(1, 'Guest name is required').max(100, 'Guest name is too long'),
-  status: z.number().int().min(1).max(3),
+  status: z.number().int().min(1, 'Guest status is required').max(3),
   email: z
     .string()
     .trim()
@@ -156,7 +156,7 @@ export const guestInputSchema = z.object({
 
 export type GuestInput = z.infer<typeof guestInputSchema>
 
-export const emptyGuestInput: GuestInput = { name: '', status: 1, email: '' }
+export const emptyGuestInput: GuestInput = { name: '', status: 0, email: '' }
 
 export const checkoutQualificationSchema = z.discriminatedUnion('supervised', [
   z

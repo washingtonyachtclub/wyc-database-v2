@@ -254,6 +254,7 @@ export function CheckoutForm({
                           <field.SelectField
                             label="Status"
                             required
+                            placeholder="Select guest status"
                             options={GUEST_STATUSES.map((status) => ({
                               value: status.value,
                               label: status.label,
