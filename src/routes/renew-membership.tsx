@@ -52,8 +52,9 @@ function formatMoney(cents: number, currency: string) {
 
 const UW_STATUS_OPTIONS: { value: UwStatus; label: string }[] = [
   { value: 'student', label: 'Student' },
+  { value: 'alumni', label: 'Alumni' },
   { value: 'employee_retiree', label: 'Employee/Retiree' },
-  { value: 'neither', label: 'Neither' },
+  { value: 'public', label: 'Public (none of the above)' },
 ]
 
 const IMA_PURCHASE_URL = 'https://www.washington.edu/ima/member/'
@@ -267,9 +268,9 @@ function RenewMembershipPage() {
         />
       )}
 
-      {uwStatus === 'neither' && (
+      {(uwStatus === 'alumni' || uwStatus === 'public') && (
         <ChoiceGroup
-          label="Would you like to be paired with a student to sign up for an Plus One Membership?"
+          label="Would you like to be paired with a student to sign up for a Plus One Membership?"
           helper={SPONSEE_HELPER}
           options={SPONSEE_OPTIONS}
           value={plusOne}

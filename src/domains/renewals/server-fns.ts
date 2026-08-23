@@ -17,7 +17,7 @@ import { createHash } from 'node:crypto'
 import { variationId } from './catalog'
 import type { RenewalDuration, RenewalTier } from './compute-renewal'
 import { MAX_QUARTERS_AHEAD, RENEWAL_QUARTER, computeRenewal } from './compute-renewal'
-import { parseQuestionnaire, tierForUwStatus } from './questionnaire'
+import { categoryIdForUwStatus, parseQuestionnaire, tierForUwStatus } from './questionnaire'
 import type { QuestionnaireAnswers } from './questionnaire'
 
 function parseTier(v: unknown): RenewalTier {
@@ -137,7 +137,7 @@ export const getRenewalPrice = createServerFn({ method: 'GET' })
     }
   })
 
-/** Bump ExpireQtr and log the payment row; throws so the caller can word the error. Questionnaire is best-effort. */
+/** Update membership and log the payment row; throws so the caller can word the error. Questionnaire history is best-effort. */
 async function recordRenewal(input: {
   wycNumber: number
   tier: RenewalTier
@@ -152,7 +152,12 @@ async function recordRenewal(input: {
 }): Promise<void> {
   await db
     .update(wycDatabase)
-    .set({ expireQtrIndex: input.targetExpireQtr })
+    .set({
+      expireQtrIndex: input.targetExpireQtr,
+      ...(input.questionnaire && {
+        categoryId: categoryIdForUwStatus(input.questionnaire.uwStatus),
+      }),
+    })
     .where(eq(wycDatabase.wycNumber, input.wycNumber))
 
   await db.insert(membershipPayments).values({

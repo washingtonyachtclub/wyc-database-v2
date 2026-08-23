@@ -6,19 +6,20 @@ How existing members renew their own membership, and how dues exemptions are req
 
 Logged-in members renew on the `/renew-membership` page by paying with a card. New member signup runs on WordPress and the `/membership-processing` route (see [membership processing](membership-processing.md)); only renewals for existing members are handled here.
 
-A renewal advances `WYCDatabase.ExpireQtr`, the quarter a member is paid through (see [quarters](quarters.md)). The session user is the member: `requireAuth()` returns their WYCNumber, so no admin privilege is involved and the server already knows who is paying.
+A renewal advances `WYCDatabase.ExpireQtr`, the quarter a member is paid through (see [quarters](quarters.md)), and synchronizes `WYCDatabase.Category` with the member's selected UW status. The session user is the member: `requireAuth()` returns their WYCNumber, so no admin privilege is involved and the server already knows who is paying.
 
 The same page also hosts the dues-exemption request flow for officers, instructors, and honorary members, who renew without payment subject to approval.
 
 ## Renewal flow
 
 1. The page shows current status from `getRenewalStatus`: the quarter the member is paid through and whether they are active.
-2. The member picks a tier (Student or Non-Student) and duration (Quarterly or Annual). The tier is an honor-system toggle, not read from the member's category.
-3. The live price for the selected combination is fetched from Square via `getRenewalPrice`. Prices are never stored locally.
-4. The Square Web Payments SDK card form renders inline. On submit it tokenizes the card client-side into a single-use source id.
-5. `payAndRenew` charges the card and, only on a completed payment, advances `ExpireQtr`, logs the renewal, and emails confirmation.
+2. The member selects Student, Alumni, Employee/Retiree, or Public and answers the Plus One questionnaire.
+3. Student selections use the student price tier. All other statuses use the non-student tier.
+4. The live price for the selected combination is fetched from Square via `getRenewalPrice`. Prices are never stored locally.
+5. The Square Web Payments SDK card form renders inline. On submit it tokenizes the card client-side into a single-use source id.
+6. `payAndRenew` charges the card and, only on a completed payment, advances `ExpireQtr`, updates the member category, logs the renewal, and emails confirmation.
 
-Both toggles also show the resulting expiry quarter for each duration so the member can compare outcomes before paying.
+The duration choices show the resulting expiry quarter so the member can compare outcomes before paying.
 
 ## Quarter math
 
@@ -45,9 +46,9 @@ CreateOrder(variation, qty 1)   ->  Square computes the total from the catalog
 CreatePayment(sourceId, orderId, total)  ->  status COMPLETED (synchronous)
 ```
 
-The amount charged comes from `order.totalMoney`, never from the client. The client only sends tier, duration, and the card token.
+The amount charged comes from `order.totalMoney`, never from the client. The client sends the questionnaire, duration, and card token. The server validates the questionnaire and derives the price tier from UW status.
 
-**Confirmation.** `ExpireQtr` is updated only after `CreatePayment` returns `COMPLETED`, inside the same server function. The charge and the post-payment database write are separate try blocks: if the charge fails, nothing changes and the member sees a safe decline reason; if the database write fails after a completed charge, the member is told their payment went through and not to pay again. There is no webhook, since the embedded card form returns the final status synchronously.
+**Confirmation.** `ExpireQtr` and `Category` are updated only after `CreatePayment` returns `COMPLETED`, inside the same server function. The charge and the post-payment database write are separate try blocks: if the charge fails, nothing changes and the member sees a safe decline reason; if the database write fails after a completed charge, the member is told their payment went through and not to pay again. There is no webhook, since the embedded card form returns the final status synchronously.
 
 **Idempotency.** Every order and payment passes an idempotency key (`renew-o/{wyc}/{targetQtr}` and `renew-p/{wyc}/{targetQtr}`) so a double-click cannot double-charge.
 
@@ -82,13 +83,13 @@ Officers, instructors who will teach that quarter, and honorary members renew wi
 
 ### Member side
 
-On the renewal page, a separate Request Dues Exempt action submits `requestDuesExemption`. It freezes the target quarter at request time, enforces one open request per member, and records a `pending` row. The renewal status reflects the pending request across reloads.
+On the renewal page, a separate Request Dues Exempt action submits `requestDuesExemption`. It freezes the target quarter at request time, enforces one open request per member, and stores the request and questionnaire together in a transaction. The renewal status reflects the pending request across reloads.
 
 ### Approval side
 
 Active holders of Commodore (1000), Vice Commodore (1010), or Webmaster (2260) positions can reach `/approve-exemptions`. The screen lists pending requests with requester name, requested quarter, current expiry, and request date.
 
-- `approveExemptionRequest`: if the member is already covered through the frozen target quarter, the grant is a no-op (no `ExpireQtr` change, no ledger row); otherwise it advances `ExpireQtr` and writes the EXEMPT ledger row. Either way the request is marked approved, linked to the ledger row, and the member receives the renewal confirmation email (only when a quarter was actually granted).
+- `approveExemptionRequest`: if the member is already covered through the frozen target quarter, the grant is a no-op (no profile change and no ledger row); otherwise it advances `ExpireQtr`, synchronizes `Category` from the stored UW status, and writes the EXEMPT ledger row. Either way the request is marked approved, linked to the ledger row, and the member receives the renewal confirmation email (only when a quarter was actually granted).
 - `denyExemptionRequest`: marks the request denied. No reason is captured, and a denied member may request again.
 
 ### Request table: `dues_exemption_requests`

@@ -544,7 +544,7 @@ export const renewalQuestionnaire = mysqlTable(
     wycNumber: int('wyc_number').notNull(),
     // Renewal quarter these answers were captured for.
     quarter: int('quarter').notNull(),
-    uwStatus: varchar('uw_status', { length: 20 }).notNull(), // 'student' | 'employee_retiree' | 'neither'
+    uwStatus: varchar('uw_status', { length: 20 }).notNull(),
     // Self-describing code (sponsor_* / sponsee_*) so a row is interpretable without UW status.
     plusOneResponse: varchar('plus_one_response', { length: 30 }).notNull(),
     // 'active' (paid) | 'pending' (exempt, awaiting approval) | 'void' (exempt denied).
