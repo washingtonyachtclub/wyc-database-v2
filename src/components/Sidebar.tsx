@@ -81,15 +81,9 @@ export function SidebarNav({ onNavigate }: { onNavigate?: () => void }) {
           <Link to="/my-lessons" className={linkClass(location.pathname === '/my-lessons')}>
             My Lessons
           </Link>
-          <a
-            href="https://checkout.washingtonyachtclub.org"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="flex items-center gap-2 px-4 py-2 rounded-md transition-colors hover:bg-primary/5 text-foreground"
-          >
-            Check Out a Boat
-            <ExternalLink className="h-3.5 w-3.5 text-muted-foreground" />
-          </a>
+          <Link to="/checkout" className={linkClass(location.pathname === '/checkout')}>
+            Boat Checkout
+          </Link>
           <Link
             to="/renew-membership"
             className={linkClass(location.pathname === '/renew-membership')}

@@ -10,12 +10,19 @@ import { Command, CommandEmpty, CommandInput, CommandItem, CommandList } from '.
 import { Label } from './label'
 import { Popover, PopoverContent, PopoverTrigger } from './popover'
 
+export type MemberLite = { wycNumber: number; first: string | null; last: string | null }
+
 type MemberComboboxProps = {
   value: number | null
   onChange: (wycNumber: number | null) => void
   label?: string
   placeholder?: string
   disabled?: boolean
+  required?: boolean
+  error?: string
+  members?: MemberLite[]
+  showWycNumbers?: boolean
+  exactWycNumberSearch?: boolean
 }
 
 export function MemberCombobox({
@@ -24,15 +31,24 @@ export function MemberCombobox({
   label,
   placeholder = 'Search for a member...',
   disabled = false,
+  required = false,
+  error,
+  members: membersProp,
+  showWycNumbers = true,
+  exactWycNumberSearch = false,
 }: MemberComboboxProps) {
   const [open, setOpen] = useState(false)
   const [search, setSearch] = useState('')
 
-  const { data: members = [] } = useQuery(getAllMembersLiteQueryOptions())
+  const { data: fetched = [] } = useQuery({
+    ...getAllMembersLiteQueryOptions(),
+    enabled: membersProp === undefined,
+  })
+  const members = membersProp ?? fetched
 
   const selectedMember = value != null ? members.find((m) => m.wycNumber === value) : null
   const selectedLabel = selectedMember
-    ? `${selectedMember.first} ${selectedMember.last}`.trim()
+    ? `${selectedMember.first ?? ''} ${selectedMember.last ?? ''}`.trim()
     : null
 
   const MIN_SEARCH_LENGTH = 2
@@ -40,12 +56,15 @@ export function MemberCombobox({
 
   const trimmedSearch = search.trim()
   const searchTokens = trimmedSearch.toLowerCase().split(/\s+/)
+  const isWycNumberSearch = exactWycNumberSearch && /^\d+$/.test(trimmedSearch)
   const filteredMembers =
     trimmedSearch.length < MIN_SEARCH_LENGTH
       ? []
       : members.filter((m) => {
-          const full = `${m.first} ${m.last} ${m.wycNumber}`.toLowerCase()
-          return searchTokens.every((token) => full.includes(token))
+          if (isWycNumberSearch) return String(m.wycNumber) === trimmedSearch
+          const fullName = `${m.first ?? ''} ${m.last ?? ''}`.toLowerCase()
+          const searchable = exactWycNumberSearch ? fullName : `${fullName} ${m.wycNumber}`
+          return searchTokens.every((token) => searchable.includes(token))
         })
 
   const displayedMembers = filteredMembers.slice(0, MAX_RESULTS)
@@ -53,7 +72,12 @@ export function MemberCombobox({
 
   return (
     <div>
-      {label && <Label className="mb-1">{label}</Label>}
+      {label && (
+        <Label className="mb-1">
+          {label}
+          {required && ' *'}
+        </Label>
+      )}
       <Popover open={open} onOpenChange={setOpen}>
         <PopoverTrigger asChild>
           <Button
@@ -84,7 +108,10 @@ export function MemberCombobox({
 
                   {displayedMembers.map((member) => {
                     const isSelected = member.wycNumber === value
-                    const displayName = `${member.first} ${member.last}`.trim()
+                    const displayName = `${member.first ?? ''} ${member.last ?? ''}`.trim()
+                    const displayWycNumber =
+                      showWycNumbers ||
+                      (isWycNumberSearch && trimmedSearch === String(member.wycNumber))
                     return (
                       <CommandItem
                         key={member.wycNumber}
@@ -102,8 +129,10 @@ export function MemberCombobox({
                           )}
                         />
                         <span>
-                          {displayName}{' '}
-                          <span className="text-muted-foreground">({member.wycNumber})</span>
+                          {displayName}
+                          {displayWycNumber && (
+                            <span className="text-muted-foreground"> ({member.wycNumber})</span>
+                          )}
                         </span>
                       </CommandItem>
                     )
@@ -120,6 +149,7 @@ export function MemberCombobox({
           </Command>
         </PopoverContent>
       </Popover>
+      {error && <p className="mt-1 text-sm text-destructive">{error}</p>}
     </div>
   )
 }

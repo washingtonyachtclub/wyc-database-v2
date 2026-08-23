@@ -38,6 +38,7 @@ import { Route as DoorCodesRouteImport } from './routes/door-codes'
 import { Route as DbDotcgiRouteImport } from './routes/db[.]cgi'
 import { Route as ChiefsRouteImport } from './routes/chiefs'
 import { Route as CheckoutsRouteImport } from './routes/checkouts'
+import { Route as CheckoutRouteImport } from './routes/checkout'
 import { Route as BoatTypesRouteImport } from './routes/boat-types'
 import { Route as ApproveExemptionsRouteImport } from './routes/approve-exemptions'
 import { Route as IndexRouteImport } from './routes/index'
@@ -45,6 +46,7 @@ import { Route as SignupLessonIndexRouteImport } from './routes/signup.$lessonIn
 import { Route as RatingsRatingIndexRouteImport } from './routes/ratings_.$ratingIndex'
 import { Route as MembersWycNumberRouteImport } from './routes/members_.$wycNumber'
 import { Route as LessonsLessonIndexRouteImport } from './routes/lessons_.$lessonIndex'
+import { Route as CheckoutNewRouteImport } from './routes/checkout_.new'
 import { Route as ApiCronLessonRemindersRouteImport } from './routes/api.cron.lesson-reminders'
 
 const TestsRoute = TestsRouteImport.update({
@@ -192,6 +194,11 @@ const CheckoutsRoute = CheckoutsRouteImport.update({
   path: '/checkouts',
   getParentRoute: () => rootRouteImport,
 } as any)
+const CheckoutRoute = CheckoutRouteImport.update({
+  id: '/checkout',
+  path: '/checkout',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const BoatTypesRoute = BoatTypesRouteImport.update({
   id: '/boat-types',
   path: '/boat-types',
@@ -227,6 +234,11 @@ const LessonsLessonIndexRoute = LessonsLessonIndexRouteImport.update({
   path: '/lessons/$lessonIndex',
   getParentRoute: () => rootRouteImport,
 } as any)
+const CheckoutNewRoute = CheckoutNewRouteImport.update({
+  id: '/checkout_/new',
+  path: '/checkout/new',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiCronLessonRemindersRoute = ApiCronLessonRemindersRouteImport.update({
   id: '/api/cron/lesson-reminders',
   path: '/api/cron/lesson-reminders',
@@ -237,6 +249,7 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/approve-exemptions': typeof ApproveExemptionsRoute
   '/boat-types': typeof BoatTypesRoute
+  '/checkout': typeof CheckoutRoute
   '/checkouts': typeof CheckoutsRoute
   '/chiefs': typeof ChiefsRoute
   '/db.cgi': typeof DbDotcgiRoute
@@ -266,6 +279,7 @@ export interface FileRoutesByFullPath {
   '/set-password': typeof SetPasswordRoute
   '/settings': typeof SettingsRoute
   '/tests': typeof TestsRoute
+  '/checkout/new': typeof CheckoutNewRoute
   '/lessons/$lessonIndex': typeof LessonsLessonIndexRoute
   '/members/$wycNumber': typeof MembersWycNumberRoute
   '/ratings/$ratingIndex': typeof RatingsRatingIndexRoute
@@ -276,6 +290,7 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/approve-exemptions': typeof ApproveExemptionsRoute
   '/boat-types': typeof BoatTypesRoute
+  '/checkout': typeof CheckoutRoute
   '/checkouts': typeof CheckoutsRoute
   '/chiefs': typeof ChiefsRoute
   '/db.cgi': typeof DbDotcgiRoute
@@ -305,6 +320,7 @@ export interface FileRoutesByTo {
   '/set-password': typeof SetPasswordRoute
   '/settings': typeof SettingsRoute
   '/tests': typeof TestsRoute
+  '/checkout/new': typeof CheckoutNewRoute
   '/lessons/$lessonIndex': typeof LessonsLessonIndexRoute
   '/members/$wycNumber': typeof MembersWycNumberRoute
   '/ratings/$ratingIndex': typeof RatingsRatingIndexRoute
@@ -316,6 +332,7 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/approve-exemptions': typeof ApproveExemptionsRoute
   '/boat-types': typeof BoatTypesRoute
+  '/checkout': typeof CheckoutRoute
   '/checkouts': typeof CheckoutsRoute
   '/chiefs': typeof ChiefsRoute
   '/db.cgi': typeof DbDotcgiRoute
@@ -345,6 +362,7 @@ export interface FileRoutesById {
   '/set-password': typeof SetPasswordRoute
   '/settings': typeof SettingsRoute
   '/tests': typeof TestsRoute
+  '/checkout_/new': typeof CheckoutNewRoute
   '/lessons_/$lessonIndex': typeof LessonsLessonIndexRoute
   '/members_/$wycNumber': typeof MembersWycNumberRoute
   '/ratings_/$ratingIndex': typeof RatingsRatingIndexRoute
@@ -357,6 +375,7 @@ export interface FileRouteTypes {
     | '/'
     | '/approve-exemptions'
     | '/boat-types'
+    | '/checkout'
     | '/checkouts'
     | '/chiefs'
     | '/db.cgi'
@@ -386,6 +405,7 @@ export interface FileRouteTypes {
     | '/set-password'
     | '/settings'
     | '/tests'
+    | '/checkout/new'
     | '/lessons/$lessonIndex'
     | '/members/$wycNumber'
     | '/ratings/$ratingIndex'
@@ -396,6 +416,7 @@ export interface FileRouteTypes {
     | '/'
     | '/approve-exemptions'
     | '/boat-types'
+    | '/checkout'
     | '/checkouts'
     | '/chiefs'
     | '/db.cgi'
@@ -425,6 +446,7 @@ export interface FileRouteTypes {
     | '/set-password'
     | '/settings'
     | '/tests'
+    | '/checkout/new'
     | '/lessons/$lessonIndex'
     | '/members/$wycNumber'
     | '/ratings/$ratingIndex'
@@ -435,6 +457,7 @@ export interface FileRouteTypes {
     | '/'
     | '/approve-exemptions'
     | '/boat-types'
+    | '/checkout'
     | '/checkouts'
     | '/chiefs'
     | '/db.cgi'
@@ -464,6 +487,7 @@ export interface FileRouteTypes {
     | '/set-password'
     | '/settings'
     | '/tests'
+    | '/checkout_/new'
     | '/lessons_/$lessonIndex'
     | '/members_/$wycNumber'
     | '/ratings_/$ratingIndex'
@@ -475,6 +499,7 @@ export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   ApproveExemptionsRoute: typeof ApproveExemptionsRoute
   BoatTypesRoute: typeof BoatTypesRoute
+  CheckoutRoute: typeof CheckoutRoute
   CheckoutsRoute: typeof CheckoutsRoute
   ChiefsRoute: typeof ChiefsRoute
   DbDotcgiRoute: typeof DbDotcgiRoute
@@ -504,6 +529,7 @@ export interface RootRouteChildren {
   SetPasswordRoute: typeof SetPasswordRoute
   SettingsRoute: typeof SettingsRoute
   TestsRoute: typeof TestsRoute
+  CheckoutNewRoute: typeof CheckoutNewRoute
   LessonsLessonIndexRoute: typeof LessonsLessonIndexRoute
   MembersWycNumberRoute: typeof MembersWycNumberRoute
   RatingsRatingIndexRoute: typeof RatingsRatingIndexRoute
@@ -716,6 +742,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof CheckoutsRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/checkout': {
+      id: '/checkout'
+      path: '/checkout'
+      fullPath: '/checkout'
+      preLoaderRoute: typeof CheckoutRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/boat-types': {
       id: '/boat-types'
       path: '/boat-types'
@@ -765,6 +798,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof LessonsLessonIndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/checkout_/new': {
+      id: '/checkout_/new'
+      path: '/checkout/new'
+      fullPath: '/checkout/new'
+      preLoaderRoute: typeof CheckoutNewRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/cron/lesson-reminders': {
       id: '/api/cron/lesson-reminders'
       path: '/api/cron/lesson-reminders'
@@ -779,6 +819,7 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   ApproveExemptionsRoute: ApproveExemptionsRoute,
   BoatTypesRoute: BoatTypesRoute,
+  CheckoutRoute: CheckoutRoute,
   CheckoutsRoute: CheckoutsRoute,
   ChiefsRoute: ChiefsRoute,
   DbDotcgiRoute: DbDotcgiRoute,
@@ -808,6 +849,7 @@ const rootRouteChildren: RootRouteChildren = {
   SetPasswordRoute: SetPasswordRoute,
   SettingsRoute: SettingsRoute,
   TestsRoute: TestsRoute,
+  CheckoutNewRoute: CheckoutNewRoute,
   LessonsLessonIndexRoute: LessonsLessonIndexRoute,
   MembersWycNumberRoute: MembersWycNumberRoute,
   RatingsRatingIndexRoute: RatingsRatingIndexRoute,

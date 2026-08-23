@@ -1,4 +1,10 @@
-import { queryOptions, useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import {
+  queryOptions,
+  type QueryClient,
+  useMutation,
+  useQuery,
+  useQueryClient,
+} from '@tanstack/react-query'
 import {
   getCurrentUserServerFn,
   loginServerFn,
@@ -21,6 +27,11 @@ export const getCurrentUserQueryOptions = () =>
     staleTime: 5 * 60 * 1000, // 5 minutes
   })
 
+async function refreshCurrentUser(queryClient: QueryClient) {
+  await queryClient.invalidateQueries({ queryKey: ['auth', 'currentUser'] })
+  await queryClient.fetchQuery(getCurrentUserQueryOptions())
+}
+
 /**
  * Hook for login mutation
  */
@@ -33,9 +44,7 @@ export const useLoginMutation = () => {
     },
     onSuccess: async (data: LoginResponse) => {
       if (data.success) {
-        await queryClient.invalidateQueries({
-          queryKey: ['auth', 'currentUser'],
-        })
+        await refreshCurrentUser(queryClient)
       }
     },
   })
@@ -64,7 +73,7 @@ export const useVerifyEmailOtpMutation = () => {
     },
     onSuccess: async (data: VerifyOtpResponse) => {
       if (data.success) {
-        await queryClient.invalidateQueries({ queryKey: ['auth', 'currentUser'] })
+        await refreshCurrentUser(queryClient)
       }
     },
   })

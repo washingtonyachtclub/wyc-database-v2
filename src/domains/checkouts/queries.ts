@@ -6,6 +6,7 @@ import { boatTypes, checkouts, crew, ratings, wycDatabase } from '@/db/schema'
 import type { CheckoutFilters } from './filter-types'
 
 const skipperTable = alias(wycDatabase, 'skipper')
+const supervisorTable = alias(wycDatabase, 'supervisor')
 
 export const checkoutSelectFields = {
   index: checkouts.index,
@@ -56,6 +57,36 @@ export function baseCheckoutsQuery(opts?: { wycNumber?: number; since?: string }
   query.orderBy(desc(checkouts.expectedReturn))
 
   return query
+}
+
+// --- Member-facing card queries (active + recently returned) ---
+
+export const checkoutCardSelectFields = {
+  index: checkouts.index,
+  wycNumber: checkouts.wycNumber,
+  skipperFirst: skipperTable.first,
+  skipperLast: skipperTable.last,
+  boatName: boatTypes.type,
+  fleet: boatTypes.fleet,
+  destination: checkouts.destination,
+  timeDeparture: checkouts.timeDeparture,
+  expectedReturn: checkouts.expectedReturn,
+  timeReturn: checkouts.timeReturn,
+  ratingName: ratings.text,
+  supervisorFirst: supervisorTable.first,
+  supervisorLast: supervisorTable.last,
+}
+
+export type CheckoutCardQueryRow = Awaited<ReturnType<typeof baseCheckoutCardsQuery>>[number]
+
+export function baseCheckoutCardsQuery() {
+  return db
+    .select(checkoutCardSelectFields)
+    .from(checkouts)
+    .leftJoin(skipperTable, eq(checkouts.wycNumber, skipperTable.wycNumber))
+    .leftJoin(boatTypes, eq(checkouts.boat, boatTypes.index))
+    .leftJoin(ratings, eq(checkouts.relevantRating, ratings.index))
+    .leftJoin(supervisorTable, eq(checkouts.chiefId, supervisorTable.wycNumber))
 }
 
 // --- Table page queries (paginated, sortable, filterable) ---

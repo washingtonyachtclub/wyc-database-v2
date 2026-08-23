@@ -3,25 +3,35 @@ import { cn } from '@/lib/utils'
 import { useFieldContext, useFormContext } from '../../hooks/form-context'
 import { Button } from './button'
 import { Checkbox } from './checkbox'
+import { GroupedSelect, type GroupedSelectGroup } from './GroupedSelect'
 import { Input } from './input'
 import { Label } from './label'
 import { Tooltip, TooltipContent, TooltipTrigger } from './tooltip'
-import {
-  Select,
-  SelectContent,
-  SelectGroup,
-  SelectItem,
-  SelectLabel,
-  SelectTrigger,
-  SelectValue,
-} from './select'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './select'
 import { Textarea } from './textarea'
 
 // --- Shared helpers ---
 
-function FieldError({ errors }: { errors: Array<any> }) {
-  if (errors.length === 0) return null
-  const message = typeof errors[0] === 'string' ? errors[0] : (errors[0]?.message ?? '')
+export function formErrorMessage(error: unknown): string | undefined {
+  if (typeof error === 'string') return error
+  if (Array.isArray(error)) {
+    for (const item of error) {
+      const message = formErrorMessage(item)
+      if (message) return message
+    }
+  }
+  if (error && typeof error === 'object') {
+    if ('message' in error && typeof error.message === 'string') return error.message
+    for (const value of Object.values(error)) {
+      const message = formErrorMessage(value)
+      if (message) return message
+    }
+  }
+  return undefined
+}
+
+function FieldError({ errors }: { errors: Array<unknown> }) {
+  const message = formErrorMessage(errors)
   if (!message) return null
   return <p className="text-sm text-destructive mt-1">{message}</p>
 }
@@ -37,7 +47,7 @@ export function TextField({
 }: {
   label: string
   required?: boolean
-  type?: 'text' | 'date' | 'time' | 'email' | 'password'
+  type?: 'text' | 'date' | 'time' | 'datetime-local' | 'email' | 'password'
   placeholder?: string
   className?: string
 }) {
@@ -180,7 +190,7 @@ export function GroupedSelectField({
   label: string
   required?: boolean
   placeholder?: string
-  groups: { label: string; options: { value: number; label: string }[] }[]
+  groups: GroupedSelectGroup[]
   tooltip?: string
   className?: string
 }) {
@@ -199,26 +209,13 @@ export function GroupedSelectField({
           </Tooltip>
         )}
       </Label>
-      <Select
-        value={field.state.value != null ? String(field.state.value) : ''}
-        onValueChange={(value) => field.handleChange(value === '' ? null : Number(value))}
-      >
-        <SelectTrigger onBlur={field.handleBlur}>
-          <SelectValue placeholder={placeholder} />
-        </SelectTrigger>
-        <SelectContent>
-          {groups.map((group) => (
-            <SelectGroup key={group.label}>
-              <SelectLabel>{group.label}</SelectLabel>
-              {group.options.map((opt) => (
-                <SelectItem key={opt.value} value={String(opt.value)} className="pl-6">
-                  {opt.label}
-                </SelectItem>
-              ))}
-            </SelectGroup>
-          ))}
-        </SelectContent>
-      </Select>
+      <GroupedSelect
+        value={field.state.value}
+        onValueChange={field.handleChange}
+        groups={groups}
+        placeholder={placeholder}
+        onBlur={field.handleBlur}
+      />
       <FieldError errors={field.state.meta.errors} />
     </div>
   )

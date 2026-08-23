@@ -66,6 +66,7 @@ export const boatTypes = mysqlTable(
     usefulLink: varchar({ length: 100 }).notNull(),
     fleet: varchar({ length: 80 }).notNull(),
     numberInFleet: int().notNull(),
+    active: tinyint().default(1).notNull(),
   },
   (table) => [primaryKey({ columns: [table.index] })],
 )
@@ -162,9 +163,9 @@ export const guests = mysqlTable(
   {
     index: int('_index').autoincrement().notNull(),
     checkoutId: int('checkout_ID').notNull(),
-    name: varchar({ length: 20 }),
+    name: varchar({ length: 100 }),
     status: int().notNull(),
-    email: varchar({ length: 20 }),
+    email: varchar({ length: 255 }),
     phone: varchar({ length: 15 }),
   },
   (table) => [primaryKey({ columns: [table.index] })],

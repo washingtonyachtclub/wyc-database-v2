@@ -24,7 +24,10 @@ export default function Header() {
   const logoutMutation = useLogoutMutation()
   const [showAdminModal, setShowAdminModal] = useState(false)
   const [sheetOpen, setSheetOpen] = useState(false)
-  const isBarePage = ['/login', '/forgot-password'].includes(location.pathname)
+  const isCheckoutPage =
+    location.pathname === '/checkout' || location.pathname.startsWith('/checkout/')
+  const isBarePage =
+    ['/login', '/forgot-password'].includes(location.pathname) || (isCheckoutPage && sailLockerMode)
   const { data: dbName } = useQuery({
     queryKey: ['databaseName'],
     queryFn: () => getDatabaseName(),
@@ -64,8 +67,8 @@ export default function Header() {
   const handleLogout = async () => {
     try {
       await logoutMutation.mutateAsync()
-      router.invalidate()
-      router.navigate({
+      await router.invalidate()
+      await router.navigate({
         to: '/login',
         search: { redirect: '/' },
       })

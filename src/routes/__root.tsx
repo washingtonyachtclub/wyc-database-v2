@@ -9,6 +9,7 @@ import Header from '../components/Header'
 import { ExemptionApproverBanner } from '../components/ExemptionApproverBanner'
 import { MembershipBanner } from '../components/MembershipBanner'
 import { QuarterMaintenanceBanner } from '../components/QuarterMaintenanceBanner'
+import { SailLockerCheckoutSessionGuard } from '../components/SailLockerCheckoutSessionGuard'
 import Sidebar from '../components/Sidebar'
 import { TanStackDevTools } from '../components/TanStackDevTools'
 import { TooltipProvider } from '../components/ui/tooltip'
@@ -83,11 +84,21 @@ function NotFound() {
 
 function RootDocument({ children }: { children: React.ReactNode }) {
   const location = useLocation()
+  const { sailLockerMode } = Route.useRouteContext()
   const isEmbedPage = location.pathname === '/lesson-list' || location.pathname === '/meet-the-team'
+  const isCheckoutPage =
+    location.pathname === '/checkout' || location.pathname.startsWith('/checkout/')
+  const isSailLockerCheckout = isCheckoutPage && sailLockerMode
+  const loginRedirect =
+    typeof location.search.redirect === 'string' ? location.search.redirect : undefined
+  const isSailLockerCheckoutLogin =
+    location.pathname === '/login' &&
+    sailLockerMode &&
+    (loginRedirect === '/checkout' || loginRedirect?.startsWith('/checkout/') === true)
   const isBarePage =
     ['/login', '/forgot-password'].includes(location.pathname) ||
-    location.pathname.startsWith('/signup')
-
+    location.pathname.startsWith('/signup') ||
+    isSailLockerCheckout
   return (
     <html lang="en">
       <head>
@@ -98,7 +109,8 @@ function RootDocument({ children }: { children: React.ReactNode }) {
           children
         ) : (
           <TooltipProvider delayDuration={0}>
-            <Header />
+            {!isSailLockerCheckout && !isSailLockerCheckoutLogin && <Header />}
+            {isSailLockerCheckout && <SailLockerCheckoutSessionGuard />}
             {!isBarePage && <MembershipBanner />}
             {!isBarePage && <ExemptionApproverBanner />}
             {!isBarePage && <QuarterMaintenanceBanner />}

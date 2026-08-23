@@ -34,7 +34,7 @@ export const LESSON_CATEGORIES = [
   },
   {
     label: 'Advanced',
-    typeIds: [3, 6, 7], // Catamaran, INT Dinghy Weekday, INT Dinghy Weekend
+    typeIds: [3, 6, 7, 14], // Catamaran, INT Dinghy Weekday, INT Dinghy Weekend, Daysailer
   },
   {
     label: 'Keelboat',
