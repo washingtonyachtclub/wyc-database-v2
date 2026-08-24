@@ -44,6 +44,7 @@ import { Route as ApproveExemptionsRouteImport } from './routes/approve-exemptio
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as SignupLessonIndexRouteImport } from './routes/signup.$lessonIndex'
 import { Route as RatingsRatingIndexRouteImport } from './routes/ratings_.$ratingIndex'
+import { Route as QrLoginApproveRouteImport } from './routes/qr-login.approve'
 import { Route as MembersWycNumberRouteImport } from './routes/members_.$wycNumber'
 import { Route as LessonsLessonIndexRouteImport } from './routes/lessons_.$lessonIndex'
 import { Route as CheckoutNewRouteImport } from './routes/checkout_.new'
@@ -224,6 +225,11 @@ const RatingsRatingIndexRoute = RatingsRatingIndexRouteImport.update({
   path: '/ratings/$ratingIndex',
   getParentRoute: () => rootRouteImport,
 } as any)
+const QrLoginApproveRoute = QrLoginApproveRouteImport.update({
+  id: '/qr-login/approve',
+  path: '/qr-login/approve',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const MembersWycNumberRoute = MembersWycNumberRouteImport.update({
   id: '/members_/$wycNumber',
   path: '/members/$wycNumber',
@@ -282,6 +288,7 @@ export interface FileRoutesByFullPath {
   '/checkout/new': typeof CheckoutNewRoute
   '/lessons/$lessonIndex': typeof LessonsLessonIndexRoute
   '/members/$wycNumber': typeof MembersWycNumberRoute
+  '/qr-login/approve': typeof QrLoginApproveRoute
   '/ratings/$ratingIndex': typeof RatingsRatingIndexRoute
   '/signup/$lessonIndex': typeof SignupLessonIndexRoute
   '/api/cron/lesson-reminders': typeof ApiCronLessonRemindersRoute
@@ -323,6 +330,7 @@ export interface FileRoutesByTo {
   '/checkout/new': typeof CheckoutNewRoute
   '/lessons/$lessonIndex': typeof LessonsLessonIndexRoute
   '/members/$wycNumber': typeof MembersWycNumberRoute
+  '/qr-login/approve': typeof QrLoginApproveRoute
   '/ratings/$ratingIndex': typeof RatingsRatingIndexRoute
   '/signup/$lessonIndex': typeof SignupLessonIndexRoute
   '/api/cron/lesson-reminders': typeof ApiCronLessonRemindersRoute
@@ -365,6 +373,7 @@ export interface FileRoutesById {
   '/checkout_/new': typeof CheckoutNewRoute
   '/lessons_/$lessonIndex': typeof LessonsLessonIndexRoute
   '/members_/$wycNumber': typeof MembersWycNumberRoute
+  '/qr-login/approve': typeof QrLoginApproveRoute
   '/ratings_/$ratingIndex': typeof RatingsRatingIndexRoute
   '/signup/$lessonIndex': typeof SignupLessonIndexRoute
   '/api/cron/lesson-reminders': typeof ApiCronLessonRemindersRoute
@@ -408,6 +417,7 @@ export interface FileRouteTypes {
     | '/checkout/new'
     | '/lessons/$lessonIndex'
     | '/members/$wycNumber'
+    | '/qr-login/approve'
     | '/ratings/$ratingIndex'
     | '/signup/$lessonIndex'
     | '/api/cron/lesson-reminders'
@@ -449,6 +459,7 @@ export interface FileRouteTypes {
     | '/checkout/new'
     | '/lessons/$lessonIndex'
     | '/members/$wycNumber'
+    | '/qr-login/approve'
     | '/ratings/$ratingIndex'
     | '/signup/$lessonIndex'
     | '/api/cron/lesson-reminders'
@@ -490,6 +501,7 @@ export interface FileRouteTypes {
     | '/checkout_/new'
     | '/lessons_/$lessonIndex'
     | '/members_/$wycNumber'
+    | '/qr-login/approve'
     | '/ratings_/$ratingIndex'
     | '/signup/$lessonIndex'
     | '/api/cron/lesson-reminders'
@@ -532,6 +544,7 @@ export interface RootRouteChildren {
   CheckoutNewRoute: typeof CheckoutNewRoute
   LessonsLessonIndexRoute: typeof LessonsLessonIndexRoute
   MembersWycNumberRoute: typeof MembersWycNumberRoute
+  QrLoginApproveRoute: typeof QrLoginApproveRoute
   RatingsRatingIndexRoute: typeof RatingsRatingIndexRoute
   SignupLessonIndexRoute: typeof SignupLessonIndexRoute
   ApiCronLessonRemindersRoute: typeof ApiCronLessonRemindersRoute
@@ -784,6 +797,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof RatingsRatingIndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/qr-login/approve': {
+      id: '/qr-login/approve'
+      path: '/qr-login/approve'
+      fullPath: '/qr-login/approve'
+      preLoaderRoute: typeof QrLoginApproveRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/members_/$wycNumber': {
       id: '/members_/$wycNumber'
       path: '/members/$wycNumber'
@@ -852,6 +872,7 @@ const rootRouteChildren: RootRouteChildren = {
   CheckoutNewRoute: CheckoutNewRoute,
   LessonsLessonIndexRoute: LessonsLessonIndexRoute,
   MembersWycNumberRoute: MembersWycNumberRoute,
+  QrLoginApproveRoute: QrLoginApproveRoute,
   RatingsRatingIndexRoute: RatingsRatingIndexRoute,
   SignupLessonIndexRoute: SignupLessonIndexRoute,
   ApiCronLessonRemindersRoute: ApiCronLessonRemindersRoute,

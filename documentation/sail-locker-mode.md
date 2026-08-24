@@ -37,7 +37,11 @@ The Sail Locker dashboard and checkout form prominently show the authenticated m
 
 ### QR login
 
-QR login is not part of Sail Locker mode. A future QR flow can create a Sail Locker session through the same session creation path.
+The login page displays a two-minute QR code only in Sail Locker mode. Scanning it opens an approval URL on the member's phone. An authenticated phone approves the request automatically; an unauthenticated phone returns to the approval page after normal login.
+
+The database stores separate SHA-256 hashes for the approval secret in the QR URL and the polling secret held by the terminal. The terminal polls every 1.5 seconds. An approved request is locked and consumed in a transaction before the terminal creates its session through `useAppSession()`. The phone session is never copied, so the terminal always receives the Sail Locker lifetime.
+
+Requests are single-use and expire after two minutes. The login panel automatically replaces an expired QR code. Creating a QR code removes rows older than one day and limits each source to ten requests per ten minutes. Replacing a QR code or completing another login method cancels the active request.
 
 ## Key Files
 
@@ -47,7 +51,10 @@ QR login is not part of Sail Locker mode. A future QR flow can create a Sail Loc
 | `src/lib/auth/session-policy.ts`                    | Defines device and session lifetimes                          |
 | `src/lib/auth/session.ts`                           | Applies the device-specific session policy                    |
 | `src/lib/auth/identity.ts`                          | Loads the current member and privileges from the database     |
+| `src/lib/auth/qr-login-server-fns.ts`               | Creates, approves, polls, consumes, and cancels QR requests   |
 | `src/lib/auth/device-settings-server-fns.ts`        | Applies the DB-protected setting and clears the session       |
+| `src/components/auth/QrLoginPanel.tsx`              | Displays the terminal QR code and polls for approval          |
+| `src/routes/qr-login.approve.tsx`                   | Automatically approves a request from an authenticated phone  |
 | `src/routes/settings.tsx`                           | Settings page                                                 |
 | `src/components/Header.tsx`                         | Settings link, mode reminder, and automatic expiry navigation |
 | `src/components/SailLockerCheckoutSessionGuard.tsx` | Checkout session expiry navigation                            |
