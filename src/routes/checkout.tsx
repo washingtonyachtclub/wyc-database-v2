@@ -32,8 +32,7 @@ function CheckoutPage() {
 
   const switchSailLockerUser = async () => {
     await logout.mutateAsync()
-    await router.invalidate()
-    await navigate({ to: '/login', search: { redirect: '/checkout' } })
+    window.location.assign('/login?redirect=%2Fcheckout')
   }
 
   return (

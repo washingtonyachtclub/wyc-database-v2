@@ -95,9 +95,11 @@ function RootDocument({ children }: { children: React.ReactNode }) {
     location.pathname === '/login' &&
     sailLockerMode &&
     (loginRedirect === '/checkout' || loginRedirect?.startsWith('/checkout/') === true)
+  const isQrLoginApproval = location.pathname === '/qr-login/approve'
   const isBarePage =
     ['/login', '/forgot-password'].includes(location.pathname) ||
     location.pathname.startsWith('/signup') ||
+    isQrLoginApproval ||
     isSailLockerCheckout
   return (
     <html lang="en">
@@ -109,7 +111,9 @@ function RootDocument({ children }: { children: React.ReactNode }) {
           children
         ) : (
           <TooltipProvider delayDuration={0}>
-            {!isSailLockerCheckout && !isSailLockerCheckoutLogin && <Header />}
+            {!isSailLockerCheckout && !isSailLockerCheckoutLogin && !isQrLoginApproval && (
+              <Header />
+            )}
             {isSailLockerCheckout && <SailLockerCheckoutSessionGuard />}
             {!isBarePage && <MembershipBanner />}
             {!isBarePage && <ExemptionApproverBanner />}

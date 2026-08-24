@@ -1,6 +1,6 @@
 # Database Schema Overview
 
-The database has 33 tables defined in `src/db/schema.ts`. Of these, **16 are actively used in v2** and **17 are legacy-only** (carried over from the Perl/PHP system, defined in schema but never imported in v2 code).
+The database has 41 tables defined in `src/db/schema.ts`, including tables used by v2 and tables retained for legacy applications.
 
 ---
 
@@ -125,6 +125,13 @@ See [RBAC docs](rbac.md) for detailed coverage.
 | ------------ | ------------------------------------ |
 | `boat_types` | Boat type definitions (fleet, count) |
 | `checkouts`  | Boat checkout records                |
+
+### Authentication (v2-active)
+
+| Table               | Purpose                                      |
+| ------------------- | -------------------------------------------- |
+| `otp_codes`         | Short-lived email login codes                |
+| `qr_login_requests` | Short-lived Sail Locker device authorization |
 
 ### Legacy-Only Tables
 

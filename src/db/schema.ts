@@ -479,6 +479,32 @@ export const otpCodes = mysqlTable(
   ],
 )
 
+export const qrLoginRequests = mysqlTable(
+  'qr_login_requests',
+  {
+    id: int('id').autoincrement().notNull(),
+    approvalSecretHash: char('approval_secret_hash', { length: 64 }).notNull(),
+    pollingSecretHash: char('polling_secret_hash', { length: 64 }).notNull(),
+    status: mysqlEnum('status', ['pending', 'approved', 'consumed', 'expired', 'canceled'])
+      .default('pending')
+      .notNull(),
+    approvedBy: int('approved_by'),
+    createdIpHash: char('created_ip_hash', { length: 64 }).notNull(),
+    expiresAt: timestamp('expires_at').notNull(),
+    approvedAt: timestamp('approved_at'),
+    consumedAt: timestamp('consumed_at'),
+    canceledAt: timestamp('canceled_at'),
+    createdAt: timestamp('created_at').notNull(),
+  },
+  (table) => [
+    primaryKey({ columns: [table.id] }),
+    unique('uq_qr_login_approval_secret').on(table.approvalSecretHash),
+    unique('uq_qr_login_polling_secret').on(table.pollingSecretHash),
+    index('idx_qr_login_expires').on(table.expiresAt),
+    index('idx_qr_login_rate_limit').on(table.createdIpHash, table.createdAt),
+  ],
+)
+
 export const doorCodes = mysqlTable(
   'door_codes',
   {

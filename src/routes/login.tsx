@@ -3,15 +3,25 @@ import { useState } from 'react'
 import { Button } from '../components/ui/button'
 import { Input } from '../components/ui/input'
 import { Label } from '../components/ui/label'
+import { QrLoginPanel } from '@/components/auth/QrLoginPanel'
 import {
   useLoginMutation,
   useRequestEmailOtpMutation,
   useVerifyEmailOtpMutation,
 } from '@/lib/auth/auth-query-options'
+import { cancelQrLoginRequestServerFn } from '@/lib/auth/qr-login-server-fns'
+import { cn } from '@/lib/utils'
+
+function safeRedirect(value: unknown): string | undefined {
+  if (typeof value !== 'string' || !value.startsWith('/') || value.startsWith('//')) {
+    return undefined
+  }
+  return value
+}
 
 export const Route = createFileRoute('/login')({
   validateSearch: (search: Record<string, unknown>) => {
-    const redirectTo = search.redirect as string | undefined
+    const redirectTo = safeRedirect(search.redirect)
     return redirectTo ? { redirect: redirectTo } : {}
   },
   beforeLoad: ({ context, search }) => {
@@ -27,34 +37,49 @@ type EmailStep = 'request' | 'verify'
 
 function LoginPage() {
   const router = useRouter()
+  const { sailLockerMode } = Route.useRouteContext()
   const [mode, setMode] = useState<Mode>('password')
-  const finishAuthentication = () => router.invalidate()
+  const [qrPollingSecret, setQrPollingSecret] = useState<string | null>(null)
+  const finishAuthentication = async () => {
+    if (qrPollingSecret) {
+      await cancelQrLoginRequestServerFn({ data: { pollingSecret: qrPollingSecret } })
+      setQrPollingSecret(null)
+    }
+    await router.invalidate()
+  }
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-muted px-4 py-12 sm:px-6 lg:px-8">
-      <div className="w-full max-w-md">
+      <div className={cn('w-full', sailLockerMode ? 'max-w-4xl' : 'max-w-md')}>
         <div className="rounded-xl bg-card p-8 shadow-lg space-y-8">
           <div className="flex flex-col items-center">
             <img src="/favicon.png" alt="WYC" className="h-12 w-12" />
             <h2 className="mt-4 text-center text-3xl font-bold tracking-tight">WYC Database</h2>
             <p className="mt-2 text-center text-sm text-muted-foreground">
-              {mode === 'password'
-                ? 'Sign in with your WYC ID and password'
-                : 'Sign in with a code sent to your email'}
+              {sailLockerMode
+                ? 'Scan with your phone or use another sign-in option'
+                : mode === 'password'
+                  ? 'Sign in with your WYC ID and password'
+                  : 'Sign in with a code sent to your email'}
             </p>
           </div>
 
-          {mode === 'password' ? (
-            <PasswordForm
-              onSwitchMode={() => setMode('email')}
-              onAuthenticated={finishAuthentication}
-            />
-          ) : (
-            <EmailOtpFlow
-              onSwitchMode={() => setMode('password')}
-              onAuthenticated={finishAuthentication}
-            />
-          )}
+          <div className={cn(sailLockerMode && 'grid gap-8 md:grid-cols-2')}>
+            {sailLockerMode && <QrLoginPanel onPollingSecretChange={setQrPollingSecret} />}
+            <div>
+              {mode === 'password' ? (
+                <PasswordForm
+                  onSwitchMode={() => setMode('email')}
+                  onAuthenticated={finishAuthentication}
+                />
+              ) : (
+                <EmailOtpFlow
+                  onSwitchMode={() => setMode('password')}
+                  onAuthenticated={finishAuthentication}
+                />
+              )}
+            </div>
+          </div>
         </div>
       </div>
     </div>
