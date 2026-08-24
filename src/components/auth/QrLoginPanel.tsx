@@ -11,6 +11,8 @@ import {
   pollQrLoginRequestServerFn,
 } from '@/lib/auth/qr-login-server-fns'
 
+const QR_LOGIN_POLL_INTERVAL_MS = 5000
+
 type ActiveRequest = {
   approvalSecret: string
   pollingSecret: string
@@ -116,7 +118,7 @@ export function QrLoginPanel({
       }
 
       if (!stopped) {
-        timeout = window.setTimeout(() => void poll(), 1500)
+        timeout = window.setTimeout(() => void poll(), QR_LOGIN_POLL_INTERVAL_MS)
       }
     }
 

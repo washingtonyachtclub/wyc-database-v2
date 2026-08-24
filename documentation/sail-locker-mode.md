@@ -39,7 +39,7 @@ The Sail Locker dashboard and checkout form prominently show the authenticated m
 
 The login page displays a two-minute QR code only in Sail Locker mode. Scanning it opens an approval URL on the member's phone. An authenticated phone approves the request automatically; an unauthenticated phone returns to the approval page after normal login.
 
-The database stores separate SHA-256 hashes for the approval secret in the QR URL and the polling secret held by the terminal. The terminal polls every 1.5 seconds. An approved request is locked and consumed in a transaction before the terminal creates its session through `useAppSession()`. The phone session is never copied, so the terminal always receives the Sail Locker lifetime.
+The database stores separate SHA-256 hashes for the approval secret in the QR URL and the polling secret held by the terminal. The terminal polls every five seconds. An approved request is locked and consumed in a transaction before the terminal creates its session through `useAppSession()`. The phone session is never copied, so the terminal always receives the Sail Locker lifetime.
 
 Requests are single-use and expire after two minutes. The login panel automatically replaces an expired QR code. Creating a QR code removes rows older than one day and limits each source to ten requests per ten minutes. Replacing a QR code or completing another login method cancels the active request.
 
