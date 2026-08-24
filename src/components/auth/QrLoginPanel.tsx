@@ -75,10 +75,13 @@ export function QrLoginPanel({
   useEffect(() => {
     if (!request) return
 
-    const timeout = window.setTimeout(() => {
-      authenticatedRef.current = false
-      void createRequest()
-    }, Math.max(0, request.expiresAt - Date.now()))
+    const timeout = window.setTimeout(
+      () => {
+        authenticatedRef.current = false
+        void createRequest()
+      },
+      Math.max(0, request.expiresAt - Date.now()),
+    )
 
     return () => window.clearTimeout(timeout)
   }, [createRequest, request])
