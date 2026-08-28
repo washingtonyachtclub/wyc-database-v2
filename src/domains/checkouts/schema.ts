@@ -1,6 +1,11 @@
 import { z } from 'zod'
 import { fullName, num, str } from '@/db/mapper-utils'
-import type { CheckoutCardQueryRow, CheckoutQueryRow, CheckoutTableQueryRow } from './queries'
+import type {
+  CheckoutCardQueryRow,
+  CheckoutQueryRow,
+  CheckoutTableQueryRow,
+  MemberCheckoutExportQueryRow,
+} from './queries'
 
 // --- Core types ---
 
@@ -32,6 +37,56 @@ export function toCheckout(row: CheckoutQueryRow, profileWycNumber?: number): Ch
     destination: str(row.destination),
     departureDate: timeDeparture.slice(0, 10),
     departureTime: timeDeparture.slice(11, 16),
+  }
+}
+
+export type MemberCheckoutExportRow = {
+  skipper: string
+  departed: string
+  returned: string
+  hoursOut: number | ''
+  boat: string
+  fleet: string
+  destination: string
+  role: 'Skipper' | 'Crew'
+  memberCrewmates: string
+  guests: string
+}
+
+function dateTimeMilliseconds(value: string): number {
+  const [date, time] = value.split(' ')
+  const [year, month, day] = date.split('-').map(Number)
+  const [hour, minute, second] = time.split(':').map(Number)
+  return Date.UTC(year, month - 1, day, hour, minute, second)
+}
+
+export function toMemberCheckoutExportRow(
+  row: MemberCheckoutExportQueryRow,
+  profileWycNumber: number,
+  memberCrewmates: string[],
+  guests: string[],
+): MemberCheckoutExportRow {
+  const departed = str(row.timeDeparture)
+  const returned = str(row.timeReturn)
+  const boatReference = str(row.boatReference)
+  const hoursOut = returned
+    ? Math.round(
+        ((dateTimeMilliseconds(returned) - dateTimeMilliseconds(departed)) / 3_600_000) * 10,
+      ) / 10
+    : ''
+
+  return {
+    skipper: fullName(row.skipperFirst, row.skipperLast),
+    departed,
+    returned,
+    hoursOut,
+    boat:
+      str(row.boatName) || (/^\d+$/.test(boatReference) ? `boat#${boatReference}` : boatReference),
+    fleet: str(row.fleet),
+    destination: str(row.destination),
+    role: row.wycNumber === profileWycNumber ? 'Skipper' : 'Crew',
+    memberCrewmates: memberCrewmates.join(', '),
+    guests: guests.join(', '),
   }
 }
 

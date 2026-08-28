@@ -22,6 +22,7 @@ import {
   baseAllCheckoutsQuery,
   baseCheckoutCardsQuery,
   baseCheckoutsQuery,
+  baseMemberCheckoutExportQuery,
   checkoutSortColumns,
   withCheckoutFilters,
 } from '@/domains/checkouts/queries'
@@ -34,6 +35,7 @@ import {
   toCheckout,
   toCheckoutCard,
   toCheckoutTableRow,
+  toMemberCheckoutExportRow,
 } from '@/domains/checkouts/schema'
 import { CheckoutWriteError, writeCheckout } from '@/domains/checkouts/write'
 import {
@@ -56,6 +58,71 @@ export const getCheckouts = createServerFn({ method: 'GET' })
     await requireSelfOrPrivilege(data.wycNumber ?? 0, 'db', 'rtgs')
     const raw = await baseCheckoutsQuery(data)
     return raw.map((row) => toCheckout(row, data.wycNumber))
+  })
+
+export const getMemberCheckoutExport = createServerFn({ method: 'GET' })
+  .inputValidator((input) => z.object({ wycNumber: z.number().int().positive() }).parse(input))
+  .handler(async ({ data: { wycNumber } }) => {
+    await requireSelfOrPrivilege(wycNumber, 'db', 'rtgs')
+
+    try {
+      const raw = await baseMemberCheckoutExportQuery(wycNumber)
+      if (raw.length === 0) return []
+
+      const checkoutIds = raw.map((row) => row.index)
+      const skipperByCheckout = new Map(raw.map((row) => [row.index, row.wycNumber]))
+      const [crewRows, guestRows] = await Promise.all([
+        db
+          .select({
+            checkoutId: crew.checkoutId,
+            crewId: crew.crewId,
+            first: wycDatabase.first,
+            last: wycDatabase.last,
+          })
+          .from(crew)
+          .innerJoin(wycDatabase, eq(crew.crewId, wycDatabase.wycNumber))
+          .where(inArray(crew.checkoutId, checkoutIds))
+          .orderBy(crew.checkoutId, wycDatabase.last, wycDatabase.first),
+        db
+          .select({ checkoutId: guests.checkoutId, name: guests.name })
+          .from(guests)
+          .where(inArray(guests.checkoutId, checkoutIds))
+          .orderBy(guests.checkoutId, guests.name),
+      ])
+
+      const crewByCheckout = new Map<number, Set<string>>()
+      for (const row of crewRows) {
+        if (row.crewId === wycNumber || row.crewId === skipperByCheckout.get(row.checkoutId)) {
+          continue
+        }
+        const name = fullName(row.first, row.last)
+        if (!name) continue
+        const names = crewByCheckout.get(row.checkoutId) ?? new Set<string>()
+        names.add(name)
+        crewByCheckout.set(row.checkoutId, names)
+      }
+
+      const guestsByCheckout = new Map<number, Set<string>>()
+      for (const row of guestRows) {
+        const name = str(row.name).trim()
+        if (!name) continue
+        const names = guestsByCheckout.get(row.checkoutId) ?? new Set<string>()
+        names.add(name)
+        guestsByCheckout.set(row.checkoutId, names)
+      }
+
+      return raw.map((row) =>
+        toMemberCheckoutExportRow(
+          row,
+          wycNumber,
+          [...(crewByCheckout.get(row.index) ?? [])],
+          [...(guestsByCheckout.get(row.index) ?? [])],
+        ),
+      )
+    } catch (error) {
+      console.error('Failed to export member checkouts:', error)
+      throw new Error('Failed to export checkouts')
+    }
   })
 
 export const getAllCheckouts = createServerFn({ method: 'GET' })

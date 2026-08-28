@@ -11,6 +11,7 @@ import {
   getCheckoutFormMembers,
   getCheckoutMembers,
   getCheckouts,
+  getMemberCheckoutExport,
   getMyRatings,
   getWindHistory,
 } from './server-fns'
@@ -23,6 +24,12 @@ export const getCheckoutsQueryOptions = (wycNumber?: number, since?: string) =>
 
 export const getMemberCheckoutsQueryOptions = (wycNumber: number, since?: string) =>
   getCheckoutsQueryOptions(wycNumber, since)
+
+export function useMemberCheckoutExportMutation() {
+  return useMutation({
+    mutationFn: (wycNumber: number) => getMemberCheckoutExport({ data: { wycNumber } }),
+  })
+}
 
 export const getAllCheckoutsQueryOptions = (
   pageIndex: number,
