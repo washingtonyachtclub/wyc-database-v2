@@ -1,6 +1,14 @@
 import { and, count, eq, gte, or } from 'drizzle-orm'
 import db from '@/db/index'
-import { lessonQuarter, lessons, officers, posPrivMap, privs, wycDatabase } from '@/db/schema'
+import {
+  lessonQuarter,
+  lessons,
+  officers,
+  positions,
+  posPrivMap,
+  privs,
+  wycDatabase,
+} from '@/db/schema'
 import type { Privilege } from '../permissions'
 
 export type AuthUser = {
@@ -29,9 +37,10 @@ export async function loadUserPrivileges(wycNumber: number): Promise<Privilege[]
   const privRows = await db
     .selectDistinct({ name: privs.name })
     .from(officers)
+    .innerJoin(positions, eq(officers.position, positions.index))
     .innerJoin(posPrivMap, eq(officers.position, posPrivMap.position))
     .innerJoin(privs, eq(posPrivMap.priv, privs.index))
-    .where(and(eq(officers.member, wycNumber), eq(officers.active, 1)))
+    .where(and(eq(officers.member, wycNumber), eq(officers.active, 1), eq(positions.active, 1)))
 
   const userPrivileges: Privilege[] = privRows
     .map((row) => row.name?.trim())

@@ -2,7 +2,7 @@ import { and, eq } from 'drizzle-orm'
 import { createServerFn } from '@tanstack/react-start'
 import { baseChiefsQuery, getChiefPositions } from '@/domains/chiefs/queries'
 import { toChiefRow, type ChiefTableRow } from '@/domains/chiefs/schema'
-import { officers, posType } from '@/db/schema'
+import { officers, positions, posType } from '@/db/schema'
 import db from '@/db'
 import { requireAuth, requirePrivilege } from '@/lib/auth/auth-middleware'
 
@@ -15,7 +15,9 @@ export const getChiefsTable = createServerFn({ method: 'GET' }).handler(async ()
   await requireAuth()
 
   try {
-    const rawRows = await baseChiefsQuery().where(and(eq(posType.index, 3), eq(officers.active, 1)))
+    const rawRows = await baseChiefsQuery().where(
+      and(eq(posType.index, 3), eq(positions.active, 1), eq(officers.active, 1)),
+    )
     const mapped = rawRows.map(toChiefRow)
 
     const grouped = new Map<
