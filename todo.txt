@@ -1,21 +1,6 @@
 # Important
 
-- sail locker mode, infinite sessions when not sail locker computer 
-- boat maintenance onboarding page with linear invite link
-- consider how to differentiate vibed and non-vibed parts of codebase
-
 - pwa manifest save website as app investigation?
-- hyperlink support in lesson desc. + display lesson formatting on individual sign up page
-- autohide lessons after calendar date (can't derive display from dates bc future lessons sometimes displayed and sometimes not)
-- make unlimited class size option. Can be represented 0 in db but checkbox in UI. Don't allow <= 0 class sizes. Change sign up / email UX to not include waitlists and stuff
-- boat status page derived from linear out of service tags
-- email student when admin removes from lesson
-
-- new checkout page (in branch)
-
-## backend
-- resolve any drizzle shchema.ts and actual schema mismatch. Make drizzle the source of truth?
-- migrate class_types to make more sense (Laser, FJ, etc)
 
 ## bigger projects
 - automated IMA plus one matching
@@ -29,6 +14,7 @@
 	- one-stop shop for all things a member could need
 
 # Less Important
+- consider how to differentiate vibed and non-vibed parts of codebase
 - image hosting for chiefs / officers
 - public officers page
 - better ratings viewing: de-duping expired novices, showing only highest earned rating per category, etc
