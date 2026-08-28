@@ -46,6 +46,10 @@ See `documentation/` for detailed docs:
 - [Email OTP login](documentation/email-otp-login.md): passwordless login via a code sent to the member's email
 - [Sail Locker mode](documentation/sail-locker-mode.md): device-specific session lifetimes for the shared computer
 
+## Issue Tracking
+
+Issues are tracked in Linear. See [https://database.washingtonyachtclub.org/maintenance-tracker](https://database.washingtonyachtclub.org/maintenance-tracker).
+
 # Getting Started
 
 ## Environment Setup
