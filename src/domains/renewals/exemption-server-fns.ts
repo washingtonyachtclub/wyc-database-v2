@@ -14,7 +14,7 @@ import { returningMemberEmail } from '@/lib/emails/membership'
 import { createServerFn } from '@tanstack/react-start'
 import { and, desc, eq, inArray } from 'drizzle-orm'
 import { computeRenewal } from './compute-renewal'
-import { parseQuestionnaire } from './questionnaire'
+import { categoryIdForUwStatus, isUwStatus, parseQuestionnaire } from './questionnaire'
 
 /** Whether a member is an active holder of an approver position (Commodore / Vice Commodore / Webmaster). */
 async function isApprover(wycNumber: number): Promise<boolean> {
@@ -86,22 +86,28 @@ export const requestDuesExemption = createServerFn({ method: 'POST' })
     const expireQtr = member.expireQtrIndex ?? 0
     const requestedExpireQtr = computeRenewal(expireQtr, 'quarterly')
 
-    const [request] = await db.insert(duesExemptionRequests).values({
-      wycNumber,
-      requestedExpireQtr,
-      status: 'pending',
-    })
+    try {
+      await db.transaction(async (tx) => {
+        const [request] = await tx.insert(duesExemptionRequests).values({
+          wycNumber,
+          requestedExpireQtr,
+          status: 'pending',
+        })
 
-    // Answers stay 'pending' until an approver acts; flipped to 'active' on approval, 'void' on denial.
-    await db.insert(renewalQuestionnaire).values({
-      wycNumber,
-      quarter: requestedExpireQtr,
-      uwStatus: data.answers.uwStatus,
-      plusOneResponse: data.answers.plusOneResponse,
-      status: 'pending',
-      source: 'exempt',
-      requestId: request.insertId,
-    })
+        await tx.insert(renewalQuestionnaire).values({
+          wycNumber,
+          quarter: requestedExpireQtr,
+          uwStatus: data.answers.uwStatus,
+          plusOneResponse: data.answers.plusOneResponse,
+          status: 'pending',
+          source: 'exempt',
+          requestId: request.insertId,
+        })
+      })
+    } catch (error) {
+      console.error('requestDuesExemption: DB write failed:', error)
+      throw new Error('We could not submit your request. Please try again.')
+    }
 
     return { success: true as const }
   })
@@ -195,11 +201,24 @@ export const approveExemptionRequest = createServerFn({ method: 'POST' })
         wycNumber: duesExemptionRequests.wycNumber,
         requestedExpireQtr: duesExemptionRequests.requestedExpireQtr,
         status: duesExemptionRequests.status,
+        uwStatus: renewalQuestionnaire.uwStatus,
       })
       .from(duesExemptionRequests)
+      .leftJoin(
+        renewalQuestionnaire,
+        eq(renewalQuestionnaire.requestId, duesExemptionRequests.index),
+      )
       .where(eq(duesExemptionRequests.index, data.requestId))
     if (!request) throw new Error('Request not found.')
     if (request.status !== 'pending') throw new Error('This request has already been decided.')
+    const uwStatus = request.uwStatus
+    if (!isUwStatus(uwStatus)) {
+      console.error('approveExemptionRequest: invalid questionnaire status', {
+        requestId: data.requestId,
+        uwStatus,
+      })
+      throw new Error('We could not read the request questionnaire.')
+    }
 
     const [member] = await db
       .select({
@@ -221,41 +240,46 @@ export const approveExemptionRequest = createServerFn({ method: 'POST' })
 
     let paymentId: number | null = null
     try {
-      if (!alreadyCovered) {
-        await db
-          .update(wycDatabase)
-          .set({ expireQtrIndex: target })
-          .where(eq(wycDatabase.wycNumber, request.wycNumber))
+      await db.transaction(async (tx) => {
+        if (!alreadyCovered) {
+          await tx
+            .update(wycDatabase)
+            .set({
+              expireQtrIndex: target,
+              categoryId: categoryIdForUwStatus(uwStatus),
+            })
+            .where(eq(wycDatabase.wycNumber, request.wycNumber))
 
-        const result = await db.insert(membershipPayments).values({
-          wycNumber: request.wycNumber,
-          squarePaymentId: null,
-          squareOrderId: null,
-          amountCents: 0,
-          currency: 'USD',
-          tier: 'exempt',
-          duration: 'quarterly',
-          prevExpireQtr,
-          newExpireQtr: target,
-          status: 'EXEMPT',
-        })
-        paymentId = result[0].insertId
-      }
+          const result = await tx.insert(membershipPayments).values({
+            wycNumber: request.wycNumber,
+            squarePaymentId: null,
+            squareOrderId: null,
+            amountCents: 0,
+            currency: 'USD',
+            tier: 'exempt',
+            duration: 'quarterly',
+            prevExpireQtr,
+            newExpireQtr: target,
+            status: 'EXEMPT',
+          })
+          paymentId = result[0].insertId
+        }
 
-      await db
-        .update(duesExemptionRequests)
-        .set({
-          status: 'approved',
-          paymentId,
-          decidedBy: approver,
-          decidedAt: new Date(),
-        })
-        .where(eq(duesExemptionRequests.index, data.requestId))
+        await tx
+          .update(duesExemptionRequests)
+          .set({
+            status: 'approved',
+            paymentId,
+            decidedBy: approver,
+            decidedAt: new Date(),
+          })
+          .where(eq(duesExemptionRequests.index, data.requestId))
 
-      await db
-        .update(renewalQuestionnaire)
-        .set({ status: 'active' })
-        .where(eq(renewalQuestionnaire.requestId, data.requestId))
+        await tx
+          .update(renewalQuestionnaire)
+          .set({ status: 'active' })
+          .where(eq(renewalQuestionnaire.requestId, data.requestId))
+      })
     } catch (error) {
       console.error('approveExemptionRequest: DB update failed:', error)
       throw new Error('We could not approve this request. Please try again.')

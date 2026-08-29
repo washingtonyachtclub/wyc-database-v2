@@ -3,25 +3,37 @@ import { cn } from '@/lib/utils'
 import { useFieldContext, useFormContext } from '../../hooks/form-context'
 import { Button } from './button'
 import { Checkbox } from './checkbox'
+import { DatePicker } from './DatePicker'
 import { Input } from './input'
 import { Label } from './label'
+import { SearchableSelect } from './SearchableSelect'
+import { TimePicker } from './TimePicker'
 import { Tooltip, TooltipContent, TooltipTrigger } from './tooltip'
-import {
-  Select,
-  SelectContent,
-  SelectGroup,
-  SelectItem,
-  SelectLabel,
-  SelectTrigger,
-  SelectValue,
-} from './select'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './select'
 import { Textarea } from './textarea'
 
 // --- Shared helpers ---
 
-function FieldError({ errors }: { errors: Array<any> }) {
-  if (errors.length === 0) return null
-  const message = typeof errors[0] === 'string' ? errors[0] : (errors[0]?.message ?? '')
+export function formErrorMessage(error: unknown): string | undefined {
+  if (typeof error === 'string') return error
+  if (Array.isArray(error)) {
+    for (const item of error) {
+      const message = formErrorMessage(item)
+      if (message) return message
+    }
+  }
+  if (error && typeof error === 'object') {
+    if ('message' in error && typeof error.message === 'string') return error.message
+    for (const value of Object.values(error)) {
+      const message = formErrorMessage(value)
+      if (message) return message
+    }
+  }
+  return undefined
+}
+
+function FieldError({ errors }: { errors: Array<unknown> }) {
+  const message = formErrorMessage(errors)
   if (!message) return null
   return <p className="text-sm text-destructive mt-1">{message}</p>
 }
@@ -37,17 +49,29 @@ export function TextField({
 }: {
   label: string
   required?: boolean
-  type?: 'text' | 'date' | 'time' | 'email' | 'password'
+  type?: 'text' | 'date' | 'time' | 'datetime-local' | 'email' | 'password'
   placeholder?: string
   className?: string
 }) {
   const field = useFieldContext<string>()
-  return (
-    <div className={className}>
-      <Label htmlFor={field.name} className="mb-1">
-        {label}
-        {required && ' *'}
-      </Label>
+  const input =
+    type === 'date' ? (
+      <DatePicker
+        id={field.name}
+        value={field.state.value}
+        required={required}
+        onBlur={field.handleBlur}
+        onChange={(value) => field.handleChange(value ?? '')}
+      />
+    ) : type === 'time' ? (
+      <TimePicker
+        id={field.name}
+        value={field.state.value}
+        required={required}
+        onBlur={field.handleBlur}
+        onChange={field.handleChange}
+      />
+    ) : (
       <Input
         id={field.name}
         type={type}
@@ -56,6 +80,15 @@ export function TextField({
         onBlur={field.handleBlur}
         onChange={(e) => field.handleChange(e.target.value)}
       />
+    )
+
+  return (
+    <div className={className}>
+      <Label htmlFor={field.name} className="mb-1">
+        {label}
+        {required && ' *'}
+      </Label>
+      {input}
       <FieldError errors={field.state.meta.errors} />
     </div>
   )
@@ -149,21 +182,16 @@ export function SelectField({
         {label}
         {required && ' *'}
       </Label>
-      <Select
-        value={field.state.value != null ? String(field.state.value) : ''}
-        onValueChange={(value) => field.handleChange(value === '' ? null : Number(value))}
-      >
-        <SelectTrigger onBlur={field.handleBlur}>
-          <SelectValue placeholder={placeholder} />
-        </SelectTrigger>
-        <SelectContent>
-          {options.map((opt) => (
-            <SelectItem key={opt.value} value={String(opt.value)}>
-              {opt.label}
-            </SelectItem>
-          ))}
-        </SelectContent>
-      </Select>
+      <SearchableSelect
+        value={field.state.value != null ? String(field.state.value) : null}
+        onValueChange={(value) => field.handleChange(Number(value))}
+        onBlur={field.handleBlur}
+        placeholder={placeholder}
+        options={options.map((option) => ({
+          value: String(option.value),
+          label: option.label,
+        }))}
+      />
       <FieldError errors={field.state.meta.errors} />
     </div>
   )
@@ -199,26 +227,19 @@ export function GroupedSelectField({
           </Tooltip>
         )}
       </Label>
-      <Select
-        value={field.state.value != null ? String(field.state.value) : ''}
-        onValueChange={(value) => field.handleChange(value === '' ? null : Number(value))}
-      >
-        <SelectTrigger onBlur={field.handleBlur}>
-          <SelectValue placeholder={placeholder} />
-        </SelectTrigger>
-        <SelectContent>
-          {groups.map((group) => (
-            <SelectGroup key={group.label}>
-              <SelectLabel>{group.label}</SelectLabel>
-              {group.options.map((opt) => (
-                <SelectItem key={opt.value} value={String(opt.value)} className="pl-6">
-                  {opt.label}
-                </SelectItem>
-              ))}
-            </SelectGroup>
-          ))}
-        </SelectContent>
-      </Select>
+      <SearchableSelect
+        value={field.state.value != null ? String(field.state.value) : null}
+        onValueChange={(value) => field.handleChange(Number(value))}
+        onBlur={field.handleBlur}
+        placeholder={placeholder}
+        groups={groups.map((group) => ({
+          label: group.label,
+          options: group.options.map((option) => ({
+            value: String(option.value),
+            label: option.label,
+          })),
+        }))}
+      />
       <FieldError errors={field.state.meta.errors} />
     </div>
   )

@@ -1,6 +1,7 @@
 import { Link } from '@tanstack/react-router'
 import { createColumnHelper } from '@tanstack/react-table'
 import { X } from 'lucide-react'
+import { ActiveStatus } from '@/components/ui/ActiveStatus'
 import type { ExaminerTableRow } from '@/domains/examiners/schema'
 
 export type ExaminerTableMeta = {
@@ -35,12 +36,7 @@ export const columns = [
   }),
   columnHelper.accessor('active', {
     header: 'Status',
-    cell: (info) =>
-      info.getValue() ? (
-        <span className="text-sm">Active</span>
-      ) : (
-        <span className="text-sm text-muted-foreground">Inactive</span>
-      ),
+    cell: (info) => <ActiveStatus active={info.getValue()} />,
     enableSorting: false,
   }),
   columnHelper.display({

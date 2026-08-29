@@ -1,22 +1,32 @@
-import { createFileRoute, Link, redirect, useNavigate } from '@tanstack/react-router'
+import { createFileRoute, Link, redirect, useRouter } from '@tanstack/react-router'
 import { useState } from 'react'
 import { Button } from '../components/ui/button'
 import { Input } from '../components/ui/input'
 import { Label } from '../components/ui/label'
+import { QrLoginPanel } from '@/components/auth/QrLoginPanel'
 import {
   useLoginMutation,
   useRequestEmailOtpMutation,
   useVerifyEmailOtpMutation,
 } from '@/lib/auth/auth-query-options'
+import { cancelQrLoginRequestServerFn } from '@/lib/auth/qr-login-server-fns'
+import { cn } from '@/lib/utils'
+
+function safeRedirect(value: unknown): string | undefined {
+  if (typeof value !== 'string' || !value.startsWith('/') || value.startsWith('//')) {
+    return undefined
+  }
+  return value
+}
 
 export const Route = createFileRoute('/login')({
   validateSearch: (search: Record<string, unknown>) => {
-    const redirectTo = search.redirect as string | undefined
+    const redirectTo = safeRedirect(search.redirect)
     return redirectTo ? { redirect: redirectTo } : {}
   },
-  beforeLoad: ({ context }) => {
+  beforeLoad: ({ context, search }) => {
     if (context.isAuthenticated) {
-      throw redirect({ to: '/' })
+      throw redirect({ to: search.redirect ?? '/' })
     }
   },
   component: LoginPage,
@@ -26,37 +36,50 @@ type Mode = 'password' | 'email'
 type EmailStep = 'request' | 'verify'
 
 function LoginPage() {
-  const navigate = useNavigate()
-  const { redirect: redirectTo } = Route.useSearch()
+  const router = useRouter()
+  const { sailLockerMode } = Route.useRouteContext()
   const [mode, setMode] = useState<Mode>('password')
+  const [qrPollingSecret, setQrPollingSecret] = useState<string | null>(null)
+  const finishAuthentication = async () => {
+    if (qrPollingSecret) {
+      await cancelQrLoginRequestServerFn({ data: { pollingSecret: qrPollingSecret } })
+      setQrPollingSecret(null)
+    }
+    await router.invalidate()
+  }
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-muted px-4 py-12 sm:px-6 lg:px-8">
-      <div className="w-full max-w-md">
+      <div className={cn('w-full', sailLockerMode ? 'max-w-4xl' : 'max-w-md')}>
         <div className="rounded-xl bg-card p-8 shadow-lg space-y-8">
           <div className="flex flex-col items-center">
             <img src="/favicon.png" alt="WYC" className="h-12 w-12" />
             <h2 className="mt-4 text-center text-3xl font-bold tracking-tight">WYC Database</h2>
             <p className="mt-2 text-center text-sm text-muted-foreground">
-              {mode === 'password'
-                ? 'Sign in with your WYC ID and password'
-                : 'Sign in with a code sent to your email'}
+              {sailLockerMode
+                ? 'Scan with your phone or use another sign-in option'
+                : mode === 'password'
+                  ? 'Sign in with your WYC ID and password'
+                  : 'Sign in with a code sent to your email'}
             </p>
           </div>
 
-          {mode === 'password' ? (
-            <PasswordForm
-              redirectTo={redirectTo}
-              onSwitchMode={() => setMode('email')}
-              navigate={navigate}
-            />
-          ) : (
-            <EmailOtpFlow
-              redirectTo={redirectTo}
-              onSwitchMode={() => setMode('password')}
-              navigate={navigate}
-            />
-          )}
+          <div className={cn(sailLockerMode && 'grid gap-8 md:grid-cols-2')}>
+            {sailLockerMode && <QrLoginPanel onPollingSecretChange={setQrPollingSecret} />}
+            <div>
+              {mode === 'password' ? (
+                <PasswordForm
+                  onSwitchMode={() => setMode('email')}
+                  onAuthenticated={finishAuthentication}
+                />
+              ) : (
+                <EmailOtpFlow
+                  onSwitchMode={() => setMode('password')}
+                  onAuthenticated={finishAuthentication}
+                />
+              )}
+            </div>
+          </div>
         </div>
       </div>
     </div>
@@ -64,13 +87,11 @@ function LoginPage() {
 }
 
 function PasswordForm({
-  redirectTo,
   onSwitchMode,
-  navigate,
+  onAuthenticated,
 }: {
-  redirectTo: string | undefined
   onSwitchMode: () => void
-  navigate: ReturnType<typeof useNavigate>
+  onAuthenticated: () => Promise<void>
 }) {
   const loginMutation = useLoginMutation()
   const [wycNumber, setWycNumber] = useState('')
@@ -88,7 +109,7 @@ function PasswordForm({
       })
 
       if (result.success) {
-        navigate({ to: redirectTo ?? '/' })
+        await onAuthenticated()
       } else {
         setError(result.message || 'Login failed')
       }
@@ -161,13 +182,11 @@ function PasswordForm({
 }
 
 function EmailOtpFlow({
-  redirectTo,
   onSwitchMode,
-  navigate,
+  onAuthenticated,
 }: {
-  redirectTo: string | undefined
   onSwitchMode: () => void
-  navigate: ReturnType<typeof useNavigate>
+  onAuthenticated: () => Promise<void>
 }) {
   const requestMutation = useRequestEmailOtpMutation()
   const verifyMutation = useVerifyEmailOtpMutation()
@@ -205,7 +224,7 @@ function EmailOtpFlow({
         code,
       })
       if (result.success) {
-        navigate({ to: redirectTo ?? '/' })
+        await onAuthenticated()
       } else {
         setError(result.message || 'Invalid or expired code')
       }

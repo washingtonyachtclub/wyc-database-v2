@@ -1,4 +1,10 @@
-import { queryOptions, useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import {
+  queryOptions,
+  type QueryClient,
+  useMutation,
+  useQuery,
+  useQueryClient,
+} from '@tanstack/react-query'
 import {
   getCurrentUserServerFn,
   loginServerFn,
@@ -21,6 +27,11 @@ export const getCurrentUserQueryOptions = () =>
     staleTime: 5 * 60 * 1000, // 5 minutes
   })
 
+async function refreshCurrentUser(queryClient: QueryClient) {
+  await queryClient.invalidateQueries({ queryKey: ['auth', 'currentUser'] })
+  await queryClient.fetchQuery(getCurrentUserQueryOptions())
+}
+
 /**
  * Hook for login mutation
  */
@@ -31,12 +42,9 @@ export const useLoginMutation = () => {
     mutationFn: async (data: { wycNumber: number; password: string }) => {
       return await loginServerFn({ data })
     },
-    onSuccess: (data: LoginResponse) => {
+    onSuccess: async (data: LoginResponse) => {
       if (data.success) {
-        // Invalidate and refetch current user
-        queryClient.invalidateQueries({
-          queryKey: ['auth', 'currentUser'],
-        })
+        await refreshCurrentUser(queryClient)
       }
     },
   })
@@ -63,9 +71,9 @@ export const useVerifyEmailOtpMutation = () => {
     mutationFn: async (data: { wycNumber: number; code: string }) => {
       return await verifyEmailOtpServerFn({ data })
     },
-    onSuccess: (data: VerifyOtpResponse) => {
+    onSuccess: async (data: VerifyOtpResponse) => {
       if (data.success) {
-        queryClient.invalidateQueries({ queryKey: ['auth', 'currentUser'] })
+        await refreshCurrentUser(queryClient)
       }
     },
   })
@@ -102,6 +110,8 @@ export const useCurrentUser = () => {
     isAuthenticated: query.data?.isValid ?? false,
     privileges: query.data?.privileges ?? [],
     realPrivileges: query.data?.realPrivileges,
+    sailLockerMode: query.data?.sailLockerMode ?? false,
+    sessionExpiresAt: query.data?.sessionExpiresAt,
     isLoading: query.isLoading,
     isError: query.isError,
   }

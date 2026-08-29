@@ -15,6 +15,7 @@ export const routePermissions = {
   '/lessons/$lessonIndex': [], // auth only; server functions enforce per-lesson instructor-or-db access
   '/my-lessons': [],
   '/door-codes': [], // auth only; the server function filters codes by ratings
+  '/maintenance-tracker': [],
   '/ratings': ['rtgs'],
   '/ratings/$ratingIndex': ['rtgs'],
   '/rating-types': ['db', 'rtgs'],
@@ -23,6 +24,7 @@ export const routePermissions = {
   '/privileges': ['db'],
   '/honorary': ['db'],
   '/boat-types': ['db'],
+  '/checkout/new': [],
   '/checkouts': ['db', 'rtgs'],
   '/lesson-types': ['db'],
   '/quarters': ['db'],
@@ -33,6 +35,7 @@ export const routePermissions = {
   '/set-current-quarter': ['db'],
   '/tests': [],
   '/set-password': [],
+  '/settings': [],
   '/forbidden': [],
 } as const satisfies Record<string, readonly Privilege[]>
 

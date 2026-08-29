@@ -9,6 +9,7 @@ import Header from '../components/Header'
 import { ExemptionApproverBanner } from '../components/ExemptionApproverBanner'
 import { MembershipBanner } from '../components/MembershipBanner'
 import { QuarterMaintenanceBanner } from '../components/QuarterMaintenanceBanner'
+import { SailLockerCheckoutSessionGuard } from '../components/SailLockerCheckoutSessionGuard'
 import Sidebar from '../components/Sidebar'
 import { TanStackDevTools } from '../components/TanStackDevTools'
 import { TooltipProvider } from '../components/ui/tooltip'
@@ -16,8 +17,8 @@ import { TooltipProvider } from '../components/ui/tooltip'
 import { Analytics } from '@vercel/analytics/react'
 import appCss from '../styles.css?url'
 
-import { getCurrentUserServerFn } from '@/lib/auth/auth-server-fns'
-import type { AuthUser } from '@/lib/auth/auth-server-fns'
+import { getCurrentUserQueryOptions } from '@/lib/auth/auth-query-options'
+import type { AuthUser } from '@/lib/auth/identity'
 import type { QueryClient } from '@tanstack/react-query'
 import type { Privilege } from '../lib/permissions'
 
@@ -26,16 +27,19 @@ interface MyRouterContext {
   user: AuthUser | null
   isAuthenticated: boolean
   privileges: Privilege[]
+  sailLockerMode: boolean
+  sessionExpiresAt?: number
 }
 
 export const Route = createRootRouteWithContext<MyRouterContext>()({
-  beforeLoad: async () => {
-    // Fetch current user to populate context
-    const authResult = await getCurrentUserServerFn()
+  beforeLoad: async ({ context }) => {
+    const authResult = await context.queryClient.ensureQueryData(getCurrentUserQueryOptions())
     return {
       user: authResult.isValid ? authResult.user : null,
       isAuthenticated: authResult.isValid,
       privileges: authResult.privileges ?? [],
+      sailLockerMode: authResult.sailLockerMode,
+      sessionExpiresAt: authResult.sessionExpiresAt,
     }
   },
   head: () => ({
@@ -80,11 +84,23 @@ function NotFound() {
 
 function RootDocument({ children }: { children: React.ReactNode }) {
   const location = useLocation()
+  const { sailLockerMode } = Route.useRouteContext()
   const isEmbedPage = location.pathname === '/lesson-list' || location.pathname === '/meet-the-team'
+  const isCheckoutPage =
+    location.pathname === '/checkout' || location.pathname.startsWith('/checkout/')
+  const isSailLockerCheckout = isCheckoutPage && sailLockerMode
+  const loginRedirect =
+    typeof location.search.redirect === 'string' ? location.search.redirect : undefined
+  const isSailLockerCheckoutLogin =
+    location.pathname === '/login' &&
+    sailLockerMode &&
+    (loginRedirect === '/checkout' || loginRedirect?.startsWith('/checkout/') === true)
+  const isQrLoginApproval = location.pathname === '/qr-login/approve'
   const isBarePage =
     ['/login', '/forgot-password'].includes(location.pathname) ||
-    location.pathname.startsWith('/signup')
-
+    location.pathname.startsWith('/signup') ||
+    isQrLoginApproval ||
+    isSailLockerCheckout
   return (
     <html lang="en">
       <head>
@@ -95,7 +111,10 @@ function RootDocument({ children }: { children: React.ReactNode }) {
           children
         ) : (
           <TooltipProvider delayDuration={0}>
-            <Header />
+            {!isSailLockerCheckout && !isSailLockerCheckoutLogin && !isQrLoginApproval && (
+              <Header />
+            )}
+            {isSailLockerCheckout && <SailLockerCheckoutSessionGuard />}
             {!isBarePage && <MembershipBanner />}
             {!isBarePage && <ExemptionApproverBanner />}
             {!isBarePage && <QuarterMaintenanceBanner />}

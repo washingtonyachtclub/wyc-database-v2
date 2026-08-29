@@ -14,6 +14,7 @@ import { notifyDoorUnlocks } from '@/domains/door-codes/notify'
 import type { DoorCodeSlug } from '@/domains/door-codes/rules'
 import { unlockedSlugs } from '@/domains/door-codes/rules'
 import { withPagination, withSorting } from '@/db/query-helpers'
+import { str } from '@/db/mapper-utils'
 import { ratings, wycRatings } from '@/db/schema'
 import db from '@/db/index'
 import { requirePrivilege } from '@/lib/auth/auth-middleware'
@@ -70,11 +71,13 @@ export const getRatingById = createServerFn({ method: 'GET' })
   })
 
 export const getRatingTypes = createServerFn({ method: 'GET' }).handler(async () => {
-  await requirePrivilege('rtgs')
+  await requirePrivilege('rtgs', 'db')
   try {
-    return await db
+    const rows = await db
       .select({ index: ratings.index, text: ratings.text, type: ratings.type })
       .from(ratings)
+      .orderBy(ratings.type, ratings.degree)
+    return rows.map((row) => ({ ...row, text: str(row.text) }))
   } catch (error) {
     console.error('Failed to fetch rating types:', error)
     throw new Error('Failed to fetch rating types')

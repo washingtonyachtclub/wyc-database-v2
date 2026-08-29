@@ -33,6 +33,8 @@ export function usePayAndRenewMutation() {
     }) => payAndRenew({ data: input }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['renewals', 'status'] })
+      queryClient.invalidateQueries({ queryKey: ['members'] })
+      queryClient.invalidateQueries({ queryKey: ['stats', 'membership'] })
     },
   })
 }
@@ -76,6 +78,8 @@ export function useApproveExemptionMutation() {
     mutationFn: (requestId: number) => approveExemptionRequest({ data: { requestId } }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['exemptions', 'pending'] })
+      queryClient.invalidateQueries({ queryKey: ['members'] })
+      queryClient.invalidateQueries({ queryKey: ['stats', 'membership'] })
     },
   })
 }

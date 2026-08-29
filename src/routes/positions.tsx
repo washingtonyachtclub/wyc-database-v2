@@ -1,6 +1,7 @@
 import { AddPositionModal } from '@/components/positions/AddPositionModal'
 import { columns } from '@/components/positions/columns'
 import type { PositionTableMeta } from '@/components/positions/columns'
+import { activeStatusRowClassName } from '@/components/ui/ActiveStatus'
 import { Checkbox } from '@/components/ui/checkbox'
 import { ConfirmDialog } from '@/components/ui/ConfirmDialog'
 import { Button } from '@/components/ui/button'
@@ -93,7 +94,10 @@ function PositionsPage() {
       </div>
 
       <p className="text-sm text-muted-foreground mb-2">{countLabel}</p>
-      <DataTable table={table} />
+      <DataTable
+        table={table}
+        rowClassName={(row) => activeStatusRowClassName(row.original.active)}
+      />
 
       {isAddModalOpen && (
         <AddPositionModal onClose={() => setIsAddModalOpen(false)} onSuccess={() => {}} />

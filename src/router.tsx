@@ -64,6 +64,8 @@ export const getRouter = () => {
       user: null,
       isAuthenticated: false,
       privileges: [],
+      sailLockerMode: false,
+      sessionExpiresAt: undefined,
     },
 
     defaultPreload: 'intent',

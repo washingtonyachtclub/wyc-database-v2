@@ -3,7 +3,7 @@ import { Button } from '../ui/button'
 import { DatePicker } from '../ui/DatePicker'
 import { Label } from '../ui/label'
 import { MemberCombobox } from '../ui/MemberCombobox'
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select'
+import { SearchableSelect } from '../ui/SearchableSelect'
 import { cn } from '@/lib/utils'
 
 const ALL = '__all__'
@@ -48,28 +48,26 @@ export function RatingFilterControls({
 
         <div>
           <Label className="mb-1">Rating Type</Label>
-          <Select
+          <SearchableSelect
             value={ratingIndex !== undefined ? String(ratingIndex) : ALL}
             onValueChange={(value) =>
               onFilterChange({
                 ratingIndex: value === ALL ? undefined : Number(value),
               })
             }
-          >
-            <SelectTrigger
-              className={cn('border-2', ratingIndex !== undefined ? activeClass : inactiveClass)}
-            >
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value={ALL}>All Ratings</SelectItem>
-              {ratingTypes.map((rt) => (
-                <SelectItem key={rt.index} value={String(rt.index)}>
-                  {rt.text || `Rating ${rt.index}`}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+            className={cn(
+              'min-w-48 border-2',
+              ratingIndex !== undefined ? activeClass : inactiveClass,
+            )}
+            searchPlaceholder="Search rating types..."
+            options={[
+              { value: ALL, label: 'All Ratings' },
+              ...ratingTypes.map((ratingType) => ({
+                value: String(ratingType.index),
+                label: ratingType.text || `Rating ${ratingType.index}`,
+              })),
+            ]}
+          />
         </div>
 
         <DatePicker

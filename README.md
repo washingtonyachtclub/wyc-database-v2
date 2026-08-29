@@ -36,6 +36,7 @@ See `documentation/` for detailed docs:
 
 - [Architecture](documentation/architecture.md): codebase structure, type system, data flow patterns
 - [Schema overview](documentation/schema-overview.md): all database tables
+- [Database schema changes](documentation/database-schema-changes.md): Drizzle migrations, pull requests, and deployment safety
 - [RBAC](documentation/rbac.md): role-based access control and privilege system
 - [Quarter system](documentation/quarters.md): how quarters work and control membership/enrollment
 - [Database queries](documentation/queries.md): SQL reference for direct DB work
@@ -44,6 +45,11 @@ See `documentation/` for detailed docs:
 - [Maintenance](documentation/maintenance.md): recurring operational tasks
 - [Password migration](documentation/password-migration-plan.md): legacy to Argon2id transition plan
 - [Email OTP login](documentation/email-otp-login.md): passwordless login via a code sent to the member's email
+- [Sail Locker mode](documentation/sail-locker-mode.md): device-specific session lifetimes for the shared computer
+
+## Issue Tracking
+
+Issues are tracked in Linear. See [https://database.washingtonyachtclub.org/maintenance-tracker](https://database.washingtonyachtclub.org/maintenance-tracker).
 
 # Getting Started
 

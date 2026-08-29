@@ -1,11 +1,18 @@
 import type { RenewalTier } from './compute-renewal'
 
-export const UW_STATUSES = ['student', 'employee_retiree', 'neither'] as const
+export const UW_STATUSES = ['student', 'alumni', 'employee_retiree', 'public'] as const
 export type UwStatus = (typeof UW_STATUSES)[number]
+
+const CATEGORY_IDS = {
+  student: 1,
+  facultyStaff: 2,
+  alumni: 3,
+  public: 6,
+} as const
 
 /**
  * Plus One responses, split by direction: sponsor_* for UW members who can sponsor a Plus One
- * (student / employee-retiree), sponsee_* for non-UW members who need to be sponsored (neither).
+ * (student / employee-retiree), sponsee_* for non-UW members who need to be sponsored.
  * The *_yes codes are the ones an officer pairs up; the rest need no action.
  */
 export const SPONSOR_RESPONSES = ['sponsor_already', 'sponsor_yes', 'sponsor_no'] as const
@@ -28,7 +35,26 @@ export function tierForUwStatus(uwStatus: UwStatus): RenewalTier {
 }
 
 export function plusOneResponsesFor(uwStatus: UwStatus): readonly PlusOneResponse[] {
-  return uwStatus === 'neither' ? SPONSEE_RESPONSES : SPONSOR_RESPONSES
+  return uwStatus === 'student' || uwStatus === 'employee_retiree'
+    ? SPONSOR_RESPONSES
+    : SPONSEE_RESPONSES
+}
+
+export function categoryIdForUwStatus(uwStatus: UwStatus): number {
+  switch (uwStatus) {
+    case 'student':
+      return CATEGORY_IDS.student
+    case 'alumni':
+      return CATEGORY_IDS.alumni
+    case 'employee_retiree':
+      return CATEGORY_IDS.facultyStaff
+    case 'public':
+      return CATEGORY_IDS.public
+  }
+}
+
+export function isUwStatus(value: unknown): value is UwStatus {
+  return UW_STATUSES.includes(value as UwStatus)
 }
 
 /**
@@ -39,18 +65,17 @@ export function parseQuestionnaire(input: unknown): QuestionnaireAnswers {
   const obj = (input ?? {}) as Record<string, unknown>
 
   const uwStatus = obj.uwStatus
-  if (!UW_STATUSES.includes(uwStatus as UwStatus)) {
+  if (!isUwStatus(uwStatus)) {
     throw new Error('Please select your UW status.')
   }
-  const status = uwStatus as UwStatus
 
-  const allowed = plusOneResponsesFor(status)
+  const allowed = plusOneResponsesFor(uwStatus)
   if (!allowed.includes(obj.plusOneResponse as PlusOneResponse)) {
     throw new Error('Please answer the Plus One question.')
   }
 
   return {
-    uwStatus: status,
+    uwStatus,
     plusOneResponse: obj.plusOneResponse as PlusOneResponse,
   }
 }

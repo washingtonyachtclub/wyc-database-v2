@@ -1,10 +1,14 @@
 import { useQuery, useSuspenseQuery } from '@tanstack/react-query'
 import { createFileRoute, useNavigate } from '@tanstack/react-router'
 import { getCoreRowModel, getSortedRowModel, useReactTable } from '@tanstack/react-table'
+import { Plus } from 'lucide-react'
+import { useState } from 'react'
 import { z } from 'zod'
 import { columns } from '../components/checkouts/columns'
 import { CheckoutFilterControls } from '../components/checkouts/CheckoutFilterControls'
+import { ManualAddCheckoutModal } from '../components/checkouts/ManualAddCheckoutModal'
 import { PaginationControls } from '../components/members/PaginationControls'
+import { Button } from '../components/ui/button'
 import { DataTable } from '../components/ui/DataTable'
 import type { CheckoutFilters } from '@/domains/checkouts/filter-types'
 import {
@@ -12,6 +16,7 @@ import {
   getCheckoutBoatTypesQueryOptions,
 } from '@/domains/checkouts/query-options'
 import { requirePrivilegeForRoute } from '../lib/route-guards'
+import { hasPrivilege } from '../lib/permissions'
 
 const checkoutSearchSchema = z.object({
   pageIndex: z.number().catch(0),
@@ -29,6 +34,7 @@ export const Route = createFileRoute('/checkouts')({
   validateSearch: checkoutSearchSchema,
   beforeLoad: ({ context }) => {
     requirePrivilegeForRoute(context, '/checkouts')
+    return { canManualAdd: hasPrivilege(context.privileges, ['db']) }
   },
   loaderDeps: ({
     search: {
@@ -79,6 +85,8 @@ const checkoutSortableColumns: Record<string, true> = {
 }
 
 function CheckoutsPage() {
+  const [isManualAddOpen, setIsManualAddOpen] = useState(false)
+  const { canManualAdd } = Route.useRouteContext()
   const navigate = useNavigate({ from: '/checkouts' })
   const { boatId, fleet, memberWycNumber, since, until } = Route.useSearch()
   const { pageIndex, pageSize, filters, sorting } = Route.useLoaderDeps()
@@ -171,7 +179,15 @@ function CheckoutsPage() {
 
   return (
     <div className="p-4">
-      <h2 className="text-2xl font-bold mb-4">Boat Checkouts</h2>
+      <div className="mb-4 flex items-center justify-between gap-4">
+        <h2 className="text-2xl font-bold">Boat Checkouts</h2>
+        {canManualAdd && (
+          <Button onClick={() => setIsManualAddOpen(true)}>
+            <Plus className="h-4 w-4" />
+            Manual Add
+          </Button>
+        )}
+      </div>
       <CheckoutFilterControls
         boatId={boatId}
         fleet={fleet}
@@ -190,6 +206,7 @@ function CheckoutsPage() {
         }
       />
       <PaginationControls table={table} pageCount={pageCount} totalCount={totalCount} />
+      {isManualAddOpen && <ManualAddCheckoutModal onClose={() => setIsManualAddOpen(false)} />}
     </div>
   )
 }

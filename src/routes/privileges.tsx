@@ -15,13 +15,7 @@ import { Button } from '@/components/ui/button'
 import { Plus } from 'lucide-react'
 import { DataTable } from '@/components/ui/DataTable'
 import { Label } from '@/components/ui/label'
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select'
+import { SearchableSelect } from '@/components/ui/SearchableSelect'
 import type { PrivilegeFilters } from '@/domains/privileges/queries'
 import {
   getPrivilegesQueryOptions,
@@ -107,7 +101,7 @@ function PrivilegesPage() {
         <div className="flex flex-wrap items-end gap-4">
           <div>
             <Label className="mb-1">Role</Label>
-            <Select
+            <SearchableSelect
               value={privilegeType !== undefined ? String(privilegeType) : ALL}
               onValueChange={(value) =>
                 navigate({
@@ -119,24 +113,19 @@ function PrivilegesPage() {
                   resetScroll: false,
                 })
               }
-            >
-              <SelectTrigger
-                className={cn(
-                  'border-2',
-                  privilegeType !== undefined ? activeClass : inactiveClass,
-                )}
-              >
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value={ALL}>All Roles</SelectItem>
-                {privilegeTypes.map((pt) => (
-                  <SelectItem key={pt.index} value={String(pt.index)}>
-                    {pt.name || `Position ${pt.index}`}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+              className={cn(
+                'min-w-48 border-2',
+                privilegeType !== undefined ? activeClass : inactiveClass,
+              )}
+              searchPlaceholder="Search roles..."
+              options={[
+                { value: ALL, label: 'All Roles' },
+                ...privilegeTypes.map((privilegeTypeOption) => ({
+                  value: String(privilegeTypeOption.index),
+                  label: privilegeTypeOption.name || `Position ${privilegeTypeOption.index}`,
+                })),
+              ]}
+            />
           </div>
 
           {hasFilters && (
