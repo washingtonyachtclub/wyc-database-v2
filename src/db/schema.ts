@@ -5,6 +5,7 @@ import {
   datetime,
   double,
   float,
+  foreignKey,
   index,
   int,
   mysqlEnum,
@@ -16,6 +17,7 @@ import {
   unique,
   varchar,
 } from 'drizzle-orm/mysql-core'
+import { sql } from 'drizzle-orm'
 
 const blobAsText = customType<{ data: string; driverData: Buffer }>({
   dataType() {
@@ -29,27 +31,37 @@ const blobAsText = customType<{ data: string; driverData: Buffer }>({
   },
 })
 
+const tinyint1 = customType<{ data: number; driverData: number }>({
+  dataType() {
+    return 'tinyint(1)'
+  },
+})
+
 export const wycDatabase = mysqlTable(
   'WYCDatabase',
   {
-    last: char('Last', { length: 50 }),
-    first: char('First', { length: 50 }),
-    streetAddress: char('StreetAddress', { length: 100 }),
-    city: char('City', { length: 50 }),
-    state: char('State', { length: 20 }),
-    zipCode: char('ZipCode', { length: 10 }),
-    phone1: char('Phone1', { length: 50 }),
-    phone2: char('Phone2', { length: 50 }),
-    email: char('Email', { length: 50 }),
+    last: char('Last', { length: 50 }).charSet('latin1').collate('latin1_swedish_ci'),
+    first: char('First', { length: 50 }).charSet('latin1').collate('latin1_swedish_ci'),
+    streetAddress: char('StreetAddress', { length: 100 })
+      .charSet('latin1')
+      .collate('latin1_swedish_ci'),
+    city: char('City', { length: 50 }).charSet('latin1').collate('latin1_swedish_ci'),
+    state: char('State', { length: 20 }).charSet('latin1').collate('latin1_swedish_ci'),
+    zipCode: char('ZipCode', { length: 10 }).charSet('latin1').collate('latin1_swedish_ci'),
+    phone1: char('Phone1', { length: 50 }).charSet('latin1').collate('latin1_swedish_ci'),
+    phone2: char('Phone2', { length: 50 }).charSet('latin1').collate('latin1_swedish_ci'),
+    email: char('Email', { length: 50 }).charSet('latin1').collate('latin1_swedish_ci'),
     categoryId: int('Category'),
     wycNumber: int('WYCNumber').default(0).notNull(),
     expireQtrIndex: int('ExpireQtr').default(0).notNull(),
     studentId: int('StudentID'),
-    password: char({ length: 50 }),
-    passwordArgon2: varchar('password_argon2', { length: 255 }),
-    outToSea: tinyint('out_to_sea').default(0),
+    password: char({ length: 50 }).charSet('latin1').collate('latin1_swedish_ci'),
+    passwordArgon2: varchar('password_argon2', { length: 255 })
+      .charSet('latin1')
+      .collate('latin1_swedish_ci'),
+    outToSea: tinyint1('out_to_sea').default(sql`false`),
     joinDate: timestamp('JoinDate', { mode: 'string' }).defaultNow().notNull(),
-    imageName: char('image_name', { length: 50 }),
+    imageName: char('image_name', { length: 50 }).charSet('latin1').collate('latin1_swedish_ci'),
   },
   (table) => [
     primaryKey({ columns: [table.wycNumber] }),
@@ -61,27 +73,32 @@ export const boatTypes = mysqlTable(
   'boat_types',
   {
     index: int('_index').autoincrement().notNull(),
-    type: varchar({ length: 80 }),
-    description: varchar({ length: 500 }).notNull(),
-    usefulLink: varchar({ length: 100 }).notNull(),
-    fleet: varchar({ length: 80 }).notNull(),
+    type: varchar({ length: 80 }).charSet('latin1').collate('latin1_swedish_ci'),
+    description: varchar({ length: 500 }).charSet('latin1').collate('latin1_swedish_ci').notNull(),
+    usefulLink: varchar({ length: 100 }).charSet('latin1').collate('latin1_swedish_ci').notNull(),
+    fleet: varchar({ length: 80 }).charSet('latin1').collate('latin1_swedish_ci').notNull(),
     numberInFleet: int().notNull(),
-    active: tinyint().default(1).notNull(),
+    active: tinyint1()
+      .default(sql`true`)
+      .notNull(),
   },
   (table) => [primaryKey({ columns: [table.index] })],
 )
 
 export const calendaradmin = mysqlTable('calendaradmin', {
   wycnum: int().notNull(),
-  description: varchar({ length: 50 }).notNull(),
+  description: varchar({ length: 50 }).charSet('latin1').collate('latin1_swedish_ci').notNull(),
 })
 
 export const calendarboats = mysqlTable(
   'calendarboats',
   {
     cBoatId: int().autoincrement().notNull(),
-    name: varchar({ length: 50 }).notNull(),
-    description: varchar('Description', { length: 500 }).notNull(),
+    name: varchar({ length: 50 }).charSet('latin1').collate('latin1_swedish_ci').notNull(),
+    description: varchar('Description', { length: 500 })
+      .charSet('latin1')
+      .collate('latin1_swedish_ci')
+      .notNull(),
   },
   (table) => [primaryKey({ columns: [table.cBoatId] })],
 )
@@ -90,14 +107,17 @@ export const calendarcomment = mysqlTable('calendarcomment', {
   id: int().notNull(),
   userwyc: int().notNull(),
   date: datetime({ mode: 'string' }).notNull(),
-  comment: text().notNull(),
+  comment: text().charSet('latin1').collate('latin1_swedish_ci').notNull(),
 })
 
 export const calendarconfig = mysqlTable(
   'calendarconfig',
   {
-    wacip: varchar({ length: 15 }).notNull(),
-    ipdescription: varchar({ length: 255 }).notNull(),
+    wacip: varchar({ length: 15 }).charSet('latin1').collate('latin1_swedish_ci').notNull(),
+    ipdescription: varchar({ length: 255 })
+      .charSet('latin1')
+      .collate('latin1_swedish_ci')
+      .notNull(),
   },
   (table) => [primaryKey({ columns: [table.wacip] })],
 )
@@ -107,17 +127,17 @@ export const calendartable = mysqlTable(
   {
     id: int().autoincrement().notNull(),
     cBoatId: int().notNull(),
-    memberWycNumber: int().notNull(),
+    memberWycNumber: int('memberWYCNumber').notNull(),
     reserveFrom: datetime({ mode: 'string' }).notNull(),
     reserveTo: datetime({ mode: 'string' }).notNull(),
-    destination: varchar({ length: 255 }).notNull(),
+    destination: varchar({ length: 255 }).charSet('latin1').collate('latin1_swedish_ci').notNull(),
     numberOfCrew: int().notNull(),
-    comments: varchar({ length: 255 }),
-    phone: varchar({ length: 45 }).notNull(),
-    numFullWd: int().notNull(),
-    numHalfWd: int().notNull(),
-    numFullWe: int().notNull(),
-    numHalfWe: int().notNull(),
+    comments: varchar({ length: 255 }).charSet('latin1').collate('latin1_swedish_ci'),
+    phone: varchar({ length: 45 }).charSet('latin1').collate('latin1_swedish_ci').notNull(),
+    numFullWd: int('numFullWD').notNull(),
+    numHalfWd: int('numHalfWD').notNull(),
+    numFullWe: int('numFullWE').notNull(),
+    numHalfWe: int('numHalfWE').notNull(),
   },
   (table) => [primaryKey({ columns: [table.id] })],
 )
@@ -128,7 +148,7 @@ export const checkouts = mysqlTable(
     index: int('_index').autoincrement().notNull(),
     wycNumber: int('WYCNumber').notNull(),
     timeDeparture: datetime('TimeDeparture', { mode: 'string' }).notNull(),
-    crew: text('Crew').notNull(),
+    crew: text('Crew'),
     boat: varchar('Boat', { length: 50 }).notNull(),
     destination: varchar('Destination', { length: 100 }).notNull(),
     timeReturn: datetime('TimeReturn', { mode: 'string' }),
@@ -143,7 +163,7 @@ export const classType = mysqlTable(
   'class_type',
   {
     index: int('_index').autoincrement().notNull(),
-    text: varchar({ length: 80 }),
+    text: varchar({ length: 80 }).charSet('latin1').collate('latin1_swedish_ci'),
   },
   (table) => [primaryKey({ columns: [table.index] })],
 )
@@ -155,7 +175,15 @@ export const crew = mysqlTable(
     checkoutId: int('checkout_ID').notNull(),
     crewId: int('crew_ID').notNull(),
   },
-  (table) => [primaryKey({ columns: [table.index] })],
+  (table) => [
+    primaryKey({ columns: [table.index] }),
+    unique('uq_crew_checkout_member').on(table.crewId, table.checkoutId),
+    foreignKey({
+      columns: [table.checkoutId],
+      foreignColumns: [checkouts.index],
+      name: 'fk_crew_checkout',
+    }).onDelete('cascade'),
+  ],
 )
 
 export const guests = mysqlTable(
@@ -168,7 +196,14 @@ export const guests = mysqlTable(
     email: varchar({ length: 255 }),
     phone: varchar({ length: 15 }),
   },
-  (table) => [primaryKey({ columns: [table.index] })],
+  (table) => [
+    primaryKey({ columns: [table.index] }),
+    foreignKey({
+      columns: [table.checkoutId],
+      foreignColumns: [checkouts.index],
+      name: 'fk_guests_checkout',
+    }).onDelete('cascade'),
+  ],
 )
 
 export const keelboatPricing = mysqlTable('keelboat_pricing', {
@@ -192,22 +227,31 @@ export const lessons = mysqlTable(
   {
     index: int('_index').autoincrement().notNull(),
     type: int(),
-    subtype: varchar({ length: 80 }),
+    subtype: varchar({ length: 80 }).charSet('latin1').collate('latin1_swedish_ci'),
     // `lesson_sessions` is the source of truth; these are kept only
     // because they are the last record of the dates for the old lessons.
-    day: varchar({ length: 80 }),
-    time: varchar({ length: 80 }),
-    dates: text(),
+    day: varchar({ length: 80 }).charSet('latin1').collate('latin1_swedish_ci'),
+    time: varchar({ length: 80 }).charSet('latin1').collate('latin1_swedish_ci'),
+    dates: text().charSet('latin1').collate('latin1_swedish_ci'),
     calendarDate: date('CalendarDate', { mode: 'string' }).notNull(),
     instructor1: int(),
     instructor2: int(),
     comments: blobAsText('comments'),
-    requirements: text(),
-    location: varchar({ length: 80 }),
-    locationUrl: varchar('location_url', { length: 255 }),
+    requirements: text().charSet('latin1').collate('latin1_swedish_ci'),
+    description: text('Description')
+      .charSet('latin1')
+      .collate('latin1_swedish_ci')
+      .notNull()
+      .$default(() => ''),
+    location: varchar({ length: 80 }).charSet('latin1').collate('latin1_swedish_ci'),
+    locationUrl: varchar('location_url', { length: 255 })
+      .charSet('latin1')
+      .collate('latin1_swedish_ci'),
     size: int(),
     expire: int(),
-    display: tinyint().default(0).notNull(),
+    display: tinyint1()
+      .default(sql`false`)
+      .notNull(),
   },
   (table) => [primaryKey({ columns: [table.index] })],
 )
@@ -230,7 +274,7 @@ export const memcat = mysqlTable(
   'memcat',
   {
     index: int('_index').autoincrement().notNull(),
-    text: varchar({ length: 50 }),
+    text: varchar({ length: 50 }).charSet('latin1').collate('latin1_swedish_ci'),
   },
   (table) => [primaryKey({ columns: [table.index] })],
 )
@@ -238,8 +282,10 @@ export const memcat = mysqlTable(
 export const noyes = mysqlTable(
   'noyes',
   {
-    index: tinyint('_index').default(0).notNull(),
-    text: char({ length: 10 }),
+    index: tinyint1('_index')
+      .default(sql`false`)
+      .notNull(),
+    text: char({ length: 10 }).charSet('latin1').collate('latin1_swedish_ci'),
   },
   (table) => [primaryKey({ columns: [table.index] })],
 )
@@ -250,17 +296,23 @@ export const officers = mysqlTable(
     index: int('_index').autoincrement().notNull(),
     member: int(),
     position: int(),
-    active: tinyint().default(1).notNull(),
+    active: tinyint1()
+      .default(sql`true`)
+      .notNull(),
   },
-  (table) => [primaryKey({ columns: [table.index] }), unique('_index').on(table.index)],
+  (table) => [
+    primaryKey({ columns: [table.index] }),
+    unique('_index').on(table.index),
+    unique('member').on(table.position, table.member),
+  ],
 )
 
 export const options = mysqlTable(
   'options',
   {
     index: int('_index').autoincrement().notNull(),
-    name: varchar({ length: 80 }),
-    value: varchar({ length: 250 }),
+    name: varchar({ length: 80 }).charSet('latin1').collate('latin1_swedish_ci'),
+    value: varchar({ length: 250 }).charSet('latin1').collate('latin1_swedish_ci'),
   },
   (table) => [primaryKey({ columns: [table.index] })],
 )
@@ -279,7 +331,7 @@ export const posType = mysqlTable(
   'pos_type',
   {
     index: int('_index').autoincrement().notNull(),
-    text: char({ length: 50 }),
+    text: char({ length: 50 }).charSet('latin1').collate('latin1_swedish_ci'),
   },
   (table) => [primaryKey({ columns: [table.index] })],
 )
@@ -288,12 +340,16 @@ export const positions = mysqlTable(
   'positions',
   {
     index: int('_index').autoincrement().notNull(),
-    name: varchar({ length: 50 }).default('').notNull(),
+    name: varchar({ length: 50 })
+      .default('')
+      .charSet('latin1')
+      .collate('latin1_swedish_ci')
+      .notNull(),
     sortorder: int(),
-    isDuesExempt: tinyint('is_dues_exempt').default(0),
+    isDuesExempt: tinyint1('is_dues_exempt').default(sql`false`),
     type: int(),
-    bookmark: varchar({ length: 50 }),
-    jobDesc: varchar('job_desc', { length: 50 }),
+    bookmark: varchar({ length: 50 }).charSet('latin1').collate('latin1_swedish_ci'),
+    jobDesc: varchar('job_desc', { length: 50 }).charSet('latin1').collate('latin1_swedish_ci'),
     active: tinyint().default(0).notNull(),
   },
   (table) => [primaryKey({ columns: [table.index] })],
@@ -303,7 +359,11 @@ export const priorityTypes = mysqlTable(
   'priority_types',
   {
     index: int('_index').autoincrement().notNull(),
-    priority: varchar({ length: 25 }).default('').notNull(),
+    priority: varchar({ length: 25 })
+      .default('')
+      .charSet('latin1')
+      .collate('latin1_swedish_ci')
+      .notNull(),
   },
   (table) => [primaryKey({ columns: [table.index] })],
 )
@@ -312,7 +372,7 @@ export const privs = mysqlTable(
   'privs',
   {
     index: int('_index').autoincrement().notNull(),
-    name: char({ length: 10 }),
+    name: char({ length: 10 }).charSet('latin1').collate('latin1_swedish_ci'),
   },
   (table) => [primaryKey({ columns: [table.index] })],
 )
@@ -321,8 +381,8 @@ export const quarters = mysqlTable(
   'quarters',
   {
     index: int('_index').autoincrement().notNull(),
-    text: char({ length: 50 }),
-    school: char({ length: 50 }),
+    text: char({ length: 50 }).charSet('latin1').collate('latin1_swedish_ci'),
+    school: char({ length: 50 }).charSet('latin1').collate('latin1_swedish_ci'),
     // you can use { mode: 'date' }, if you want to have Date as type for this column
     endDate: date({ mode: 'string' }),
   },
@@ -333,8 +393,8 @@ export const ratings = mysqlTable(
   'ratings',
   {
     index: int('_index').autoincrement().notNull(),
-    text: char({ length: 50 }),
-    type: varchar({ length: 10 }).notNull(),
+    text: char({ length: 50 }).charSet('latin1').collate('latin1_swedish_ci'),
+    type: varchar({ length: 10 }).charSet('latin1').collate('latin1_swedish_ci').notNull(),
     degree: int().notNull(),
     expires: tinyint('expires').default(0).notNull(),
   },
@@ -342,26 +402,28 @@ export const ratings = mysqlTable(
 )
 
 export const recip = mysqlTable('recip', {
-  clubName: varchar('club_name', { length: 50 }),
-  website: varchar({ length: 50 }),
-  recipUrl: varchar('recip_url', { length: 75 }),
-  location: varchar({ length: 2000 }),
-  latLong: varchar('lat_long', { length: 100 }),
-  lengthStay: varchar('length_stay', { length: 2000 }),
-  procedures: varchar({ length: 2000 }),
-  amenities: varchar({ length: 2000 }),
-  image: varchar({ length: 100 }),
-  imageNext: varchar('image_next', { length: 100 }),
-  clubId: varchar('club_id', { length: 2 }),
+  clubName: varchar('club_name', { length: 50 }).charSet('latin1').collate('latin1_swedish_ci'),
+  website: varchar({ length: 50 }).charSet('latin1').collate('latin1_swedish_ci'),
+  recipUrl: varchar('recip_url', { length: 75 }).charSet('latin1').collate('latin1_swedish_ci'),
+  location: varchar({ length: 2000 }).charSet('latin1').collate('latin1_swedish_ci'),
+  latLong: varchar('lat_long', { length: 100 }).charSet('latin1').collate('latin1_swedish_ci'),
+  lengthStay: varchar('length_stay', { length: 2000 })
+    .charSet('latin1')
+    .collate('latin1_swedish_ci'),
+  procedures: varchar({ length: 2000 }).charSet('latin1').collate('latin1_swedish_ci'),
+  amenities: varchar({ length: 2000 }).charSet('latin1').collate('latin1_swedish_ci'),
+  image: varchar({ length: 100 }).charSet('latin1').collate('latin1_swedish_ci'),
+  imageNext: varchar('image_next', { length: 100 }).charSet('latin1').collate('latin1_swedish_ci'),
+  clubId: varchar('club_id', { length: 2 }).charSet('latin1').collate('latin1_swedish_ci'),
 })
 
 export const sessions = mysqlTable(
   'sessions',
   {
     index: int('_index').autoincrement().notNull(),
-    session: varchar({ length: 80 }),
+    session: varchar({ length: 80 }).charSet('latin1').collate('latin1_swedish_ci'),
     userid: int(),
-    time: varchar({ length: 80 }),
+    time: varchar({ length: 80 }).charSet('latin1').collate('latin1_swedish_ci'),
   },
   (table) => [primaryKey({ columns: [table.index] })],
 )
@@ -389,25 +451,25 @@ export const snc = mysqlTable(
     memberDinner: int('member_dinner'),
     memberLunch1: int('member_lunch1'),
     memberLunch2: int('member_lunch2'),
-    guest1Name: char('guest1_name', { length: 100 }),
+    guest1Name: char('guest1_name', { length: 100 }).charSet('latin1').collate('latin1_swedish_ci'),
     guest1Dinner: int('guest1_dinner'),
     guest1Lunch1: int('guest1_lunch1'),
     guest1Lunch2: int('guest1_lunch2'),
-    guest2Name: char('guest2_name', { length: 100 }),
+    guest2Name: char('guest2_name', { length: 100 }).charSet('latin1').collate('latin1_swedish_ci'),
     guest2Dinner: int('guest2_dinner'),
     guest2Lunch1: int('guest2_lunch1'),
     guest2Lunch2: int('guest2_lunch2'),
-    boat1Pref: char({ length: 100 }),
-    boat2Pref: char({ length: 100 }),
+    boat1Pref: char('boat1pref', { length: 100 }).charSet('latin1').collate('latin1_swedish_ci'),
+    boat2Pref: char('boat2pref', { length: 100 }).charSet('latin1').collate('latin1_swedish_ci'),
     ratingSh: int('rating_sh'),
     ratingDh: int('rating_dh'),
     ratingKb: int('rating_kb'),
-    isLockVeteran: tinyint('is_lock_veteran'),
-    friends: char({ length: 100 }),
+    isLockVeteran: tinyint1('is_lock_veteran'),
+    friends: char({ length: 100 }).charSet('latin1').collate('latin1_swedish_ci'),
     duties: int(),
-    guest1Child: tinyint('guest1_child'),
-    guest2Child: tinyint('guest2_child'),
-    transpt: tinyint().default(0),
+    guest1Child: tinyint1('guest1_child'),
+    guest2Child: tinyint1('guest2_child'),
+    transpt: tinyint1().default(sql`false`),
     paymentConfirm: int('payment_confirm').notNull(),
   },
   (table) => [primaryKey({ columns: [table.index] })],
@@ -417,9 +479,9 @@ export const sncFood = mysqlTable(
   'snc_food',
   {
     index: int('_index').autoincrement().notNull(),
-    text: char({ length: 50 }),
-    isAllowed: tinyint('is_allowed'),
-    isDinner: tinyint('is_dinner'),
+    text: char({ length: 50 }).charSet('latin1').collate('latin1_swedish_ci'),
+    isAllowed: tinyint1('is_allowed'),
+    isDinner: tinyint1('is_dinner'),
     cost: int().default(0).notNull(),
   },
   (table) => [primaryKey({ columns: [table.index] })],
@@ -429,8 +491,8 @@ export const sncWork = mysqlTable(
   'snc_work',
   {
     index: int('_index').autoincrement().notNull(),
-    text: char({ length: 50 }),
-    isAllowed: tinyint('is_allowed'),
+    text: char({ length: 50 }).charSet('latin1').collate('latin1_swedish_ci'),
+    isAllowed: tinyint1('is_allowed'),
   },
   (table) => [primaryKey({ columns: [table.index] })],
 )
@@ -446,7 +508,7 @@ export const wycRatings = mysqlTable(
     examiner: int(),
     enteredBy: int('entered_by'),
     enteredAt: timestamp('entered_at', { mode: 'string' }).defaultNow(),
-    comments: varchar({ length: 255 }),
+    comments: varchar({ length: 255 }).charSet('latin1').collate('latin1_swedish_ci'),
   },
   (table) => [primaryKey({ columns: [table.index] })],
 )
@@ -510,9 +572,19 @@ export const doorCodes = mysqlTable(
   {
     index: int('_index').autoincrement().notNull(),
     // Joins the row to its eligibility rule in door-codes/rules.ts.
-    slug: varchar('slug', { length: 32 }).notNull(),
-    name: varchar('name', { length: 64 }).notNull(),
-    code: varchar('code', { length: 32 }).default('').notNull(),
+    slug: varchar('slug', { length: 32 })
+      .charSet('utf8mb4')
+      .collate('utf8mb4_0900_ai_ci')
+      .notNull(),
+    name: varchar('name', { length: 64 })
+      .charSet('utf8mb4')
+      .collate('utf8mb4_0900_ai_ci')
+      .notNull(),
+    code: varchar('code', { length: 32 })
+      .default('')
+      .charSet('utf8mb4')
+      .collate('utf8mb4_0900_ai_ci')
+      .notNull(),
     updatedAt: datetime('updated_at', { mode: 'string' }),
     updatedBy: int('updated_by'),
   },
