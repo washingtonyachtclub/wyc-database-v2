@@ -85,7 +85,8 @@ function NotFound() {
 function RootDocument({ children }: { children: React.ReactNode }) {
   const location = useLocation()
   const { sailLockerMode } = Route.useRouteContext()
-  const isEmbedPage = location.pathname === '/lesson-list' || location.pathname === '/meet-the-team'
+  const isEmbeddedPage =
+    location.pathname === '/lesson-list' || location.pathname === '/meet-the-team'
   const isCheckoutPage =
     location.pathname === '/checkout' || location.pathname.startsWith('/checkout/')
   const isSailLockerCheckout = isCheckoutPage && sailLockerMode
@@ -96,35 +97,38 @@ function RootDocument({ children }: { children: React.ReactNode }) {
     sailLockerMode &&
     (loginRedirect === '/checkout' || loginRedirect?.startsWith('/checkout/') === true)
   const isQrLoginApproval = location.pathname === '/qr-login/approve'
-  const isBarePage =
-    ['/login', '/forgot-password'].includes(location.pathname) ||
+  const isGuestWaiverPage = location.pathname === '/guest-waiver'
+  const isStandalonePage =
+    ['/login', '/forgot-password', '/guest-waiver'].includes(location.pathname) ||
     location.pathname.startsWith('/signup') ||
     isQrLoginApproval ||
     isSailLockerCheckout
+  const showAppHeader =
+    !isSailLockerCheckout && !isSailLockerCheckoutLogin && !isQrLoginApproval && !isGuestWaiverPage
+  const showAppLayout = !isStandalonePage
   return (
     <html lang="en">
       <head>
         <HeadContent />
       </head>
       <body>
-        {isEmbedPage ? (
+        {isEmbeddedPage ? (
           children
         ) : (
           <TooltipProvider delayDuration={0}>
-            {!isSailLockerCheckout && !isSailLockerCheckoutLogin && !isQrLoginApproval && (
-              <Header />
-            )}
+            {showAppHeader && <Header />}
             {isSailLockerCheckout && <SailLockerCheckoutSessionGuard />}
-            {!isBarePage && <MembershipBanner />}
-            {!isBarePage && <ExemptionApproverBanner />}
-            {!isBarePage && <QuarterMaintenanceBanner />}
-            {!isBarePage && (
+            {showAppLayout && <MembershipBanner />}
+            {showAppLayout && <ExemptionApproverBanner />}
+            {showAppLayout && <QuarterMaintenanceBanner />}
+            {showAppLayout ? (
               <div className="flex">
                 <Sidebar />
                 <main className="flex-1">{children}</main>
               </div>
+            ) : (
+              children
             )}
-            {isBarePage && children}
             <TanStackDevTools />
           </TooltipProvider>
         )}

@@ -8,6 +8,7 @@ import {
   foreignKey,
   index,
   int,
+  json,
   mysqlEnum,
   mysqlTable,
   primaryKey,
@@ -656,6 +657,31 @@ export const renewalQuestionnaire = mysqlTable(
     primaryKey({ columns: [table.index] }),
     index('idx_renewal_questionnaire_wyc').on(table.wycNumber),
     index('idx_renewal_questionnaire_status').on(table.status),
+  ],
+)
+
+export const guestWaivers = mysqlTable(
+  'guest_waivers',
+  {
+    id: char({ length: 36 }).notNull(),
+    waiverVersion: varchar('waiver_version', { length: 50 }).notNull(),
+    firstName: varchar('first_name', { length: 60 }).notNull(),
+    lastName: varchar('last_name', { length: 60 }).notNull(),
+    email: varchar({ length: 254 }).notNull(),
+    dateOfBirth: date('date_of_birth', { mode: 'string' }).notNull(),
+    submittedValues: json('submitted_values').notNull(),
+    signedAt: timestamp('signed_at').notNull(),
+    objectKey: varchar('object_key', { length: 512 }).notNull(),
+    pdfSha256: char('pdf_sha256', { length: 64 }).notNull(),
+    pdfSize: int('pdf_size').notNull(),
+    pdfContentType: varchar('pdf_content_type', { length: 100 }).notNull(),
+  },
+  (table) => [
+    primaryKey({ columns: [table.id] }),
+    unique('uq_guest_waivers_object_key').on(table.objectKey),
+    index('idx_guest_waivers_email').on(table.email),
+    index('idx_guest_waivers_name').on(table.lastName, table.firstName),
+    index('idx_guest_waivers_signed_at').on(table.signedAt),
   ],
 )
 
