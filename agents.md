@@ -119,6 +119,9 @@ This project uses [shadcn/ui](https://ui.shadcn.com) — source-owned components
 
 ### Rules
 
+- Prefer self-explanatory structure, labels, and familiar controls over instructional text. Do not narrate what the visible UI already communicates.
+- Remove headings, badges, helper text, and button text that only announce availability or repeat an adjacent control.
+- Keep labels concise. Icon-only controls need an accessible name and a tooltip when their meaning may be unclear.
 - **Never use raw HTML elements** for interactive UI. Use the shadcn equivalents:
   - `<input>` → `<Input>` from `@/components/ui/input`
   - `<button>` → `<Button>` from `@/components/ui/button`
