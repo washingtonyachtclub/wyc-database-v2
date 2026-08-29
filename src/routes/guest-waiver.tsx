@@ -5,8 +5,10 @@ import { Label } from '@/components/ui/label'
 import { SignaturePad } from '@/domains/waivers/SignaturePad'
 import {
   finalGuestWaiverAcknowledgement,
+  getGuestWaiverTextSegments,
   guestWaiverSections,
   sectionAcknowledgement,
+  type GuestWaiverParagraph,
 } from '@/domains/waivers/guest-waiver-content'
 import { submitGuestWaiver, type GuestWaiverInput } from '@/domains/waivers/server-fns'
 import { isDevEnvironment } from '@/lib/env'
@@ -27,13 +29,22 @@ const initialForm: GuestWaiverInput = {
     miscellaneous: false,
     waiverAndRelease: false,
   },
-  confirmEmail: '',
   dateOfBirth: '',
   email: '',
   firstName: '',
   lastName: '',
   signatureDataUrl: '',
   testAcknowledged: false,
+}
+
+function WaiverText({ paragraph }: { paragraph: GuestWaiverParagraph }) {
+  return getGuestWaiverTextSegments(paragraph).map((segment, index) =>
+    segment.bold ? (
+      <strong key={index}>{segment.text}</strong>
+    ) : (
+      <span key={index}>{segment.text}</span>
+    ),
+  )
 }
 
 function GuestWaiverPage() {
@@ -60,7 +71,6 @@ function GuestWaiverPage() {
   }
 
   const allSectionsAcknowledged = Object.values(form.acknowledgements).every(Boolean)
-  const emailsMatch = form.email.trim().toLowerCase() === form.confirmEmail.trim().toLowerCase()
   const adultBirthDate = new Date()
   adultBirthDate.setFullYear(adultBirthDate.getFullYear() - 18)
 
@@ -85,20 +95,18 @@ function GuestWaiverPage() {
                 : 'Your signed Participant Agreement has been stored successfully.'}
             </p>
 
-            <dl className="grid gap-2 text-sm sm:grid-cols-[8rem_1fr]">
-              <dt className="font-medium">Acceptance ID</dt>
-              <dd className="break-all font-mono text-xs">{result.acceptanceId}</dd>
-              {result.isMock && (
-                <>
-                  <dt className="font-medium">Object key</dt>
-                  <dd className="break-all font-mono text-xs">{result.objectKey}</dd>
-                  <dt className="font-medium">SHA-256</dt>
-                  <dd className="break-all font-mono text-xs">{result.sha256}</dd>
-                  <dt className="font-medium">Size</dt>
-                  <dd>{result.size.toLocaleString()} bytes</dd>
-                </>
-              )}
-            </dl>
+            {result.isMock && (
+              <dl className="grid gap-2 text-sm sm:grid-cols-[8rem_1fr]">
+                <dt className="font-medium">Acceptance ID</dt>
+                <dd className="break-all font-mono text-xs">{result.acceptanceId}</dd>
+                <dt className="font-medium">Object key</dt>
+                <dd className="break-all font-mono text-xs">{result.objectKey}</dd>
+                <dt className="font-medium">SHA-256</dt>
+                <dd className="break-all font-mono text-xs">{result.sha256}</dd>
+                <dt className="font-medium">Size</dt>
+                <dd>{result.size.toLocaleString()} bytes</dd>
+              </dl>
+            )}
 
             <Button
               type="button"
@@ -142,53 +150,19 @@ function GuestWaiverPage() {
               Participant&apos;s Agreement
             </h1>
             <p className="mt-3 max-w-2xl text-muted-foreground">
-              Read and acknowledge each section, then complete the signer information and draw a
-              signature below.
+              Read and acknowledge each section, then complete the information and sign.
             </p>
           </header>
 
           <form onSubmit={handleSubmit} className="divide-y">
-            <div className="space-y-5 px-6 py-7 sm:px-10 sm:py-9">
-              <div className="grid gap-5 sm:grid-cols-2">
-                <div className="space-y-2 sm:col-span-2">
-                  <Label htmlFor="email">Email</Label>
-                  <Input
-                    id="email"
-                    type="email"
-                    autoComplete="email"
-                    value={form.email}
-                    onChange={(event) => setField('email', event.target.value)}
-                    disabled={mutation.isPending}
-                    required
-                    maxLength={254}
-                  />
-                </div>
-                <div className="space-y-2 sm:col-span-2">
-                  <Label htmlFor="confirm-email">Confirm email</Label>
-                  <Input
-                    id="confirm-email"
-                    type="email"
-                    autoComplete="email"
-                    value={form.confirmEmail}
-                    onChange={(event) => setField('confirmEmail', event.target.value)}
-                    disabled={mutation.isPending}
-                    required
-                    maxLength={254}
-                    aria-invalid={Boolean(form.confirmEmail) && !emailsMatch}
-                  />
-                  {form.confirmEmail && !emailsMatch && (
-                    <p className="text-sm text-destructive">The email addresses do not match.</p>
-                  )}
-                </div>
-              </div>
-            </div>
-
             {guestWaiverSections.map((section) => (
               <section key={section.id} className="space-y-5 px-6 py-7 sm:px-10 sm:py-9">
                 <h2 className="text-xl font-bold tracking-tight text-slate-900">{section.title}</h2>
                 <div className="space-y-4 text-[15px] leading-7 text-slate-800">
                   {section.paragraphs.map((paragraph) => (
-                    <p key={paragraph}>{paragraph}</p>
+                    <p key={paragraph.text}>
+                      <WaiverText paragraph={paragraph} />
+                    </p>
                   ))}
                 </div>
                 <div className="flex items-start gap-3 rounded-lg border border-sky-200 bg-sky-50 p-4">
@@ -206,9 +180,11 @@ function GuestWaiverPage() {
             ))}
 
             <section className="space-y-7 px-6 py-7 sm:px-10 sm:py-9">
-              <div className="space-y-4 rounded-lg border-2 border-slate-800 bg-slate-50 p-5 font-bold leading-7 text-slate-950">
+              <div className="space-y-4 rounded-lg border-2 border-slate-800 bg-slate-50 p-5 leading-7 text-slate-950">
                 {finalGuestWaiverAcknowledgement.map((paragraph) => (
-                  <p key={paragraph}>{paragraph}</p>
+                  <p key={paragraph.text}>
+                    <WaiverText paragraph={paragraph} />
+                  </p>
                 ))}
               </div>
 
@@ -249,7 +225,19 @@ function GuestWaiverPage() {
                     max={adultBirthDate.toISOString().slice(0, 10)}
                     required
                   />
-                  <p className="text-sm text-muted-foreground">The signer must be 18 or older.</p>
+                </div>
+                <div className="space-y-2 sm:col-span-2">
+                  <Label htmlFor="email">Email</Label>
+                  <Input
+                    id="email"
+                    type="email"
+                    autoComplete="email"
+                    value={form.email}
+                    onChange={(event) => setField('email', event.target.value)}
+                    disabled={mutation.isPending}
+                    required
+                    maxLength={254}
+                  />
                 </div>
               </div>
 
@@ -286,7 +274,6 @@ function GuestWaiverPage() {
                   !form.firstName.trim() ||
                   !form.lastName.trim() ||
                   !form.email.trim() ||
-                  !emailsMatch ||
                   !form.dateOfBirth ||
                   !form.signatureDataUrl ||
                   (isMock && !form.testAcknowledged)
