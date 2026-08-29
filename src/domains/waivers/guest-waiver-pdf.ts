@@ -1,8 +1,10 @@
 import { PDFDocument, StandardFonts, rgb, type PDFFont, type PDFPage } from 'pdf-lib'
 import {
   finalGuestWaiverAcknowledgement,
+  getGuestWaiverTextSegments,
   guestWaiverSections,
   sectionAcknowledgement,
+  type GuestWaiverParagraph,
 } from './guest-waiver-content'
 
 export type GuestWaiverPdfInput = {
@@ -61,6 +63,37 @@ export async function createGuestWaiverPdf(input: GuestWaiverPdfInput) {
   )
   document.setCreationDate(new Date(input.signedAt))
 
+  function wrapWaiverText(paragraph: GuestWaiverParagraph, size: number, maxWidth: number) {
+    const words = getGuestWaiverTextSegments(paragraph).flatMap((segment) =>
+      segment.text
+        .split(/\s+/)
+        .filter(Boolean)
+        .map((text) => ({ text, bold: segment.bold })),
+    )
+    const lines: Array<typeof words> = []
+    const spaceWidth = regular.widthOfTextAtSize(' ', size)
+    let line: typeof words = []
+    let lineWidth = 0
+
+    for (const word of words) {
+      const font = word.bold ? bold : regular
+      const wordWidth = font.widthOfTextAtSize(word.text, size)
+      const candidateWidth = lineWidth + (line.length > 0 ? spaceWidth : 0) + wordWidth
+
+      if (line.length > 0 && candidateWidth > maxWidth) {
+        lines.push(line)
+        line = []
+        lineWidth = 0
+      }
+
+      lineWidth += (line.length > 0 ? spaceWidth : 0) + wordWidth
+      line.push(word)
+    }
+
+    if (line.length > 0) lines.push(line)
+    return lines
+  }
+
   function addPage() {
     page = document.addPage([PAGE_WIDTH, PAGE_HEIGHT])
     page.drawRectangle({
@@ -91,24 +124,30 @@ export async function createGuestWaiverPdf(input: GuestWaiverPdfInput) {
     if (y - height < BOTTOM_MARGIN) addPage()
   }
 
-  function drawWrappedText(
-    text: string,
-    options: { font?: PDFFont; size?: number; lineHeight?: number; indent?: number } = {},
+  function drawWaiverText(
+    paragraph: GuestWaiverParagraph,
+    options: { size?: number; lineHeight?: number; indent?: number } = {},
   ) {
-    const font = options.font ?? regular
     const size = options.size ?? 9.2
     const lineHeight = options.lineHeight ?? 12.5
     const indent = options.indent ?? 0
-    const lines = wrapText(text, font, size, CONTENT_WIDTH - indent)
+    const lines = wrapWaiverText(paragraph, size, CONTENT_WIDTH - indent)
+    const spaceWidth = regular.widthOfTextAtSize(' ', size)
     ensureSpace(lines.length * lineHeight)
     for (const line of lines) {
-      page.drawText(line, {
-        x: MARGIN + indent,
-        y,
-        size,
-        font,
-        color: rgb(0.12, 0.15, 0.19),
-      })
+      let x = MARGIN + indent
+      for (const [index, word] of line.entries()) {
+        const font = word.bold ? bold : regular
+        if (index > 0) x += spaceWidth
+        page.drawText(word.text, {
+          x,
+          y,
+          size,
+          font,
+          color: rgb(0.12, 0.15, 0.19),
+        })
+        x += font.widthOfTextAtSize(word.text, size)
+      }
       y -= lineHeight
     }
   }
@@ -181,12 +220,12 @@ export async function createGuestWaiverPdf(input: GuestWaiverPdfInput) {
   }
 
   for (const section of guestWaiverSections) {
-    const firstParagraphLines = wrapText(section.paragraphs[0], regular, 9.2, CONTENT_WIDTH)
+    const firstParagraphLines = wrapWaiverText(section.paragraphs[0], 9.2, CONTENT_WIDTH)
     ensureSpace(34 + firstParagraphLines.length * 12.5)
     drawSectionHeading(section.title)
     for (const [index, paragraph] of section.paragraphs.entries()) {
       if (index === section.paragraphs.length - 1) {
-        const paragraphLines = wrapText(paragraph, regular, 9.2, CONTENT_WIDTH)
+        const paragraphLines = wrapWaiverText(paragraph, 9.2, CONTENT_WIDTH)
         const acknowledgementLines = wrapText(
           sectionAcknowledgement,
           regular,
@@ -195,7 +234,7 @@ export async function createGuestWaiverPdf(input: GuestWaiverPdfInput) {
         )
         ensureSpace(paragraphLines.length * 12.5 + acknowledgementLines.length * 12 + 31)
       }
-      drawWrappedText(paragraph)
+      drawWaiverText(paragraph)
       y -= 8
     }
     drawAcknowledgement(input.acknowledgements[section.id])
@@ -203,7 +242,7 @@ export async function createGuestWaiverPdf(input: GuestWaiverPdfInput) {
 
   drawSectionHeading('FINAL ACKNOWLEDGEMENT')
   for (const paragraph of finalGuestWaiverAcknowledgement) {
-    drawWrappedText(paragraph, { font: bold, size: 9.2, lineHeight: 12.5 })
+    drawWaiverText(paragraph, { size: 9.2, lineHeight: 12.5 })
     y -= 8
   }
 

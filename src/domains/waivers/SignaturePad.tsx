@@ -145,7 +145,7 @@ export function SignaturePad({ disabled, onChange }: SignaturePadProps) {
       />
       <div className="flex items-center justify-between gap-4">
         <p className="text-sm text-muted-foreground" aria-live="polite">
-          {hasSignature ? 'Signature captured' : 'Use your mouse, trackpad, or finger to sign.'}
+          {hasSignature ? 'Signature captured' : null}
         </p>
         <Button type="button" variant="outline" size="sm" onClick={clearCanvas} disabled={disabled}>
           Clear signature

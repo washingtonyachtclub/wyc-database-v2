@@ -12,35 +12,29 @@ const requiredAcknowledgement = z.boolean().refine((value) => value, {
   message: 'Every acknowledgement is required',
 })
 
-const guestWaiverSchema = z
-  .object({
-    acknowledgements: z.object({
-      assumptionOfRisk: requiredAcknowledgement,
-      consentToTreatment: requiredAcknowledgement,
-      indemnification: requiredAcknowledgement,
-      intro: requiredAcknowledgement,
-      miscellaneous: requiredAcknowledgement,
-      waiverAndRelease: requiredAcknowledgement,
-    }),
-    confirmEmail: z.string().trim().toLowerCase().email().max(254),
-    dateOfBirth: z.iso.date().refine((value) => {
-      const cutoff = new Date()
-      cutoff.setFullYear(cutoff.getFullYear() - 18)
-      return value <= cutoff.toISOString().slice(0, 10)
-    }, 'The signer must be at least 18 years old'),
-    email: z.string().trim().toLowerCase().email().max(254),
-    firstName: z.string().trim().min(1).max(60),
-    lastName: z.string().trim().min(1).max(60),
-    signatureDataUrl: z
-      .string()
-      .max(1_500_000)
-      .regex(/^data:image\/png;base64,[A-Za-z0-9+/]+=*$/),
-    testAcknowledged: z.boolean(),
-  })
-  .refine((data) => data.email === data.confirmEmail, {
-    message: 'Email addresses must match',
-    path: ['confirmEmail'],
-  })
+const guestWaiverSchema = z.object({
+  acknowledgements: z.object({
+    assumptionOfRisk: requiredAcknowledgement,
+    consentToTreatment: requiredAcknowledgement,
+    indemnification: requiredAcknowledgement,
+    intro: requiredAcknowledgement,
+    miscellaneous: requiredAcknowledgement,
+    waiverAndRelease: requiredAcknowledgement,
+  }),
+  dateOfBirth: z.iso.date().refine((value) => {
+    const cutoff = new Date()
+    cutoff.setFullYear(cutoff.getFullYear() - 18)
+    return value <= cutoff.toISOString().slice(0, 10)
+  }, 'The signer must be at least 18 years old'),
+  email: z.string().trim().toLowerCase().email().max(254),
+  firstName: z.string().trim().min(1).max(60),
+  lastName: z.string().trim().min(1).max(60),
+  signatureDataUrl: z
+    .string()
+    .max(1_500_000)
+    .regex(/^data:image\/png;base64,[A-Za-z0-9+/]+=*$/),
+  testAcknowledged: z.boolean(),
+})
 
 export type GuestWaiverInput = z.infer<typeof guestWaiverSchema>
 
@@ -83,7 +77,7 @@ export const submitGuestWaiver = createServerFn({ method: 'POST' })
         sha256,
       })
 
-      const { confirmEmail: _, testAcknowledged, ...submittedValues } = data
+      const { testAcknowledged, ...submittedValues } = data
       await db.insert(guestWaivers).values({
         id: acceptanceId,
         waiverVersion: guestWaiverVersion,
@@ -106,13 +100,20 @@ export const submitGuestWaiver = createServerFn({ method: 'POST' })
       }
     }
 
+    if (isMock) {
+      return {
+        success: true as const,
+        acceptanceId,
+        isMock: true as const,
+        objectKey,
+        sha256,
+        size: pdf.byteLength,
+        signedAt,
+      }
+    }
+
     return {
       success: true as const,
-      acceptanceId,
-      isMock,
-      objectKey,
-      sha256,
-      size: pdf.byteLength,
-      signedAt,
+      isMock: false as const,
     }
   })
