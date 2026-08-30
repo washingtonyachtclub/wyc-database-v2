@@ -33,8 +33,6 @@ export function usePayAndRenewMutation() {
     }) => payAndRenew({ data: input }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['renewals', 'status'] })
-      queryClient.invalidateQueries({ queryKey: ['members'] })
-      queryClient.invalidateQueries({ queryKey: ['stats', 'membership'] })
     },
   })
 }

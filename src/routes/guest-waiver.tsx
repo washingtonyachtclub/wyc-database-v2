@@ -5,13 +5,12 @@ import { Label } from '@/components/ui/label'
 import { SignaturePad } from '@/domains/waivers/SignaturePad'
 import {
   finalGuestWaiverAcknowledgement,
-  getGuestWaiverTextSegments,
   guestWaiverSections,
   sectionAcknowledgement,
-  type GuestWaiverParagraph,
 } from '@/domains/waivers/guest-waiver-content'
 import { submitGuestWaiver, type GuestWaiverInput } from '@/domains/waivers/server-fns'
 import { isDevEnvironment } from '@/lib/env'
+import { WaiverText } from '@/domains/waivers/WaiverText'
 import { useMutation } from '@tanstack/react-query'
 import { createFileRoute } from '@tanstack/react-router'
 import { useState } from 'react'
@@ -29,22 +28,12 @@ const initialForm: GuestWaiverInput = {
     miscellaneous: false,
     waiverAndRelease: false,
   },
-  dateOfBirth: '',
+  adultAcknowledged: false,
   email: '',
   firstName: '',
   lastName: '',
   signatureDataUrl: '',
   testAcknowledged: false,
-}
-
-function WaiverText({ paragraph }: { paragraph: GuestWaiverParagraph }) {
-  return getGuestWaiverTextSegments(paragraph).map((segment, index) =>
-    segment.bold ? (
-      <strong key={index}>{segment.text}</strong>
-    ) : (
-      <span key={index}>{segment.text}</span>
-    ),
-  )
 }
 
 function GuestWaiverPage() {
@@ -71,9 +60,6 @@ function GuestWaiverPage() {
   }
 
   const allSectionsAcknowledged = Object.values(form.acknowledgements).every(Boolean)
-  const adultBirthDate = new Date()
-  adultBirthDate.setFullYear(adultBirthDate.getFullYear() - 18)
-
   if (mutation.data?.success) {
     const result = mutation.data
     return (
@@ -214,19 +200,6 @@ function GuestWaiverPage() {
                   />
                 </div>
                 <div className="space-y-2 sm:col-span-2">
-                  <Label htmlFor="date-of-birth">Date of birth</Label>
-                  <Input
-                    id="date-of-birth"
-                    type="date"
-                    autoComplete="bday"
-                    value={form.dateOfBirth}
-                    onChange={(event) => setField('dateOfBirth', event.target.value)}
-                    disabled={mutation.isPending}
-                    max={adultBirthDate.toISOString().slice(0, 10)}
-                    required
-                  />
-                </div>
-                <div className="space-y-2 sm:col-span-2">
                   <Label htmlFor="email">Email</Label>
                   <Input
                     id="email"
@@ -239,6 +212,18 @@ function GuestWaiverPage() {
                     maxLength={254}
                   />
                 </div>
+              </div>
+
+              <div className="flex items-start gap-3 rounded-lg border border-sky-200 bg-sky-50 p-4">
+                <Checkbox
+                  id="adult-acknowledged"
+                  checked={form.adultAcknowledged}
+                  onCheckedChange={(checked) => setField('adultAcknowledged', checked === true)}
+                  disabled={mutation.isPending}
+                />
+                <Label htmlFor="adult-acknowledged" className="leading-5 text-slate-900">
+                  I confirm that I am 18 years of age or older.
+                </Label>
               </div>
 
               <div className="space-y-2">
@@ -274,7 +259,7 @@ function GuestWaiverPage() {
                   !form.firstName.trim() ||
                   !form.lastName.trim() ||
                   !form.email.trim() ||
-                  !form.dateOfBirth ||
+                  !form.adultAcknowledged ||
                   !form.signatureDataUrl ||
                   (isMock && !form.testAcknowledged)
                 }

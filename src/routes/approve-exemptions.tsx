@@ -63,9 +63,16 @@ function ApproveExemptionsPage() {
               className="flex flex-wrap items-center justify-between gap-3 rounded-md border p-4"
             >
               <div className="space-y-1">
-                <div className="font-semibold">
-                  {r.name || 'Unknown'}{' '}
-                  <span className="text-muted-foreground">#{r.wycNumber}</span>
+                <div className="flex flex-wrap items-center gap-2 font-semibold">
+                  <span>
+                    {r.name || 'Unknown'}{' '}
+                    <span className="text-muted-foreground">#{r.wycNumber}</span>
+                  </span>
+                  {!r.waiverComplete && (
+                    <span className="rounded-full bg-muted px-2 py-0.5 text-xs text-muted-foreground">
+                      Waiting for waiver
+                    </span>
+                  )}
                 </div>
                 <div className="text-sm text-muted-foreground">
                   Requesting <strong className="text-foreground">{r.requestedLabel}</strong> · paid
@@ -80,7 +87,10 @@ function ApproveExemptionsPage() {
                 >
                   Deny
                 </Button>
-                <Button disabled={busyId === r.index} onClick={() => decide('approve', r.index)}>
+                <Button
+                  disabled={busyId === r.index || !r.waiverComplete}
+                  onClick={() => decide('approve', r.index)}
+                >
                   {busyId === r.index ? 'Working…' : 'Approve'}
                 </Button>
               </div>

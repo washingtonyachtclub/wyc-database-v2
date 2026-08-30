@@ -1,179 +1,256 @@
 # Waiver Plan
 
-## Goal
+## Status and delivery sequence
 
-Replace the WordPress waiver forms with forms owned by database v2 while preserving
-the current member and guest waiver experiences exactly. The two waivers remain
-separate and are not consolidated, rewritten, or simplified.
+The guest waiver is complete and deployed. It has a public `/guest-waiver` route, a
+mobile signature pad, server-side validation, deterministic PDF generation, private R2
+storage, and durable `guest_waivers` metadata. Development uses a clearly marked mock
+waiver and the development R2 bucket. Production uses the real agreement and production
+bucket. The guest flow does not email the executed PDF.
 
-## Fixed decisions
+The remaining member work is split into two pull requests:
 
-- Maintain two independent forms:
-  - the new-member waiver currently included in the WordPress join form;
-  - the general guest Participant Agreement.
-- Copy each form exactly, including its text, headings, capitalization, emphasis,
-  acknowledgements, checkboxes, fields, and signature requirement.
-- Preserve the current differences between the forms. Do not adapt the member
-  language for guests or the guest language for members.
-- Keep the system limited to participants who are at least 18 years old.
-- Require the member waiver for every new membership application and each membership
-  renewal, whether the renewal covers one quarter or one year.
-- Keep the guest waiver as a standalone workflow with no account or member linkage.
-  Store and search guest submissions by the name and email fields already collected by
-  the current Participant Agreement.
-- Make both signing experiences work well on mobile devices.
-- Email the signer a copy of the executed waiver PDF.
-- Do not migrate historical WordPress or RightSignature submissions. Existing records
-  remain in their current systems and archives.
-- Do not add geolocation collection.
+1. **Member waiver on renewals:** add the shared member-waiver record, make an
+   existing-member renewal a durable workflow, and require its waiver before applying
+   the membership extension.
+2. **New-member signup:** implement the complete application flow in
+   [new-member-signup-plan.md](./new-member-signup-plan.md) and link its waiver to the
+   same `member_waivers` table.
 
-## Entry flow boundaries
+The first pull request is implemented on `codex/member-waiver-renewals`.
 
-### New members
+## Shared waiver decisions
 
-The new-member waiver is embedded in Stage B of the signup flow after payment. The
-application and its `membership_payments` row already exist, but the application does
-not yet have a resolved WYC number. The waiver acceptance links to the application.
-Completing the waiver and the other Stage B requirements moves the application toward
-human review; it does not activate the membership by itself.
+- Keep `guest_waivers` and `member_waivers` separate. The forms and relationships have
+  different lifecycles.
+- Use one append-only row for every completed signing event. Never overwrite an
+  executed waiver.
+- Require all fields and acknowledgements on the server. Both forms use a required
+  `I confirm that I am 18 years of age or older` acknowledgement instead of collecting
+  a full birthdate.
+- Store a waiver-version identifier with every row. A content change introduces a new
+  identifier; it does not change old PDFs or rows.
+- Treat the executed PDF as the canonical human-readable record. It contains the full
+  waiver text, submitted values, signature, signing time, and acceptance ID.
+- Store PDFs in the private `wyc-waivers-dev` and `wyc-waivers-prod` R2 buckets. Do not
+  expose either bucket through a public CDN.
+- Use non-guessable object keys and never overwrite a PDF.
+- Do not retain a separate raw signature image after the PDF is generated.
+- Do not migrate historical WordPress or RightSignature submissions.
+- Do not collect geolocation.
 
-### Existing-member renewals
+## Pull request 1: member waiver on renewals
 
-Opening the renewal page does not create a record. A successful Square payment creates
-a `membership_renewals` row and its linked `membership_payments` row without changing
-the member's expiry quarter. The renewal page then shows the member waiver instead of
-another payment form. The final acceptance links to that renewal.
+### Goal
 
-After the waiver and PDF are complete, renewal reconciliation applies the frozen target
-expiry and completes the renewal. Returning to the renewal page then shows its ordinary
-state using the updated expiry, including the existing prepayment-cap behavior.
+A successful payment records money received but does not immediately extend the
+membership. It creates an open renewal and sends the member to the waiver. The member's
+expiry changes only after the waiver PDF and acceptance row exist. Refreshing or leaving
+the page never loses the paid renewal and never asks the member to pay twice.
 
-### Guests
+### Data model
 
-The guest Participant Agreement remains an independent public form. A guest does not
-create or use a WYC account. Submission creates a self-contained guest acceptance
-identified by the submitted name and email address.
+#### `membership_renewals`
 
-## Signing records
+One row owns each new renewal workflow:
 
-Create a new acceptance for every signing event. Never overwrite a previous member,
-renewal, or guest acceptance. Use separate member and guest acceptance tables because
-the forms, relationships, and lifecycles are different.
+- `id`: random UUID primary key;
+- `wyc_number`: the existing member, indexed as a logical relationship because the
+  legacy `WYCDatabase` MyISAM table cannot be a foreign-key target;
+- `previous_expire_qtr`: the expiry observed when the renewal was created;
+- `target_expire_qtr`: the frozen expiry to apply after all requirements are complete;
+- `tier` and `duration`: the purchased membership selection;
+- `source`: paid or dues-exempt;
+- `created_at`: when the workflow was recorded;
+- `completed_at`: null while the renewal still needs a waiver, then set in the same
+  transaction that updates the member;
+- `closed_at`: set when an exemption request is denied or cancelled without completing
+  the renewal.
 
-### Member waiver linkage
+The row owns workflow state. It does not duplicate the Square transaction or the
+executed waiver.
 
-A member acceptance belongs to exactly one workflow:
+#### `membership_payments`
 
-- `application_id` for a new-member application;
-- `renewal_id` for an existing-member renewal.
+This remains the financial ledger:
 
-Enforce that exactly one of those foreign keys is present. Make each foreign key unique
-so one application or renewal cannot accidentally acquire multiple completed waivers.
-Do not use a bare WYC number as the renewal relationship because it would identify the
-member but not the specific renewal that required the waiver.
+- add nullable unique `renewal_id` for new renewal payments;
+- make `square_payment_id` unique when present;
+- keep `wyc_number`, amount, currency, tier, duration, Square IDs, status, and audit
+  timestamps;
+- preserve the existing expiry snapshot fields for historical compatibility even
+  though the linked renewal owns the frozen expiry for new workflows.
 
-The presence of a complete acceptance and stored PDF is the source of truth for waiver
-completion. Avoid a second independently editable waiver-status value on the
-application or renewal.
+Existing ledger rows remain valid with a null `renewal_id`. New self-service renewal
+payments must link to a renewal. The migration does not invent renewal rows for old
+payments.
 
-### Renewal coordination
+#### `member_waivers`
 
-`membership_renewals` owns the membership-extension workflow. It records the member,
-previous expiry, frozen target expiry, selected tier and duration, creation time, and a
-nullable completion time. `membership_payments` links to it but remains the financial
-record.
+One row records the completed member waiver:
 
-The renewal page reads the current state without creating or mutating anything:
+- `id`: random UUID primary key and PDF acceptance ID;
+- nullable unique `renewal_id`;
+- nullable unique `application_id`, reserved for the application workflow;
+- a constraint requiring exactly one workflow link;
+- `waiver_version`;
+- signer name and email snapshots from the authenticated member record;
+- `submitted_values` JSON for all acknowledgements and member-waiver-specific fields;
+- `signed_at`;
+- unique private R2 `object_key`;
+- `pdf_sha256`, `pdf_size`, and `pdf_content_type`.
 
-- no open renewal: show the ordinary renewal page;
-- paid open renewal without a waiver: show the waiver requirement and no payment form;
-- completed renewal: no longer open, so show the ordinary renewal page using the new
-  expiry and existing prepayment-cap rules.
+This pull request writes only `renewal_id`. It does not create placeholder application
+rows or member-waiver rows. The application foreign key is added when
+`membership_applications` exists; until then no server path accepts an application ID.
 
-Payment completion and waiver completion both ask a renewal coordinator to reevaluate
-the renewal. The coordinator alone updates the member's expiry, and only when all
-currently configured requirements are satisfied. The waiver submission code records
-the waiver but does not directly renew the member.
+#### `renewal_questionnaire`
 
-If waivers stop being a renewal requirement later, change the coordinator's requirement
-policy and reconcile open renewals. The payment, waiver, and membership schemas do not
-need to change.
+New questionnaire rows link to `renewal_id` so answers belong to a specific renewal,
+not merely to a member and quarter. Historical rows remain unchanged. The coordinator
+uses the linked answers when applying member-category changes.
 
-### Acceptance contents
+### Runtime sequence
 
-Each acceptance records at least:
+1. The authenticated member opens `/renew-membership`.
+2. With no open renewal, the route shows the normal questionnaire and payment flow.
+3. The server computes and freezes the previous and target expiry quarters.
+4. Square completes the charge.
+5. One database transaction creates the open `membership_renewals` row, its
+   `membership_payments` row, and linked questionnaire row. It does not update the
+   member's expiry.
+6. Send an immediate `Complete your WYC renewal` email linking to `/renew-membership`.
+   It says that payment was received, the waiver is still required, and the member does
+   not need to pay again. The wording says `if you have not already signed` so it remains
+   accurate if the member completes the waiver before the email arrives.
+7. The route reloads into the paid, waiver-required state. It never shows another card
+   form for that open renewal.
+8. The member reviews the member waiver, confirms every acknowledgement, and signs.
+9. The server validates the submission, generates the PDF, uploads it to private R2,
+   and inserts the unique `member_waivers` row.
+10. The renewal coordinator runs. It locks or rechecks the open workflow, applies the
+    frozen expiry and category idempotently, and sets `completed_at`. The new workflow
+    tables are transactional; the legacy MyISAM member table is not, so a retry resumes
+    and converges if execution stops between those writes.
+11. The ordinary renewal confirmation email is sent after commit. Email failure does
+    not undo the completed renewal.
+12. The route returns to the ordinary membership state using the updated expiry and
+    existing prepayment-cap rules.
 
-- its application, renewal, or standalone guest submission, as applicable;
-- the submitted legal name and email address;
-- all submitted form values, including acknowledgements and checkbox responses;
-- the 18-or-older response and birthdate fields currently present on the form;
-- the signing timestamp;
-- the signature;
-- the private object-storage key for the executed PDF;
-- a SHA-256 hash of the executed PDF.
+The route derives the visible state from durable rows:
 
-The exact schema should follow existing database v2 conventions. The application must
-enforce required fields server-side rather than relying only on browser validation.
+- no open renewal: show the ordinary renewal form;
+- open renewal without `member_waivers`: show only the waiver;
+- completed renewal: show the ordinary state using the updated membership expiry.
 
-## Executed PDFs
+### Failure and retry behavior
 
-Generate one self-contained PDF for every completed waiver. It is the canonical
-human-readable signing record and includes:
+- **Square fails:** create no renewal or ledger row and allow another payment attempt.
+- **Square succeeds but the database write fails:** never tell the member to pay again.
+  Log the Square identifiers and show a contact-the-club reconciliation message.
+- **PDF generation or R2 upload fails:** create no waiver row. Keep the paid renewal
+  open and let the member retry the waiver without another payment.
+- **R2 succeeds but the waiver insert fails:** keep the renewal open. The private orphan
+  object is safe and can be cleaned up separately.
+- **The waiver is submitted twice:** the unique `renewal_id` prevents two completed
+  acceptances. Return the already-completed state rather than creating another row.
+- **Completion is retried:** the coordinator is idempotent. It rechecks `completed_at`
+  and sets the member expiry to the greater of its current and frozen target values. An
+  already-stored waiver can resume the coordinator without creating a second waiver.
+- **Confirmation email fails:** the renewal remains complete because email is
+  post-commit and non-blocking.
 
-- the complete text and presentation of the applicable waiver;
-- every acknowledgement and checkbox response;
-- every required signer field;
-- the signature;
-- the signing timestamp;
-- a unique acceptance identifier.
+### Dues-exemption renewals
 
-Do not retain only an isolated signature image. The executed PDF must show the terms
-to which the signature was attached. Retaining the raw signature asset separately is
-acceptable, but it does not replace the PDF.
+A dues-exemption renewal has two requirements: an officer approval and a completed
+member waiver. The easiest flow prevents approval until the waiver is present:
 
-No generalized waiver-versioning system is required initially. Each executed PDF is
-self-contained, and the two canonical form definitions must not be edited silently.
-If either waiver changes later, preserve the old definition and introduce explicit
-versions as part of that change.
+1. Requesting an exemption creates the `dues_exemption_requests` row, an open
+   `membership_renewals` row with `source = 'exempt'`, and its questionnaire row in one
+   transaction.
+2. Send an immediate email asking the member to sign the waiver before officers can
+   approve the exemption.
+3. `/renew-membership` shows the open renewal and waiver. It does not show payment.
+4. The exemption approval page derives one of two actionable labels:
+   - `Waiting for waiver`: approval is disabled, denial remains available;
+   - `Ready to review`: the waiver exists and approval is enabled.
+5. The approval server function rechecks the waiver even when the UI enabled the
+   button. Approval inserts the zero-dollar `EXEMPT` ledger row and completes the
+   renewal in the same transaction.
+6. Denial or cancellation closes the renewal without changing membership. A waiver
+   already signed for that request remains an append-only historical record.
 
-## Object storage and retention
+This avoids an `approved but waiting for waiver` state. The future approvals interface
+can use the same requirement-label pattern without changing the exemption tables again.
 
-Store executed PDFs in private object storage. The same provider may also host public
-website images, but waiver files must use a separate private bucket or equivalent
-access boundary and must never receive public image-hosting or CDN access rules.
+### Member waiver form
 
-- Use unique, non-guessable object keys and never overwrite an executed waiver.
-- Allow downloads only through authenticated application authorization or short-lived
-  signed URLs.
-- Retain each executed waiver and its acceptance metadata for seven years after the
-  associated membership or participation period ends.
-- Prevent ordinary cleanup or image lifecycle rules from deleting waiver files.
-- Preserve records subject to an incident or legal hold beyond the ordinary retention
-  period.
+Reuse the guest-waiver implementation where the mechanics match:
 
-## Implementation outline
+- the responsive layout and `SignaturePad` component;
+- server-side age, field, acknowledgement, and signature validation;
+- versioned TypeScript content;
+- deterministic `pdf-lib` generation;
+- SHA-256 metadata and private R2 upload.
 
-1. Capture the two current WordPress forms as the canonical member and guest
-   definitions and verify their rendered text and fields against the live forms.
-2. Build responsive database v2 forms that reproduce each definition exactly.
-3. Add member acceptance storage linked to applications or renewals and standalone
-   guest acceptance storage searchable by name and email.
-4. Generate and privately store executed PDFs after successful submission.
-5. Email the executed PDF to the signer.
-6. Expose waiver completion as a server-side prerequisite that the signup, renewal,
-   guest, and approval flows can consume.
+The member form uses the distinct member agreement currently shown in Step 4 of the
+WordPress signup form. It has its own content definition and PDF generator so changes
+do not affect the guest agreement. For an authenticated renewal, display the member's
+existing name and email read-only and store them as signing-time snapshots. The member
+enters only a signature and confirms that they are at least 18 years old.
 
-## Out of scope
+The guest agreement already states that the signer acknowledges being 18 or older. Add
+the same explicit required checkbox to its UI and executed PDF, stop collecting the
+birthdate, and introduce a new guest waiver version. Existing executed PDFs remain
+unchanged. The guest schema migration removes the typed `date_of_birth` column and the
+birthdate and raw signature image from stored JSON. New records store the adult
+acknowledgement without retaining the raw signature image in the database.
 
-- Reminder and resume-link behavior after a signer leaves an incomplete member flow.
-- Changing, reviewing, or consolidating the waiver language.
-- Changing the membership payment or human-approval flow.
-- Migrating historical waiver records.
-- Building generalized template-version management before either waiver changes.
+Use `waivers/v1/member/{year}/{acceptanceId}.pdf` for production objects and the
+existing mock prefix in development.
 
-## Remaining TODOs
+### Implementation checklist
 
-- Select the private object-storage provider and access configuration alongside the
-  image-hosting decision.
-- Select the server-side PDF-generation approach and verify that it preserves the
-  forms' emphasis, layout, checkbox state, and mobile signature output.
+- [x] Verify the distinct member-waiver legal text and fields in the WordPress flow.
+- [x] Use authenticated name and email snapshots without requiring re-entry.
+- [x] Require both a waiver and officer approval for dues-exemption renewals.
+- [x] Send an immediate incomplete-renewal email and a final completion email, without
+      attaching the executed PDF.
+- [x] Replace birthdate collection with an explicit adult acknowledgement in both forms
+      and migrate `guest_waivers`.
+- [x] Add the schema and generated migration, preserving historical ledger and
+      questionnaire rows.
+- [x] Add renewal row, payment, and questionnaire writes in one transaction after a
+      completed Square payment.
+- [x] Make Square payment/database reconciliation explicit and prevent repeat payment.
+- [x] Add open-renewal loading to the renewal route.
+- [x] Add the immediate incomplete-renewal and exemption-waiver emails.
+- [x] Add member-waiver content, form, server validation, PDF generation, and R2 upload.
+- [x] Add the idempotent renewal coordinator.
+- [x] Move expiry and category updates from payment time to coordinator completion.
+- [x] Send the ordinary renewal confirmation only after coordinator completion.
+- [x] Gate dues-exemption approval on the waiver and complete the renewal after approval.
+- [x] Preserve the legacy membership-processing path until its WordPress input is
+      retired; do not manufacture new digital-waiver rows for imported historical forms.
+- [x] Verify the generated migration, type checking, production build, and executed PDF
+      rendering.
+- [ ] Manually exercise desktop and mobile success, refresh/resume, duplicate submit,
+      declined payment, PDF/R2 failure, and payment/database reconciliation cases.
+
+## Retention and access
+
+Retain executed waiver PDFs and metadata for seven years after the associated
+membership or participation period ends. Prevent ordinary R2 cleanup rules from
+deleting them. Preserve records subject to an incident or legal hold beyond the normal
+retention period. Any future download path must require officer authorization or a
+short-lived signed URL.
+
+## Out of scope for pull request 1
+
+- The public membership application UI, payment flow, completion link, review queue,
+  and approval logic.
+- Historical waiver migration.
+- Generalized waiver-template administration.
+- An officer PDF browser or download UI.
+- Automated orphan-object cleanup or legal-hold tooling.
+- Delayed or repeated incomplete-renewal reminder jobs beyond the immediate email.

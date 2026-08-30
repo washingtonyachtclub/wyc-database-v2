@@ -1,5 +1,5 @@
-const SIGNATURE_NAME = 'Eshan Arora'
-const SIGNATURE_POSITION = 'Webmaster, WYC'
+const WELCOME_SIGNATURE_NAME = 'Eshan Arora and Zachary Taylor'
+const WELCOME_SIGNATURE_POSITION = 'Co-Commodores, WYC'
 
 export function newMemberEmail(
   member: { first: string; last: string; wycNumber: number },
@@ -26,8 +26,8 @@ It is definitely the best way to keep up with everything the club is up to.
 
 If you have any questions feel free to ask in discord!
 
-${SIGNATURE_NAME}
-${SIGNATURE_POSITION}`
+${WELCOME_SIGNATURE_NAME}
+${WELCOME_SIGNATURE_POSITION}`
 }
 
 export function newMemberEmailFallback(member: {
@@ -53,8 +53,8 @@ It is definitely the best way to keep up with everything the club is up to.
 
 If you have any questions feel free to ask in discord!
 
-${SIGNATURE_NAME}
-${SIGNATURE_POSITION}`
+${WELCOME_SIGNATURE_NAME}
+${WELCOME_SIGNATURE_POSITION}`
 }
 
 export function returningMemberEmail(
@@ -76,4 +76,30 @@ Your WYC Number is: ${wycNumber}
 Your membership is now active through ${newExpireQtrSchoolText}.
 You can review your ratings and information at database.washingtonyachtclub.org.
 ${mismatchNote}`
+}
+
+export function renewalWaiverRequiredEmail(
+  first: string,
+  last: string,
+  targetQuarter: string,
+): string {
+  return `Hello ${first} ${last},
+
+We received your WYC membership payment for membership through ${targetQuarter}.
+
+Your membership will not be extended until you sign the member waiver. If you have not already signed it, return here to complete your renewal:
+https://database.washingtonyachtclub.org/renew-membership`
+}
+
+export function exemptionWaiverRequiredEmail(
+  first: string,
+  last: string,
+  targetQuarter: string,
+): string {
+  return `Hello ${first} ${last},
+
+We received your WYC dues-exemption request for ${targetQuarter}.
+
+An officer cannot approve the request until you sign the member waiver. If you have not already signed it, return here:
+https://database.washingtonyachtclub.org/renew-membership`
 }
