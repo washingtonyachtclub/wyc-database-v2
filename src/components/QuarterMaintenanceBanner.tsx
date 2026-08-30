@@ -42,10 +42,25 @@ export function QuarterMaintenanceBanner() {
     renewalMessage = `Renewal quarter needs bumping in compute-renewal.ts before ${reminder.quarterName} ends${window}.`
   }
 
-  if (maintenanceMessages.length === 0 && !renewalMessage) return null
+  if (!health.currentQuarterOverdue && maintenanceMessages.length === 0 && !renewalMessage) {
+    return null
+  }
 
   return (
     <>
+      {health.currentQuarterOverdue && (
+        <div className="border-b border-destructive/40 bg-destructive text-destructive-foreground">
+          <div className="mx-auto flex max-w-7xl flex-wrap items-center justify-center gap-3 px-4 py-2 sm:px-6 lg:px-8">
+            <span className="text-sm font-medium">
+              Current quarter is stale: {health.currentQuarterOverdue.quarterName} ended{' '}
+              {health.currentQuarterOverdue.endDate}.
+            </span>
+            <Button asChild size="sm" variant="secondary">
+              <Link to="/set-current-quarter">Set current quarter</Link>
+            </Button>
+          </div>
+        </div>
+      )}
       {maintenanceMessages.length > 0 && (
         <div className="border-b border-amber-300 bg-amber-50 text-amber-900">
           <div className="mx-auto flex max-w-7xl flex-wrap items-center justify-center gap-3 px-4 py-2 sm:px-6 lg:px-8">
