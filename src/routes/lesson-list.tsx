@@ -190,7 +190,7 @@ function LessonCard({ entry, muted }: { entry: PublicLesson; muted?: boolean }) 
 }
 
 function EnrollAction({ lessonIndex, isFull }: { lessonIndex: number; isFull: boolean }) {
-  const href = `/signup/${lessonIndex}`
+  const href = `https://database.washingtonyachtclub.org/signup/${lessonIndex}`
 
   if (isFull) {
     return (
