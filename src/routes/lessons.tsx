@@ -13,7 +13,7 @@ import { cn } from '@/lib/utils'
 import { useQuery, useSuspenseQuery } from '@tanstack/react-query'
 import { createFileRoute, useNavigate } from '@tanstack/react-router'
 import { getCoreRowModel, getSortedRowModel, useReactTable } from '@tanstack/react-table'
-import { Plus, RefreshCw } from 'lucide-react'
+import { ExternalLink, Plus, RefreshCw } from 'lucide-react'
 import { useMemo, useState } from 'react'
 import { z } from 'zod'
 import { columns } from '../components/lessons/columns'
@@ -274,6 +274,12 @@ function LessonsPage() {
             {syncing ? 'Syncing…' : 'Sync calendar'}
           </Button>
         )}
+        <Button variant="outline" asChild>
+          <a href="/lesson-list" target="_blank" rel="noopener noreferrer">
+            Lesson list
+            <ExternalLink className="h-4 w-4" />
+          </a>
+        </Button>
         {syncMsg && <span className="text-sm text-muted-foreground">{syncMsg}</span>}
       </div>
 
