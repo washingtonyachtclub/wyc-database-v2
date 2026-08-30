@@ -27,6 +27,7 @@ import type {
   UwStatus,
 } from '@/domains/renewals/questionnaire'
 import { tierForUwStatus } from '@/domains/renewals/questionnaire'
+import { MemberWaiverForm } from '@/domains/waivers/MemberWaiverForm'
 import { useQuery, useSuspenseQuery } from '@tanstack/react-query'
 import { createFileRoute, redirect, useNavigate } from '@tanstack/react-router'
 import { CircleHelp } from 'lucide-react'
@@ -85,9 +86,8 @@ const SPONSOR_HELPER =
 const SPONSEE_HELPER =
   'If a current WYC member is willing to sponsor, we will pair you via email for the two of you to coordinate a time to visit the IMA for you to purchase a Plus One membership through them.'
 
-type RenewResult = {
-  newExpireQtr: number
-  quarterLabel: string
+type CompletionResult = {
+  quarterLabel: string | null
   amountCents: number
   currency: string
   emailSent: boolean
@@ -112,7 +112,9 @@ function RenewMembershipPage() {
   )
   const [error, setError] = useState<string | null>(null)
   const [submitting, setSubmitting] = useState(false)
-  const [result, setResult] = useState<RenewResult | null>(null)
+  const [result, setResult] = useState<CompletionResult | null>(null)
+  const [requiredEmailSimulated, setRequiredEmailSimulated] = useState(false)
+  const [exemptionEmailSimulated, setExemptionEmailSimulated] = useState(false)
   const [exemptRequested, setExemptRequested] = useState(false)
 
   const cardRef = useRef<SquareCardHandle>(null)
@@ -159,7 +161,7 @@ function RenewMembershipPage() {
     try {
       const sourceId = await cardRef.current!.tokenize()
       const data = await mutation.mutateAsync({ duration, sourceId, questionnaire })
-      setResult(data)
+      setRequiredEmailSimulated(data.emailSimulated)
     } catch (e: any) {
       setError(e?.message ?? 'Something went wrong. Please try again.')
     } finally {
@@ -177,7 +179,8 @@ function RenewMembershipPage() {
             received.
           </p>
           <p className="mt-1">
-            Your membership is now active through <strong>{result.quarterLabel}</strong>.
+            Your membership is now active through{' '}
+            <strong>{result.quarterLabel ?? 'the requested quarter'}</strong>.
           </p>
         </div>
         {result.emailSent && (
@@ -193,10 +196,55 @@ function RenewMembershipPage() {
     )
   }
 
+  if (status.openRenewal) {
+    if (!status.openRenewal.waiverComplete) {
+      return (
+        <div>
+          <MemberWaiverForm
+            member={status.member}
+            renewal={status.openRenewal}
+            onCompleted={(completion) =>
+              setResult({
+                ...completion,
+                amountCents: status.openRenewal!.amountCents,
+                currency: status.openRenewal!.currency,
+              })
+            }
+          />
+          {requiredEmailSimulated && (
+            <div className="w-full px-4 pb-4 sm:px-6 lg:px-8">
+              <EmailSimulatedNotice />
+            </div>
+          )}
+        </div>
+      )
+    }
+
+    if (status.openRenewal.source === 'exempt') {
+      return (
+        <ExemptionRequestedScreen
+          quarterLabel={status.openRenewal.targetLabel}
+          waiverComplete
+          emailSimulated={exemptionEmailSimulated}
+          onCancelled={() => setExemptRequested(false)}
+        />
+      )
+    }
+
+    return (
+      <div className="p-4 max-w-md space-y-4">
+        <h1 className="text-2xl font-bold">Finishing renewal</h1>
+        <p>Your waiver is stored. Refresh this page if your membership status does not update.</p>
+      </div>
+    )
+  }
+
   if (status.exemptionRequest || exemptRequested) {
     return (
       <ExemptionRequestedScreen
         quarterLabel={status.exemptionRequest?.label ?? status.preview.quarterly.label}
+        waiverComplete={false}
+        emailSimulated={exemptionEmailSimulated}
         onCancelled={() => setExemptRequested(false)}
       />
     )
@@ -343,7 +391,10 @@ function RenewMembershipPage() {
       <DuesExemptSection
         targetQuarterLabel={status.preview.quarterly.label}
         questionnaire={questionnaire}
-        onRequested={() => setExemptRequested(true)}
+        onRequested={(emailSimulated) => {
+          setExemptionEmailSimulated(emailSimulated)
+          setExemptRequested(true)
+        }}
       />
     </div>
   )
@@ -390,7 +441,7 @@ function DuesExemptSection({
 }: {
   targetQuarterLabel: string
   questionnaire: QuestionnaireAnswers | null
-  onRequested: () => void
+  onRequested: (emailSimulated: boolean) => void
 }) {
   const [showModal, setShowModal] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -400,9 +451,9 @@ function DuesExemptSection({
     if (!questionnaire) return
     setError(null)
     try {
-      await mutation.mutateAsync(questionnaire)
+      const result = await mutation.mutateAsync(questionnaire)
       setShowModal(false)
-      onRequested()
+      onRequested(result.emailSimulated)
     } catch (e: any) {
       setError(e?.message ?? 'Something went wrong. Please try again.')
     }
@@ -467,9 +518,13 @@ function DuesExemptSection({
 
 function ExemptionRequestedScreen({
   quarterLabel,
+  waiverComplete,
+  emailSimulated,
   onCancelled,
 }: {
   quarterLabel: string
+  waiverComplete: boolean
+  emailSimulated: boolean
   onCancelled: () => void
 }) {
   const [showModal, setShowModal] = useState(false)
@@ -491,12 +546,24 @@ function ExemptionRequestedScreen({
     <div className="p-4 max-w-md space-y-4">
       <h1 className="text-2xl font-bold">Dues Exemption Requested</h1>
       <div className="rounded-md border border-green-300 bg-green-50 p-4 text-green-800">
-        <p className="font-semibold">Your request is in.</p>
+        <p className="font-semibold">
+          {waiverComplete ? 'Your waiver is signed.' : 'Your request is in.'}
+        </p>
         <p className="mt-1">
-          We've submitted your dues-exemption request for <strong>{quarterLabel}</strong>. A club
-          officer will review it, and you'll get an email once it's approved.
+          {waiverComplete ? (
+            <>
+              Your dues-exemption request for <strong>{quarterLabel}</strong> is ready for officer
+              review. Your membership will update automatically after approval.
+            </>
+          ) : (
+            <>
+              We've submitted your dues-exemption request for <strong>{quarterLabel}</strong>. Sign
+              the member waiver before an officer can approve it.
+            </>
+          )}
         </p>
       </div>
+      {emailSimulated && <EmailSimulatedNotice />}
       <Button variant="outline" className="w-full" onClick={() => setShowModal(true)}>
         Cancel request
       </Button>

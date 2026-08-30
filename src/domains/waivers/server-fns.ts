@@ -13,6 +13,7 @@ const requiredAcknowledgement = z.boolean().refine((value) => value, {
 })
 
 const guestWaiverSchema = z.object({
+  adultAcknowledged: requiredAcknowledgement,
   acknowledgements: z.object({
     assumptionOfRisk: requiredAcknowledgement,
     consentToTreatment: requiredAcknowledgement,
@@ -21,11 +22,6 @@ const guestWaiverSchema = z.object({
     miscellaneous: requiredAcknowledgement,
     waiverAndRelease: requiredAcknowledgement,
   }),
-  dateOfBirth: z.iso.date().refine((value) => {
-    const cutoff = new Date()
-    cutoff.setFullYear(cutoff.getFullYear() - 18)
-    return value <= cutoff.toISOString().slice(0, 10)
-  }, 'The signer must be at least 18 years old'),
   email: z.string().trim().toLowerCase().email().max(254),
   firstName: z.string().trim().min(1).max(60),
   lastName: z.string().trim().min(1).max(60),
@@ -59,13 +55,14 @@ export const submitGuestWaiver = createServerFn({ method: 'POST' })
       pdf = await createGuestWaiverPdf({
         acceptanceId,
         acknowledgements: data.acknowledgements,
-        dateOfBirth: data.dateOfBirth,
+        adultAcknowledged: data.adultAcknowledged,
         email: data.email,
         firstName: data.firstName,
         isMock,
         lastName: data.lastName,
         signatureDataUrl: data.signatureDataUrl,
         signedAt,
+        testAcknowledged: data.testAcknowledged,
       })
       sha256 = createHash('sha256').update(pdf).digest('hex')
 
@@ -77,15 +74,22 @@ export const submitGuestWaiver = createServerFn({ method: 'POST' })
         sha256,
       })
 
-      const { testAcknowledged, ...submittedValues } = data
+      const submittedValues = {
+        adultAcknowledged: data.adultAcknowledged,
+        acknowledgements: data.acknowledgements,
+        email: data.email,
+        firstName: data.firstName,
+        lastName: data.lastName,
+      }
       await db.insert(guestWaivers).values({
         id: acceptanceId,
         waiverVersion: guestWaiverVersion,
         firstName: data.firstName,
         lastName: data.lastName,
         email: data.email,
-        dateOfBirth: data.dateOfBirth,
-        submittedValues: isMock ? { ...submittedValues, testAcknowledged } : submittedValues,
+        submittedValues: isMock
+          ? { ...submittedValues, testAcknowledged: data.testAcknowledged }
+          : submittedValues,
         signedAt: new Date(signedAt),
         objectKey,
         pdfSha256: sha256,

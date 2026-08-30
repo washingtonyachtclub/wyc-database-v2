@@ -4,6 +4,14 @@
 
 Replace the WordPress form and CSV-processing workflow with a public signup owned by the database application. Applicants pay immediately, finish all required contact and waiver information, and then enter a manual review queue. Review protects against duplicates and processing errors rather than deciding whether someone may join.
 
+## Delivery boundary
+
+This plan is implemented as the pull request after the member-waiver renewal workflow.
+It consumes the shared payment-ledger rules, member-waiver storage contract, PDF/R2
+services, and workflow-coordinator pattern established there. The entire public signup,
+completion, review, and approval flow remains together in this pull request rather than
+being divided into smaller delivery pull requests.
+
 ## Decisions
 
 - Use an unauthenticated bare route, tentatively `/join`.
@@ -64,7 +72,8 @@ The supplied HTML and CSV contain the following relevant fields:
 - Conditional membership questions: UW email, IMA membership or acknowledgement, and the UW-status-dependent Plus One question.
 - Contact: address lines, city, state, ZIP code, phone, and emergency-contact name, phone, and relationship.
 - Optional demographics: residential status, student level, gender identity and self-description, and selected communities or experiences.
-- Waiver-owned data: participant name, birthdate, signature, and signing date.
+- Waiver-owned data: authenticated application identity snapshot, adult acknowledgement,
+  signature, and signing date.
 - Payment: dues code, card details, and name on card.
 
 The new flow keeps the identity, UW email, IMA or Plus One, contact, emergency-contact, demographic, waiver, and payment concepts. It removes country, Student ID, registered-course upload, and student-quarter selection. Dues-exempt codes remain later work. Cardholder fields remain owned by the Square card component.
@@ -219,7 +228,8 @@ Membership applications and dues exemptions remain separate workflows. They may 
 
 ### 2. Schema and shared services
 
-- Add the UUID application, unified payment-ledger linkage, UW email, and emergency-contact schema.
+- Add the UUID application, application-side payment linkage, UW email, and emergency-contact schema.
+- Add the application relationship and foreign key to the existing `member_waivers` contract.
 - Extract server-side email normalization and duplicate matching.
 - Extract the shared Square catalog-order-payment operation used by renewal and signup.
 - Make membership-state and ledger writes transactional while keeping external-payment reconciliation explicit.
@@ -251,7 +261,6 @@ Membership applications and dues exemptions remain separate workflows. They may 
 
 ## Later work
 
-- Waiver-system implementation details.
 - Dues-exempt new members.
 - Discount or promotional codes.
 - General secondary-email management beyond the primary and UW fields.

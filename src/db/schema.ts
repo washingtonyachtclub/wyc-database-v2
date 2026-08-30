@@ -1,5 +1,7 @@
+import { sql } from 'drizzle-orm'
 import {
   char,
+  check,
   customType,
   date,
   datetime,
@@ -18,7 +20,6 @@ import {
   unique,
   varchar,
 } from 'drizzle-orm/mysql-core'
-import { sql } from 'drizzle-orm'
 
 const blobAsText = customType<{ data: string; driverData: Buffer }>({
   dataType() {
@@ -592,11 +593,33 @@ export const doorCodes = mysqlTable(
   (table) => [primaryKey({ columns: [table.index] }), unique('uq_door_codes_slug').on(table.slug)],
 )
 
+export const membershipRenewals = mysqlTable(
+  'membership_renewals',
+  {
+    id: char({ length: 36 }).notNull(),
+    wycNumber: int('wyc_number').notNull(),
+    source: varchar({ length: 20 }).notNull(),
+    tier: varchar({ length: 20 }).notNull(),
+    duration: varchar({ length: 20 }).notNull(),
+    previousExpireQtr: int('previous_expire_qtr').notNull(),
+    targetExpireQtr: int('target_expire_qtr').notNull(),
+    completedAt: timestamp('completed_at'),
+    closedAt: timestamp('closed_at'),
+    createdAt: timestamp('created_at').defaultNow().notNull(),
+  },
+  (table) => [
+    primaryKey({ columns: [table.id] }),
+    index('idx_membership_renewals_wyc').on(table.wycNumber),
+    index('idx_membership_renewals_open').on(table.wycNumber, table.completedAt, table.closedAt),
+  ],
+)
+
 export const membershipPayments = mysqlTable(
   'membership_payments',
   {
     index: int('_index').autoincrement().notNull(),
     wycNumber: int('wyc_number').notNull(),
+    renewalId: char('renewal_id', { length: 36 }),
     // null for non-payment renewals (e.g. dues-exempt).
     squarePaymentId: varchar('square_payment_id', { length: 255 }),
     squareOrderId: varchar('square_order_id', { length: 255 }),
@@ -611,7 +634,14 @@ export const membershipPayments = mysqlTable(
   },
   (table) => [
     primaryKey({ columns: [table.index] }),
+    unique('uq_membership_payments_renewal').on(table.renewalId),
+    unique('uq_membership_payments_square_payment').on(table.squarePaymentId),
     index('idx_membership_payments_wyc').on(table.wycNumber),
+    foreignKey({
+      columns: [table.renewalId],
+      foreignColumns: [membershipRenewals.id],
+      name: 'fk_membership_payments_renewal',
+    }),
   ],
 )
 
@@ -620,6 +650,7 @@ export const duesExemptionRequests = mysqlTable(
   {
     index: int('_index').autoincrement().notNull(),
     wycNumber: int('wyc_number').notNull(),
+    renewalId: char('renewal_id', { length: 36 }),
     // Target quarter frozen at request time; the grant is a no-op if already covered by approval.
     requestedExpireQtr: int('requested_expire_qtr').notNull(),
     status: varchar('status', { length: 20 }).notNull(), // 'pending' | 'approved' | 'denied' | 'cancelled'
@@ -631,8 +662,14 @@ export const duesExemptionRequests = mysqlTable(
   },
   (table) => [
     primaryKey({ columns: [table.index] }),
+    unique('uq_dues_exemption_requests_renewal').on(table.renewalId),
     index('idx_dues_exemption_requests_wyc').on(table.wycNumber),
     index('idx_dues_exemption_requests_status').on(table.status),
+    foreignKey({
+      columns: [table.renewalId],
+      foreignColumns: [membershipRenewals.id],
+      name: 'fk_dues_exemption_requests_renewal',
+    }),
   ],
 )
 
@@ -641,6 +678,7 @@ export const renewalQuestionnaire = mysqlTable(
   {
     index: int('_index').autoincrement().notNull(),
     wycNumber: int('wyc_number').notNull(),
+    renewalId: char('renewal_id', { length: 36 }),
     // Renewal quarter these answers were captured for.
     quarter: int('quarter').notNull(),
     uwStatus: varchar('uw_status', { length: 20 }).notNull(),
@@ -655,8 +693,51 @@ export const renewalQuestionnaire = mysqlTable(
   },
   (table) => [
     primaryKey({ columns: [table.index] }),
+    unique('uq_renewal_questionnaire_renewal').on(table.renewalId),
     index('idx_renewal_questionnaire_wyc').on(table.wycNumber),
     index('idx_renewal_questionnaire_status').on(table.status),
+    foreignKey({
+      columns: [table.renewalId],
+      foreignColumns: [membershipRenewals.id],
+      name: 'fk_renewal_questionnaire_renewal',
+    }),
+  ],
+)
+
+export const memberWaivers = mysqlTable(
+  'member_waivers',
+  {
+    id: char({ length: 36 }).notNull(),
+    renewalId: char('renewal_id', { length: 36 }),
+    applicationId: char('application_id', { length: 36 }),
+    waiverVersion: varchar('waiver_version', { length: 50 }).notNull(),
+    firstName: varchar('first_name', { length: 60 }).notNull(),
+    lastName: varchar('last_name', { length: 60 }).notNull(),
+    email: varchar({ length: 254 }).notNull(),
+    submittedValues: json('submitted_values').notNull(),
+    signedAt: timestamp('signed_at').notNull(),
+    objectKey: varchar('object_key', { length: 512 }).notNull(),
+    pdfSha256: char('pdf_sha256', { length: 64 }).notNull(),
+    pdfSize: int('pdf_size').notNull(),
+    pdfContentType: varchar('pdf_content_type', { length: 100 }).notNull(),
+  },
+  (table) => [
+    primaryKey({ columns: [table.id] }),
+    unique('uq_member_waivers_renewal').on(table.renewalId),
+    unique('uq_member_waivers_application').on(table.applicationId),
+    unique('uq_member_waivers_object_key').on(table.objectKey),
+    index('idx_member_waivers_email').on(table.email),
+    index('idx_member_waivers_name').on(table.lastName, table.firstName),
+    index('idx_member_waivers_signed_at').on(table.signedAt),
+    check(
+      'chk_member_waivers_workflow',
+      sql`(${table.renewalId} is not null) <> (${table.applicationId} is not null)`,
+    ),
+    foreignKey({
+      columns: [table.renewalId],
+      foreignColumns: [membershipRenewals.id],
+      name: 'fk_member_waivers_renewal',
+    }),
   ],
 )
 
@@ -668,7 +749,6 @@ export const guestWaivers = mysqlTable(
     firstName: varchar('first_name', { length: 60 }).notNull(),
     lastName: varchar('last_name', { length: 60 }).notNull(),
     email: varchar({ length: 254 }).notNull(),
-    dateOfBirth: date('date_of_birth', { mode: 'string' }).notNull(),
     submittedValues: json('submitted_values').notNull(),
     signedAt: timestamp('signed_at').notNull(),
     objectKey: varchar('object_key', { length: 512 }).notNull(),

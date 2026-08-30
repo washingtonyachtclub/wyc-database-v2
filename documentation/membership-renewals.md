@@ -1,135 +1,134 @@
 # Membership Renewals
 
-How existing members renew their own membership, and how dues exemptions are requested and approved.
-
 ## Overview
 
-Logged-in members renew on the `/renew-membership` page by paying with a card. New member signup runs on WordPress and the `/membership-processing` route (see [membership processing](membership-processing.md)); only renewals for existing members are handled here.
+Logged-in members renew on `/renew-membership` by paying with a card or requesting a dues exemption. Both paths create a renewal workflow. Membership expiry and category are updated only after the workflow has its required funding decision and a signed member waiver.
 
-A renewal advances `WYCDatabase.ExpireQtr`, the quarter a member is paid through (see [quarters](quarters.md)), and synchronizes `WYCDatabase.Category` with the member's selected UW status. The session user is the member: `requireAuth()` returns their WYCNumber, so no admin privilege is involved and the server already knows who is paying.
+New member signup is handled separately by WordPress and `/membership-processing`. See [membership processing](membership-processing.md).
 
-The same page also hosts the dues-exemption request flow for officers, instructors, and honorary members, who renew without payment subject to approval.
+## Renewal lifecycle
 
-## Renewal flow
+`membership_renewals` is the parent record for a renewal. An open renewal has neither `completed_at` nor `closed_at`.
 
-1. The page shows current status from `getRenewalStatus`: the quarter the member is paid through and whether they are active.
-2. The member selects Student, Alumni, Employee/Retiree, or Public and answers the Plus One questionnaire.
-3. Student selections use the student price tier. All other statuses use the non-student tier.
-4. The live price for the selected combination is fetched from Square via `getRenewalPrice`. Prices are never stored locally.
-5. The Square Web Payments SDK card form renders inline. On submit it tokenizes the card client-side into a single-use source id.
-6. `payAndRenew` charges the card and, only on a completed payment, advances `ExpireQtr`, updates the member category, logs the renewal, and emails confirmation.
+```
+renewal created
+    -> funding requirement completed + member waiver stored
+    -> membership expiry and category updated
+    -> renewal completed
+```
 
-The duration choices show the resulting expiry quarter so the member can compare outcomes before paying.
+Paid renewals complete funding before the waiver. Exemption renewals store the waiver before approval completes funding. `reconcileRenewal` completes either workflow once both requirements are present. Completion activates the renewal questionnaire, advances `WYCDatabase.ExpireQtr` without removing paid time, synchronizes `WYCDatabase.Category` with the submitted UW status, and sends the membership-renewed email.
+
+The renewal page resumes an open workflow after a reload. It shows the waiver when one is still required and shows the exemption status while an exemption decision is pending.
+
+## Paid renewal flow
+
+1. The member selects Student, Alumni, Employee/Retiree, or Public and completes the renewal questionnaire.
+2. UW status determines the price tier. Student uses the student tier; every other status uses the non-student tier.
+3. The member chooses quarterly or annual membership. The page fetches the matching live price from Square.
+4. The Square Web Payments SDK tokenizes the card into a single-use source ID.
+5. `payAndRenew` creates a Square order from the configured catalog variation and charges the order total.
+6. A completed charge creates `membership_renewals`, `membership_payments`, and `renewal_questionnaire` rows in one database transaction. The questionnaire remains pending.
+7. The member receives the `Complete your WYC renewal` email and signs the member waiver.
+8. Storing the waiver completes the renewal and sends the `WYC Membership Renewed` email.
+
+The amount charged comes from `order.totalMoney`. The client never supplies a price or price tier.
+
+## Member waiver
+
+The renewal page gets the member's name and email from `WYCDatabase`. The member confirms the adult acknowledgement and draws a signature.
+
+The server creates a versioned PDF, uploads it to the waiver R2 bucket, and inserts a `member_waivers` row containing the workflow link, signer identity, submitted values, signing time, R2 object key, PDF hash, size, and content type. Production objects use `waivers/v1/member/{year}/{acceptanceId}.pdf`. Development objects use `mock/member/{acceptanceId}.pdf`.
+
+Each member waiver links to exactly one workflow through either `renewal_id` or `application_id`. Renewal waivers use `renewal_id`. A unique index permits only one waiver per renewal.
 
 ## Quarter math
 
 All renewal math anchors to `RENEWAL_QUARTER`, a hand-maintained constant in `compute-renewal.ts`. It is the quarter an expired member renews into. `computeRenewal(expireQtr, duration)` rewards early renewal and never removes paid time:
 
-- **Active** (`expireQtr >= RENEWAL_QUARTER`): stack the new period on remaining time. Quarterly adds 1, annual adds 4.
-- **Expired** (`expireQtr < RENEWAL_QUARTER`): start fresh. Quarterly lands on `RENEWAL_QUARTER`, annual on `RENEWAL_QUARTER + 3`.
+- Active membership (`expireQtr >= RENEWAL_QUARTER`) stacks the new period on remaining time. Quarterly adds one quarter and annual adds four.
+- Expired membership (`expireQtr < RENEWAL_QUARTER`) starts fresh. Quarterly lands on `RENEWAL_QUARTER` and annual lands on `RENEWAL_QUARTER + 3`.
 
-A pre-pay cap (`MAX_QUARTERS_AHEAD = 4`) blocks any renewal that would push `ExpireQtr` more than four quarters past `RENEWAL_QUARTER`, so members cannot bank many quarters ahead of a dues increase. A standard annual renewal from `RENEWAL_QUARTER` lands exactly at the cap.
+`MAX_QUARTERS_AHEAD = 4` prevents a renewal from moving expiry more than four quarters past `RENEWAL_QUARTER`.
 
-### The `RENEWAL_QUARTER` constant
+### Maintaining `RENEWAL_QUARTER`
 
-`RENEWAL_QUARTER` is normally equal to the current quarter (`lesson_quarter.quarter`). It is a separate constant, not read live, so it can be advanced **early**: in the couple of weeks before a quarter ends, bump it to the next quarter so members can renew into the upcoming quarter before the rollover happens. Anchoring renewals directly to `lesson_quarter.quarter` would remove that early window, and would also let an operational edit of that field silently reprice and re-date every member's renewal.
-
-**When to bump it:** raise `RENEWAL_QUARTER` to the next quarter index (in `compute-renewal.ts`) about two weeks before the current quarter's end date. `QuarterMaintenanceBanner` shows a dedicated reminder to `db`-privileged users, separate from the in-app quarter-data warnings because bumping the constant is a code change. It appears in two cases: **due soon**, within 14 days of the current quarter's end date while `RENEWAL_QUARTER` still equals the current quarter; and **stale**, if the current quarter has already rolled past `RENEWAL_QUARTER`. Bumping the constant clears it.
+`RENEWAL_QUARTER` normally equals the current lesson quarter. It can be advanced shortly before a quarter ends so members can renew into the upcoming quarter. `QuarterMaintenanceBanner` reminds `db`-privileged users when the constant is due to advance or is stale.
 
 ## Square integration
 
-Pricing has a single source of truth: the Square catalog item, the same item the WordPress flow sells.
+The Square catalog is the pricing source of truth. `catalog.ts` maps each tier and duration to a catalog variation ID for the active environment.
 
 ```
-{tier, duration}  ->  Square catalog variation id   (catalog.ts config)
-CreateOrder(variation, qty 1)   ->  Square computes the total from the catalog
-CreatePayment(sourceId, orderId, total)  ->  status COMPLETED (synchronous)
+{tier, duration} -> catalog variation
+CreateOrder(variation, quantity 1) -> order total
+CreatePayment(sourceId, orderId, order total) -> completed payment
 ```
 
-The amount charged comes from `order.totalMoney`, never from the client. The client sends the questionnaire, duration, and card token. The server validates the questionnaire and derives the price tier from UW status.
+Orders use `renew-o/{wycNumber}/{targetExpireQtr}` as their idempotency key. Payments use a key containing the member, target quarter, and a hash of the single-use card source ID. Reusing the same source ID deduplicates the payment request. A newly tokenized card produces a new payment key.
 
-**Confirmation.** `ExpireQtr` and `Category` are updated only after `CreatePayment` returns `COMPLETED`, inside the same server function. The charge and the post-payment database write are separate try blocks: if the charge fails, nothing changes and the member sees a safe decline reason; if the database write fails after a completed charge, the member is told their payment went through and not to pay again. There is no webhook, since the embedded card form returns the final status synchronously.
+Recognized card errors receive a friendly decline message. Definite non-card failures are logged and return a generic retry message. A timeout, connection failure, Square server error, or uncertain payment status after `CreatePayment` tells the member not to retry if they received a receipt or see a charge. The log includes the member, amount, target quarter, and Square order ID for manual reconciliation. Successful workflows store the Square payment ID and order ID. If Square confirms the charge but the database write fails, those IDs are logged and the member is told to contact the club and not pay again.
 
-**Idempotency.** Every order and payment passes an idempotency key (`renew-o/{wyc}/{targetQtr}` and `renew-p/{wyc}/{targetQtr}`) so a double-click cannot double-charge.
+The member's email is passed to Square for its receipt. WYC separately sends the waiver-required and renewal-completed emails.
 
-**Receipts.** The member's email is passed to Square as `buyer_email_address` for Square's automatic receipt, and a separate renewal confirmation email is sent via `sendEmail` (dev-simulated like all other mail; see [email OTP login](email-otp-login.md)).
+## Dues exemptions
 
-**Error handling.** Card decline reasons are surfaced in a friendly form so the member knows their card failed. All other Square and database errors are logged server-side and returned as generic messages.
+Officers, instructors who will teach during the quarter, and honorary members can request one dues-exempt quarter. Eligibility is verified by an approver.
 
-## Ledger table: `membership_payments`
+Submitting a request creates an open `membership_renewals` row, a pending `dues_exemption_requests` row, and a pending questionnaire row in one transaction. The target quarter is frozen when the request is submitted. The member receives an email directing them to sign the waiver.
 
-One row per granted dues event, paid or exempt. The table is the record of when members renew, for how long, and the Square ids and amount behind each paid renewal.
+The member can cancel a pending request. Cancellation closes the renewal and voids the questionnaire. Denial performs the same workflow cleanup and records the approver.
 
-| Column              | Type      | Notes                                    |
-| ------------------- | --------- | ---------------------------------------- |
-| `_index`            | int PK    |                                          |
-| `wyc_number`        | int       | FK to `WYCDatabase.WYCNumber`            |
-| `square_payment_id` | varchar   | null for exempt renewals                 |
-| `square_order_id`   | varchar   | null for exempt renewals                 |
-| `amount_cents`      | int       | from the Square order total (audit only) |
-| `currency`          | char(3)   | "USD"                                    |
-| `tier`              | varchar   | "student" / "nonstudent" / "exempt"      |
-| `duration`          | varchar   | "quarterly" / "annual"                   |
-| `prev_expire_qtr`   | int       | ExpireQtr before the renewal             |
-| `new_expire_qtr`    | int       | ExpireQtr after the renewal              |
-| `status`            | varchar   | "COMPLETED" / "EXEMPT"                   |
-| `created_at`        | timestamp | default CURRENT_TIMESTAMP                |
+Active holders of Commodore (1000), Vice Commodore (1010), or Webmaster (2260) positions can use `/approve-exemptions`. Approval requires a stored member waiver. It creates an `EXEMPT` membership ledger row, marks the request approved, and reconciles the renewal in one transaction. The ledger records the decision even when the member is already covered through the requested quarter. Expiry never moves backward.
 
-Exempt renewals use null Square ids, `amount_cents = 0`, `tier = 'exempt'`, and `status = 'EXEMPT'`.
+## Data model
 
-## Dues exemption
+### `membership_renewals`
 
-Officers, instructors who will teach that quarter, and honorary members renew without paying. Eligibility is honor-system and verified by a human approver, not auto-detected. Each exemption grants one quarter only, using the same baseline as a quarterly renewal.
+The parent workflow record. It stores the member, funding source, tier, duration, previous and target expiry quarters, completion time, closure time, and creation time.
 
-### Member side
+### `membership_payments`
 
-On the renewal page, a separate Request Dues Exempt action submits `requestDuesExemption`. It freezes the target quarter at request time, enforces one open request per member, and stores the request and questionnaire together in a transaction. The renewal status reflects the pending request across reloads.
+One funding ledger row per renewal. Paid rows contain the Square payment ID, order ID, amount, and currency with status `COMPLETED`. Exempt rows contain null Square IDs, zero amount, tier `exempt`, and status `EXEMPT`. `renewal_id` is unique.
 
-### Approval side
+### `renewal_questionnaire`
 
-Active holders of Commodore (1000), Vice Commodore (1010), or Webmaster (2260) positions can reach `/approve-exemptions`. The screen lists pending requests with requester name, requested quarter, current expiry, and request date.
+Stores UW status and the Plus One response for the renewal. It is pending while the workflow is open, active after completion, and void after a denied or cancelled exemption.
 
-- `approveExemptionRequest`: if the member is already covered through the frozen target quarter, the grant is a no-op (no profile change and no ledger row); otherwise it advances `ExpireQtr`, synchronizes `Category` from the stored UW status, and writes the EXEMPT ledger row. Either way the request is marked approved, linked to the ledger row, and the member receives the renewal confirmation email (only when a quarter was actually granted).
-- `denyExemptionRequest`: marks the request denied. No reason is captured, and a denied member may request again.
+### `member_waivers`
 
-### Request table: `dues_exemption_requests`
+Stores the durable acceptance record and R2 PDF metadata. `renewal_id` and `application_id` are independently unique, and exactly one must be present.
 
-Kept separate from the ledger so denials, which grant nothing, never appear there.
+### `dues_exemption_requests`
 
-| Column                 | Type           | Notes                                            |
-| ---------------------- | -------------- | ------------------------------------------------ |
-| `_index`               | int PK         |                                                  |
-| `wyc_number`           | int            | requester FK to `WYCDatabase.WYCNumber`          |
-| `requested_expire_qtr` | int            | target quarter, frozen at request time           |
-| `status`               | varchar        | `pending` / `approved` / `denied`                |
-| `payment_id`           | int null       | FK to the EXEMPT ledger row, set on a real grant |
-| `decided_by`           | int null       | approver's WYCNumber                             |
-| `decided_at`           | timestamp null |                                                  |
-| `created_at`           | timestamp      | default CURRENT_TIMESTAMP                        |
+Stores pending, approved, denied, and cancelled exemption decisions. It links the member, renewal, questionnaire, approver decision, and `EXEMPT` ledger row.
 
 ## Configuration
 
-Square runs against Sandbox in dev and Production in prod, selected by `isDevEnvironment()`. The same choice picks the catalog variation ids in `catalog.ts` (sandbox and production ids differ). Variation ids are config, not secrets.
+Square uses Sandbox in development and Production in production, selected by `isDevEnvironment()`. Catalog variation IDs differ by environment.
 
-| Env var                      | Sandbox (dev)        | Production       |
-| ---------------------------- | -------------------- | ---------------- |
-| `VITE_SQUARE_APPLICATION_ID` | `sandbox-sq0idb-...` | `sq0idp-...`     |
-| `SQUARE_ACCESS_TOKEN` secret | sandbox `EAAA...`    | production token |
-| `SQUARE_LOCATION_ID`         | sandbox `L...`       | `5EEW5V3XR4SJW`  |
-| `VITE_SQUARE_LOCATION_ID`    | sandbox `L...`       | `5EEW5V3XR4SJW`  |
+| Environment variable         | Development      | Production          |
+| ---------------------------- | ---------------- | ------------------- |
+| `VITE_SQUARE_APPLICATION_ID` | Sandbox app ID   | Production app ID   |
+| `SQUARE_ACCESS_TOKEN`        | Sandbox token    | Production token    |
+| `SQUARE_LOCATION_ID`         | Sandbox location | Production location |
+| `VITE_SQUARE_LOCATION_ID`    | Sandbox location | Production location |
 
-`SQUARE_ACCESS_TOKEN` is server-only and must never reach client code. Sandbox values go in `.env.local` and the dev Vercel project; production values go in the main Vercel project. `VITE_APP_ENV` is unset in production, which is what makes `isDevEnvironment()` false and flips both the SDK and the card form to Production. Sandbox test cards are documented at https://developer.squareup.com/docs/devtools/sandbox/payments.
+`SQUARE_ACCESS_TOKEN` is server-only. `VITE_APP_ENV` is set to `dev` for the development project and is absent in production.
 
 ## Key files
 
-| File                                           | Purpose                                                     |
-| ---------------------------------------------- | ----------------------------------------------------------- |
-| `src/routes/renew-membership.tsx`              | Renewal page: toggles, live price, card form, success view  |
-| `src/routes/approve-exemptions.tsx`            | Approver screen for pending exemption requests              |
-| `src/components/renewals/SquareCardForm.tsx`   | Loads the Web Payments SDK and mounts the card iframe       |
-| `src/domains/renewals/server-fns.ts`           | `getRenewalStatus`, `getRenewalPrice`, `payAndRenew`        |
-| `src/domains/renewals/exemption-server-fns.ts` | Request, list, approve, and deny exemption server functions |
-| `src/domains/renewals/compute-renewal.ts`      | `computeRenewal` quarter math and the pre-pay cap           |
-| `src/domains/renewals/catalog.ts`              | tier x duration to Square variation id (sandbox vs prod)    |
-| `src/lib/square.ts`                            | Server-only Square SDK client                               |
-| `src/db/schema.ts`                             | `membershipPayments` and `duesExemptionRequests` tables     |
+| File                                              | Purpose                                                                 |
+| ------------------------------------------------- | ----------------------------------------------------------------------- |
+| `src/routes/renew-membership.tsx`                 | Renewal questionnaire, payment form, workflow status, and member waiver |
+| `src/routes/approve-exemptions.tsx`               | Pending exemption review                                                |
+| `src/components/renewals/SquareCardForm.tsx`      | Square Web Payments SDK card form                                       |
+| `src/domains/renewals/server-fns.ts`              | Renewal status, live pricing, payment, and paid workflow creation       |
+| `src/domains/renewals/exemption-server-fns.ts`    | Exemption request, cancellation, review, approval, and denial           |
+| `src/domains/renewals/renewal-coordinator.ts`     | Shared workflow completion and completion email                         |
+| `src/domains/renewals/compute-renewal.ts`         | Quarter math and prepay cap                                             |
+| `src/domains/renewals/catalog.ts`                 | Square catalog variation configuration                                  |
+| `src/domains/waivers/member-waiver-server-fns.ts` | Member waiver storage and renewal reconciliation                        |
+| `src/domains/waivers/member-waiver-pdf.ts`        | Executed member waiver PDF generation                                   |
+| `src/lib/square.ts`                               | Server-only Square SDK client                                           |
+| `src/db/schema.ts`                                | Renewal, payment, questionnaire, exemption, and waiver tables           |

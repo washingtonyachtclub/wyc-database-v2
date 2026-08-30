@@ -2,18 +2,22 @@ import db from '@/db/index'
 import {
   duesExemptionRequests,
   lessonQuarter,
+  memberWaivers,
   membershipPayments,
+  membershipRenewals,
   quarters,
   renewalQuestionnaire,
   wycDatabase,
 } from '@/db/schema'
 import { requireAuth, requirePrivilege } from '@/lib/auth/auth-middleware'
 import { sendEmail } from '@/lib/email'
-import { returningMemberEmail } from '@/lib/emails/membership'
+import { renewalWaiverRequiredEmail, returningMemberEmail } from '@/lib/emails/membership'
 import { SQUARE_LOCATION_ID, squareClient } from '@/lib/square'
 import { createServerFn } from '@tanstack/react-start'
-import { and, eq } from 'drizzle-orm'
-import { createHash } from 'node:crypto'
+import { and, desc, eq, isNull } from 'drizzle-orm'
+import { createHash, randomUUID } from 'node:crypto'
+import { SquareError, SquareTimeoutError } from 'square'
+import type { Payment } from 'square'
 import { variationId } from './catalog'
 import type { RenewalDuration, RenewalTier } from './compute-renewal'
 import { MAX_QUARTERS_AHEAD, RENEWAL_QUARTER, computeRenewal } from './compute-renewal'
@@ -50,6 +54,15 @@ function declineMessage(error: any): string | null {
   }
 }
 
+const unknownPaymentOutcomeMessage =
+  'We could not confirm whether your payment completed. If you received a receipt or see a charge, do not retry. Please contact the club.'
+
+function isUnknownPaymentOutcome(error: unknown) {
+  if (error instanceof SquareTimeoutError) return true
+  if (!(error instanceof SquareError)) return true
+  return error.statusCode === undefined || error.statusCode === 408 || error.statusCode >= 500
+}
+
 /** Current quarter and the logged-in member's ExpireQtr, with labels, for the renewal status line. */
 export const getRenewalStatus = createServerFn({ method: 'GET' }).handler(async () => {
   const wycNumber = await requireAuth()
@@ -62,7 +75,12 @@ export const getRenewalStatus = createServerFn({ method: 'GET' }).handler(async 
   const currentQuarter = cq.quarter
 
   const [member] = await db
-    .select({ expireQtrIndex: wycDatabase.expireQtrIndex })
+    .select({
+      email: wycDatabase.email,
+      expireQtrIndex: wycDatabase.expireQtrIndex,
+      first: wycDatabase.first,
+      last: wycDatabase.last,
+    })
     .from(wycDatabase)
     .where(eq(wycDatabase.wycNumber, wycNumber))
   if (!member) {
@@ -73,6 +91,32 @@ export const getRenewalStatus = createServerFn({ method: 'GET' }).handler(async 
 
   const labels = await db.select({ index: quarters.index, school: quarters.school }).from(quarters)
   const labelFor = (idx: number) => labels.find((q) => q.index === idx)?.school ?? `quarter ${idx}`
+
+  const [openRenewal] = await db
+    .select({
+      amountCents: membershipPayments.amountCents,
+      approvalStatus: duesExemptionRequests.status,
+      createdAt: membershipRenewals.createdAt,
+      currency: membershipPayments.currency,
+      duration: membershipRenewals.duration,
+      id: membershipRenewals.id,
+      source: membershipRenewals.source,
+      targetExpireQtr: membershipRenewals.targetExpireQtr,
+      waiverId: memberWaivers.id,
+    })
+    .from(membershipRenewals)
+    .leftJoin(membershipPayments, eq(membershipPayments.renewalId, membershipRenewals.id))
+    .leftJoin(memberWaivers, eq(memberWaivers.renewalId, membershipRenewals.id))
+    .leftJoin(duesExemptionRequests, eq(duesExemptionRequests.renewalId, membershipRenewals.id))
+    .where(
+      and(
+        eq(membershipRenewals.wycNumber, wycNumber),
+        isNull(membershipRenewals.completedAt),
+        isNull(membershipRenewals.closedAt),
+      ),
+    )
+    .orderBy(desc(membershipRenewals.createdAt))
+    .limit(1)
 
   const previewFor = (duration: RenewalDuration) => {
     const newExpireQtr = computeRenewal(expireQtr, duration)
@@ -101,11 +145,30 @@ export const getRenewalStatus = createServerFn({ method: 'GET' }).handler(async 
     currentQuarterLabel: labelFor(currentQuarter),
     expireQtr,
     expireQtrLabel: labelFor(expireQtr),
+    member: {
+      email: member.email ?? '',
+      firstName: member.first ?? '',
+      lastName: member.last ?? '',
+    },
     isActive: expireQtr >= currentQuarter,
     preview: {
       quarterly: previewFor('quarterly'),
       annual: previewFor('annual'),
     },
+    openRenewal: openRenewal
+      ? {
+          amountCents: openRenewal.amountCents ?? 0,
+          approvalStatus: openRenewal.approvalStatus,
+          createdAt: openRenewal.createdAt,
+          currency: openRenewal.currency ?? 'USD',
+          duration: openRenewal.duration,
+          id: openRenewal.id,
+          source: openRenewal.source,
+          targetExpireQtr: openRenewal.targetExpireQtr,
+          targetLabel: labelFor(openRenewal.targetExpireQtr),
+          waiverComplete: openRenewal.waiverId !== null,
+        }
+      : null,
     exemptionRequest: openRequest
       ? {
           requestedExpireQtr: openRequest.requestedExpireQtr,
@@ -138,7 +201,7 @@ export const getRenewalPrice = createServerFn({ method: 'GET' })
   })
 
 /** Update membership and log the payment row; throws so the caller can word the error. Questionnaire history is best-effort. */
-async function recordRenewal(input: {
+async function recordLegacyRenewal(input: {
   wycNumber: number
   tier: RenewalTier
   duration: RenewalDuration
@@ -192,6 +255,83 @@ async function recordRenewal(input: {
   }
 }
 
+async function recordPaidRenewal(input: {
+  amountCents: number
+  currency: string
+  duration: RenewalDuration
+  prevExpireQtr: number
+  questionnaire: QuestionnaireAnswers
+  squareOrderId: string
+  squarePaymentId: string
+  targetExpireQtr: number
+  tier: RenewalTier
+  wycNumber: number
+}) {
+  const renewalId = randomUUID()
+  await db.transaction(async (tx) => {
+    await tx.insert(membershipRenewals).values({
+      id: renewalId,
+      wycNumber: input.wycNumber,
+      source: 'paid',
+      tier: input.tier,
+      duration: input.duration,
+      previousExpireQtr: input.prevExpireQtr,
+      targetExpireQtr: input.targetExpireQtr,
+    })
+    await tx.insert(membershipPayments).values({
+      renewalId,
+      wycNumber: input.wycNumber,
+      squarePaymentId: input.squarePaymentId,
+      squareOrderId: input.squareOrderId,
+      amountCents: input.amountCents,
+      currency: input.currency,
+      tier: input.tier,
+      duration: input.duration,
+      prevExpireQtr: input.prevExpireQtr,
+      newExpireQtr: input.targetExpireQtr,
+      status: 'COMPLETED',
+    })
+    await tx.insert(renewalQuestionnaire).values({
+      renewalId,
+      wycNumber: input.wycNumber,
+      quarter: input.targetExpireQtr,
+      uwStatus: input.questionnaire.uwStatus,
+      plusOneResponse: input.questionnaire.plusOneResponse,
+      status: 'pending',
+      source: 'paid',
+    })
+  })
+  return renewalId
+}
+
+async function sendWaiverRequiredEmail(input: {
+  email: string | null
+  first: string | null
+  last: string | null
+  renewalId: string
+  targetExpireQtr: number
+}) {
+  const [quarter] = await db
+    .select({ school: quarters.school })
+    .from(quarters)
+    .where(eq(quarters.index, input.targetExpireQtr))
+  const quarterLabel = quarter?.school ?? `quarter ${input.targetExpireQtr}`
+  if (!input.email) return { emailSent: false, emailSimulated: false, quarterLabel }
+
+  try {
+    const result = await sendEmail({
+      to: input.email,
+      subject: 'Complete your WYC renewal',
+      text: renewalWaiverRequiredEmail(input.first ?? '', input.last ?? '', quarterLabel),
+      idempotencyKey: `renewal-waiver-required/${input.renewalId}`,
+    })
+    return { emailSent: true, emailSimulated: result.simulated, quarterLabel }
+  } catch (error) {
+    console.error('sendWaiverRequiredEmail failed:', error)
+    return { emailSent: false, emailSimulated: false, quarterLabel }
+  }
+}
+
 /** Resolve the new ExpireQtr's label and send the renewal confirmation. Non-fatal: never throws. */
 async function sendRenewalConfirmation(input: {
   member: { first: string | null; last: string | null; email: string | null }
@@ -232,8 +372,8 @@ async function sendRenewalConfirmation(input: {
 }
 
 /**
- * Self-service renewal: charge the member's card, and only on a COMPLETED payment update
- * ExpireQtr, log the renewal, and email confirmation. The session user is the member (requireAuth).
+ * Self-service renewal: charge the member's card and record an open renewal that waits for its
+ * member waiver. The session user is the member (requireAuth).
  */
 export const payAndRenew = createServerFn({ method: 'POST' })
   .inputValidator((input: { duration: string; sourceId: string; questionnaire: unknown }) => ({
@@ -266,6 +406,21 @@ export const payAndRenew = createServerFn({ method: 'POST' })
       throw new Error('We could not find your membership record.')
     }
 
+    const [existingOpenRenewal] = await db
+      .select({ id: membershipRenewals.id })
+      .from(membershipRenewals)
+      .where(
+        and(
+          eq(membershipRenewals.wycNumber, wycNumber),
+          isNull(membershipRenewals.completedAt),
+          isNull(membershipRenewals.closedAt),
+        ),
+      )
+      .limit(1)
+    if (existingOpenRenewal) {
+      throw new Error('You already have a renewal in progress. Complete its waiver first.')
+    }
+
     const prevExpireQtr = member.expireQtrIndex ?? 0
     const targetExpireQtr = computeRenewal(prevExpireQtr, data.duration)
     if (targetExpireQtr > RENEWAL_QUARTER + MAX_QUARTERS_AHEAD) {
@@ -275,9 +430,8 @@ export const payAndRenew = createServerFn({ method: 'POST' })
     }
     const variation = variationId(tier, data.duration)
 
-    // Orders computes the total from the catalog item; Payments charges it.
+    // Orders computes the total from the catalog item.
     let orderId: string
-    let paymentId: string
     let amountCents: number
     let currency: string
     try {
@@ -290,9 +444,22 @@ export const payAndRenew = createServerFn({ method: 'POST' })
       })
       const order = orderRes.order
       if (!order?.id) throw new Error('Square returned no order id')
+      orderId = order.id
       amountCents = Number(order.totalMoney?.amount ?? 0n)
       currency = order.totalMoney?.currency ?? 'USD'
+    } catch (error) {
+      console.error('payAndRenew: Square order creation failed:', {
+        wycNumber,
+        targetExpireQtr,
+        error,
+      })
+      throw new Error('We could not start your payment. Please try again.')
+    }
 
+    // Payments charges the order.
+    let paymentId: string
+    let payment: Payment | undefined
+    try {
       const payRes = await squareClient.payments.create({
         // Keyed on the single-use card nonce (hashed; Square caps the key at 45 chars) so a
         // genuine resubmit of the same nonce dedupes, but a fresh attempt (new card token)
@@ -302,28 +469,71 @@ export const payAndRenew = createServerFn({ method: 'POST' })
           .digest('hex')
           .slice(0, 16)}`,
         sourceId: data.sourceId,
-        orderId: order.id,
+        orderId,
         amountMoney: { amount: BigInt(amountCents), currency: currency as any },
         locationId: SQUARE_LOCATION_ID,
         buyerEmailAddress: member.email ?? undefined,
       })
-      const payment = payRes.payment
-      if (payment?.status !== 'COMPLETED') {
-        console.error('payAndRenew: payment not COMPLETED, status =', payment?.status)
-        throw new Error('Your payment did not complete. Please try again.')
-      }
-      orderId = order.id
-      paymentId = payment.id ?? ''
+      payment = payRes.payment
     } catch (error) {
-      console.error('payAndRenew: Square charge failed:', error)
-      throw new Error(
-        declineMessage(error) ?? 'We could not process your payment. Please try again.',
-      )
+      const decline = declineMessage(error)
+      if (decline) {
+        console.error('payAndRenew: Square declined payment:', {
+          wycNumber,
+          orderId,
+          targetExpireQtr,
+          error,
+        })
+        throw new Error(decline)
+      }
+
+      if (isUnknownPaymentOutcome(error)) {
+        console.error('payAndRenew: Square payment outcome unknown:', {
+          wycNumber,
+          orderId,
+          amountCents,
+          targetExpireQtr,
+          error,
+        })
+        throw new Error(unknownPaymentOutcomeMessage)
+      }
+
+      console.error('payAndRenew: Square payment failed:', {
+        wycNumber,
+        orderId,
+        targetExpireQtr,
+        error,
+      })
+      throw new Error('We could not process your payment. Please try again.')
     }
 
+    if (payment?.status !== 'COMPLETED') {
+      console.error('payAndRenew: payment not COMPLETED:', {
+        wycNumber,
+        orderId,
+        paymentId: payment?.id,
+        status: payment?.status,
+        targetExpireQtr,
+      })
+      if (payment?.status === 'FAILED' || payment?.status === 'CANCELED') {
+        throw new Error('Your payment did not complete. Please try again.')
+      }
+      throw new Error(unknownPaymentOutcomeMessage)
+    }
+    if (!payment.id) {
+      console.error('payAndRenew: completed Square payment has no id:', {
+        wycNumber,
+        orderId,
+        targetExpireQtr,
+      })
+      throw new Error(unknownPaymentOutcomeMessage)
+    }
+    paymentId = payment.id
+
     // Payment is COMPLETED beyond this point — record the renewal.
+    let renewalId: string
     try {
-      await recordRenewal({
+      renewalId = await recordPaidRenewal({
         wycNumber,
         tier,
         duration: data.duration,
@@ -350,15 +560,18 @@ export const payAndRenew = createServerFn({ method: 'POST' })
       )
     }
 
-    const { emailSent, emailSimulated, quarterLabel } = await sendRenewalConfirmation({
-      member,
-      wycNumber,
+    const { emailSent, emailSimulated, quarterLabel } = await sendWaiverRequiredEmail({
+      email: member.email,
+      first: member.first,
+      last: member.last,
+      renewalId,
       targetExpireQtr,
     })
 
     return {
       success: true as const,
-      newExpireQtr: targetExpireQtr,
+      renewalId,
+      targetExpireQtr,
       quarterLabel,
       amountCents,
       currency,
@@ -431,7 +644,7 @@ export const adminRecordRenewal = createServerFn({ method: 'POST' })
     }
 
     try {
-      await recordRenewal({
+      await recordLegacyRenewal({
         wycNumber: data.wycNumber,
         tier: data.tier,
         duration: data.duration,
