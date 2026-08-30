@@ -80,12 +80,20 @@ export const getQuarterHealth = createServerFn({ method: 'GET' }).handler(async 
 
   const quartersAhead = maxIndex - currentQuarter
 
+  const current = rows.find((r) => r.index === currentQuarter)
+  const daysToEnd = current?.endDate != null ? daysUntil(current.endDate) : null
+  const currentQuarterOverdue =
+    current?.endDate != null && daysToEnd != null && daysToEnd < 0
+      ? {
+          quarterName: current.school ?? `quarter ${currentQuarter}`,
+          endDate: current.endDate,
+        }
+      : null
+
   // RENEWAL_QUARTER is hand-maintained and normally equals the current quarter. It gets bumped to
   // the next quarter a couple weeks early so members can renew ahead of the rollover. Nag once we're
   // inside that window and it hasn't been bumped yet ('dueSoon'), or if the quarter already rolled
   // past it ('stale'/overdue). A missing end date is nagged separately.
-  const current = rows.find((r) => r.index === currentQuarter)
-  const daysToEnd = current?.endDate != null ? daysUntil(current.endDate) : null
   const renewalReminder: RenewalReminder =
     RENEWAL_QUARTER < currentQuarter
       ? { state: 'stale' }
@@ -103,6 +111,7 @@ export const getQuarterHealth = createServerFn({ method: 'GET' }).handler(async 
     target: QUARTERS_AHEAD_TARGET,
     isLow: quartersAhead < QUARTERS_AHEAD_MIN,
     missingEndDates,
+    currentQuarterOverdue,
     renewalReminder,
   }
 })
