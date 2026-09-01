@@ -11,9 +11,6 @@ export const RATING_EXPIRY_MONTHS = 6
  */
 export const OFFICER_PAGE_TYPES = [1, 2, 5] as const
 
-/** pos_type._index for club officers (Commodore, Vice Commodore, Rear Commodore, Treasurer). */
-export const OFFICER_POS_TYPE = 1
-
 /**
  * Class type IDs grouped into display categories for the public lesson list
  * and the class type dropdown in lesson create/edit forms.
@@ -63,12 +60,6 @@ export const LESSON_LOCATION_PRESETS = [
 
 /** class_type index for Windsurfing, which defaults to SSP rather than the WAC. */
 export const WINDSURFING_TYPE_ID = 12
-
-/**
- * Active holders of these positions may approve/deny dues-exemption requests.
- * pos `_index` values: 1000=Commodore, 1010=Vice Commodore, 2260=Webmaster.
- */
-export const EXEMPTION_APPROVER_POSITIONS = [1000, 1010, 2260] as const
 
 /** WYC number of the database administrator */
 export const DATABASE_ADMIN_WYC_NUMBER = 23757

@@ -1,20 +1,18 @@
-import { EXEMPTION_APPROVER_POSITIONS } from '@/db/constants'
 import db from '@/db/index'
 import {
   duesExemptionRequests,
   memberWaivers,
   membershipPayments,
   membershipRenewals,
-  officers,
   quarters,
   renewalQuestionnaire,
   wycDatabase,
 } from '@/db/schema'
-import { requireAuth } from '@/lib/auth/auth-middleware'
+import { requireAuth, requirePrivilege } from '@/lib/auth/auth-middleware'
 import { sendEmail } from '@/lib/email'
 import { exemptionWaiverRequiredEmail } from '@/lib/emails/membership'
 import { createServerFn } from '@tanstack/react-start'
-import { and, desc, eq, inArray, isNull } from 'drizzle-orm'
+import { and, desc, eq, isNull } from 'drizzle-orm'
 import { randomUUID } from 'node:crypto'
 import { computeRenewal } from './compute-renewal'
 import { isUwStatus, parseQuestionnaire } from './questionnaire'
@@ -51,37 +49,6 @@ async function sendExemptionWaiverEmail(input: {
     return { emailSent: false, emailSimulated: false }
   }
 }
-
-/** Whether a member is an active holder of an approver position (Commodore / Vice Commodore / Webmaster). */
-async function isApprover(wycNumber: number): Promise<boolean> {
-  const rows = await db
-    .select({ position: officers.position })
-    .from(officers)
-    .where(
-      and(
-        eq(officers.member, wycNumber),
-        eq(officers.active, 1),
-        inArray(officers.position, [...EXEMPTION_APPROVER_POSITIONS]),
-      ),
-    )
-    .limit(1)
-  return rows.length > 0
-}
-
-/** requireAuth + approver-position check. Returns the approver's WYCNumber or throws. */
-async function requireExemptionApprover(): Promise<number> {
-  const wycNumber = await requireAuth()
-  if (!(await isApprover(wycNumber))) {
-    throw new Error('Forbidden: Insufficient privileges')
-  }
-  return wycNumber
-}
-
-/** Boolean approver check for route gating (does not throw on non-approver). */
-export const getIsExemptionApprover = createServerFn({ method: 'GET' }).handler(async () => {
-  const wycNumber = await requireAuth()
-  return { isApprover: await isApprover(wycNumber) }
-})
 
 /**
  * Member self-service: request dues-exempt membership for the next eligible quarter.
@@ -238,7 +205,7 @@ export const cancelDuesExemption = createServerFn({ method: 'POST' }).handler(as
 
 /** Pending requests for the approval screen, with requester name, requested quarter, and current ExpireQtr. */
 export const listPendingExemptionRequests = createServerFn({ method: 'GET' }).handler(async () => {
-  await requireExemptionApprover()
+  await requirePrivilege('db')
 
   const rows = await db
     .select({
@@ -284,7 +251,7 @@ function parseRequestId(input: { requestId: unknown }): { requestId: number } {
 export const approveExemptionRequest = createServerFn({ method: 'POST' })
   .inputValidator(parseRequestId)
   .handler(async ({ data }) => {
-    const approver = await requireExemptionApprover()
+    const approver = await requirePrivilege('db')
 
     const [request] = await db
       .select({
@@ -385,7 +352,7 @@ export const approveExemptionRequest = createServerFn({ method: 'POST' })
 export const denyExemptionRequest = createServerFn({ method: 'POST' })
   .inputValidator(parseRequestId)
   .handler(async ({ data }) => {
-    const approver = await requireExemptionApprover()
+    const approver = await requirePrivilege('db')
 
     const [request] = await db
       .select({

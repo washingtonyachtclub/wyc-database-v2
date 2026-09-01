@@ -1,7 +1,5 @@
-import { getIsExemptionApproverQueryOptions } from '@/domains/renewals/query-options'
 import { useCurrentUser } from '@/lib/auth/auth-query-options'
-import { hasPrivilege, routePermissions } from '@/lib/permissions'
-import { useQuery } from '@tanstack/react-query'
+import { hasRoutePrivilegeAccess, type ProtectedRoute } from '@/lib/permissions'
 import { useRouter } from '@tanstack/react-router'
 import { ArrowRight, Search } from 'lucide-react'
 import { useEffect, useState } from 'react'
@@ -18,7 +16,7 @@ import {
 import { Dialog, DialogContent, DialogDescription, DialogTitle } from './ui/dialog'
 
 type Destination = {
-  path: string
+  path: ProtectedRoute
   label: string
 }
 
@@ -27,11 +25,6 @@ export function QuickSwitcher() {
   const [shortcut, setShortcut] = useState('Ctrl K')
   const router = useRouter()
   const { user, privileges } = useCurrentUser()
-  const { data: approver } = useQuery({
-    ...getIsExemptionApproverQueryOptions(),
-    enabled: Boolean(user),
-  })
-
   useEffect(() => {
     const isMac = /Mac|iPhone|iPad|iPod/.test(navigator.platform)
     if (isMac) setShortcut('⌘K')
@@ -49,10 +42,7 @@ export function QuickSwitcher() {
   if (!user) return null
 
   const visible = (items: readonly Destination[]) =>
-    items.filter((item) => {
-      const required = routePermissions[item.path as keyof typeof routePermissions]
-      return required ? hasPrivilege(privileges, required) : true
-    })
+    items.filter((item) => hasRoutePrivilegeAccess(privileges, item.path))
 
   const groups = [
     {
@@ -67,12 +57,7 @@ export function QuickSwitcher() {
     { label: 'Admin', items: visible(adminItems) },
     {
       label: 'Tools',
-      items: [
-        ...visible(toolsItems),
-        ...(approver?.isApprover
-          ? [{ path: '/approve-exemptions', label: 'Dues Exemptions' }]
-          : []),
-      ],
+      items: visible(toolsItems),
     },
     { label: 'People Management', items: visible(peopleManagementItems) },
     { label: 'Support Tables', items: visible(supportTableItems) },

@@ -6,7 +6,7 @@ import {
 } from '@tanstack/react-router'
 
 import Header from '../components/Header'
-import { ExemptionApproverBanner } from '../components/ExemptionApproverBanner'
+import { MembershipApprovalsBanner } from '../components/MembershipApprovalsBanner'
 import { MembershipBanner } from '../components/MembershipBanner'
 import { QuarterMaintenanceBanner } from '../components/QuarterMaintenanceBanner'
 import { SailLockerCheckoutSessionGuard } from '../components/SailLockerCheckoutSessionGuard'
@@ -98,13 +98,19 @@ function RootDocument({ children }: { children: React.ReactNode }) {
     (loginRedirect === '/checkout' || loginRedirect?.startsWith('/checkout/') === true)
   const isQrLoginApproval = location.pathname === '/qr-login/approve'
   const isGuestWaiverPage = location.pathname === '/guest-waiver'
+  const isJoinPage = location.pathname === '/join' || location.pathname.startsWith('/join/')
   const isStandalonePage =
     ['/login', '/forgot-password', '/guest-waiver'].includes(location.pathname) ||
+    isJoinPage ||
     location.pathname.startsWith('/signup') ||
     isQrLoginApproval ||
     isSailLockerCheckout
   const showAppHeader =
-    !isSailLockerCheckout && !isSailLockerCheckoutLogin && !isQrLoginApproval && !isGuestWaiverPage
+    !isSailLockerCheckout &&
+    !isSailLockerCheckoutLogin &&
+    !isQrLoginApproval &&
+    !isGuestWaiverPage &&
+    !isJoinPage
   const showAppLayout = !isStandalonePage
   return (
     <html lang="en">
@@ -119,7 +125,7 @@ function RootDocument({ children }: { children: React.ReactNode }) {
             {showAppHeader && <Header />}
             {isSailLockerCheckout && <SailLockerCheckoutSessionGuard />}
             {showAppLayout && <MembershipBanner />}
-            {showAppLayout && <ExemptionApproverBanner />}
+            {showAppLayout && <MembershipApprovalsBanner />}
             {showAppLayout && <QuarterMaintenanceBanner />}
             {showAppLayout ? (
               <div className="flex">

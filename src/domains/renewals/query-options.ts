@@ -4,7 +4,6 @@ import {
   approveExemptionRequest,
   cancelDuesExemption,
   denyExemptionRequest,
-  getIsExemptionApprover,
   listPendingExemptionRequests,
   requestDuesExemption,
 } from './exemption-server-fns'
@@ -41,12 +40,6 @@ export const getPendingExemptionsQueryOptions = () =>
   queryOptions({
     queryKey: ['exemptions', 'pending'],
     queryFn: listPendingExemptionRequests,
-  })
-
-export const getIsExemptionApproverQueryOptions = () =>
-  queryOptions({
-    queryKey: ['exemptions', 'is-approver'],
-    queryFn: getIsExemptionApprover,
   })
 
 export function useRequestDuesExemptionMutation() {

@@ -32,7 +32,9 @@ export const getMembershipStats = createServerFn({ method: 'GET' }).handler(asyn
 
     const latestStatus = new Map<number, string>()
     for (const payment of payments) {
-      if (!latestStatus.has(payment.wycNumber)) latestStatus.set(payment.wycNumber, payment.status)
+      if (payment.wycNumber !== null && !latestStatus.has(payment.wycNumber)) {
+        latestStatus.set(payment.wycNumber, payment.status)
+      }
     }
 
     const exemptWycNumbers = new Set(

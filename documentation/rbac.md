@@ -171,13 +171,13 @@ The encrypted session records when its identity data was refreshed. Authorizatio
 
 ## Authorization Layers
 
-Access control is enforced at three layers. All three use the same `hasPrivilege()` function and OR logic.
+Access control is enforced at multiple layers.
 
 ### 1. Route-Level Guards
 
 **Files**: `permissions.ts`, `route-guards.ts`
 
-The `routePermissions` object in `permissions.ts` is the single source of truth mapping routes to required privileges:
+The permission registry in `permissions.ts` is the single source of truth for route privileges:
 
 ```typescript
 export const routePermissions = {
@@ -192,7 +192,7 @@ export const routePermissions = {
 }
 ```
 
-Each route's `beforeLoad` hook calls `requirePrivilegeForRoute()`, which:
+Each protected route's `beforeLoad` hook calls `requirePrivilegeForRoute()`, which:
 
 - Redirects to `/login` if not authenticated
 - Redirects to `/forbidden` if the user lacks the required privilege
@@ -232,7 +232,8 @@ The history sections (`getMemberRatings`, `getMemberRatingsGiven`, `getMemberLes
 
 **File**: `Sidebar.tsx`
 
-The sidebar filters navigation items using the same `routePermissions` map and `hasPrivilege()` function. Users only see links to pages they can access. This keeps the UI consistent with the actual access control — if you can see the link, you can access the page.
+The sidebar and quick switcher filter navigation items through `hasRoutePrivilegeAccess()`. Users
+only see links allowed by the same privilege rules used by route guards.
 
 ---
 
@@ -260,11 +261,11 @@ An empty required array (`[]`) means "any authenticated user" — no specific pr
 | File                                 | Purpose                                                                  |
 | ------------------------------------ | ------------------------------------------------------------------------ |
 | `src/db/schema.ts`                   | Drizzle schema for `officers`, `positions`, `posPrivMap`, `privs` tables |
-| `src/lib/permissions.ts`             | `Privilege` type, `routePermissions` registry, `hasPrivilege()`          |
+| `src/lib/permissions.ts`             | Route privilege registry                                                 |
 | `src/lib/auth/auth-middleware.ts`    | Server-side privilege check functions                                    |
 | `src/lib/auth/identity.ts`           | Member and privilege loading                                             |
 | `src/lib/auth/auth-server-fns.ts`    | Login, logout, and dev impersonation tools                               |
 | `src/lib/route-guards.ts`            | `requirePrivilegeForRoute()` for route `beforeLoad` hooks                |
 | `src/lib/auth/session.ts`            | Session type definition, cookie configuration, and hourly refresh        |
 | `src/lib/auth/auth-query-options.ts` | React Query hooks for current user and privileges                        |
-| `src/components/Sidebar.tsx`         | Privilege-filtered navigation                                            |
+| `src/components/Sidebar.tsx`         | Permission-filtered navigation                                           |

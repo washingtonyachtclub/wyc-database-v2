@@ -10,15 +10,17 @@ import {
   wycDatabase,
 } from '@/db/schema'
 import { requireAuth, requirePrivilege } from '@/lib/auth/auth-middleware'
+import {
+  MembershipPaymentError,
+  chargeMembershipOrder,
+  createMembershipOrder,
+  getMembershipPrice,
+} from '@/domains/membership-payments/square-payment'
 import { sendEmail } from '@/lib/email'
 import { renewalWaiverRequiredEmail, returningMemberEmail } from '@/lib/emails/membership'
-import { SQUARE_LOCATION_ID, squareClient } from '@/lib/square'
 import { createServerFn } from '@tanstack/react-start'
 import { and, desc, eq, isNull } from 'drizzle-orm'
 import { createHash, randomUUID } from 'node:crypto'
-import { SquareError, SquareTimeoutError } from 'square'
-import type { Payment } from 'square'
-import { variationId } from './catalog'
 import type { RenewalDuration, RenewalTier } from './compute-renewal'
 import { MAX_QUARTERS_AHEAD, RENEWAL_QUARTER, computeRenewal } from './compute-renewal'
 import { categoryIdForUwStatus, parseQuestionnaire, tierForUwStatus } from './questionnaire'
@@ -34,34 +36,8 @@ function parseDuration(v: unknown): RenewalDuration {
   throw new Error('Invalid duration')
 }
 
-/** Safe user-facing message for a card decline; null if it's not a card error (caller stays generic). */
-function declineMessage(error: any): string | null {
-  const errs = error?.errors ?? error?.body?.errors
-  if (!Array.isArray(errs) || errs.length === 0) return null
-  const e = errs[0]
-  if (e?.category !== 'PAYMENT_METHOD_ERROR' && e?.category !== 'CARD_ERROR') return null
-  switch (e?.code) {
-    case 'CVV_FAILURE':
-      return 'The card security code (CVV) was incorrect.'
-    case 'ADDRESS_VERIFICATION_FAILURE':
-      return 'The billing postal code did not match your card.'
-    case 'EXPIRATION_FAILURE':
-      return 'The card expiration date was invalid.'
-    case 'INSUFFICIENT_FUNDS':
-      return 'The card was declined for insufficient funds.'
-    default:
-      return 'Your card was declined. Please try a different card.'
-  }
-}
-
 const unknownPaymentOutcomeMessage =
   'We could not confirm whether your payment completed. If you received a receipt or see a charge, do not retry. Please contact the club.'
-
-function isUnknownPaymentOutcome(error: unknown) {
-  if (error instanceof SquareTimeoutError) return true
-  if (!(error instanceof SquareError)) return true
-  return error.statusCode === undefined || error.statusCode === 408 || error.statusCode >= 500
-}
 
 /** Current quarter and the logged-in member's ExpireQtr, with labels, for the renewal status line. */
 export const getRenewalStatus = createServerFn({ method: 'GET' }).handler(async () => {
@@ -187,13 +163,7 @@ export const getRenewalPrice = createServerFn({ method: 'GET' })
   .handler(async ({ data }) => {
     await requireAuth()
     try {
-      const res = await squareClient.catalog.object.get({
-        objectId: variationId(data.tier, data.duration),
-      })
-      const obj = res.object
-      const price = obj?.type === 'ITEM_VARIATION' ? obj.itemVariationData?.priceMoney : undefined
-      if (!price?.amount) throw new Error('No price on variation')
-      return { amountCents: Number(price.amount), currency: price.currency ?? 'USD' }
+      return await getMembershipPrice(data.tier, data.duration)
     } catch (error) {
       console.error('Failed to fetch renewal price:', error)
       throw new Error('Could not load the membership price')
@@ -387,11 +357,6 @@ export const payAndRenew = createServerFn({ method: 'POST' })
     // Honor-system price tier comes from UW status; we never trust a client-sent tier.
     const tier = tierForUwStatus(data.answers.uwStatus)
 
-    if (!SQUARE_LOCATION_ID) {
-      console.error('SQUARE_LOCATION_ID is not configured')
-      throw new Error('Payments are not configured. Please contact the club.')
-    }
-
     const [member] = await db
       .select({
         first: wycDatabase.first,
@@ -428,25 +393,19 @@ export const payAndRenew = createServerFn({ method: 'POST' })
         'Your membership is already paid as far ahead as we allow. Please renew again closer to your expiry date.',
       )
     }
-    const variation = variationId(tier, data.duration)
-
     // Orders computes the total from the catalog item.
     let orderId: string
     let amountCents: number
     let currency: string
     try {
-      const orderRes = await squareClient.orders.create({
+      const order = await createMembershipOrder({
+        duration: data.duration,
         idempotencyKey: `renew-o/${wycNumber}/${targetExpireQtr}`,
-        order: {
-          locationId: SQUARE_LOCATION_ID,
-          lineItems: [{ catalogObjectId: variation, quantity: '1' }],
-        },
+        tier,
       })
-      const order = orderRes.order
-      if (!order?.id) throw new Error('Square returned no order id')
-      orderId = order.id
-      amountCents = Number(order.totalMoney?.amount ?? 0n)
-      currency = order.totalMoney?.currency ?? 'USD'
+      orderId = order.orderId
+      amountCents = order.amountCents
+      currency = order.currency
     } catch (error) {
       console.error('payAndRenew: Square order creation failed:', {
         wycNumber,
@@ -458,36 +417,29 @@ export const payAndRenew = createServerFn({ method: 'POST' })
 
     // Payments charges the order.
     let paymentId: string
-    let payment: Payment | undefined
     try {
-      const payRes = await squareClient.payments.create({
-        // Keyed on the single-use card nonce (hashed; Square caps the key at 45 chars) so a
-        // genuine resubmit of the same nonce dedupes, but a fresh attempt (new card token)
-        // gets a distinct key.
+      const payment = await chargeMembershipOrder({
+        buyerEmail: member.email,
         idempotencyKey: `renew-p/${wycNumber}/${targetExpireQtr}/${createHash('sha256')
           .update(data.sourceId)
           .digest('hex')
           .slice(0, 16)}`,
+        order: { amountCents, currency, orderId },
         sourceId: data.sourceId,
-        orderId,
-        amountMoney: { amount: BigInt(amountCents), currency: currency as any },
-        locationId: SQUARE_LOCATION_ID,
-        buyerEmailAddress: member.email ?? undefined,
       })
-      payment = payRes.payment
+      paymentId = payment.id!
     } catch (error) {
-      const decline = declineMessage(error)
-      if (decline) {
+      if (error instanceof MembershipPaymentError && error.kind === 'declined') {
         console.error('payAndRenew: Square declined payment:', {
           wycNumber,
           orderId,
           targetExpireQtr,
           error,
         })
-        throw new Error(decline)
+        throw new Error(error.message)
       }
 
-      if (isUnknownPaymentOutcome(error)) {
+      if (error instanceof MembershipPaymentError && error.kind === 'unknown') {
         console.error('payAndRenew: Square payment outcome unknown:', {
           wycNumber,
           orderId,
@@ -504,31 +456,12 @@ export const payAndRenew = createServerFn({ method: 'POST' })
         targetExpireQtr,
         error,
       })
-      throw new Error('We could not process your payment. Please try again.')
+      throw new Error(
+        error instanceof MembershipPaymentError
+          ? error.message
+          : 'We could not process your payment. Please try again.',
+      )
     }
-
-    if (payment?.status !== 'COMPLETED') {
-      console.error('payAndRenew: payment not COMPLETED:', {
-        wycNumber,
-        orderId,
-        paymentId: payment?.id,
-        status: payment?.status,
-        targetExpireQtr,
-      })
-      if (payment?.status === 'FAILED' || payment?.status === 'CANCELED') {
-        throw new Error('Your payment did not complete. Please try again.')
-      }
-      throw new Error(unknownPaymentOutcomeMessage)
-    }
-    if (!payment.id) {
-      console.error('payAndRenew: completed Square payment has no id:', {
-        wycNumber,
-        orderId,
-        targetExpireQtr,
-      })
-      throw new Error(unknownPaymentOutcomeMessage)
-    }
-    paymentId = payment.id
 
     // Payment is COMPLETED beyond this point — record the renewal.
     let renewalId: string

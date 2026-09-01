@@ -8,7 +8,7 @@ declare global {
 }
 
 export interface SquareCardHandle {
-  /** Tokenize the entered card → single-use source id for payAndRenew. Throws on invalid input. */
+  /** Tokenize the entered card into a single-use Square source ID. */
   tokenize: () => Promise<string>
 }
 

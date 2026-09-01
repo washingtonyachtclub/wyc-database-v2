@@ -1,11 +1,9 @@
-import { getIsExemptionApproverQueryOptions } from '@/domains/renewals/query-options'
 import { useCurrentUser } from '@/lib/auth/auth-query-options'
-import { useQuery } from '@tanstack/react-query'
 import { Link, useLocation } from '@tanstack/react-router'
 import { ExternalLink } from 'lucide-react'
 import type { ReactNode } from 'react'
 import type { ProtectedRoute } from '../lib/permissions'
-import { hasPrivilege, routePermissions } from '../lib/permissions'
+import { hasRoutePrivilegeAccess } from '../lib/permissions'
 
 export const adminItems = [
   { path: '/members' as const, label: 'Members' },
@@ -36,6 +34,7 @@ export const toolsItems = [
   { path: '/membership-stats' as const, label: 'Membership Stats' },
   { path: '/set-current-quarter' as const, label: 'Set Current Quarter' },
   { path: '/tests' as const, label: 'Written Tests' },
+  { path: '/membership-approvals' as const, label: 'Membership Approvals' },
 ]
 
 function SidebarSectionHeading({ children }: { children: ReactNode }) {
@@ -49,17 +48,8 @@ function SidebarSectionHeading({ children }: { children: ReactNode }) {
 export function SidebarNav({ onNavigate }: { onNavigate?: () => void }) {
   const location = useLocation()
   const { user, privileges } = useCurrentUser()
-  const { data: approver } = useQuery({
-    ...getIsExemptionApproverQueryOptions(),
-    enabled: Boolean(user),
-  })
-  const isExemptionApprover = approver?.isApprover ?? false
-
   const filterVisible = (items: { path: ProtectedRoute; label: string }[]) =>
-    items.filter((item) => {
-      const required = routePermissions[item.path]
-      return hasPrivilege(privileges, required)
-    })
+    items.filter((item) => hasRoutePrivilegeAccess(privileges, item.path))
 
   const visibleAdminItems = filterVisible(adminItems)
   const visiblePeopleManagementItems = filterVisible(peopleManagementItems)
@@ -123,14 +113,6 @@ export function SidebarNav({ onNavigate }: { onNavigate?: () => void }) {
           </Link>
         )
       })}
-      {isExemptionApprover && (
-        <Link
-          to="/approve-exemptions"
-          className={linkClass(location.pathname === '/approve-exemptions')}
-        >
-          Dues Exemptions
-        </Link>
-      )}
       <a
         href="/lesson-list"
         target="_blank"

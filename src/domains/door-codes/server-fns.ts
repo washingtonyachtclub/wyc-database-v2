@@ -1,10 +1,9 @@
 import { createServerFn } from '@tanstack/react-start'
-import { and, eq, inArray } from 'drizzle-orm'
-import { OFFICER_POS_TYPE } from '@/db/constants'
+import { eq, inArray } from 'drizzle-orm'
 import db from '@/db/index'
 import { fullName } from '@/db/mapper-utils'
 import { isMembershipActive } from '@/db/membership-utils'
-import { doorCodes, lessonQuarter, officers, positions, wycDatabase } from '@/db/schema'
+import { doorCodes, lessonQuarter, wycDatabase } from '@/db/schema'
 import { requireAuth } from '@/lib/auth/auth-middleware'
 import { hasPrivilege } from '@/lib/permissions'
 import { useRefreshedAppSession } from '@/lib/auth/session'
@@ -14,28 +13,9 @@ import { getActiveMemberRatings } from '@/domains/ratings/queries'
 import type { ActiveRating } from './rules'
 import { ruleForSlug, satisfiesRule } from './rules'
 
-async function isOfficer(wycNumber: number): Promise<boolean> {
-  const rows = await db
-    .select({ index: officers.index })
-    .from(officers)
-    .innerJoin(positions, eq(officers.position, positions.index))
-    .where(
-      and(
-        eq(officers.member, wycNumber),
-        eq(officers.active, 1),
-        eq(positions.active, 1),
-        eq(positions.type, OFFICER_POS_TYPE),
-      ),
-    )
-    .limit(1)
-  return rows.length > 0
-}
-
-/** db privilege or an active officer position. */
-async function canEditDoorCodes(wycNumber: number): Promise<boolean> {
+async function canEditDoorCodes(): Promise<boolean> {
   const session = await useRefreshedAppSession()
-  if (hasPrivilege(session.data.privileges ?? [], ['db'])) return true
-  return isOfficer(wycNumber)
+  return hasPrivilege(session.data.privileges ?? [], ['db'])
 }
 
 async function getCurrentQuarter(): Promise<number> {
@@ -52,10 +32,7 @@ export const getMyDoorCodes = createServerFn({ method: 'GET' }).handler(async ()
   const wycNumber = await requireAuth()
 
   try {
-    const [rows, canEdit] = await Promise.all([
-      db.select().from(doorCodes),
-      canEditDoorCodes(wycNumber),
-    ])
+    const [rows, canEdit] = await Promise.all([db.select().from(doorCodes), canEditDoorCodes()])
 
     const unlockAll = canEdit
     let held: ActiveRating[] = []
@@ -133,7 +110,7 @@ export const updateDoorCode = createServerFn({ method: 'POST' })
   .inputValidator((input: DoorCodeUpdateData) => doorCodeUpdateSchema.parse(input))
   .handler(async ({ data }) => {
     const wycNumber = await requireAuth()
-    if (!(await canEditDoorCodes(wycNumber))) {
+    if (!(await canEditDoorCodes())) {
       throw new Error('Forbidden: Insufficient privileges')
     }
 

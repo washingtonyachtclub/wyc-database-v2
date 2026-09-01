@@ -103,3 +103,29 @@ We received your WYC dues-exemption request for ${targetQuarter}.
 An officer cannot approve the request until you sign the member waiver. If you have not already signed it, return here:
 https://database.washingtonyachtclub.org/renew-membership`
 }
+
+export function newMemberCompletionEmail(
+  firstName: string,
+  _lastName: string,
+  completionUrl: string,
+): string {
+  return `Hello ${firstName},
+
+We received your Washington Yacht Club membership payment.
+
+Complete your contact information and sign the member waiver here:
+${completionUrl}
+
+Your membership will be activated after you submit these requirements and an officer processes your application.`
+}
+
+export function newMemberIncompleteReminderEmail(firstName: string, completionUrl: string): string {
+  return `Hello ${firstName},
+
+Your Washington Yacht Club membership application is still missing required contact information or a signed member waiver.
+
+Finish your application here:
+${completionUrl}
+
+Your membership cannot be activated until these requirements are submitted.`
+}

@@ -1,3 +1,4 @@
+@import url('https://fonts.googleapis.com/css2?family=Lato:wght@400;700;900&family=Lora:wght@400;500;600&display=swap');
 @import 'tailwindcss';
 
 @theme {
@@ -20,6 +21,10 @@
   --color-border: oklch(91.4% 0.006 285.88);
   --color-input: oklch(91.4% 0.006 285.88);
   --color-ring: oklch(54.6% 0.245 262.88);
+  --color-wyc-gold: #b7a57a;
+  --color-wyc-purple: #4b2e83;
+  --font-wyc-body: 'Lora', serif;
+  --font-wyc-heading: 'Lato', sans-serif;
   --radius: 0.5rem;
 }
 
