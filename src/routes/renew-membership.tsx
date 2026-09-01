@@ -1,4 +1,5 @@
 import type { SquareCardHandle } from '@/components/renewals/SquareCardForm'
+import { MembershipQuestionnaireFields } from '@/components/renewals/MembershipQuestionnaireFields'
 import { SquareCardForm } from '@/components/renewals/SquareCardForm'
 import { Button } from '@/components/ui/button'
 import {
@@ -50,41 +51,6 @@ export const Route = createFileRoute('/renew-membership')({
 function formatMoney(cents: number, currency: string) {
   return (cents / 100).toLocaleString('en-US', { style: 'currency', currency })
 }
-
-const UW_STATUS_OPTIONS: { value: UwStatus; label: string }[] = [
-  { value: 'student', label: 'Student' },
-  { value: 'alumni', label: 'Alumni' },
-  { value: 'employee_retiree', label: 'Employee/Retiree' },
-  { value: 'public', label: 'Public (none of the above)' },
-]
-
-const IMA_PURCHASE_URL = 'https://www.washington.edu/ima/member/'
-
-const SPONSOR_OPTIONS: { value: PlusOneResponse; label: string }[] = [
-  {
-    value: 'sponsor_already',
-    label: 'I am already sponsoring a WYC member and can coordinate renewal with them on my own',
-  },
-  { value: 'sponsor_yes', label: 'Yes' },
-  { value: 'sponsor_no', label: 'No' },
-]
-
-const SPONSEE_OPTIONS: { value: PlusOneResponse; label: string }[] = [
-  {
-    value: 'sponsee_already',
-    label: 'No, I am already sponsored and can coordinate renewal with them on my own',
-  },
-  {
-    value: 'sponsee_no_facilities',
-    label: 'No, I will not use the facilities/docks at the Waterfront Activities Center',
-  },
-  { value: 'sponsee_yes', label: 'Yes' },
-]
-
-const SPONSOR_HELPER =
-  'We will pair you with a WYC member via email for the two of you to coordinate a time to visit the IMA for them to purchase a Plus One membership through you.'
-const SPONSEE_HELPER =
-  'If a current WYC member is willing to sponsor, we will pair you via email for the two of you to coordinate a time to visit the IMA for you to purchase a Plus One membership through them.'
 
 type CompletionResult = {
   quarterLabel: string | null
@@ -275,56 +241,14 @@ function RenewMembershipPage() {
         Your membership is paid through <strong>{status.expireQtrLabel}</strong>.
       </p>
 
-      <ChoiceGroup
-        label="What is your UW Status?"
-        options={UW_STATUS_OPTIONS}
-        value={uwStatus}
-        onChange={selectUwStatus}
+      <MembershipQuestionnaireFields
+        uwStatus={uwStatus}
+        imaAcknowledged={imaAcknowledged}
+        plusOne={plusOne}
+        onUwStatusChange={selectUwStatus}
+        onImaAcknowledgedChange={setImaAcknowledged}
+        onPlusOneChange={setPlusOne}
       />
-
-      {uwStatus && (
-        <div className="space-y-2">
-          <p className="text-base">
-            An IMA rec membership is required to use the WAC docks and facilities.{' '}
-            <a
-              href={IMA_PURCHASE_URL}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="font-medium text-primary underline"
-            >
-              Membership Info
-            </a>
-          </p>
-          <Button
-            type="button"
-            variant={imaAcknowledged ? 'default' : 'outline'}
-            onClick={() => setImaAcknowledged((v) => !v)}
-            className="h-auto w-full justify-start whitespace-normal border-2 px-4 py-3 text-left text-base font-normal"
-          >
-            I understand
-          </Button>
-        </div>
-      )}
-
-      {(uwStatus === 'student' || uwStatus === 'employee_retiree') && (
-        <ChoiceGroup
-          label="Are you willing to sponsor a WYC member as your Plus One?"
-          helper={SPONSOR_HELPER}
-          options={SPONSOR_OPTIONS}
-          value={plusOne}
-          onChange={setPlusOne}
-        />
-      )}
-
-      {(uwStatus === 'alumni' || uwStatus === 'public') && (
-        <ChoiceGroup
-          label="Would you like to be paired with a student to sign up for a Plus One Membership?"
-          helper={SPONSEE_HELPER}
-          options={SPONSEE_OPTIONS}
-          value={plusOne}
-          onChange={setPlusOne}
-        />
-      )}
       <div className="space-y-2">
         <Label className="text-base">Duration</Label>
         {uwStatus === null && (
@@ -396,40 +320,6 @@ function RenewMembershipPage() {
           setExemptRequested(true)
         }}
       />
-    </div>
-  )
-}
-
-function ChoiceGroup<T extends string>({
-  label,
-  helper,
-  options,
-  value,
-  onChange,
-}: {
-  label: string
-  helper?: string
-  options: { value: T; label: string }[]
-  value: T | null
-  onChange: (value: T) => void
-}) {
-  return (
-    <div className="space-y-2">
-      <Label className="text-base">{label}</Label>
-      <div className="grid gap-2">
-        {options.map((opt) => (
-          <Button
-            key={opt.value}
-            type="button"
-            variant={value === opt.value ? 'default' : 'outline'}
-            onClick={() => onChange(opt.value)}
-            className="h-auto justify-start whitespace-normal border-2 px-4 py-3 text-left text-base font-normal"
-          >
-            {opt.label}
-          </Button>
-        ))}
-      </div>
-      {helper && <p className="text-sm text-muted-foreground">{helper}</p>}
     </div>
   )
 }

@@ -31,6 +31,7 @@ export const routePermissions = {
   '/positions': ['db'],
   '/ratings-examiners': ['db'],
   '/membership-processing': ['db'],
+  '/membership-approvals': ['db'],
   '/membership-stats': ['db'],
   '/set-current-quarter': ['db'],
   '/tests': [],
@@ -51,4 +52,11 @@ export function hasPrivilege(
 ): boolean {
   if (required.length === 0) return true
   return required.some((p) => userPrivileges.includes(p))
+}
+
+export function hasRoutePrivilegeAccess(
+  userPrivileges: readonly Privilege[],
+  route: ProtectedRoute,
+): boolean {
+  return hasPrivilege(userPrivileges, routePermissions[route])
 }

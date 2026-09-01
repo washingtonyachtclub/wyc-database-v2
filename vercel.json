@@ -3,7 +3,7 @@
   "buildCommand": "npm run vercel-build",
   "crons": [
     {
-      "path": "/api/cron/lesson-reminders",
+      "path": "/api/cron/daily-tasks",
       "schedule": "0 15 * * *"
     }
   ]

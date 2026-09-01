@@ -1,5 +1,5 @@
 import { createServerFn } from '@tanstack/react-start'
-import { and, asc, count, desc, eq, gte, lte } from 'drizzle-orm'
+import { asc, count, desc, eq } from 'drizzle-orm'
 import {
   baseLessonsSignedUpQuery,
   baseLessonsTaughtQuery,
@@ -26,10 +26,9 @@ import {
   requireSelfOrPrivilege,
   sessionHasPrivilege,
 } from '@/lib/auth/auth-middleware'
-import { hashPasswordArgon2, hashPasswordLegacy } from '@/lib/auth/auth'
 import { sendEmail } from '@/lib/email'
-import { generatePassphrase } from '@/lib/generate-passphrase'
 import { newMemberEmail } from '@/lib/emails/membership'
+import { allocateWycNumber, createMemberCredentials } from './member-write'
 
 export const getMembersTable = createServerFn({ method: 'GET' })
   .inputValidator(
@@ -94,46 +93,6 @@ export const getMemberEmails = createServerFn({ method: 'GET' })
     }
   })
 
-export const getNextWycNumber = createServerFn({ method: 'GET' }).handler(async () => {
-  await requirePrivilege('db')
-  const mostRecentWycNumberRow = await db
-    .select({ wycNumber: wycDatabase.wycNumber })
-    .from(wycDatabase)
-    .orderBy(desc(wycDatabase.joinDate))
-    .limit(1)
-
-  if (mostRecentWycNumberRow.length === 0) {
-    return 1
-  }
-  const mostRecentWycNumber = mostRecentWycNumberRow[0].wycNumber
-
-  let setSize = 100
-  while (true) {
-    const takenWycNumbers = await db
-      .select({ wycNumber: wycDatabase.wycNumber })
-      .from(wycDatabase)
-      .where(
-        and(
-          gte(wycDatabase.wycNumber, mostRecentWycNumber + 1),
-          lte(wycDatabase.wycNumber, mostRecentWycNumber + setSize),
-        ),
-      )
-
-    const takenWycNumbersSet = new Set(
-      takenWycNumbers.map((row: { wycNumber: number }) => row.wycNumber),
-    )
-    // if there is a ID available
-    if (takenWycNumbersSet.size < setSize) {
-      let candidateWycNumber = mostRecentWycNumber + 1
-      while (takenWycNumbersSet.has(candidateWycNumber)) {
-        candidateWycNumber++
-      }
-      return candidateWycNumber
-    }
-    setSize *= 2
-  }
-})
-
 export const getCategories = createServerFn({ method: 'GET' }).handler(async () => {
   await requireAuth()
   const result = await db.select().from(memcat).orderBy(memcat.index)
@@ -145,15 +104,16 @@ export const createMember = createServerFn({ method: 'POST' })
   .handler(async ({ data: { member, sendEmail: shouldSendEmail } }) => {
     await requirePrivilege('db')
     try {
-      const password = generatePassphrase()
-      const wycNumber = await getNextWycNumber()
-      const argon2Hash = await hashPasswordArgon2(password)
-      const legacyHash = hashPasswordLegacy(password)
-      await db.insert(wycDatabase).values({
-        ...fromMemberInsert(member),
-        wycNumber,
-        password: legacyHash,
-        passwordArgon2: argon2Hash,
+      const credentials = await createMemberCredentials()
+      let wycNumber = 0
+      await db.transaction(async (tx) => {
+        wycNumber = await allocateWycNumber(tx)
+        await tx.insert(wycDatabase).values({
+          ...fromMemberInsert(member),
+          wycNumber,
+          password: credentials.legacyHash,
+          passwordArgon2: credentials.passwordArgon2,
+        })
       })
 
       let emailSent = false
@@ -162,7 +122,7 @@ export const createMember = createServerFn({ method: 'POST' })
         try {
           const emailText = newMemberEmail(
             { first: member.first, last: member.last, wycNumber },
-            password,
+            credentials.password,
           )
           const result = await sendEmail({
             to: member.email,

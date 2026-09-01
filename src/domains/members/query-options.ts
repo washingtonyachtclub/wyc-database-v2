@@ -10,7 +10,6 @@ import {
   getMemberRatings,
   getMemberRatingsGiven,
   getMembersTable,
-  getNextWycNumber,
   getProcessedEntryIds,
   updateMember,
   updateMemberProfile,
@@ -37,12 +36,6 @@ export const getMemberEmailsQueryOptions = (filters?: MemberFilters) =>
     queryKey: ['members', 'emails', filters],
     queryFn: () => getMemberEmails({ data: { filters } }),
     enabled: false,
-  })
-
-export const getNextWycNumberQueryOptions = () =>
-  queryOptions({
-    queryKey: ['nextWycNumber'],
-    queryFn: getNextWycNumber,
   })
 
 export const getCategoriesQueryOptions = () =>

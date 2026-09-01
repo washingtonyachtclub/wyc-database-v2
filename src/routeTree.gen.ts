@@ -24,6 +24,7 @@ import { Route as OfficersRouteImport } from './routes/officers'
 import { Route as MyLessonsRouteImport } from './routes/my-lessons'
 import { Route as MembershipStatsRouteImport } from './routes/membership-stats'
 import { Route as MembershipProcessingRouteImport } from './routes/membership-processing'
+import { Route as MembershipApprovalsRouteImport } from './routes/membership-approvals'
 import { Route as MembersRouteImport } from './routes/members'
 import { Route as MeetTheTeamRouteImport } from './routes/meet-the-team'
 import { Route as MaintenanceTrackerRouteImport } from './routes/maintenance-tracker'
@@ -31,6 +32,7 @@ import { Route as LoginRouteImport } from './routes/login'
 import { Route as LessonsRouteImport } from './routes/lessons'
 import { Route as LessonTypesRouteImport } from './routes/lesson-types'
 import { Route as LessonListRouteImport } from './routes/lesson-list'
+import { Route as JoinRouteImport } from './routes/join'
 import { Route as HonoraryRouteImport } from './routes/honorary'
 import { Route as GuestWaiverRouteImport } from './routes/guest-waiver'
 import { Route as ForgotPasswordRouteImport } from './routes/forgot-password'
@@ -48,8 +50,10 @@ import { Route as RatingsRatingIndexRouteImport } from './routes/ratings_.$ratin
 import { Route as QrLoginApproveRouteImport } from './routes/qr-login.approve'
 import { Route as MembersWycNumberRouteImport } from './routes/members_.$wycNumber'
 import { Route as LessonsLessonIndexRouteImport } from './routes/lessons_.$lessonIndex'
+import { Route as JoinApplicationIdRouteImport } from './routes/join_.$applicationId'
 import { Route as CheckoutNewRouteImport } from './routes/checkout_.new'
 import { Route as ApiCronLessonRemindersRouteImport } from './routes/api.cron.lesson-reminders'
+import { Route as ApiCronDailyTasksRouteImport } from './routes/api.cron.daily-tasks'
 
 const TestsRoute = TestsRouteImport.update({
   id: '/tests',
@@ -126,6 +130,11 @@ const MembershipProcessingRoute = MembershipProcessingRouteImport.update({
   path: '/membership-processing',
   getParentRoute: () => rootRouteImport,
 } as any)
+const MembershipApprovalsRoute = MembershipApprovalsRouteImport.update({
+  id: '/membership-approvals',
+  path: '/membership-approvals',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const MembersRoute = MembersRouteImport.update({
   id: '/members',
   path: '/members',
@@ -159,6 +168,11 @@ const LessonTypesRoute = LessonTypesRouteImport.update({
 const LessonListRoute = LessonListRouteImport.update({
   id: '/lesson-list',
   path: '/lesson-list',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const JoinRoute = JoinRouteImport.update({
+  id: '/join',
+  path: '/join',
   getParentRoute: () => rootRouteImport,
 } as any)
 const HonoraryRoute = HonoraryRouteImport.update({
@@ -246,6 +260,11 @@ const LessonsLessonIndexRoute = LessonsLessonIndexRouteImport.update({
   path: '/lessons/$lessonIndex',
   getParentRoute: () => rootRouteImport,
 } as any)
+const JoinApplicationIdRoute = JoinApplicationIdRouteImport.update({
+  id: '/join_/$applicationId',
+  path: '/join/$applicationId',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const CheckoutNewRoute = CheckoutNewRouteImport.update({
   id: '/checkout_/new',
   path: '/checkout/new',
@@ -254,6 +273,11 @@ const CheckoutNewRoute = CheckoutNewRouteImport.update({
 const ApiCronLessonRemindersRoute = ApiCronLessonRemindersRouteImport.update({
   id: '/api/cron/lesson-reminders',
   path: '/api/cron/lesson-reminders',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiCronDailyTasksRoute = ApiCronDailyTasksRouteImport.update({
+  id: '/api/cron/daily-tasks',
+  path: '/api/cron/daily-tasks',
   getParentRoute: () => rootRouteImport,
 } as any)
 
@@ -270,6 +294,7 @@ export interface FileRoutesByFullPath {
   '/forgot-password': typeof ForgotPasswordRoute
   '/guest-waiver': typeof GuestWaiverRoute
   '/honorary': typeof HonoraryRoute
+  '/join': typeof JoinRoute
   '/lesson-list': typeof LessonListRoute
   '/lesson-types': typeof LessonTypesRoute
   '/lessons': typeof LessonsRoute
@@ -277,6 +302,7 @@ export interface FileRoutesByFullPath {
   '/maintenance-tracker': typeof MaintenanceTrackerRoute
   '/meet-the-team': typeof MeetTheTeamRoute
   '/members': typeof MembersRoute
+  '/membership-approvals': typeof MembershipApprovalsRoute
   '/membership-processing': typeof MembershipProcessingRoute
   '/membership-stats': typeof MembershipStatsRoute
   '/my-lessons': typeof MyLessonsRoute
@@ -293,11 +319,13 @@ export interface FileRoutesByFullPath {
   '/settings': typeof SettingsRoute
   '/tests': typeof TestsRoute
   '/checkout/new': typeof CheckoutNewRoute
+  '/join/$applicationId': typeof JoinApplicationIdRoute
   '/lessons/$lessonIndex': typeof LessonsLessonIndexRoute
   '/members/$wycNumber': typeof MembersWycNumberRoute
   '/qr-login/approve': typeof QrLoginApproveRoute
   '/ratings/$ratingIndex': typeof RatingsRatingIndexRoute
   '/signup/$lessonIndex': typeof SignupLessonIndexRoute
+  '/api/cron/daily-tasks': typeof ApiCronDailyTasksRoute
   '/api/cron/lesson-reminders': typeof ApiCronLessonRemindersRoute
 }
 export interface FileRoutesByTo {
@@ -313,6 +341,7 @@ export interface FileRoutesByTo {
   '/forgot-password': typeof ForgotPasswordRoute
   '/guest-waiver': typeof GuestWaiverRoute
   '/honorary': typeof HonoraryRoute
+  '/join': typeof JoinRoute
   '/lesson-list': typeof LessonListRoute
   '/lesson-types': typeof LessonTypesRoute
   '/lessons': typeof LessonsRoute
@@ -320,6 +349,7 @@ export interface FileRoutesByTo {
   '/maintenance-tracker': typeof MaintenanceTrackerRoute
   '/meet-the-team': typeof MeetTheTeamRoute
   '/members': typeof MembersRoute
+  '/membership-approvals': typeof MembershipApprovalsRoute
   '/membership-processing': typeof MembershipProcessingRoute
   '/membership-stats': typeof MembershipStatsRoute
   '/my-lessons': typeof MyLessonsRoute
@@ -336,11 +366,13 @@ export interface FileRoutesByTo {
   '/settings': typeof SettingsRoute
   '/tests': typeof TestsRoute
   '/checkout/new': typeof CheckoutNewRoute
+  '/join/$applicationId': typeof JoinApplicationIdRoute
   '/lessons/$lessonIndex': typeof LessonsLessonIndexRoute
   '/members/$wycNumber': typeof MembersWycNumberRoute
   '/qr-login/approve': typeof QrLoginApproveRoute
   '/ratings/$ratingIndex': typeof RatingsRatingIndexRoute
   '/signup/$lessonIndex': typeof SignupLessonIndexRoute
+  '/api/cron/daily-tasks': typeof ApiCronDailyTasksRoute
   '/api/cron/lesson-reminders': typeof ApiCronLessonRemindersRoute
 }
 export interface FileRoutesById {
@@ -357,6 +389,7 @@ export interface FileRoutesById {
   '/forgot-password': typeof ForgotPasswordRoute
   '/guest-waiver': typeof GuestWaiverRoute
   '/honorary': typeof HonoraryRoute
+  '/join': typeof JoinRoute
   '/lesson-list': typeof LessonListRoute
   '/lesson-types': typeof LessonTypesRoute
   '/lessons': typeof LessonsRoute
@@ -364,6 +397,7 @@ export interface FileRoutesById {
   '/maintenance-tracker': typeof MaintenanceTrackerRoute
   '/meet-the-team': typeof MeetTheTeamRoute
   '/members': typeof MembersRoute
+  '/membership-approvals': typeof MembershipApprovalsRoute
   '/membership-processing': typeof MembershipProcessingRoute
   '/membership-stats': typeof MembershipStatsRoute
   '/my-lessons': typeof MyLessonsRoute
@@ -380,11 +414,13 @@ export interface FileRoutesById {
   '/settings': typeof SettingsRoute
   '/tests': typeof TestsRoute
   '/checkout_/new': typeof CheckoutNewRoute
+  '/join_/$applicationId': typeof JoinApplicationIdRoute
   '/lessons_/$lessonIndex': typeof LessonsLessonIndexRoute
   '/members_/$wycNumber': typeof MembersWycNumberRoute
   '/qr-login/approve': typeof QrLoginApproveRoute
   '/ratings_/$ratingIndex': typeof RatingsRatingIndexRoute
   '/signup/$lessonIndex': typeof SignupLessonIndexRoute
+  '/api/cron/daily-tasks': typeof ApiCronDailyTasksRoute
   '/api/cron/lesson-reminders': typeof ApiCronLessonRemindersRoute
 }
 export interface FileRouteTypes {
@@ -402,6 +438,7 @@ export interface FileRouteTypes {
     | '/forgot-password'
     | '/guest-waiver'
     | '/honorary'
+    | '/join'
     | '/lesson-list'
     | '/lesson-types'
     | '/lessons'
@@ -409,6 +446,7 @@ export interface FileRouteTypes {
     | '/maintenance-tracker'
     | '/meet-the-team'
     | '/members'
+    | '/membership-approvals'
     | '/membership-processing'
     | '/membership-stats'
     | '/my-lessons'
@@ -425,11 +463,13 @@ export interface FileRouteTypes {
     | '/settings'
     | '/tests'
     | '/checkout/new'
+    | '/join/$applicationId'
     | '/lessons/$lessonIndex'
     | '/members/$wycNumber'
     | '/qr-login/approve'
     | '/ratings/$ratingIndex'
     | '/signup/$lessonIndex'
+    | '/api/cron/daily-tasks'
     | '/api/cron/lesson-reminders'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -445,6 +485,7 @@ export interface FileRouteTypes {
     | '/forgot-password'
     | '/guest-waiver'
     | '/honorary'
+    | '/join'
     | '/lesson-list'
     | '/lesson-types'
     | '/lessons'
@@ -452,6 +493,7 @@ export interface FileRouteTypes {
     | '/maintenance-tracker'
     | '/meet-the-team'
     | '/members'
+    | '/membership-approvals'
     | '/membership-processing'
     | '/membership-stats'
     | '/my-lessons'
@@ -468,11 +510,13 @@ export interface FileRouteTypes {
     | '/settings'
     | '/tests'
     | '/checkout/new'
+    | '/join/$applicationId'
     | '/lessons/$lessonIndex'
     | '/members/$wycNumber'
     | '/qr-login/approve'
     | '/ratings/$ratingIndex'
     | '/signup/$lessonIndex'
+    | '/api/cron/daily-tasks'
     | '/api/cron/lesson-reminders'
   id:
     | '__root__'
@@ -488,6 +532,7 @@ export interface FileRouteTypes {
     | '/forgot-password'
     | '/guest-waiver'
     | '/honorary'
+    | '/join'
     | '/lesson-list'
     | '/lesson-types'
     | '/lessons'
@@ -495,6 +540,7 @@ export interface FileRouteTypes {
     | '/maintenance-tracker'
     | '/meet-the-team'
     | '/members'
+    | '/membership-approvals'
     | '/membership-processing'
     | '/membership-stats'
     | '/my-lessons'
@@ -511,11 +557,13 @@ export interface FileRouteTypes {
     | '/settings'
     | '/tests'
     | '/checkout_/new'
+    | '/join_/$applicationId'
     | '/lessons_/$lessonIndex'
     | '/members_/$wycNumber'
     | '/qr-login/approve'
     | '/ratings_/$ratingIndex'
     | '/signup/$lessonIndex'
+    | '/api/cron/daily-tasks'
     | '/api/cron/lesson-reminders'
   fileRoutesById: FileRoutesById
 }
@@ -532,6 +580,7 @@ export interface RootRouteChildren {
   ForgotPasswordRoute: typeof ForgotPasswordRoute
   GuestWaiverRoute: typeof GuestWaiverRoute
   HonoraryRoute: typeof HonoraryRoute
+  JoinRoute: typeof JoinRoute
   LessonListRoute: typeof LessonListRoute
   LessonTypesRoute: typeof LessonTypesRoute
   LessonsRoute: typeof LessonsRoute
@@ -539,6 +588,7 @@ export interface RootRouteChildren {
   MaintenanceTrackerRoute: typeof MaintenanceTrackerRoute
   MeetTheTeamRoute: typeof MeetTheTeamRoute
   MembersRoute: typeof MembersRoute
+  MembershipApprovalsRoute: typeof MembershipApprovalsRoute
   MembershipProcessingRoute: typeof MembershipProcessingRoute
   MembershipStatsRoute: typeof MembershipStatsRoute
   MyLessonsRoute: typeof MyLessonsRoute
@@ -555,11 +605,13 @@ export interface RootRouteChildren {
   SettingsRoute: typeof SettingsRoute
   TestsRoute: typeof TestsRoute
   CheckoutNewRoute: typeof CheckoutNewRoute
+  JoinApplicationIdRoute: typeof JoinApplicationIdRoute
   LessonsLessonIndexRoute: typeof LessonsLessonIndexRoute
   MembersWycNumberRoute: typeof MembersWycNumberRoute
   QrLoginApproveRoute: typeof QrLoginApproveRoute
   RatingsRatingIndexRoute: typeof RatingsRatingIndexRoute
   SignupLessonIndexRoute: typeof SignupLessonIndexRoute
+  ApiCronDailyTasksRoute: typeof ApiCronDailyTasksRoute
   ApiCronLessonRemindersRoute: typeof ApiCronLessonRemindersRoute
 }
 
@@ -670,6 +722,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof MembershipProcessingRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/membership-approvals': {
+      id: '/membership-approvals'
+      path: '/membership-approvals'
+      fullPath: '/membership-approvals'
+      preLoaderRoute: typeof MembershipApprovalsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/members': {
       id: '/members'
       path: '/members'
@@ -717,6 +776,13 @@ declare module '@tanstack/react-router' {
       path: '/lesson-list'
       fullPath: '/lesson-list'
       preLoaderRoute: typeof LessonListRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/join': {
+      id: '/join'
+      path: '/join'
+      fullPath: '/join'
+      preLoaderRoute: typeof JoinRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/honorary': {
@@ -838,6 +904,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof LessonsLessonIndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/join_/$applicationId': {
+      id: '/join_/$applicationId'
+      path: '/join/$applicationId'
+      fullPath: '/join/$applicationId'
+      preLoaderRoute: typeof JoinApplicationIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/checkout_/new': {
       id: '/checkout_/new'
       path: '/checkout/new'
@@ -850,6 +923,13 @@ declare module '@tanstack/react-router' {
       path: '/api/cron/lesson-reminders'
       fullPath: '/api/cron/lesson-reminders'
       preLoaderRoute: typeof ApiCronLessonRemindersRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/cron/daily-tasks': {
+      id: '/api/cron/daily-tasks'
+      path: '/api/cron/daily-tasks'
+      fullPath: '/api/cron/daily-tasks'
+      preLoaderRoute: typeof ApiCronDailyTasksRouteImport
       parentRoute: typeof rootRouteImport
     }
   }
@@ -868,6 +948,7 @@ const rootRouteChildren: RootRouteChildren = {
   ForgotPasswordRoute: ForgotPasswordRoute,
   GuestWaiverRoute: GuestWaiverRoute,
   HonoraryRoute: HonoraryRoute,
+  JoinRoute: JoinRoute,
   LessonListRoute: LessonListRoute,
   LessonTypesRoute: LessonTypesRoute,
   LessonsRoute: LessonsRoute,
@@ -875,6 +956,7 @@ const rootRouteChildren: RootRouteChildren = {
   MaintenanceTrackerRoute: MaintenanceTrackerRoute,
   MeetTheTeamRoute: MeetTheTeamRoute,
   MembersRoute: MembersRoute,
+  MembershipApprovalsRoute: MembershipApprovalsRoute,
   MembershipProcessingRoute: MembershipProcessingRoute,
   MembershipStatsRoute: MembershipStatsRoute,
   MyLessonsRoute: MyLessonsRoute,
@@ -891,11 +973,13 @@ const rootRouteChildren: RootRouteChildren = {
   SettingsRoute: SettingsRoute,
   TestsRoute: TestsRoute,
   CheckoutNewRoute: CheckoutNewRoute,
+  JoinApplicationIdRoute: JoinApplicationIdRoute,
   LessonsLessonIndexRoute: LessonsLessonIndexRoute,
   MembersWycNumberRoute: MembersWycNumberRoute,
   QrLoginApproveRoute: QrLoginApproveRoute,
   RatingsRatingIndexRoute: RatingsRatingIndexRoute,
   SignupLessonIndexRoute: SignupLessonIndexRoute,
+  ApiCronDailyTasksRoute: ApiCronDailyTasksRoute,
   ApiCronLessonRemindersRoute: ApiCronLessonRemindersRoute,
 }
 export const routeTree = rootRouteImport

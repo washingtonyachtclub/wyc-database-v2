@@ -12,14 +12,29 @@ export type MemberWaiverPdfInput = {
   firstName: string
   isMock: boolean
   lastName: string
-  renewalId: string
   signatureDataUrl: string
   signedAt: string
   testAcknowledged: boolean
-  wycNumber: number
-}
+} & (
+  | { applicationId: string; renewalId?: never; wycNumber?: never }
+  | { applicationId?: never; renewalId: string; wycNumber: number }
+)
 
 export function createMemberWaiverPdf(input: MemberWaiverPdfInput) {
+  const signerRows: [string, string][] =
+    input.applicationId !== undefined
+      ? [
+          ['Applicant name', `${input.firstName} ${input.lastName}`],
+          ['Email', input.email],
+          ['Application ID', input.applicationId],
+        ]
+      : [
+          ['Member name', `${input.firstName} ${input.lastName}`],
+          ['Email', input.email],
+          ['WYC number', String(input.wycNumber)],
+          ['Renewal ID', input.renewalId],
+        ]
+
   return createExecutedWaiverPdf({
     acceptanceId: input.acceptanceId,
     adultAcknowledged: input.adultAcknowledged,
@@ -34,12 +49,7 @@ export function createMemberWaiverPdf(input: MemberWaiverPdfInput) {
     ],
     signatureDataUrl: input.signatureDataUrl,
     signedAt: input.signedAt,
-    signerRows: [
-      ['Member name', `${input.firstName} ${input.lastName}`],
-      ['Email', input.email],
-      ['WYC number', String(input.wycNumber)],
-      ['Renewal ID', input.renewalId],
-    ],
+    signerRows,
     subject: 'Executed member acknowledgement, waiver, release, and consent',
   })
 }

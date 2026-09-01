@@ -79,7 +79,11 @@ Submitting a request creates an open `membership_renewals` row, a pending `dues_
 
 The member can cancel a pending request. Cancellation closes the renewal and voids the questionnaire. Denial performs the same workflow cleanup and records the approver.
 
-Active holders of Commodore (1000), Vice Commodore (1010), or Webmaster (2260) positions can use `/approve-exemptions`. Approval requires a stored member waiver. It creates an `EXEMPT` membership ledger row, marks the request approved, and reconciles the renewal in one transaction. The ledger records the decision even when the member is already covered through the requested quarter. Expiry never moves backward.
+Users with the `db` privilege use the Dues exemptions category of `/membership-approvals`.
+Approval requires a stored member waiver. It creates an `EXEMPT`
+membership ledger row, marks the request approved, and reconciles the renewal in one transaction.
+The ledger records the decision even when the member is already covered through the requested
+quarter. Expiry never moves backward.
 
 ## Data model
 
@@ -121,7 +125,7 @@ Square uses Sandbox in development and Production in production, selected by `is
 | File                                              | Purpose                                                                 |
 | ------------------------------------------------- | ----------------------------------------------------------------------- |
 | `src/routes/renew-membership.tsx`                 | Renewal questionnaire, payment form, workflow status, and member waiver |
-| `src/routes/approve-exemptions.tsx`               | Pending exemption review                                                |
+| `src/routes/membership-approvals.tsx`             | New-member and dues-exemption review                                    |
 | `src/components/renewals/SquareCardForm.tsx`      | Square Web Payments SDK card form                                       |
 | `src/domains/renewals/server-fns.ts`              | Renewal status, live pricing, payment, and paid workflow creation       |
 | `src/domains/renewals/exemption-server-fns.ts`    | Exemption request, cancellation, review, approval, and denial           |

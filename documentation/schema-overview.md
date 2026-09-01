@@ -1,6 +1,6 @@
 # Database Schema Overview
 
-The database has 41 tables defined in `src/db/schema.ts`, including tables used by v2 and tables retained for legacy applications.
+The database has 46 tables defined in `src/db/schema.ts`, including tables used by v2 and tables retained for legacy applications.
 
 ---
 
@@ -15,7 +15,8 @@ Primary table. One row per member, keyed by WYC number.
 | `WYCNumber`       | int PK       | Unique member ID                                                                 |
 | `First`           | char(50)     | First name                                                                       |
 | `Last`            | char(50)     | Last name                                                                        |
-| `Email`           | char(50)     | Email address                                                                    |
+| `Email`           | varchar(254) | Primary email address                                                            |
+| `uw_email`        | varchar(254) | UW email address                                                                 |
 | `StreetAddress`   | char(100)    | Street address                                                                   |
 | `City`            | char(50)     | City                                                                             |
 | `State`           | char(20)     | State                                                                            |
@@ -133,6 +134,20 @@ See [RBAC docs](rbac.md) for detailed coverage.
 | `otp_codes`         | Short-lived email login codes                |
 | `qr_login_requests` | Short-lived Sail Locker device authorization |
 
+### Membership workflows (v2-active)
+
+| Table                       | Purpose                                                        |
+| --------------------------- | -------------------------------------------------------------- |
+| `membership_applications`   | Paid new-member application, completion, and review lifecycle  |
+| `member_emergency_contacts` | Current emergency contact copied from an approved application  |
+| `membership_renewals`       | Existing-member renewal workflow                               |
+| `membership_payments`       | Shared payment and dues-exemption ledger                       |
+| `renewal_questionnaire`     | UW status and Plus One answers for a renewal                   |
+| `dues_exemption_requests`   | Officer-reviewed dues-exemption decisions                      |
+| `member_waivers`            | Executed member waivers linked to an application or renewal    |
+| `guest_waivers`             | Executed guest waivers                                         |
+| `processed_form_entries`    | WordPress entries handled by the current membership-processing |
+
 ### Legacy-Only Tables
 
 These are defined in `schema.ts` but not imported or queried in v2 code. They exist because the v2 schema was generated from the production database.
@@ -162,7 +177,7 @@ These are defined in `schema.ts` but not imported or queried in v2 code. They ex
 ## Schema Conventions
 
 - **Primary keys** are `_index` (auto-increment int) on most tables. Exception: `WYCDatabase` uses `WYCNumber`.
-- **Foreign keys** are stored as plain `int` columns — no database-level FK constraints. Referential integrity is enforced in application code.
+- **Foreign keys** on legacy tables are generally plain `int` columns. New workflow tables use database constraints where both sides of the relationship are application-owned.
 - **Lookup tables** (`memcat`, `class_type`, `noyes`, `pos_type`, `ratings`, `privs`) follow a common pattern: `_index` PK + `text` display column.
 - **Dates** use `{ mode: 'string' }` in Drizzle, stored as `YYYY-MM-DD` strings (not `Date` objects) to survive JSON serialization across the TanStack Start boundary.
 - **Booleans** are `tinyint(1)` — `0`/`1` in the database, converted to `boolean` in TypeScript mappers.

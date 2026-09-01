@@ -52,7 +52,8 @@ export const wycDatabase = mysqlTable(
     zipCode: char('ZipCode', { length: 10 }).charSet('latin1').collate('latin1_swedish_ci'),
     phone1: char('Phone1', { length: 50 }).charSet('latin1').collate('latin1_swedish_ci'),
     phone2: char('Phone2', { length: 50 }).charSet('latin1').collate('latin1_swedish_ci'),
-    email: char('Email', { length: 50 }).charSet('latin1').collate('latin1_swedish_ci'),
+    email: varchar('Email', { length: 254 }).charSet('latin1').collate('latin1_swedish_ci'),
+    uwEmail: varchar('uw_email', { length: 254 }).charSet('latin1').collate('latin1_swedish_ci'),
     categoryId: int('Category'),
     wycNumber: int('WYCNumber').default(0).notNull(),
     expireQtrIndex: int('ExpireQtr').default(0).notNull(),
@@ -593,6 +594,81 @@ export const doorCodes = mysqlTable(
   (table) => [primaryKey({ columns: [table.index] }), unique('uq_door_codes_slug').on(table.slug)],
 )
 
+export const membershipApplications = mysqlTable(
+  'membership_applications',
+  {
+    id: char({ length: 36 }).notNull(),
+    firstName: varchar('first_name', { length: 60 }).notNull(),
+    lastName: varchar('last_name', { length: 60 }).notNull(),
+    submittedPrimaryEmail: varchar('submitted_primary_email', { length: 254 }).notNull(),
+    primaryEmail: varchar('primary_email', { length: 254 }).notNull(),
+    submittedUwEmail: varchar('submitted_uw_email', { length: 254 }),
+    uwEmail: varchar('uw_email', { length: 254 }),
+    emailEditedBy: int('email_edited_by'),
+    emailEditedAt: timestamp('email_edited_at'),
+    uwStatus: varchar('uw_status', { length: 20 }).notNull(),
+    imaAcknowledged: tinyint1('ima_acknowledged').notNull(),
+    plusOneResponse: varchar('plus_one_response', { length: 30 }).notNull(),
+    tier: varchar({ length: 20 }).notNull(),
+    duration: varchar({ length: 20 }).notNull(),
+    targetExpireQtr: int('target_expire_qtr').notNull(),
+    paymentStatus: varchar('payment_status', { length: 30 }).default('pending').notNull(),
+    squareOrderId: varchar('square_order_id', { length: 255 }),
+    paymentIdempotencyKey: varchar('payment_idempotency_key', { length: 45 }),
+    paymentCompletedAt: timestamp('payment_completed_at'),
+    addressLine1: varchar('address_line_1', { length: 100 }),
+    addressLine2: varchar('address_line_2', { length: 100 }),
+    city: varchar({ length: 50 }),
+    state: varchar({ length: 20 }),
+    zipCode: varchar('zip_code', { length: 10 }),
+    phone: varchar({ length: 50 }),
+    emergencyFirstName: varchar('emergency_first_name', { length: 60 }),
+    emergencyLastName: varchar('emergency_last_name', { length: 60 }),
+    emergencyPhone: varchar('emergency_phone', { length: 50 }),
+    emergencyRelationship: varchar('emergency_relationship', { length: 100 }),
+    questionnaireVersion: varchar('questionnaire_version', { length: 50 }).notNull(),
+    questionnaireResponses: json('questionnaire_responses'),
+    requirementsCompletedAt: timestamp('requirements_completed_at'),
+    reviewStatus: varchar('review_status', { length: 30 }).default('not_ready').notNull(),
+    resolvedWycNumber: int('resolved_wyc_number'),
+    reviewedBy: int('reviewed_by'),
+    reviewedAt: timestamp('reviewed_at'),
+    reviewNote: text('review_note'),
+    closedAt: timestamp('closed_at'),
+    recoveryEmailSentAt: timestamp('recovery_email_sent_at'),
+    completionReminderSentAt: timestamp('completion_reminder_sent_at'),
+    welcomeEmailSentAt: timestamp('welcome_email_sent_at'),
+    createdIpHash: char('created_ip_hash', { length: 64 }).notNull(),
+    createdAt: timestamp('created_at').defaultNow().notNull(),
+  },
+  (table) => [
+    primaryKey({ columns: [table.id] }),
+    index('idx_membership_applications_email').on(table.primaryEmail),
+    index('idx_membership_applications_payment').on(table.paymentStatus, table.paymentCompletedAt),
+    index('idx_membership_applications_review').on(table.reviewStatus, table.createdAt),
+    index('idx_membership_applications_reminder').on(
+      table.paymentStatus,
+      table.requirementsCompletedAt,
+      table.completionReminderSentAt,
+    ),
+    index('idx_membership_applications_resolved').on(table.resolvedWycNumber),
+    index('idx_membership_applications_rate_limit').on(table.createdIpHash, table.createdAt),
+  ],
+)
+
+export const memberEmergencyContacts = mysqlTable(
+  'member_emergency_contacts',
+  {
+    wycNumber: int('wyc_number').notNull(),
+    firstName: varchar('first_name', { length: 60 }).notNull(),
+    lastName: varchar('last_name', { length: 60 }).notNull(),
+    phone: varchar({ length: 50 }).notNull(),
+    relationship: varchar({ length: 100 }).notNull(),
+    createdAt: timestamp('created_at').defaultNow().notNull(),
+  },
+  (table) => [primaryKey({ columns: [table.wycNumber] })],
+)
+
 export const membershipRenewals = mysqlTable(
   'membership_renewals',
   {
@@ -618,8 +694,9 @@ export const membershipPayments = mysqlTable(
   'membership_payments',
   {
     index: int('_index').autoincrement().notNull(),
-    wycNumber: int('wyc_number').notNull(),
+    wycNumber: int('wyc_number'),
     renewalId: char('renewal_id', { length: 36 }),
+    applicationId: char('application_id', { length: 36 }),
     // null for non-payment renewals (e.g. dues-exempt).
     squarePaymentId: varchar('square_payment_id', { length: 255 }),
     squareOrderId: varchar('square_order_id', { length: 255 }),
@@ -635,12 +712,18 @@ export const membershipPayments = mysqlTable(
   (table) => [
     primaryKey({ columns: [table.index] }),
     unique('uq_membership_payments_renewal').on(table.renewalId),
+    unique('uq_membership_payments_application').on(table.applicationId),
     unique('uq_membership_payments_square_payment').on(table.squarePaymentId),
     index('idx_membership_payments_wyc').on(table.wycNumber),
     foreignKey({
       columns: [table.renewalId],
       foreignColumns: [membershipRenewals.id],
       name: 'fk_membership_payments_renewal',
+    }),
+    foreignKey({
+      columns: [table.applicationId],
+      foreignColumns: [membershipApplications.id],
+      name: 'fk_membership_payments_application',
     }),
   ],
 )
@@ -737,6 +820,11 @@ export const memberWaivers = mysqlTable(
       columns: [table.renewalId],
       foreignColumns: [membershipRenewals.id],
       name: 'fk_member_waivers_renewal',
+    }),
+    foreignKey({
+      columns: [table.applicationId],
+      foreignColumns: [membershipApplications.id],
+      name: 'fk_member_waivers_application',
     }),
   ],
 )
