@@ -9,6 +9,7 @@ import {
   ListChecks,
   RotateCcw,
   Sailboat,
+  TriangleAlert,
 } from 'lucide-react'
 
 import {
@@ -826,6 +827,7 @@ function ResultsScreen({
   questions: readonly TestQuestion[]
 }) {
   const score = scoreTest(questions, answers)
+  const copiedGuideQuestionIndices = new Set(score.copiedGuideQuestionIndices)
   const scoredQuestionIndices = questions.map((question, index) => ({
     correct: isQuestionCorrect(question, answers[index]),
     index,
@@ -843,6 +845,31 @@ function ResultsScreen({
 
   return (
     <div className="space-y-6">
+      {score.cheatingPenalty > 0 && (
+        <section className="rounded-xl border border-destructive/40 bg-destructive/5 p-5 shadow-sm sm:p-8">
+          <div className="flex gap-3">
+            <TriangleAlert
+              aria-hidden="true"
+              className="mt-0.5 h-6 w-6 shrink-0 text-destructive"
+            />
+            <div>
+              <p className="text-sm font-medium text-destructive">Cheating detected</p>
+              <h2 className="mt-1 text-xl font-bold">Copied sailing-guide answers found</h2>
+              <p className="mt-2 text-sm leading-6 text-muted-foreground">
+                {score.cheatingPenalty} boat-part answer
+                {score.cheatingPenalty === 1 ? ' matches' : 's match'} the numbered order from the
+                WYC Sailing Guide instead of the test diagram. Each detected answer loses its normal
+                point plus one additional point.
+              </p>
+              <p className="mt-3 font-semibold text-destructive">
+                Penalty: -{score.cheatingPenalty} additional point
+                {score.cheatingPenalty === 1 ? '' : 's'}
+              </p>
+            </div>
+          </div>
+        </section>
+      )}
+
       <section className="rounded-xl border bg-card px-5 py-10 text-center shadow-sm sm:px-8">
         <span
           className={cn(
@@ -864,8 +891,13 @@ function ResultsScreen({
         </h2>
         <p className="mt-3 text-2xl font-semibold">{score.percentage}%</p>
         <p className="mt-1 text-muted-foreground">
-          {score.correct} of {score.total} correct · {PASSING_PERCENTAGE}% required to pass
+          {score.points} of {score.total} points · {PASSING_PERCENTAGE}% required to pass
         </p>
+        {score.cheatingPenalty > 0 && (
+          <p className="mt-1 text-sm text-muted-foreground">
+            {score.correct} correct before the cheating penalty
+          </p>
+        )}
         <div className="mt-6 flex flex-col justify-center gap-3 sm:flex-row">
           <Button onClick={onRetake} type="button" variant="outline">
             <RotateCcw aria-hidden="true" />
@@ -889,6 +921,7 @@ function ResultsScreen({
                     {section.questions.map(({ correct, index }) => (
                       <ReadOnlyQuestionCard
                         answer={answers[index]}
+                        copiedFromGuide={copiedGuideQuestionIndices.has(index)}
                         correct={correct}
                         key={index}
                         question={questions[index]}
@@ -909,6 +942,7 @@ function ResultsScreen({
 
 function ReadOnlyQuestionCard({
   answer,
+  copiedFromGuide,
   correct,
   question,
   questionIndex,
@@ -916,6 +950,7 @@ function ReadOnlyQuestionCard({
   total,
 }: {
   answer: TestAnswer | undefined
+  copiedFromGuide: boolean
   correct: boolean
   question: TestQuestion
   questionIndex: number
@@ -923,7 +958,12 @@ function ReadOnlyQuestionCard({
   total: number
 }) {
   return (
-    <article className="overflow-hidden rounded-xl border bg-card shadow-sm">
+    <article
+      className={cn(
+        'overflow-hidden rounded-xl border bg-card shadow-sm',
+        copiedFromGuide && 'border-destructive/40 bg-destructive/5',
+      )}
+    >
       <QuestionHeading currentIndex={questionIndex} question={question} total={total} />
       <QuestionContent question={question}>
         <div className="mt-7 rounded-lg border p-4">
@@ -935,6 +975,11 @@ function ReadOnlyQuestionCard({
             )}
             {correct ? 'Correct' : 'Incorrect'}
           </div>
+          {copiedFromGuide && (
+            <p className="mt-3 text-sm font-medium text-destructive">
+              Sailing-guide order detected: -2 points
+            </p>
+          )}
           <dl className="mt-4 grid gap-3 text-sm">
             <div>
               <dt className="font-medium text-muted-foreground">Your answer</dt>

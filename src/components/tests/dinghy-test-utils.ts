@@ -6,6 +6,33 @@ export const PASSING_PERCENTAGE = 90
 export type TestAnswer = string | number | number[]
 export type TestAnswers = Partial<Record<number, TestAnswer>>
 
+const sailingGuidePartAnswers = [
+  ['Rudder'],
+  ['Tiller'],
+  ['Hiking Stick', 'Tiller Extension'],
+  ['Centerboard'],
+  ['Mast'],
+  ['Boom'],
+  ['Main Sail'],
+  ['Jib Sail'],
+  ['Main Halyard'],
+  ['Jib Halyard'],
+  ['Outhaul'],
+  ['Main Sheet'],
+  ['Boom Vang'],
+  ['Downhaul'],
+  ['Jib Sheets'],
+  ['Battens'],
+  ['Hull'],
+  ['Forestay'],
+  ['Shroud'],
+  ['Main Head'],
+  ['Main Luff'],
+  ['Main Tack'],
+  ['Main Foot'],
+  ['Clew'],
+] as const
+
 export function normalizeTextAnswer(value: string) {
   return value
     .normalize('NFKD')
@@ -79,6 +106,21 @@ export function isDevelopmentAnswer(answer: TestAnswer | undefined) {
   )
 }
 
+export function getCopiedGuideQuestionIndices(
+  questions: readonly TestQuestion[],
+  answers: TestAnswers,
+) {
+  return questions.flatMap((question, questionIndex) => {
+    const guideAnswers = sailingGuidePartAnswers[questionIndex]
+    const answer = answers[questionIndex]
+    return question.type === 'text' &&
+      typeof answer === 'string' &&
+      guideAnswers?.some((guideAnswer) => isTextAnswerAccepted(answer, guideAnswer))
+      ? [questionIndex]
+      : []
+  })
+}
+
 export function isQuestionAnswered(question: TestQuestion, answer: TestAnswer | undefined) {
   if (isDevelopmentAnswer(answer)) return true
   if (question.type === 'text') return typeof answer === 'string' && answer.trim().length > 0
@@ -115,13 +157,19 @@ export function scoreTest(questions: readonly TestQuestion[], answers: TestAnswe
   const correct = questions.filter((question, index) =>
     isQuestionCorrect(question, answers[index]),
   ).length
-  const percentage = Math.round((correct / questions.length) * 100)
+  const copiedGuideQuestionIndices = getCopiedGuideQuestionIndices(questions, answers)
+  const cheatingPenalty = copiedGuideQuestionIndices.length
+  const points = Math.max(0, correct - cheatingPenalty)
+  const percentage = Math.round((points / questions.length) * 100)
 
   return {
     correct,
+    points,
     total: questions.length,
     percentage,
-    passed: (correct / questions.length) * 100 >= PASSING_PERCENTAGE,
+    passed: (points / questions.length) * 100 >= PASSING_PERCENTAGE,
+    cheatingPenalty,
+    copiedGuideQuestionIndices,
   }
 }
 
