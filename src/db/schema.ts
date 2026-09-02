@@ -239,9 +239,10 @@ export const lessons = mysqlTable(
     calendarDate: date('CalendarDate', { mode: 'string' }).notNull(),
     instructor1: int(),
     instructor2: int(),
-    comments: blobAsText('comments'),
+    // The legacy schema stores the lesson description in the comments column.
+    description: blobAsText('comments'),
     requirements: text().charSet('latin1').collate('latin1_swedish_ci'),
-    description: text('Description')
+    legacyDescription: text('Description')
       .charSet('latin1')
       .collate('latin1_swedish_ci')
       .notNull()
@@ -257,6 +258,23 @@ export const lessons = mysqlTable(
       .notNull(),
   },
   (table) => [primaryKey({ columns: [table.index] })],
+)
+
+export const lessonAnnouncements = mysqlTable(
+  'lesson_announcements',
+  {
+    id: int().autoincrement().notNull(),
+    lessonId: int('lesson_id').notNull(),
+    authorWycNumber: int('author_wyc_number'),
+    subject: text().charSet('utf8mb4').collate('utf8mb4_unicode_ci').notNull(),
+    bodyMarkdown: text('body_markdown').charSet('utf8mb4').collate('utf8mb4_unicode_ci').notNull(),
+    createdAt: timestamp('created_at', { mode: 'string' }).defaultNow().notNull(),
+  },
+  (table) => [
+    primaryKey({ columns: [table.id] }),
+    index('idx_lesson_announcements_lesson_created').on(table.lessonId, table.createdAt),
+    // The legacy lessons table is MyISAM, so deleteLesson enforces this relationship.
+  ],
 )
 
 export const lessonSessions = mysqlTable(

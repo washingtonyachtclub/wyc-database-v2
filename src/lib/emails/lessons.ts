@@ -51,6 +51,7 @@ export function lessonEnrolledEmail(
   studentName: string,
   lesson: LessonEmailInfo,
   fromWaitlist?: boolean,
+  announcementsUrl?: string,
 ): string {
   const intro = fromWaitlist
     ? 'A spot has opened up — you are now enrolled in the following class:'
@@ -62,7 +63,11 @@ ${intro}
 
 ${formatLessonInfo(lesson)}
 
-${PLEASE_UNENROLL}${guideLine(lesson)}`
+${PLEASE_UNENROLL}${
+    announcementsUrl
+      ? `\n\nThis lesson has announcements that may contain required information. Review all of them before attending:\n${announcementsUrl}`
+      : ''
+  }${guideLine(lesson)}`
 }
 
 export const lessonReminderSubject = 'WYC - Your upcoming lesson'

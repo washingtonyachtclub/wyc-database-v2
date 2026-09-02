@@ -2,7 +2,7 @@ import { and, asc, desc, eq, gte, inArray, like, or, sql } from 'drizzle-orm'
 import { alias, type MySqlColumn, type MySqlSelect } from 'drizzle-orm/mysql-core'
 import db from '@/db/index'
 import type { LessonFilters } from './filter-types'
-import { toLessonSession, type LessonSession, type RichLesson } from './schema'
+import { toLessonSession, type LessonSession, type LessonStudent, type RichLesson } from './schema'
 import { classType, lessonSessions, lessons, signups, wycDatabase } from '@/db/schema'
 import type { LessonEmailInfo } from '@/lib/emails/lessons'
 
@@ -26,7 +26,7 @@ export const lessonTableSelectFields = {
   instructor1Last: instructor1Table.last,
   instructor2First: instructor2Table.first,
   instructor2Last: instructor2Table.last,
-  comments: lessons.comments,
+  description: lessons.description,
   requirements: lessons.requirements,
   location: lessons.location,
   locationUrl: lessons.locationUrl,
@@ -68,6 +68,29 @@ export async function fetchSessionsByLesson(
 
 export async function fetchLessonSessions(lessonId: number): Promise<LessonSession[]> {
   return (await fetchSessionsByLesson([lessonId])).get(lessonId) ?? []
+}
+
+export async function fetchLessonStudents(lessonId: number): Promise<LessonStudent[]> {
+  const rows = await db
+    .select({
+      wycNumber: wycDatabase.wycNumber,
+      first: wycDatabase.first,
+      last: wycDatabase.last,
+      email: wycDatabase.email,
+      phone1: wycDatabase.phone1,
+    })
+    .from(signups)
+    .innerJoin(wycDatabase, eq(signups.student, wycDatabase.wycNumber))
+    .where(eq(signups.class, lessonId))
+    .orderBy(asc(signups.index))
+
+  return rows.map((row) => ({
+    wycNumber: row.wycNumber,
+    first: row.first ?? '<Unknown>',
+    last: row.last ?? '<Unknown>',
+    email: row.email ?? '',
+    phone1: row.phone1 ?? '',
+  }))
 }
 
 type InstructorRefs = { instructor1: number | null; instructor2: number | null }
@@ -146,7 +169,7 @@ export function withLessonFilters<T extends MySqlSelect>(
   if (filters?.search) {
     const pattern = `%${filters.search}%`
     conditions.push(
-      or(like(lessons.subtype, pattern), sql`CAST(${lessons.comments} AS CHAR) LIKE ${pattern}`),
+      or(like(lessons.subtype, pattern), sql`CAST(${lessons.description} AS CHAR) LIKE ${pattern}`),
     )
   }
 
@@ -192,9 +215,7 @@ export function baseSignedUpWithDetailsQuery(wycNumber: number, minExpire: numbe
     .leftJoin(classType, eq(classType.index, lessons.type))
     .leftJoin(instructor1Table, eq(lessons.instructor1, instructor1Table.wycNumber))
     .leftJoin(instructor2Table, eq(lessons.instructor2, instructor2Table.wycNumber))
-    .where(
-      and(eq(signups.student, wycNumber), gte(lessons.expire, minExpire), eq(lessons.display, 1)),
-    )
+    .where(and(eq(signups.student, wycNumber), gte(lessons.expire, minExpire)))
     .orderBy(asc(lessons.calendarDate))
 }
 

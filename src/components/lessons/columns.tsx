@@ -11,6 +11,7 @@ export const columns = [
       <Link
         to="/lessons/$lessonIndex"
         params={{ lessonIndex: String(info.getValue()) }}
+        search={{ signedUp: undefined }}
         className="underline"
       >
         {info.getValue()}
@@ -34,8 +35,8 @@ export const columns = [
     header: 'Instructor 2',
     enableSorting: false,
   }),
-  columnHelper.accessor('comments', {
-    header: 'Comments',
+  columnHelper.accessor('description', {
+    header: 'Description',
     cell: (info) => {
       const val = info.getValue()
       return val.length > 60 ? `${val.slice(0, 60)}...` : val

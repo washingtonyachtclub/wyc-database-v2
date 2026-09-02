@@ -1,20 +1,11 @@
 import { Button } from '@/components/ui/button'
 import { formatSessions } from '@/domains/lessons/format-sessions'
 import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from '@/components/ui/dialog'
-import {
   getLessonForSignupQueryOptions,
   useEnrollInLessonMutation,
 } from '@/domains/lessons/query-options'
 import { useSuspenseQuery } from '@tanstack/react-query'
-import { createFileRoute, Link, redirect } from '@tanstack/react-router'
-import { useState } from 'react'
+import { createFileRoute, Link, redirect, useNavigate } from '@tanstack/react-router'
 import { RichText } from '@/components/ui/RichText'
 
 export const Route = createFileRoute('/signup/$lessonIndex')({
@@ -37,8 +28,8 @@ export const Route = createFileRoute('/signup/$lessonIndex')({
 function SignupPage() {
   const { lessonIndex } = Route.useParams()
   const { data: signupData } = useSuspenseQuery(getLessonForSignupQueryOptions(Number(lessonIndex)))
-  const [showConfirmDialog, setShowConfirmDialog] = useState(false)
   const enrollMutation = useEnrollInLessonMutation()
+  const navigate = useNavigate()
 
   if (!signupData) {
     return (
@@ -67,7 +58,14 @@ function SignupPage() {
   const handleSignup = () => {
     enrollMutation.mutate(
       { data: { lessonIndex: lesson.index } },
-      { onSuccess: () => setShowConfirmDialog(true) },
+      {
+        onSuccess: ({ status }) =>
+          navigate({
+            to: '/lessons/$lessonIndex',
+            params: { lessonIndex: String(lesson.index) },
+            search: { signedUp: status },
+          }),
+      },
     )
   }
 
@@ -96,10 +94,10 @@ function SignupPage() {
               {lesson.instructor2Name}
             </p>
           )}
-          {lesson.comments && (
+          {lesson.description && (
             <div>
-              <span className="font-medium text-foreground">Comments: </span>
-              <RichText text={lesson.comments} />
+              <span className="font-medium text-foreground">Description: </span>
+              <RichText text={lesson.description} />
             </div>
           )}
         </div>
@@ -129,8 +127,13 @@ function SignupPage() {
         {isAlreadySignedUp && !enrollMutation.isSuccess && (
           <div className="rounded-md bg-blue-500/10 p-4 border border-blue-500 space-y-2">
             <p className="text-sm text-blue-700">You are already signed up for this lesson.</p>
-            <Link to="/my-lessons" className="text-sm underline text-blue-700">
-              View my lessons
+            <Link
+              to="/lessons/$lessonIndex"
+              params={{ lessonIndex: String(lesson.index) }}
+              search={{ signedUp: undefined }}
+              className="text-sm underline text-blue-700"
+            >
+              View lesson
             </Link>
           </div>
         )}
@@ -139,20 +142,6 @@ function SignupPage() {
         {enrollMutation.error && (
           <div className="rounded-md bg-destructive/10 p-4">
             <p className="text-sm text-destructive">{enrollMutation.error.message}</p>
-          </div>
-        )}
-
-        {/* Success display */}
-        {enrollMutation.isSuccess && (
-          <div className="rounded-md bg-green-500/10 p-4 border border-green-500 space-y-2">
-            <p className="text-sm text-green-700 font-medium">
-              {enrollMutation.data.status === 'enrolled'
-                ? 'You have been enrolled in this lesson!'
-                : 'You have been added to the waitlist.'}
-            </p>
-            <Link to="/my-lessons" className="text-sm underline text-green-700">
-              View my lessons
-            </Link>
           </div>
         )}
 
@@ -170,21 +159,6 @@ function SignupPage() {
             {enrollMutation.isPending ? 'Signing up...' : isFull ? 'Join Waitlist' : 'Sign Up'}
           </Button>
         )}
-
-        <Dialog open={showConfirmDialog} onOpenChange={setShowConfirmDialog}>
-          <DialogContent className="sm:max-w-lg">
-            <DialogHeader>
-              <DialogTitle className="text-2xl">A Quick Reminder</DialogTitle>
-              <DialogDescription className="text-lg pt-2">
-                If you're unable to attend, please unenroll as soon as possible so another member
-                can take your spot. Our instructors and fellow members appreciate it!
-              </DialogDescription>
-            </DialogHeader>
-            <DialogFooter className="pt-2">
-              <Button onClick={() => setShowConfirmDialog(false)}>I understand</Button>
-            </DialogFooter>
-          </DialogContent>
-        </Dialog>
       </div>
     </div>
   )

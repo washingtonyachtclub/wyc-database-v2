@@ -71,8 +71,10 @@ function LessonRow({ lesson, onClick }: { lesson: RichLessonWithEnrollment; onCl
       </div>
       <div className="truncate font-medium">
         {lessonName(lesson)}
-        {lesson.comments && (
-          <span className="ml-2 text-xs text-muted-foreground truncate">· {lesson.comments}</span>
+        {lesson.description && (
+          <span className="ml-2 text-xs text-muted-foreground truncate">
+            · {lesson.description}
+          </span>
         )}
       </div>
       <div className="truncate text-foreground" title={when}>

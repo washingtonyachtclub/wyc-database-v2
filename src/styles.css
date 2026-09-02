@@ -53,6 +53,65 @@
   }
 }
 
+.lesson-announcement-editor {
+  border: 1px solid var(--color-input);
+  border-radius: var(--radius);
+  overflow: hidden;
+}
+
+.lesson-announcement-editor-content {
+  min-height: 14rem;
+  padding: 0.75rem;
+  color: var(--color-foreground);
+}
+
+.lesson-announcement-editor-content h2,
+.lesson-announcement-markdown h2 {
+  margin: 1rem 0 0.5rem;
+  font-size: 1.25rem;
+  font-weight: 600;
+}
+
+.lesson-announcement-editor-content h3,
+.lesson-announcement-markdown h3 {
+  margin: 0.75rem 0 0.5rem;
+  font-size: 1.125rem;
+  font-weight: 600;
+}
+
+.lesson-announcement-editor-content p,
+.lesson-announcement-markdown p {
+  margin: 0.5rem 0;
+}
+
+.lesson-announcement-editor-content ul,
+.lesson-announcement-markdown ul {
+  margin: 0.5rem 0;
+  padding-left: 1.5rem;
+  list-style: disc;
+}
+
+.lesson-announcement-editor-content ol,
+.lesson-announcement-markdown ol {
+  margin: 0.5rem 0;
+  padding-left: 1.5rem;
+  list-style: decimal;
+}
+
+.lesson-announcement-editor-content a,
+.lesson-announcement-markdown a {
+  color: var(--color-primary);
+  text-decoration: underline;
+}
+
+.lesson-announcement-editor-content blockquote,
+.lesson-announcement-markdown blockquote {
+  margin: 0.75rem 0;
+  border-left: 3px solid var(--color-border);
+  padding-left: 0.75rem;
+  color: var(--color-muted-foreground);
+}
+
 @layer base {
   * {
     @apply border-border;
