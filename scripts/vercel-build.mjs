@@ -8,7 +8,17 @@ function run(script) {
   if (result.status !== 0) process.exit(result.status ?? 1)
 }
 
-if (process.env.VERCEL_ENV === 'production') {
+const isProductionDeployment = process.env.VERCEL_ENV === 'production'
+const isDevProject = process.env.VITE_APP_ENV === 'dev'
+
+if (isProductionDeployment && isDevProject) {
+  run('build')
+  run('db:reset:deployed-dev')
+  run('db:migrate')
+  process.exit(0)
+}
+
+if (isProductionDeployment) {
   run('db:baseline:ensure')
   run('db:migrate')
 }
