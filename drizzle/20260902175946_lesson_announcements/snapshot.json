@@ -1,8 +1,8 @@
 {
   "version": "6",
   "dialect": "mysql",
-  "id": "8272d155-9733-4346-b538-69c968353676",
-  "prevIds": ["37ec5767-ca56-464a-8d75-b1a8319b0627"],
+  "id": "ae9f2c9b-c472-4a9a-9c31-46e6ebe4554e",
+  "prevIds": ["f7f2c213-53e2-42fc-812a-5d0afbecec68"],
   "ddl": [
     {
       "name": "boat_types",
@@ -77,7 +77,15 @@
       "entityType": "tables"
     },
     {
+      "name": "member_emergency_contacts",
+      "entityType": "tables"
+    },
+    {
       "name": "member_waivers",
+      "entityType": "tables"
+    },
+    {
+      "name": "membership_applications",
       "entityType": "tables"
     },
     {
@@ -1753,6 +1761,90 @@
       "table": "lessons"
     },
     {
+      "type": "int",
+      "notNull": true,
+      "autoIncrement": false,
+      "default": null,
+      "onUpdateNow": false,
+      "onUpdateNowFsp": null,
+      "charSet": null,
+      "collation": null,
+      "generated": null,
+      "name": "wyc_number",
+      "entityType": "columns",
+      "table": "member_emergency_contacts"
+    },
+    {
+      "type": "varchar(60)",
+      "notNull": true,
+      "autoIncrement": false,
+      "default": null,
+      "onUpdateNow": false,
+      "onUpdateNowFsp": null,
+      "charSet": null,
+      "collation": null,
+      "generated": null,
+      "name": "first_name",
+      "entityType": "columns",
+      "table": "member_emergency_contacts"
+    },
+    {
+      "type": "varchar(60)",
+      "notNull": true,
+      "autoIncrement": false,
+      "default": null,
+      "onUpdateNow": false,
+      "onUpdateNowFsp": null,
+      "charSet": null,
+      "collation": null,
+      "generated": null,
+      "name": "last_name",
+      "entityType": "columns",
+      "table": "member_emergency_contacts"
+    },
+    {
+      "type": "varchar(50)",
+      "notNull": true,
+      "autoIncrement": false,
+      "default": null,
+      "onUpdateNow": false,
+      "onUpdateNowFsp": null,
+      "charSet": null,
+      "collation": null,
+      "generated": null,
+      "name": "phone",
+      "entityType": "columns",
+      "table": "member_emergency_contacts"
+    },
+    {
+      "type": "varchar(100)",
+      "notNull": true,
+      "autoIncrement": false,
+      "default": null,
+      "onUpdateNow": false,
+      "onUpdateNowFsp": null,
+      "charSet": null,
+      "collation": null,
+      "generated": null,
+      "name": "relationship",
+      "entityType": "columns",
+      "table": "member_emergency_contacts"
+    },
+    {
+      "type": "timestamp",
+      "notNull": true,
+      "autoIncrement": false,
+      "default": "(now())",
+      "onUpdateNow": false,
+      "onUpdateNowFsp": null,
+      "charSet": null,
+      "collation": null,
+      "generated": null,
+      "name": "created_at",
+      "entityType": "columns",
+      "table": "member_emergency_contacts"
+    },
+    {
       "type": "char(36)",
       "notNull": true,
       "autoIncrement": false,
@@ -1935,6 +2027,608 @@
       "table": "member_waivers"
     },
     {
+      "type": "char(36)",
+      "notNull": true,
+      "autoIncrement": false,
+      "default": null,
+      "onUpdateNow": false,
+      "onUpdateNowFsp": null,
+      "charSet": null,
+      "collation": null,
+      "generated": null,
+      "name": "id",
+      "entityType": "columns",
+      "table": "membership_applications"
+    },
+    {
+      "type": "varchar(60)",
+      "notNull": true,
+      "autoIncrement": false,
+      "default": null,
+      "onUpdateNow": false,
+      "onUpdateNowFsp": null,
+      "charSet": null,
+      "collation": null,
+      "generated": null,
+      "name": "first_name",
+      "entityType": "columns",
+      "table": "membership_applications"
+    },
+    {
+      "type": "varchar(60)",
+      "notNull": true,
+      "autoIncrement": false,
+      "default": null,
+      "onUpdateNow": false,
+      "onUpdateNowFsp": null,
+      "charSet": null,
+      "collation": null,
+      "generated": null,
+      "name": "last_name",
+      "entityType": "columns",
+      "table": "membership_applications"
+    },
+    {
+      "type": "varchar(254)",
+      "notNull": true,
+      "autoIncrement": false,
+      "default": null,
+      "onUpdateNow": false,
+      "onUpdateNowFsp": null,
+      "charSet": null,
+      "collation": null,
+      "generated": null,
+      "name": "submitted_primary_email",
+      "entityType": "columns",
+      "table": "membership_applications"
+    },
+    {
+      "type": "varchar(254)",
+      "notNull": true,
+      "autoIncrement": false,
+      "default": null,
+      "onUpdateNow": false,
+      "onUpdateNowFsp": null,
+      "charSet": null,
+      "collation": null,
+      "generated": null,
+      "name": "primary_email",
+      "entityType": "columns",
+      "table": "membership_applications"
+    },
+    {
+      "type": "varchar(254)",
+      "notNull": false,
+      "autoIncrement": false,
+      "default": null,
+      "onUpdateNow": false,
+      "onUpdateNowFsp": null,
+      "charSet": null,
+      "collation": null,
+      "generated": null,
+      "name": "submitted_uw_email",
+      "entityType": "columns",
+      "table": "membership_applications"
+    },
+    {
+      "type": "varchar(254)",
+      "notNull": false,
+      "autoIncrement": false,
+      "default": null,
+      "onUpdateNow": false,
+      "onUpdateNowFsp": null,
+      "charSet": null,
+      "collation": null,
+      "generated": null,
+      "name": "uw_email",
+      "entityType": "columns",
+      "table": "membership_applications"
+    },
+    {
+      "type": "int",
+      "notNull": false,
+      "autoIncrement": false,
+      "default": null,
+      "onUpdateNow": false,
+      "onUpdateNowFsp": null,
+      "charSet": null,
+      "collation": null,
+      "generated": null,
+      "name": "email_edited_by",
+      "entityType": "columns",
+      "table": "membership_applications"
+    },
+    {
+      "type": "timestamp",
+      "notNull": false,
+      "autoIncrement": false,
+      "default": null,
+      "onUpdateNow": false,
+      "onUpdateNowFsp": null,
+      "charSet": null,
+      "collation": null,
+      "generated": null,
+      "name": "email_edited_at",
+      "entityType": "columns",
+      "table": "membership_applications"
+    },
+    {
+      "type": "varchar(20)",
+      "notNull": true,
+      "autoIncrement": false,
+      "default": null,
+      "onUpdateNow": false,
+      "onUpdateNowFsp": null,
+      "charSet": null,
+      "collation": null,
+      "generated": null,
+      "name": "uw_status",
+      "entityType": "columns",
+      "table": "membership_applications"
+    },
+    {
+      "type": "tinyint(1)",
+      "notNull": true,
+      "autoIncrement": false,
+      "default": null,
+      "onUpdateNow": false,
+      "onUpdateNowFsp": null,
+      "charSet": null,
+      "collation": null,
+      "generated": null,
+      "name": "ima_acknowledged",
+      "entityType": "columns",
+      "table": "membership_applications"
+    },
+    {
+      "type": "varchar(30)",
+      "notNull": true,
+      "autoIncrement": false,
+      "default": null,
+      "onUpdateNow": false,
+      "onUpdateNowFsp": null,
+      "charSet": null,
+      "collation": null,
+      "generated": null,
+      "name": "plus_one_response",
+      "entityType": "columns",
+      "table": "membership_applications"
+    },
+    {
+      "type": "varchar(20)",
+      "notNull": true,
+      "autoIncrement": false,
+      "default": null,
+      "onUpdateNow": false,
+      "onUpdateNowFsp": null,
+      "charSet": null,
+      "collation": null,
+      "generated": null,
+      "name": "tier",
+      "entityType": "columns",
+      "table": "membership_applications"
+    },
+    {
+      "type": "varchar(20)",
+      "notNull": true,
+      "autoIncrement": false,
+      "default": null,
+      "onUpdateNow": false,
+      "onUpdateNowFsp": null,
+      "charSet": null,
+      "collation": null,
+      "generated": null,
+      "name": "duration",
+      "entityType": "columns",
+      "table": "membership_applications"
+    },
+    {
+      "type": "int",
+      "notNull": true,
+      "autoIncrement": false,
+      "default": null,
+      "onUpdateNow": false,
+      "onUpdateNowFsp": null,
+      "charSet": null,
+      "collation": null,
+      "generated": null,
+      "name": "target_expire_qtr",
+      "entityType": "columns",
+      "table": "membership_applications"
+    },
+    {
+      "type": "varchar(30)",
+      "notNull": true,
+      "autoIncrement": false,
+      "default": "'pending'",
+      "onUpdateNow": false,
+      "onUpdateNowFsp": null,
+      "charSet": null,
+      "collation": null,
+      "generated": null,
+      "name": "payment_status",
+      "entityType": "columns",
+      "table": "membership_applications"
+    },
+    {
+      "type": "varchar(255)",
+      "notNull": false,
+      "autoIncrement": false,
+      "default": null,
+      "onUpdateNow": false,
+      "onUpdateNowFsp": null,
+      "charSet": null,
+      "collation": null,
+      "generated": null,
+      "name": "square_order_id",
+      "entityType": "columns",
+      "table": "membership_applications"
+    },
+    {
+      "type": "varchar(45)",
+      "notNull": false,
+      "autoIncrement": false,
+      "default": null,
+      "onUpdateNow": false,
+      "onUpdateNowFsp": null,
+      "charSet": null,
+      "collation": null,
+      "generated": null,
+      "name": "payment_idempotency_key",
+      "entityType": "columns",
+      "table": "membership_applications"
+    },
+    {
+      "type": "timestamp",
+      "notNull": false,
+      "autoIncrement": false,
+      "default": null,
+      "onUpdateNow": false,
+      "onUpdateNowFsp": null,
+      "charSet": null,
+      "collation": null,
+      "generated": null,
+      "name": "payment_completed_at",
+      "entityType": "columns",
+      "table": "membership_applications"
+    },
+    {
+      "type": "varchar(100)",
+      "notNull": false,
+      "autoIncrement": false,
+      "default": null,
+      "onUpdateNow": false,
+      "onUpdateNowFsp": null,
+      "charSet": null,
+      "collation": null,
+      "generated": null,
+      "name": "address_line_1",
+      "entityType": "columns",
+      "table": "membership_applications"
+    },
+    {
+      "type": "varchar(100)",
+      "notNull": false,
+      "autoIncrement": false,
+      "default": null,
+      "onUpdateNow": false,
+      "onUpdateNowFsp": null,
+      "charSet": null,
+      "collation": null,
+      "generated": null,
+      "name": "address_line_2",
+      "entityType": "columns",
+      "table": "membership_applications"
+    },
+    {
+      "type": "varchar(50)",
+      "notNull": false,
+      "autoIncrement": false,
+      "default": null,
+      "onUpdateNow": false,
+      "onUpdateNowFsp": null,
+      "charSet": null,
+      "collation": null,
+      "generated": null,
+      "name": "city",
+      "entityType": "columns",
+      "table": "membership_applications"
+    },
+    {
+      "type": "varchar(20)",
+      "notNull": false,
+      "autoIncrement": false,
+      "default": null,
+      "onUpdateNow": false,
+      "onUpdateNowFsp": null,
+      "charSet": null,
+      "collation": null,
+      "generated": null,
+      "name": "state",
+      "entityType": "columns",
+      "table": "membership_applications"
+    },
+    {
+      "type": "varchar(10)",
+      "notNull": false,
+      "autoIncrement": false,
+      "default": null,
+      "onUpdateNow": false,
+      "onUpdateNowFsp": null,
+      "charSet": null,
+      "collation": null,
+      "generated": null,
+      "name": "zip_code",
+      "entityType": "columns",
+      "table": "membership_applications"
+    },
+    {
+      "type": "varchar(50)",
+      "notNull": false,
+      "autoIncrement": false,
+      "default": null,
+      "onUpdateNow": false,
+      "onUpdateNowFsp": null,
+      "charSet": null,
+      "collation": null,
+      "generated": null,
+      "name": "phone",
+      "entityType": "columns",
+      "table": "membership_applications"
+    },
+    {
+      "type": "varchar(60)",
+      "notNull": false,
+      "autoIncrement": false,
+      "default": null,
+      "onUpdateNow": false,
+      "onUpdateNowFsp": null,
+      "charSet": null,
+      "collation": null,
+      "generated": null,
+      "name": "emergency_first_name",
+      "entityType": "columns",
+      "table": "membership_applications"
+    },
+    {
+      "type": "varchar(60)",
+      "notNull": false,
+      "autoIncrement": false,
+      "default": null,
+      "onUpdateNow": false,
+      "onUpdateNowFsp": null,
+      "charSet": null,
+      "collation": null,
+      "generated": null,
+      "name": "emergency_last_name",
+      "entityType": "columns",
+      "table": "membership_applications"
+    },
+    {
+      "type": "varchar(50)",
+      "notNull": false,
+      "autoIncrement": false,
+      "default": null,
+      "onUpdateNow": false,
+      "onUpdateNowFsp": null,
+      "charSet": null,
+      "collation": null,
+      "generated": null,
+      "name": "emergency_phone",
+      "entityType": "columns",
+      "table": "membership_applications"
+    },
+    {
+      "type": "varchar(100)",
+      "notNull": false,
+      "autoIncrement": false,
+      "default": null,
+      "onUpdateNow": false,
+      "onUpdateNowFsp": null,
+      "charSet": null,
+      "collation": null,
+      "generated": null,
+      "name": "emergency_relationship",
+      "entityType": "columns",
+      "table": "membership_applications"
+    },
+    {
+      "type": "varchar(50)",
+      "notNull": true,
+      "autoIncrement": false,
+      "default": null,
+      "onUpdateNow": false,
+      "onUpdateNowFsp": null,
+      "charSet": null,
+      "collation": null,
+      "generated": null,
+      "name": "questionnaire_version",
+      "entityType": "columns",
+      "table": "membership_applications"
+    },
+    {
+      "type": "json",
+      "notNull": false,
+      "autoIncrement": false,
+      "default": null,
+      "onUpdateNow": false,
+      "onUpdateNowFsp": null,
+      "charSet": null,
+      "collation": null,
+      "generated": null,
+      "name": "questionnaire_responses",
+      "entityType": "columns",
+      "table": "membership_applications"
+    },
+    {
+      "type": "timestamp",
+      "notNull": false,
+      "autoIncrement": false,
+      "default": null,
+      "onUpdateNow": false,
+      "onUpdateNowFsp": null,
+      "charSet": null,
+      "collation": null,
+      "generated": null,
+      "name": "requirements_completed_at",
+      "entityType": "columns",
+      "table": "membership_applications"
+    },
+    {
+      "type": "varchar(30)",
+      "notNull": true,
+      "autoIncrement": false,
+      "default": "'not_ready'",
+      "onUpdateNow": false,
+      "onUpdateNowFsp": null,
+      "charSet": null,
+      "collation": null,
+      "generated": null,
+      "name": "review_status",
+      "entityType": "columns",
+      "table": "membership_applications"
+    },
+    {
+      "type": "int",
+      "notNull": false,
+      "autoIncrement": false,
+      "default": null,
+      "onUpdateNow": false,
+      "onUpdateNowFsp": null,
+      "charSet": null,
+      "collation": null,
+      "generated": null,
+      "name": "resolved_wyc_number",
+      "entityType": "columns",
+      "table": "membership_applications"
+    },
+    {
+      "type": "int",
+      "notNull": false,
+      "autoIncrement": false,
+      "default": null,
+      "onUpdateNow": false,
+      "onUpdateNowFsp": null,
+      "charSet": null,
+      "collation": null,
+      "generated": null,
+      "name": "reviewed_by",
+      "entityType": "columns",
+      "table": "membership_applications"
+    },
+    {
+      "type": "timestamp",
+      "notNull": false,
+      "autoIncrement": false,
+      "default": null,
+      "onUpdateNow": false,
+      "onUpdateNowFsp": null,
+      "charSet": null,
+      "collation": null,
+      "generated": null,
+      "name": "reviewed_at",
+      "entityType": "columns",
+      "table": "membership_applications"
+    },
+    {
+      "type": "text",
+      "notNull": false,
+      "autoIncrement": false,
+      "default": null,
+      "onUpdateNow": false,
+      "onUpdateNowFsp": null,
+      "charSet": null,
+      "collation": null,
+      "generated": null,
+      "name": "review_note",
+      "entityType": "columns",
+      "table": "membership_applications"
+    },
+    {
+      "type": "timestamp",
+      "notNull": false,
+      "autoIncrement": false,
+      "default": null,
+      "onUpdateNow": false,
+      "onUpdateNowFsp": null,
+      "charSet": null,
+      "collation": null,
+      "generated": null,
+      "name": "closed_at",
+      "entityType": "columns",
+      "table": "membership_applications"
+    },
+    {
+      "type": "timestamp",
+      "notNull": false,
+      "autoIncrement": false,
+      "default": null,
+      "onUpdateNow": false,
+      "onUpdateNowFsp": null,
+      "charSet": null,
+      "collation": null,
+      "generated": null,
+      "name": "recovery_email_sent_at",
+      "entityType": "columns",
+      "table": "membership_applications"
+    },
+    {
+      "type": "timestamp",
+      "notNull": false,
+      "autoIncrement": false,
+      "default": null,
+      "onUpdateNow": false,
+      "onUpdateNowFsp": null,
+      "charSet": null,
+      "collation": null,
+      "generated": null,
+      "name": "completion_reminder_sent_at",
+      "entityType": "columns",
+      "table": "membership_applications"
+    },
+    {
+      "type": "timestamp",
+      "notNull": false,
+      "autoIncrement": false,
+      "default": null,
+      "onUpdateNow": false,
+      "onUpdateNowFsp": null,
+      "charSet": null,
+      "collation": null,
+      "generated": null,
+      "name": "welcome_email_sent_at",
+      "entityType": "columns",
+      "table": "membership_applications"
+    },
+    {
+      "type": "char(64)",
+      "notNull": true,
+      "autoIncrement": false,
+      "default": null,
+      "onUpdateNow": false,
+      "onUpdateNowFsp": null,
+      "charSet": null,
+      "collation": null,
+      "generated": null,
+      "name": "created_ip_hash",
+      "entityType": "columns",
+      "table": "membership_applications"
+    },
+    {
+      "type": "timestamp",
+      "notNull": true,
+      "autoIncrement": false,
+      "default": "(now())",
+      "onUpdateNow": false,
+      "onUpdateNowFsp": null,
+      "charSet": null,
+      "collation": null,
+      "generated": null,
+      "name": "created_at",
+      "entityType": "columns",
+      "table": "membership_applications"
+    },
+    {
       "type": "int",
       "notNull": true,
       "autoIncrement": true,
@@ -1950,7 +2644,7 @@
     },
     {
       "type": "int",
-      "notNull": true,
+      "notNull": false,
       "autoIncrement": false,
       "default": null,
       "onUpdateNow": false,
@@ -1973,6 +2667,20 @@
       "collation": null,
       "generated": null,
       "name": "renewal_id",
+      "entityType": "columns",
+      "table": "membership_payments"
+    },
+    {
+      "type": "char(36)",
+      "notNull": false,
+      "autoIncrement": false,
+      "default": null,
+      "onUpdateNow": false,
+      "onUpdateNowFsp": null,
+      "charSet": null,
+      "collation": null,
+      "generated": null,
+      "name": "application_id",
       "entityType": "columns",
       "table": "membership_payments"
     },
@@ -4105,7 +4813,7 @@
       "table": "WYCDatabase"
     },
     {
-      "type": "char(50)",
+      "type": "varchar(254)",
       "notNull": false,
       "autoIncrement": false,
       "default": null,
@@ -4115,6 +4823,20 @@
       "collation": "latin1_swedish_ci",
       "generated": null,
       "name": "Email",
+      "entityType": "columns",
+      "table": "WYCDatabase"
+    },
+    {
+      "type": "varchar(254)",
+      "notNull": false,
+      "autoIncrement": false,
+      "default": null,
+      "onUpdateNow": false,
+      "onUpdateNowFsp": null,
+      "charSet": "latin1",
+      "collation": "latin1_swedish_ci",
+      "generated": null,
+      "name": "uw_email",
       "entityType": "columns",
       "table": "WYCDatabase"
     },
@@ -4517,9 +5239,21 @@
       "entityType": "pks"
     },
     {
+      "columns": ["wyc_number"],
+      "name": "PRIMARY",
+      "table": "member_emergency_contacts",
+      "entityType": "pks"
+    },
+    {
       "columns": ["id"],
       "name": "PRIMARY",
       "table": "member_waivers",
+      "entityType": "pks"
+    },
+    {
+      "columns": ["id"],
+      "name": "PRIMARY",
+      "table": "membership_applications",
       "entityType": "pks"
     },
     {
@@ -4963,6 +5697,122 @@
     {
       "columns": [
         {
+          "value": "primary_email",
+          "isExpression": false
+        }
+      ],
+      "isUnique": false,
+      "using": null,
+      "algorithm": null,
+      "lock": null,
+      "nameExplicit": true,
+      "name": "idx_membership_applications_email",
+      "entityType": "indexes",
+      "table": "membership_applications"
+    },
+    {
+      "columns": [
+        {
+          "value": "payment_status",
+          "isExpression": false
+        },
+        {
+          "value": "payment_completed_at",
+          "isExpression": false
+        }
+      ],
+      "isUnique": false,
+      "using": null,
+      "algorithm": null,
+      "lock": null,
+      "nameExplicit": true,
+      "name": "idx_membership_applications_payment",
+      "entityType": "indexes",
+      "table": "membership_applications"
+    },
+    {
+      "columns": [
+        {
+          "value": "review_status",
+          "isExpression": false
+        },
+        {
+          "value": "created_at",
+          "isExpression": false
+        }
+      ],
+      "isUnique": false,
+      "using": null,
+      "algorithm": null,
+      "lock": null,
+      "nameExplicit": true,
+      "name": "idx_membership_applications_review",
+      "entityType": "indexes",
+      "table": "membership_applications"
+    },
+    {
+      "columns": [
+        {
+          "value": "payment_status",
+          "isExpression": false
+        },
+        {
+          "value": "requirements_completed_at",
+          "isExpression": false
+        },
+        {
+          "value": "completion_reminder_sent_at",
+          "isExpression": false
+        }
+      ],
+      "isUnique": false,
+      "using": null,
+      "algorithm": null,
+      "lock": null,
+      "nameExplicit": true,
+      "name": "idx_membership_applications_reminder",
+      "entityType": "indexes",
+      "table": "membership_applications"
+    },
+    {
+      "columns": [
+        {
+          "value": "resolved_wyc_number",
+          "isExpression": false
+        }
+      ],
+      "isUnique": false,
+      "using": null,
+      "algorithm": null,
+      "lock": null,
+      "nameExplicit": true,
+      "name": "idx_membership_applications_resolved",
+      "entityType": "indexes",
+      "table": "membership_applications"
+    },
+    {
+      "columns": [
+        {
+          "value": "created_ip_hash",
+          "isExpression": false
+        },
+        {
+          "value": "created_at",
+          "isExpression": false
+        }
+      ],
+      "isUnique": false,
+      "using": null,
+      "algorithm": null,
+      "lock": null,
+      "nameExplicit": true,
+      "name": "idx_membership_applications_rate_limit",
+      "entityType": "indexes",
+      "table": "membership_applications"
+    },
+    {
+      "columns": [
+        {
           "value": "renewal_id",
           "isExpression": false
         }
@@ -4973,6 +5823,22 @@
       "lock": null,
       "nameExplicit": true,
       "name": "uq_membership_payments_renewal",
+      "entityType": "indexes",
+      "table": "membership_payments"
+    },
+    {
+      "columns": [
+        {
+          "value": "application_id",
+          "isExpression": false
+        }
+      ],
+      "isUnique": true,
+      "using": null,
+      "algorithm": null,
+      "lock": null,
+      "nameExplicit": true,
+      "name": "uq_membership_payments_application",
       "entityType": "indexes",
       "table": "membership_payments"
     },
@@ -5341,6 +6207,17 @@
       "table": "member_waivers"
     },
     {
+      "columns": ["application_id"],
+      "tableTo": "membership_applications",
+      "columnsTo": ["id"],
+      "onUpdate": "NO ACTION",
+      "onDelete": "NO ACTION",
+      "nameExplicit": true,
+      "name": "fk_member_waivers_application",
+      "entityType": "fks",
+      "table": "member_waivers"
+    },
+    {
       "columns": ["renewal_id"],
       "tableTo": "membership_renewals",
       "columnsTo": ["id"],
@@ -5348,6 +6225,17 @@
       "onDelete": "NO ACTION",
       "nameExplicit": true,
       "name": "fk_membership_payments_renewal",
+      "entityType": "fks",
+      "table": "membership_payments"
+    },
+    {
+      "columns": ["application_id"],
+      "tableTo": "membership_applications",
+      "columnsTo": ["id"],
+      "onUpdate": "NO ACTION",
+      "onDelete": "NO ACTION",
+      "nameExplicit": true,
+      "name": "fk_membership_payments_application",
       "entityType": "fks",
       "table": "membership_payments"
     },
