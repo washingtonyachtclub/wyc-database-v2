@@ -962,7 +962,9 @@ const MyLessonsRouteChildren: MyLessonsRouteChildren = {
   MyLessonsLessonIndexRoute: MyLessonsLessonIndexRoute,
 }
 
-const MyLessonsRouteWithChildren = MyLessonsRoute._addFileChildren(MyLessonsRouteChildren)
+const MyLessonsRouteWithChildren = MyLessonsRoute._addFileChildren(
+  MyLessonsRouteChildren,
+)
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
