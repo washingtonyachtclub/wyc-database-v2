@@ -26,7 +26,7 @@ export type CalendarSession = {
 export type CalendarLesson = {
   title: string
   location: string
-  comments: string
+  description: string
   requirements: string
   instructors: string[]
   colorId?: string // Google's fixed palette; unset = calendar default
@@ -72,10 +72,10 @@ function escapeHtml(text: string): string {
   return text.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
 }
 
-// Calendar renders the description as HTML, so the comment's rich-text markers become
+// Calendar renders the description as HTML, so the rich-text markers become
 // tags and newlines become <br>. Of the tags used here, only b/i/s/br survive its sanitiser.
-function commentsHtml(comments: string): string {
-  return comments
+function richTextHtml(description: string): string {
+  return description
     .split(RICH_TEXT_TOKEN)
     .map((part, i) => {
       const escaped = escapeHtml(part)
@@ -88,10 +88,10 @@ function commentsHtml(comments: string): string {
     .replace(/\n/g, '<br>')
 }
 
-function descriptionHtml(lesson: CalendarLesson): string {
+function calendarDescriptionHtml(lesson: CalendarLesson): string {
   const { instructors } = lesson
   return [
-    lesson.comments && commentsHtml(lesson.comments),
+    lesson.description && richTextHtml(lesson.description),
     instructors.length > 0 &&
       `<b>Instructor${instructors.length > 1 ? 's' : ''}:</b> ${escapeHtml(instructors.join(', '))}`,
     lesson.requirements && `<b>Requirements:</b> ${escapeHtml(lesson.requirements)}`,
@@ -114,7 +114,7 @@ function eventBody(lesson: CalendarLesson, session: CalendarSession) {
     id: sessionEventId(session.index),
     summary: lesson.title,
     location: lesson.location,
-    description: descriptionHtml(lesson),
+    description: calendarDescriptionHtml(lesson),
     ...(lesson.colorId ? { colorId: lesson.colorId } : {}),
     ...timePoint,
   }

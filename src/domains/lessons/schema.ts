@@ -66,7 +66,7 @@ export const lessonInsertSchema = z.object({
   sessions: z.array(lessonSessionInputSchema).min(1, 'At least one session is required'),
   instructor1: z.number(),
   instructor2: z.number().nullable(),
-  comments: z.string(),
+  description: z.string(),
   requirements: z.string(),
   location: z.string(),
   locationUrl: z.string(),
@@ -115,7 +115,7 @@ export type Lesson = {
   calendarDate: string
   instructor1: number // wycNumber (FK)
   instructor2: number | null // wycNumber (FK)
-  comments: string
+  description: string
   requirements: string
   location: string
   locationUrl: string
@@ -136,7 +136,7 @@ export type RichLesson = {
   calendarDate: string
   instructor1Name: string
   instructor2Name: string
-  comments: string
+  description: string
   requirements: string
   location: string
   locationUrl: string
@@ -240,7 +240,7 @@ export function toRichLesson(row: LessonQueryRow, sessions: LessonSession[]): Ri
     calendarDate: row.calendarDate,
     instructor1Name: fullName(row.instructor1First, row.instructor1Last) || '<Unknown>',
     instructor2Name: fullName(row.instructor2First, row.instructor2Last),
-    comments: str(row.comments),
+    description: str(row.description),
     requirements: str(row.requirements),
     location: str(row.location),
     locationUrl: str(row.locationUrl),
@@ -257,7 +257,7 @@ export function fromLessonInsert(data: LessonInsert) {
     calendarDate: lastSessionDate(data.sessions),
     instructor1: data.instructor1,
     instructor2: data.instructor2,
-    comments: data.comments,
+    description: data.description,
     requirements: data.requirements,
     location: data.location,
     locationUrl: data.locationUrl,

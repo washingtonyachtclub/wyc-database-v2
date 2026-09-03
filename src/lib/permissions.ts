@@ -14,6 +14,7 @@ export const routePermissions = {
   '/lessons': ['db', 'rtgs'],
   '/lessons/$lessonIndex': [], // auth only; server functions enforce per-lesson instructor-or-db access
   '/my-lessons': [],
+  '/my-lessons/$lessonIndex': [],
   '/door-codes': [], // auth only; the server function filters codes by ratings
   '/maintenance-tracker': [],
   '/ratings': ['rtgs'],

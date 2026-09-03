@@ -1,6 +1,6 @@
 import { formatSessions } from '@/domains/lessons/format-sessions'
 import type { RichLesson } from '@/domains/lessons/schema'
-import { AlertTriangle, MapPin } from 'lucide-react'
+import { AlertTriangle, ChevronRight, MapPin } from 'lucide-react'
 import { isLessonUpcoming } from '../../lib/date-utils'
 import { RichText } from '../ui/RichText'
 
@@ -26,6 +26,14 @@ export function LessonCard({
         onClick ? 'cursor-pointer' : ''
       } ${dimmed ? 'opacity-50' : ''}`}
       onClick={onClick}
+      onKeyDown={(event) => {
+        if (onClick && (event.key === 'Enter' || event.key === ' ')) {
+          event.preventDefault()
+          onClick()
+        }
+      }}
+      role={onClick ? 'link' : undefined}
+      tabIndex={onClick ? 0 : undefined}
     >
       {showUpcomingNotDisplayedWarning && (
         <div className="flex items-center gap-2 text-destructive text-sm mb-2 p-2 rounded bg-destructive/10 border border-destructive/30">
@@ -42,21 +50,24 @@ export function LessonCard({
       <div className="flex items-start justify-between">
         <div>
           <h4 className="font-semibold">{lesson.subtype || lesson.type || 'Untitled Lesson'}</h4>
-          {lesson.comments && (
+          {lesson.description && (
             <p className="text-sm text-muted-foreground mt-1 line-clamp-2">
-              <RichText text={lesson.comments} />
+              <RichText text={lesson.description} />
             </p>
           )}
         </div>
-        <span className="text-xs text-muted-foreground whitespace-nowrap ml-4 text-right">
-          {lesson.enrolledCount !== undefined && (
-            <div>
-              Signed up: {lesson.enrolledCount}
-              {lesson.size > 0 ? ` / ${lesson.size}` : ''}
-            </div>
-          )}
-          {lesson.enrolledCount === undefined && <div>Size: {lesson.size}</div>}
-        </span>
+        <div className="flex items-start gap-2 text-muted-foreground whitespace-nowrap ml-4 text-right">
+          <span className="text-xs">
+            {lesson.enrolledCount !== undefined && (
+              <div>
+                Signed up: {lesson.enrolledCount}
+                {lesson.size > 0 ? ` / ${lesson.size}` : ''}
+              </div>
+            )}
+            {lesson.enrolledCount === undefined && <div>Size: {lesson.size}</div>}
+          </span>
+          {onClick && <ChevronRight className="h-5 w-5 shrink-0" />}
+        </div>
       </div>
       <div className="mt-3 space-y-1 text-sm">
         {sessionLines.map((line) => (

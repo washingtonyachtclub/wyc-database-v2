@@ -227,7 +227,11 @@ function LessonsPage() {
   }
 
   function goToLesson(lessonIndex: number) {
-    navigate({ to: '/lessons/$lessonIndex', params: { lessonIndex: String(lessonIndex) } })
+    navigate({
+      to: '/lessons/$lessonIndex',
+      params: { lessonIndex: String(lessonIndex) },
+      search: { signedUp: undefined },
+    })
   }
 
   // TODO: Remove after verifying ErrorAlert and error boundary

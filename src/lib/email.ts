@@ -14,8 +14,10 @@ const DEV_RECIPIENT = 'delivered@resend.dev'
 
 export type SendEmailParams = {
   to: string | string[]
+  bcc?: string | string[]
   subject: string
   text: string
+  html?: string
   idempotencyKey: string
 }
 
@@ -31,6 +33,7 @@ export type BatchMessage = {
   to: string
   subject: string
   text: string
+  html?: string
 }
 
 export type SendEmailBatchResult = {
@@ -54,6 +57,7 @@ async function sendOneBatch(messages: BatchMessage[], key: string, simulated: bo
       to: simulated ? DEV_RECIPIENT : m.to,
       subject: m.subject,
       text: m.text,
+      html: m.html,
     })),
     { idempotencyKey: key },
   )
@@ -86,21 +90,26 @@ export async function sendEmailBatch(
 
 export async function sendEmail({
   to,
+  bcc,
   subject,
   text,
+  html,
   idempotencyKey,
 }: SendEmailParams): Promise<SendEmailResult> {
   const simulated = isDevEnvironment()
   const actualTo = simulated ? DEV_RECIPIENT : to
+  const actualBcc = simulated ? undefined : bcc
   const actualKey = simulated ? `dev/${idempotencyKey}` : idempotencyKey
 
   if (simulated) {
     console.log('[DEV] Email simulated:', {
       originalTo: to,
+      originalBcc: bcc,
       from: FROM_ADDRESS,
       replyTo: REPLY_TO,
       subject,
       text,
+      html,
       idempotencyKey: actualKey,
     })
   }
@@ -110,8 +119,10 @@ export async function sendEmail({
       from: FROM_ADDRESS,
       replyTo: REPLY_TO,
       to: actualTo,
+      bcc: actualBcc,
       subject,
       text,
+      html,
     },
     { idempotencyKey: actualKey },
   )

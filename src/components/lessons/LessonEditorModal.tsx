@@ -22,7 +22,7 @@ const emptyDefaults = (expireDefault: number): LessonInsert => ({
   sessions: [{ ...emptySessionInput }],
   instructor1: TBD_WYC_NUMBER,
   instructor2: null,
-  comments: '',
+  description: '',
   requirements: '',
   location: WAC.name,
   locationUrl: WAC.url,
@@ -140,10 +140,10 @@ export function LessonFormModal({ onClose, currentQuarter, onSuccess }: LessonFo
           />
 
           <form.AppField
-            name="comments"
+            name="description"
             children={(field) => (
               <field.TextAreaField
-                label="Comments"
+                label="Description"
                 className="md:col-span-2"
                 tooltip="Supports **bold**, *italics*, and ~~strikethrough~~"
               />

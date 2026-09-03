@@ -143,7 +143,7 @@ export function LessonFilterControls({
         <div>
           <Label className="mb-1">Search</Label>
           <Input
-            placeholder="Subtype or comments..."
+            placeholder="Title or description..."
             value={searchInput}
             onChange={(e) => setSearchInput(e.target.value)}
             onKeyDown={(e) => {

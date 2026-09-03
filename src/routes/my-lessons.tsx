@@ -18,8 +18,9 @@ import {
 } from '@/domains/lessons/query-options'
 import type { SignedUpLesson } from '@/domains/lessons/schema'
 import { useQuery, useSuspenseQuery } from '@tanstack/react-query'
-import { createFileRoute, redirect, useNavigate } from '@tanstack/react-router'
+import { createFileRoute, Link, redirect, useNavigate } from '@tanstack/react-router'
 import { useState } from 'react'
+import { ChevronRight } from 'lucide-react'
 
 export const Route = createFileRoute('/my-lessons')({
   beforeLoad: ({ context }) => {
@@ -73,6 +74,7 @@ function MyLessonsPage() {
                   navigate({
                     to: '/lessons/$lessonIndex',
                     params: { lessonIndex: String(lesson.index) },
+                    search: { signedUp: undefined },
                   })
                 }
               />
@@ -91,54 +93,64 @@ function SignedUpLessonCard({ lesson }: { lesson: SignedUpLesson }) {
   const sessionLines = formatSessions(lesson.sessions)
 
   return (
-    <div className="rounded-lg border border-border p-4 space-y-3">
-      <div className="flex items-center gap-3 flex-wrap">
-        <h3 className="text-lg font-semibold">
-          {lesson.type} — {lesson.subtype}
-        </h3>
-        <span
-          className={`inline-flex items-center rounded-full px-3 py-1 text-sm font-medium ${
-            isEnrolled ? 'bg-green-100 text-green-800' : 'bg-amber-100 text-amber-800'
-          }`}
-        >
-          {isEnrolled ? 'Enrolled' : 'Waitlisted'}
-        </span>
-      </div>
+    <div className="rounded-lg border border-border transition-colors hover:bg-accent">
+      <Link
+        to="/lessons/$lessonIndex"
+        params={{ lessonIndex: String(lesson.index) }}
+        search={{ signedUp: undefined }}
+        className="block p-4 space-y-3"
+      >
+        <div className="flex items-start justify-between gap-3">
+          <div className="flex items-center gap-3 flex-wrap">
+            <h3 className="text-lg font-semibold">
+              {lesson.type} — {lesson.subtype}
+            </h3>
+            <span
+              className={`inline-flex items-center rounded-full px-3 py-1 text-sm font-medium ${
+                isEnrolled ? 'bg-green-100 text-green-800' : 'bg-amber-100 text-amber-800'
+              }`}
+            >
+              {isEnrolled ? 'Enrolled' : 'Waitlisted'}
+            </span>
+          </div>
+          <ChevronRight className="mt-1 h-5 w-5 shrink-0 text-muted-foreground" />
+        </div>
 
-      <div className="text-sm text-muted-foreground space-y-1">
-        {sessionLines.map((line) => (
-          <p key={line}>{line}</p>
-        ))}
-        <p>Class size: {lesson.size}</p>
-      </div>
+        <div className="text-sm text-muted-foreground space-y-1">
+          {sessionLines.map((line) => (
+            <p key={line}>{line}</p>
+          ))}
+          <p>Class size: {lesson.size}</p>
+        </div>
 
-      <div className="text-sm space-y-1">
-        <p>
-          <span className="font-medium">Instructor: </span>
-          {lesson.instructor1Name}
-          {lesson.instructor1Email && (
-            <span className="text-muted-foreground"> — {lesson.instructor1Email}</span>
-          )}
-        </p>
-        {lesson.instructor2Name && (
+        <div className="text-sm space-y-1">
           <p>
-            <span className="font-medium">Instructor 2: </span>
-            {lesson.instructor2Name}
-            {lesson.instructor2Email && (
-              <span className="text-muted-foreground"> — {lesson.instructor2Email}</span>
+            <span className="font-medium">Instructor: </span>
+            {lesson.instructor1Name}
+            {lesson.instructor1Email && (
+              <span className="text-muted-foreground"> — {lesson.instructor1Email}</span>
             )}
           </p>
-        )}
-      </div>
-
-      {lesson.comments && (
-        <div className="text-sm">
-          <p className="font-medium">Comments:</p>
-          <p className="text-muted-foreground whitespace-pre-wrap">{lesson.comments}</p>
+          {lesson.instructor2Name && (
+            <p>
+              <span className="font-medium">Instructor 2: </span>
+              {lesson.instructor2Name}
+              {lesson.instructor2Email && (
+                <span className="text-muted-foreground"> — {lesson.instructor2Email}</span>
+              )}
+            </p>
+          )}
         </div>
-      )}
 
-      <div className="flex justify-end">
+        {lesson.description && (
+          <div className="text-sm">
+            <p className="font-medium">Description:</p>
+            <p className="text-muted-foreground whitespace-pre-wrap">{lesson.description}</p>
+          </div>
+        )}
+      </Link>
+
+      <div className="flex justify-end border-t border-border p-3">
         <Button variant="destructive" size="sm" onClick={() => setShowUnenroll(true)}>
           Unenroll
         </Button>

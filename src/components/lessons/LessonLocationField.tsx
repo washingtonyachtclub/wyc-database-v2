@@ -28,7 +28,7 @@ const locationFieldDefaults: LessonInsert = {
   sessions: [],
   instructor1: 0,
   instructor2: null,
-  comments: '',
+  description: '',
   requirements: '',
   location: '',
   locationUrl: '',

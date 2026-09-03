@@ -2,7 +2,15 @@ import { WORK_PARTY_TYPE_ID } from '@/db/constants'
 import db from '@/db/index'
 import { isMembershipActive } from '@/db/membership-utils'
 import { withPagination, withSorting } from '@/db/query-helpers'
-import { lessonQuarter, lessonSessions, lessons, quarters, signups, wycDatabase } from '@/db/schema'
+import {
+  lessonAnnouncements,
+  lessonQuarter,
+  lessonSessions,
+  lessons,
+  quarters,
+  signups,
+  wycDatabase,
+} from '@/db/schema'
 import { enrollmentStatus, splitEnrollment } from '@/db/signup-utils'
 import type { LessonFilters } from '@/domains/lessons/filter-types'
 import { quarterMismatchError } from '@/domains/lessons/quarter-rules'
@@ -11,16 +19,12 @@ import {
   baseSignedUpWithDetailsQuery,
   fetchLessonEmailInfo,
   fetchLessonSessions,
+  fetchLessonStudents,
   fetchSessionsByLesson,
   lessonSortColumns,
   withLessonFilters,
 } from '@/domains/lessons/queries'
-import type {
-  LessonInsert,
-  LessonSessionInput,
-  LessonStudent,
-  SignedUpLesson,
-} from '@/domains/lessons/schema'
+import type { LessonInsert, LessonSessionInput, SignedUpLesson } from '@/domains/lessons/schema'
 import {
   byDateThenStart,
   fromLessonInsert,
@@ -35,6 +39,7 @@ import {
 } from '@/lib/auth/auth-middleware'
 import { sendEmail } from '@/lib/email'
 import { lessonEnrolledEmail, lessonWaitlistedEmail } from '@/lib/emails/lessons'
+import { lessonPageUrl } from '@/domains/lesson-announcements/email'
 import { deleteSessionEvent, gcalEnabled, upsertSessionEvent } from '@/lib/gcal'
 import { createServerFn } from '@tanstack/react-start'
 import { and, asc, count, eq, gte, inArray, or } from 'drizzle-orm'
@@ -163,26 +168,7 @@ async function fetchLessonDetails(id: number) {
   if (!lessonRow) return null
 
   const lesson = toRichLesson(lessonRow, await fetchLessonSessions(id))
-  const students = await db
-    .select({
-      wycNumber: wycDatabase.wycNumber,
-      first: wycDatabase.first,
-      last: wycDatabase.last,
-      email: wycDatabase.email,
-      phone1: wycDatabase.phone1,
-    })
-    .from(signups)
-    .innerJoin(wycDatabase, eq(signups.student, wycDatabase.wycNumber))
-    .where(eq(signups.class, id))
-    .orderBy(asc(signups.index))
-
-  const lessonStudents: LessonStudent[] = students.map((s) => ({
-    wycNumber: s.wycNumber,
-    first: s.first || '<Unknown>',
-    last: s.last || '<Unknown>',
-    email: s.email || '<Unknown>',
-    phone1: s.phone1 || '',
-  }))
+  const lessonStudents = await fetchLessonStudents(id)
 
   const { enrolled: enrolledStudents, waitlisted: waitlistedStudents } = splitEnrollment(
     lessonStudents,
@@ -251,7 +237,7 @@ async function reconcileCalendar(lessonId: number, removedSessionIds: number[] =
     const cal = {
       title: lesson.subtype || lesson.type || 'WYC Lesson',
       location: lesson.location,
-      comments: lesson.comments,
+      description: lesson.description,
       requirements: lesson.requirements,
       instructors: [lesson.instructor1Name, lesson.instructor2Name].filter(
         (name) => name !== '' && name !== '<Unknown>',
@@ -334,6 +320,7 @@ export const deleteLesson = createServerFn({ method: 'POST' })
       .select({ index: lessonSessions.index })
       .from(lessonSessions)
       .where(eq(lessonSessions.lessonId, index))
+    await db.delete(lessonAnnouncements).where(eq(lessonAnnouncements.lessonId, index))
     await db.delete(signups).where(eq(signups.class, index))
     await db.delete(lessonSessions).where(eq(lessonSessions.lessonId, index))
     await db.delete(lessons).where(eq(lessons.index, index))
@@ -388,11 +375,21 @@ export const removeStudentFromLesson = createServerFn({ method: 'POST' })
       try {
         const studentName = `${promotedStudent.first} ${promotedStudent.last}`.trim() || 'Member'
         const lessonEmailInfo = await fetchLessonEmailInfo(lesson)
+        const [announcement] = await db
+          .select({ id: lessonAnnouncements.id })
+          .from(lessonAnnouncements)
+          .where(eq(lessonAnnouncements.lessonId, lessonId))
+          .limit(1)
 
         await sendEmail({
           to: promotedStudent.email,
           subject: "WYC - You're off the waitlist!",
-          text: lessonEnrolledEmail(studentName, lessonEmailInfo, true),
+          text: lessonEnrolledEmail(
+            studentName,
+            lessonEmailInfo,
+            true,
+            announcement ? lessonPageUrl(lessonId) : undefined,
+          ),
           idempotencyKey: `promote/${lessonId}/${promotedStudent.wycNumber}/${Date.now()}`,
         })
       } catch (emailError) {

@@ -48,6 +48,7 @@ import { Route as IndexRouteImport } from './routes/index'
 import { Route as SignupLessonIndexRouteImport } from './routes/signup.$lessonIndex'
 import { Route as RatingsRatingIndexRouteImport } from './routes/ratings_.$ratingIndex'
 import { Route as QrLoginApproveRouteImport } from './routes/qr-login.approve'
+import { Route as MyLessonsLessonIndexRouteImport } from './routes/my-lessons.$lessonIndex'
 import { Route as MembersWycNumberRouteImport } from './routes/members_.$wycNumber'
 import { Route as LessonsLessonIndexRouteImport } from './routes/lessons_.$lessonIndex'
 import { Route as JoinApplicationIdRouteImport } from './routes/join_.$applicationId'
@@ -250,6 +251,11 @@ const QrLoginApproveRoute = QrLoginApproveRouteImport.update({
   path: '/qr-login/approve',
   getParentRoute: () => rootRouteImport,
 } as any)
+const MyLessonsLessonIndexRoute = MyLessonsLessonIndexRouteImport.update({
+  id: '/$lessonIndex',
+  path: '/$lessonIndex',
+  getParentRoute: () => MyLessonsRoute,
+} as any)
 const MembersWycNumberRoute = MembersWycNumberRouteImport.update({
   id: '/members_/$wycNumber',
   path: '/members/$wycNumber',
@@ -305,7 +311,7 @@ export interface FileRoutesByFullPath {
   '/membership-approvals': typeof MembershipApprovalsRoute
   '/membership-processing': typeof MembershipProcessingRoute
   '/membership-stats': typeof MembershipStatsRoute
-  '/my-lessons': typeof MyLessonsRoute
+  '/my-lessons': typeof MyLessonsRouteWithChildren
   '/officers': typeof OfficersRoute
   '/positions': typeof PositionsRoute
   '/privileges': typeof PrivilegesRoute
@@ -322,6 +328,7 @@ export interface FileRoutesByFullPath {
   '/join/$applicationId': typeof JoinApplicationIdRoute
   '/lessons/$lessonIndex': typeof LessonsLessonIndexRoute
   '/members/$wycNumber': typeof MembersWycNumberRoute
+  '/my-lessons/$lessonIndex': typeof MyLessonsLessonIndexRoute
   '/qr-login/approve': typeof QrLoginApproveRoute
   '/ratings/$ratingIndex': typeof RatingsRatingIndexRoute
   '/signup/$lessonIndex': typeof SignupLessonIndexRoute
@@ -352,7 +359,7 @@ export interface FileRoutesByTo {
   '/membership-approvals': typeof MembershipApprovalsRoute
   '/membership-processing': typeof MembershipProcessingRoute
   '/membership-stats': typeof MembershipStatsRoute
-  '/my-lessons': typeof MyLessonsRoute
+  '/my-lessons': typeof MyLessonsRouteWithChildren
   '/officers': typeof OfficersRoute
   '/positions': typeof PositionsRoute
   '/privileges': typeof PrivilegesRoute
@@ -369,6 +376,7 @@ export interface FileRoutesByTo {
   '/join/$applicationId': typeof JoinApplicationIdRoute
   '/lessons/$lessonIndex': typeof LessonsLessonIndexRoute
   '/members/$wycNumber': typeof MembersWycNumberRoute
+  '/my-lessons/$lessonIndex': typeof MyLessonsLessonIndexRoute
   '/qr-login/approve': typeof QrLoginApproveRoute
   '/ratings/$ratingIndex': typeof RatingsRatingIndexRoute
   '/signup/$lessonIndex': typeof SignupLessonIndexRoute
@@ -400,7 +408,7 @@ export interface FileRoutesById {
   '/membership-approvals': typeof MembershipApprovalsRoute
   '/membership-processing': typeof MembershipProcessingRoute
   '/membership-stats': typeof MembershipStatsRoute
-  '/my-lessons': typeof MyLessonsRoute
+  '/my-lessons': typeof MyLessonsRouteWithChildren
   '/officers': typeof OfficersRoute
   '/positions': typeof PositionsRoute
   '/privileges': typeof PrivilegesRoute
@@ -417,6 +425,7 @@ export interface FileRoutesById {
   '/join_/$applicationId': typeof JoinApplicationIdRoute
   '/lessons_/$lessonIndex': typeof LessonsLessonIndexRoute
   '/members_/$wycNumber': typeof MembersWycNumberRoute
+  '/my-lessons/$lessonIndex': typeof MyLessonsLessonIndexRoute
   '/qr-login/approve': typeof QrLoginApproveRoute
   '/ratings_/$ratingIndex': typeof RatingsRatingIndexRoute
   '/signup/$lessonIndex': typeof SignupLessonIndexRoute
@@ -466,6 +475,7 @@ export interface FileRouteTypes {
     | '/join/$applicationId'
     | '/lessons/$lessonIndex'
     | '/members/$wycNumber'
+    | '/my-lessons/$lessonIndex'
     | '/qr-login/approve'
     | '/ratings/$ratingIndex'
     | '/signup/$lessonIndex'
@@ -513,6 +523,7 @@ export interface FileRouteTypes {
     | '/join/$applicationId'
     | '/lessons/$lessonIndex'
     | '/members/$wycNumber'
+    | '/my-lessons/$lessonIndex'
     | '/qr-login/approve'
     | '/ratings/$ratingIndex'
     | '/signup/$lessonIndex'
@@ -560,6 +571,7 @@ export interface FileRouteTypes {
     | '/join_/$applicationId'
     | '/lessons_/$lessonIndex'
     | '/members_/$wycNumber'
+    | '/my-lessons/$lessonIndex'
     | '/qr-login/approve'
     | '/ratings_/$ratingIndex'
     | '/signup/$lessonIndex'
@@ -591,7 +603,7 @@ export interface RootRouteChildren {
   MembershipApprovalsRoute: typeof MembershipApprovalsRoute
   MembershipProcessingRoute: typeof MembershipProcessingRoute
   MembershipStatsRoute: typeof MembershipStatsRoute
-  MyLessonsRoute: typeof MyLessonsRoute
+  MyLessonsRoute: typeof MyLessonsRouteWithChildren
   OfficersRoute: typeof OfficersRoute
   PositionsRoute: typeof PositionsRoute
   PrivilegesRoute: typeof PrivilegesRoute
@@ -890,6 +902,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof QrLoginApproveRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/my-lessons/$lessonIndex': {
+      id: '/my-lessons/$lessonIndex'
+      path: '/$lessonIndex'
+      fullPath: '/my-lessons/$lessonIndex'
+      preLoaderRoute: typeof MyLessonsLessonIndexRouteImport
+      parentRoute: typeof MyLessonsRoute
+    }
     '/members_/$wycNumber': {
       id: '/members_/$wycNumber'
       path: '/members/$wycNumber'
@@ -935,6 +954,18 @@ declare module '@tanstack/react-router' {
   }
 }
 
+interface MyLessonsRouteChildren {
+  MyLessonsLessonIndexRoute: typeof MyLessonsLessonIndexRoute
+}
+
+const MyLessonsRouteChildren: MyLessonsRouteChildren = {
+  MyLessonsLessonIndexRoute: MyLessonsLessonIndexRoute,
+}
+
+const MyLessonsRouteWithChildren = MyLessonsRoute._addFileChildren(
+  MyLessonsRouteChildren,
+)
+
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   ApproveExemptionsRoute: ApproveExemptionsRoute,
@@ -959,7 +990,7 @@ const rootRouteChildren: RootRouteChildren = {
   MembershipApprovalsRoute: MembershipApprovalsRoute,
   MembershipProcessingRoute: MembershipProcessingRoute,
   MembershipStatsRoute: MembershipStatsRoute,
-  MyLessonsRoute: MyLessonsRoute,
+  MyLessonsRoute: MyLessonsRouteWithChildren,
   OfficersRoute: OfficersRoute,
   PositionsRoute: PositionsRoute,
   PrivilegesRoute: PrivilegesRoute,

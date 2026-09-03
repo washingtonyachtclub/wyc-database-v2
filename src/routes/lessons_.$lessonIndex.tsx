@@ -1,10 +1,20 @@
 import { LessonLocationField, typeLocationDefault } from '@/components/lessons/LessonLocationField'
 import { LessonSessionsField } from '@/components/lessons/LessonSessionsField'
+import {
+  MemberLessonDetails,
+  type LessonSignupStatus,
+} from '@/components/lessons/MemberLessonDetails'
+import { AnnouncementComposer } from '@/components/lesson-announcements/AnnouncementComposer'
+import { AnnouncementFeed } from '@/components/lesson-announcements/AnnouncementFeed'
 import { CopyBox } from '@/components/ui/CopyBox'
 import { ErrorAlert } from '@/components/ui/ErrorAlert'
 import { parsePhoneNumberFromString } from 'libphonenumber-js'
 import { LESSON_CATEGORIES, TBD_WYC_NUMBER } from '@/db/constants'
 import { getLessonTypesQueryOptions } from '@/domains/lesson-types/query-options'
+import {
+  getLessonAnnouncementsQueryOptions,
+  getMemberLessonPageQueryOptions,
+} from '@/domains/lesson-announcements/query-options'
 import {
   getLessonByIdQueryOptions,
   useDeleteLessonMutation,
@@ -41,8 +51,47 @@ export const Route = createFileRoute('/lessons_/$lessonIndex')({
       throw redirect({ to: '/login' })
     }
   },
-  component: LessonDetailPage,
+  validateSearch: (search: Record<string, unknown>) => ({
+    signedUp:
+      search.signedUp === 'enrolled' || search.signedUp === 'waitlisted'
+        ? (search.signedUp as LessonSignupStatus)
+        : undefined,
+  }),
+  loader: async ({ context, params }) => {
+    const lessonIndex = Number(params.lessonIndex)
+    const access = await context.queryClient.fetchQuery(
+      getMemberLessonPageQueryOptions(lessonIndex),
+    )
+    if (access?.canManageLesson) {
+      await context.queryClient.ensureQueryData(getLessonByIdQueryOptions(lessonIndex))
+    }
+    return access
+  },
+  component: LessonPage,
 })
+
+function LessonPage() {
+  const { lessonIndex } = Route.useParams()
+  const { signedUp } = Route.useSearch()
+  const id = Number(lessonIndex)
+  const { data } = useSuspenseQuery(getMemberLessonPageQueryOptions(id))
+
+  if (!data) {
+    return (
+      <div className="p-4">
+        <p className="text-muted-foreground">
+          This lesson is not available or you do not have access to it.
+        </p>
+      </div>
+    )
+  }
+
+  if (!data.canManageLesson) {
+    return <MemberLessonDetails lessonId={id} signedUp={signedUp} />
+  }
+
+  return <LessonDetailPage lessonIndex={id} />
+}
 
 function lessonToDefaults(lesson: RichLesson): LessonInsert {
   return {
@@ -51,7 +100,7 @@ function lessonToDefaults(lesson: RichLesson): LessonInsert {
     sessions: lesson.sessions.map(toSessionInput),
     instructor1: lesson.instructor1,
     instructor2: lesson.instructor2,
-    comments: lesson.comments,
+    description: lesson.description,
     requirements: lesson.requirements,
     location: lesson.location,
     locationUrl: lesson.locationUrl,
@@ -61,9 +110,8 @@ function lessonToDefaults(lesson: RichLesson): LessonInsert {
   }
 }
 
-function LessonDetailPage() {
-  const { lessonIndex } = Route.useParams()
-  const { data: lessonDetails } = useSuspenseQuery(getLessonByIdQueryOptions(Number(lessonIndex)))
+function LessonDetailPage({ lessonIndex }: { lessonIndex: number }) {
+  const { data: lessonDetails } = useSuspenseQuery(getLessonByIdQueryOptions(lessonIndex))
 
   if (!lessonDetails) {
     return (
@@ -74,15 +122,24 @@ function LessonDetailPage() {
   }
 
   const navigate = useNavigate()
-  const { privileges } = useCurrentUser()
+  const { user, privileges } = useCurrentUser()
   const canManageLessons = hasPrivilege(privileges, ['db', 'rtgs'])
   const { lesson, enrolledStudents, waitlistedStudents } = lessonDetails
+  const canManageAnnouncements =
+    hasPrivilege(privileges, ['db']) ||
+    user?.wycNumber === lesson.instructor1 ||
+    user?.wycNumber === lesson.instructor2
+  const { data: announcements = [] } = useQuery({
+    ...getLessonAnnouncementsQueryOptions(lesson.index),
+    enabled: canManageAnnouncements,
+  })
   const [studentToRemove, setStudentToRemove] = useState<{
     wycNumber: number
     name: string
   } | null>(null)
   const removeMutation = useRemoveStudentMutation(lesson.index)
   const [showDeleteDialog, setShowDeleteDialog] = useState(false)
+  const [showContactDetails, setShowContactDetails] = useState(false)
   const deleteMutation = useDeleteLessonMutation()
 
   const handleRemove = (student: { wycNumber: number; first: string; last: string }) =>
@@ -96,6 +153,20 @@ function LessonDetailPage() {
       <h1 className="text-2xl font-bold">
         {lesson.type} — {lesson.subtype}
       </h1>
+
+      {canManageAnnouncements && (
+        <>
+          <AnnouncementComposer
+            lessonId={lesson.index}
+            enrolledCount={enrolledStudents.length}
+            waitlistedCount={waitlistedStudents.length}
+          />
+          <section className="space-y-3">
+            <h2 className="text-lg font-semibold">Announcements</h2>
+            <AnnouncementFeed lessonId={lesson.index} announcements={announcements} canDelete />
+          </section>
+        </>
+      )}
 
       <LessonEditForm lesson={lesson} />
 
@@ -117,6 +188,22 @@ function LessonDetailPage() {
           onRemove={handleRemove}
           emptyMessage="No students on waitlist."
         />
+      </section>
+
+      <section className="space-y-3">
+        <Button
+          type="button"
+          variant="outline"
+          onClick={() => setShowContactDetails((current) => !current)}
+        >
+          {showContactDetails ? 'Hide contact details' : 'Contact details'}
+        </Button>
+        {showContactDetails && (
+          <div className="grid gap-4 md:grid-cols-2">
+            <ContactDetails title="Enrolled" students={enrolledStudents} />
+            <ContactDetails title="Waitlist" students={waitlistedStudents} />
+          </div>
+        )}
       </section>
 
       <AlertDialog
@@ -203,52 +290,57 @@ function StudentList({
   }
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-      <div className="rounded-md border border-border p-4">
-        <h3 className="text-sm font-medium text-muted-foreground mb-2">Names</h3>
-        <div className="space-y-1">
-          {students.map((student) => (
-            <div key={student.wycNumber} className="text-sm flex items-center justify-between">
-              <span>
-                {student.first} {student.last}
-              </span>
-              <Button
-                type="button"
-                variant="ghost"
-                size="sm"
-                className="h-6 w-6 p-0 text-muted-foreground hover:text-destructive"
-                onClick={() => onRemove(student)}
+    <div className="rounded-md border border-border p-4">
+      <h3 className="text-sm font-medium text-muted-foreground mb-2">Names</h3>
+      <div className="space-y-1">
+        {students.map((student) => (
+          <div key={student.wycNumber} className="text-sm flex items-center justify-between">
+            <span>
+              {student.first} {student.last}
+            </span>
+            <Button
+              type="button"
+              variant="ghost"
+              size="sm"
+              className="h-6 w-6 p-0 text-muted-foreground hover:text-destructive"
+              onClick={() => onRemove(student)}
+            >
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                className="h-3.5 w-3.5"
               >
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="2"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  className="h-3.5 w-3.5"
-                >
-                  <line x1="18" y1="6" x2="6" y2="18" />
-                  <line x1="6" y1="6" x2="18" y2="18" />
-                </svg>
-              </Button>
-            </div>
-          ))}
-        </div>
+                <line x1="18" y1="6" x2="6" y2="18" />
+                <line x1="6" y1="6" x2="18" y2="18" />
+              </svg>
+            </Button>
+          </div>
+        ))}
       </div>
+    </div>
+  )
+}
 
+function ContactDetails({ title, students }: { title: string; students: LessonStudent[] }) {
+  return (
+    <div className="rounded-md border border-border p-4 space-y-4">
+      <h3 className="font-medium">{title}</h3>
       <CopyBox
         label="Emails"
         text={students
-          .map((s) => s.email)
+          .map((student) => student.email)
           .filter(Boolean)
           .join('\n')}
       />
       <CopyBox
-        label="Phone Numbers"
+        label="Phone numbers"
         text={students
-          .map((s) => s.phone1)
+          .map((student) => student.phone1)
           .filter(Boolean)
           .map(normalizePhone)
           .join('\n')}
@@ -367,10 +459,10 @@ function LessonEditForm({ lesson }: { lesson: RichLesson }) {
         />
 
         <form.AppField
-          name="comments"
+          name="description"
           children={(field) => (
             <field.TextAreaField
-              label="Comments"
+              label="Description"
               className="md:col-span-2"
               tooltip="Supports **bold**, *italics*, and ~~strikethrough~~"
             />
