@@ -1,4 +1,4 @@
-import { RICH_TEXT_TOKEN } from '@/components/ui/RichText'
+import { parseRichTextLink, RICH_TEXT_TOKEN } from '@/lib/rich-text'
 import { GoogleAuth } from 'google-auth-library'
 
 const CALENDAR_ID = process.env.GOOGLE_CALENDAR_ID ?? ''
@@ -78,8 +78,11 @@ function richTextHtml(description: string): string {
   return description
     .split(RICH_TEXT_TOKEN)
     .map((part, i) => {
+      const link = parseRichTextLink(part)
+      if (link) return `${escapeHtml(link.label)} (${escapeHtml(link.href)})`
       const escaped = escapeHtml(part)
       if (i % 2 === 0) return escaped
+      if (part.startsWith('[')) return escaped
       if (escaped.startsWith('**')) return `<b>${escaped.slice(2, -2)}</b>`
       if (escaped.startsWith('~~')) return `<s>${escaped.slice(2, -2)}</s>`
       return `<i>${escaped.slice(1, -1)}</i>`

@@ -145,7 +145,7 @@ export function LessonFormModal({ onClose, currentQuarter, onSuccess }: LessonFo
               <field.TextAreaField
                 label="Description"
                 className="md:col-span-2"
-                tooltip="Supports **bold**, *italics*, and ~~strikethrough~~"
+                tooltip="Supports [links](https://example.com), **bold**, *italics*, and ~~strikethrough~~"
               />
             )}
           />
