@@ -21,6 +21,8 @@ import { useQuery, useSuspenseQuery } from '@tanstack/react-query'
 import { createFileRoute, Link, redirect, useNavigate } from '@tanstack/react-router'
 import { useState } from 'react'
 import { ChevronRight } from 'lucide-react'
+import { isLessonUpcoming } from '@/lib/date-utils'
+import { cn } from '@/lib/utils'
 
 export const Route = createFileRoute('/my-lessons')({
   beforeLoad: ({ context }) => {
@@ -91,9 +93,15 @@ function SignedUpLessonCard({ lesson }: { lesson: SignedUpLesson }) {
   const [showUnenroll, setShowUnenroll] = useState(false)
   const unenrollMutation = useUnenrollFromLessonMutation()
   const sessionLines = formatSessions(lesson.sessions)
+  const hasPassed = !isLessonUpcoming(lesson.calendarDate)
 
   return (
-    <div className="rounded-lg border border-border transition-colors hover:bg-accent">
+    <div
+      className={cn(
+        'rounded-lg border border-border transition-colors hover:bg-accent',
+        hasPassed && 'opacity-50',
+      )}
+    >
       <Link
         to="/lessons/$lessonIndex"
         params={{ lessonIndex: String(lesson.index) }}
