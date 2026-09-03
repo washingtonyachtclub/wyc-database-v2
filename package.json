@@ -18,7 +18,6 @@
     "db:baseline:ensure": "node scripts/ensure-drizzle-baseline.mjs",
     "db:migrate": "drizzle-kit migrate",
     "db:migrate:dev": "dotenv -e .env.local -- drizzle-kit migrate",
-    "db:reset:deployed-dev": "node scripts/reset-deployed-dev-database.mjs",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "prepare": "husky"
