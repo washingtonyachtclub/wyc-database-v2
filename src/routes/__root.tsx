@@ -99,9 +99,11 @@ function RootDocument({ children }: { children: React.ReactNode }) {
   const isQrLoginApproval = location.pathname === '/qr-login/approve'
   const isGuestWaiverPage = location.pathname === '/guest-waiver'
   const isJoinPage = location.pathname === '/join' || location.pathname.startsWith('/join/')
+  const isGuidePage = location.pathname.startsWith('/guides/')
   const isStandalonePage =
     ['/login', '/forgot-password', '/guest-waiver'].includes(location.pathname) ||
     isJoinPage ||
+    isGuidePage ||
     location.pathname.startsWith('/signup') ||
     isQrLoginApproval ||
     isSailLockerCheckout
@@ -110,7 +112,8 @@ function RootDocument({ children }: { children: React.ReactNode }) {
     !isSailLockerCheckoutLogin &&
     !isQrLoginApproval &&
     !isGuestWaiverPage &&
-    !isJoinPage
+    !isJoinPage &&
+    !isGuidePage
   const showAppLayout = !isStandalonePage
   return (
     <html lang="en">

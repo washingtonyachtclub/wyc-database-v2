@@ -52,6 +52,7 @@ import { Route as MyLessonsLessonIndexRouteImport } from './routes/my-lessons.$l
 import { Route as MembersWycNumberRouteImport } from './routes/members_.$wycNumber'
 import { Route as LessonsLessonIndexRouteImport } from './routes/lessons_.$lessonIndex'
 import { Route as JoinApplicationIdRouteImport } from './routes/join_.$applicationId'
+import { Route as GuidesFjRouteImport } from './routes/guides.fj'
 import { Route as CheckoutNewRouteImport } from './routes/checkout_.new'
 import { Route as ApiCronLessonRemindersRouteImport } from './routes/api.cron.lesson-reminders'
 import { Route as ApiCronDailyTasksRouteImport } from './routes/api.cron.daily-tasks'
@@ -271,6 +272,11 @@ const JoinApplicationIdRoute = JoinApplicationIdRouteImport.update({
   path: '/join/$applicationId',
   getParentRoute: () => rootRouteImport,
 } as any)
+const GuidesFjRoute = GuidesFjRouteImport.update({
+  id: '/guides/fj',
+  path: '/guides/fj',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const CheckoutNewRoute = CheckoutNewRouteImport.update({
   id: '/checkout_/new',
   path: '/checkout/new',
@@ -325,6 +331,7 @@ export interface FileRoutesByFullPath {
   '/settings': typeof SettingsRoute
   '/tests': typeof TestsRoute
   '/checkout/new': typeof CheckoutNewRoute
+  '/guides/fj': typeof GuidesFjRoute
   '/join/$applicationId': typeof JoinApplicationIdRoute
   '/lessons/$lessonIndex': typeof LessonsLessonIndexRoute
   '/members/$wycNumber': typeof MembersWycNumberRoute
@@ -373,6 +380,7 @@ export interface FileRoutesByTo {
   '/settings': typeof SettingsRoute
   '/tests': typeof TestsRoute
   '/checkout/new': typeof CheckoutNewRoute
+  '/guides/fj': typeof GuidesFjRoute
   '/join/$applicationId': typeof JoinApplicationIdRoute
   '/lessons/$lessonIndex': typeof LessonsLessonIndexRoute
   '/members/$wycNumber': typeof MembersWycNumberRoute
@@ -422,6 +430,7 @@ export interface FileRoutesById {
   '/settings': typeof SettingsRoute
   '/tests': typeof TestsRoute
   '/checkout_/new': typeof CheckoutNewRoute
+  '/guides/fj': typeof GuidesFjRoute
   '/join_/$applicationId': typeof JoinApplicationIdRoute
   '/lessons_/$lessonIndex': typeof LessonsLessonIndexRoute
   '/members_/$wycNumber': typeof MembersWycNumberRoute
@@ -472,6 +481,7 @@ export interface FileRouteTypes {
     | '/settings'
     | '/tests'
     | '/checkout/new'
+    | '/guides/fj'
     | '/join/$applicationId'
     | '/lessons/$lessonIndex'
     | '/members/$wycNumber'
@@ -520,6 +530,7 @@ export interface FileRouteTypes {
     | '/settings'
     | '/tests'
     | '/checkout/new'
+    | '/guides/fj'
     | '/join/$applicationId'
     | '/lessons/$lessonIndex'
     | '/members/$wycNumber'
@@ -568,6 +579,7 @@ export interface FileRouteTypes {
     | '/settings'
     | '/tests'
     | '/checkout_/new'
+    | '/guides/fj'
     | '/join_/$applicationId'
     | '/lessons_/$lessonIndex'
     | '/members_/$wycNumber'
@@ -617,6 +629,7 @@ export interface RootRouteChildren {
   SettingsRoute: typeof SettingsRoute
   TestsRoute: typeof TestsRoute
   CheckoutNewRoute: typeof CheckoutNewRoute
+  GuidesFjRoute: typeof GuidesFjRoute
   JoinApplicationIdRoute: typeof JoinApplicationIdRoute
   LessonsLessonIndexRoute: typeof LessonsLessonIndexRoute
   MembersWycNumberRoute: typeof MembersWycNumberRoute
@@ -930,6 +943,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof JoinApplicationIdRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/guides/fj': {
+      id: '/guides/fj'
+      path: '/guides/fj'
+      fullPath: '/guides/fj'
+      preLoaderRoute: typeof GuidesFjRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/checkout_/new': {
       id: '/checkout_/new'
       path: '/checkout/new'
@@ -1004,6 +1024,7 @@ const rootRouteChildren: RootRouteChildren = {
   SettingsRoute: SettingsRoute,
   TestsRoute: TestsRoute,
   CheckoutNewRoute: CheckoutNewRoute,
+  GuidesFjRoute: GuidesFjRoute,
   JoinApplicationIdRoute: JoinApplicationIdRoute,
   LessonsLessonIndexRoute: LessonsLessonIndexRoute,
   MembersWycNumberRoute: MembersWycNumberRoute,
