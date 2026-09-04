@@ -45,7 +45,12 @@ const PUBLIC_PATHS = new Set([
 ])
 
 function isPublicPath(pathname: string): boolean {
-  return PUBLIC_PATHS.has(pathname) || pathname.startsWith('/api/') || pathname.startsWith('/join/')
+  return (
+    PUBLIC_PATHS.has(pathname) ||
+    pathname.startsWith('/api/') ||
+    pathname.startsWith('/guides/') ||
+    pathname.startsWith('/join/')
+  )
 }
 
 export const Route = createRootRouteWithContext<MyRouterContext>()({
@@ -123,9 +128,11 @@ function RootDocument({ children }: { children: React.ReactNode }) {
   const isEmbeddedJoinPage =
     isJoinPage &&
     (embedValue === true || embedValue === '1' || embedValue === 1 || embedValue === 'true')
+  const isGuidePage = location.pathname.startsWith('/guides/')
   const isStandalonePage =
     ['/login', '/forgot-password', '/guest-waiver'].includes(location.pathname) ||
     isJoinPage ||
+    isGuidePage ||
     location.pathname.startsWith('/signup') ||
     isQrLoginApproval ||
     isSailLockerCheckout
@@ -134,7 +141,8 @@ function RootDocument({ children }: { children: React.ReactNode }) {
     !isSailLockerCheckoutLogin &&
     !isQrLoginApproval &&
     !isGuestWaiverPage &&
-    !isJoinPage
+    !isJoinPage &&
+    !isGuidePage
   const showAppLayout = !isStandalonePage
   return (
     <html lang="en">
