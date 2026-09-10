@@ -1,7 +1,7 @@
 import { Button } from '@/components/ui/button'
 import { Label } from '@/components/ui/label'
 import { Switch } from '@/components/ui/switch'
-import { useCurrentUser } from '@/lib/auth/auth-query-options'
+import { useCurrentUser, useLogoutMutation } from '@/lib/auth/auth-query-options'
 import { setSailLockerModeServerFn } from '@/lib/auth/device-settings-server-fns'
 import { hasPrivilege } from '@/lib/permissions'
 import { requirePrivilegeForRoute } from '@/lib/route-guards'
@@ -19,6 +19,7 @@ function SettingsPage() {
   const router = useRouter()
   const queryClient = useQueryClient()
   const { privileges, sailLockerMode } = useCurrentUser()
+  const logoutMutation = useLogoutMutation()
   const canManageSailLocker = hasPrivilege(privileges, ['db'])
   const mutation = useMutation({
     mutationFn: (enabled: boolean) => setSailLockerModeServerFn({ data: { enabled } }),
@@ -33,6 +34,19 @@ function SettingsPage() {
     },
   })
 
+  const handleLogout = async () => {
+    try {
+      await logoutMutation.mutateAsync()
+      await router.invalidate()
+      await router.navigate({
+        to: '/login',
+        search: { redirect: '/' },
+      })
+    } catch (error) {
+      console.error('Logout error:', error)
+    }
+  }
+
   return (
     <div className="mx-auto max-w-2xl p-6">
       <h1 className="mb-6 text-2xl font-bold">Settings</h1>
@@ -45,6 +59,14 @@ function SettingsPage() {
             <Link to="/set-password">Update</Link>
           </Button>
         </div>
+        {!sailLockerMode && (
+          <div className="flex items-center justify-between gap-6 rounded-xl border bg-card p-6 shadow-sm">
+            <h2 className="text-base font-medium">Account</h2>
+            <Button variant="outline" onClick={handleLogout} disabled={logoutMutation.isPending}>
+              {logoutMutation.isPending ? 'Logging out...' : 'Logout'}
+            </Button>
+          </div>
+        )}
         {canManageSailLocker && (
           <div className="rounded-xl border bg-card p-6 shadow-sm">
             <div className="flex items-center justify-between gap-6">

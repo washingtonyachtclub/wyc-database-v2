@@ -11,8 +11,10 @@ import { AdminContactModal } from './AdminContactModal'
 import { QuickSwitcher } from './QuickSwitcher'
 import { DevPrivilegeEmulator } from './DevPrivilegeEmulator'
 import { SidebarNav } from './Sidebar'
+import { DiscordIcon } from './icons/DiscordIcon'
 import { Button } from './ui/button'
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from './ui/sheet'
+import { Tooltip, TooltipContent, TooltipTrigger } from './ui/tooltip'
 
 const isDevApp = isDevEnvironment()
 
@@ -102,12 +104,12 @@ export default function Header() {
                 </SheetContent>
               </Sheet>
             )}
-            <Link to="/" className="flex items-center gap-2 text-xl font-bold">
+            <Link to="/" className="flex items-center gap-2 text-lg font-bold sm:text-xl">
               <img src="/favicon.png" alt="WYC" className="h-6 w-6" />
               WYC Database
             </Link>
             {isDevApp && dbName && (
-              <span className="ml-1 rounded bg-yellow-200 px-2 py-0.5 text-xs font-semibold text-yellow-900">
+              <span className="ml-1 hidden rounded bg-yellow-200 px-2 py-0.5 text-xs font-semibold text-yellow-900 sm:inline">
                 Database: {dbName}
               </span>
             )}
@@ -115,7 +117,7 @@ export default function Header() {
           <div className="hidden md:block">
             {!isBarePage && isAuthenticated && <QuickSwitcher />}
           </div>
-          <div className="flex items-center gap-4 md:justify-self-end">
+          <div className="flex items-center gap-1 sm:gap-4 md:justify-self-end">
             {isAuthenticated && user ? (
               <>
                 {isDevApp && hasPrivilege(realPrivileges ?? privileges, ['db']) && (
@@ -130,9 +132,33 @@ export default function Header() {
                 <span className="hidden sm:inline text-sm font-semibold text-muted-foreground">
                   {user.first} {user.last} ({user.wycNumber})
                 </span>
-                <Button onClick={handleLogout} disabled={logoutMutation.isPending} size="sm">
-                  {logoutMutation.isPending ? 'Logging out...' : 'Logout'}
-                </Button>
+                {!sailLockerMode && (
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Button
+                        asChild
+                        variant="ghost"
+                        size="icon"
+                        className="text-muted-foreground hover:text-foreground [&_svg]:size-5"
+                      >
+                        <a
+                          href="https://discord.washingtonyachtclub.org"
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          aria-label="Open WYC Discord"
+                        >
+                          <DiscordIcon />
+                        </a>
+                      </Button>
+                    </TooltipTrigger>
+                    <TooltipContent>WYC Discord</TooltipContent>
+                  </Tooltip>
+                )}
+                {sailLockerMode && (
+                  <Button onClick={handleLogout} disabled={logoutMutation.isPending} size="sm">
+                    {logoutMutation.isPending ? 'Logging out...' : 'Logout'}
+                  </Button>
+                )}
                 {adminData && (
                   <Button
                     variant="ghost"
