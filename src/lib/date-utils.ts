@@ -1,21 +1,63 @@
-export function getTodayPacificDateString(): string {
-  const now = new Date()
+const PACIFIC_TIME_ZONE = 'America/Los_Angeles'
 
-  // Get date parts in America/Los_Angeles and convert to YYYY-MM-DD
-  const pacificString = now.toLocaleDateString('en-CA', {
-    timeZone: 'America/Los_Angeles',
-    year: 'numeric',
-    month: '2-digit',
-    day: '2-digit',
-  })
+const pacificDatePartsFormatter = new Intl.DateTimeFormat('en-US', {
+  timeZone: PACIFIC_TIME_ZONE,
+  year: 'numeric',
+  month: '2-digit',
+  day: '2-digit',
+})
 
-  // en-CA returns YYYY-MM-DD
-  return pacificString
+const pacificDisplayDateFormatter = new Intl.DateTimeFormat('en-US', {
+  timeZone: PACIFIC_TIME_ZONE,
+  year: 'numeric',
+  month: 'short',
+  day: 'numeric',
+})
+
+const pacificDateTimeFormatter = new Intl.DateTimeFormat('en-US', {
+  timeZone: PACIFIC_TIME_ZONE,
+  year: 'numeric',
+  month: 'short',
+  day: 'numeric',
+  hour: 'numeric',
+  minute: '2-digit',
+  timeZoneName: 'short',
+})
+
+function parseUtcTimestamp(value: Date | string): Date | null {
+  const timestamp =
+    value instanceof Date
+      ? value
+      : new Date(
+          /^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}(?:\.\d+)?$/.test(value)
+            ? `${value.replace(' ', 'T')}Z`
+            : value,
+        )
+  return Number.isNaN(timestamp.getTime()) ? null : timestamp
 }
 
-// Strips the time portion from a datetime string, leaving YYYY-MM-DD.
-export function dateOnly(value: string): string {
-  return value ? value.slice(0, 10) : ''
+export function toPacificDateString(value: Date | string): string {
+  const timestamp = parseUtcTimestamp(value)
+  if (!timestamp) return ''
+
+  const parts = Object.fromEntries(
+    pacificDatePartsFormatter.formatToParts(timestamp).map(({ type, value: part }) => [type, part]),
+  )
+  return `${parts.year}-${parts.month}-${parts.day}`
+}
+
+export function formatPacificDate(value: Date | string): string {
+  const timestamp = parseUtcTimestamp(value)
+  return timestamp ? pacificDisplayDateFormatter.format(timestamp) : String(value)
+}
+
+export function formatPacificDateTime(value: Date | string): string {
+  const timestamp = parseUtcTimestamp(value)
+  return timestamp ? pacificDateTimeFormatter.format(timestamp) : String(value)
+}
+
+export function getTodayPacificDateString(): string {
+  return toPacificDateString(new Date())
 }
 
 export function isLessonUpcoming(calendarDate: string): boolean {

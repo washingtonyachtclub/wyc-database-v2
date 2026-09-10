@@ -1,5 +1,6 @@
 import { Lock, Pencil } from 'lucide-react'
 import type { DoorCodeEntry } from '@/domains/door-codes/schema'
+import { formatPacificDateTime } from '@/lib/date-utils'
 import { Button } from '../ui/button'
 
 type DoorCodeCardProps = {
@@ -36,7 +37,8 @@ export function DoorCodeCard({ entry, canEdit, onEditClick }: DoorCodeCardProps)
 
       {canEdit && entry.updatedAt && (
         <p className="mt-2 text-xs text-muted-foreground">
-          Updated {entry.updatedByName && `by ${entry.updatedByName} `}on {entry.updatedAt}
+          Updated {entry.updatedByName && `by ${entry.updatedByName} `}on{' '}
+          {formatPacificDateTime(entry.updatedAt)}
         </p>
       )}
     </div>

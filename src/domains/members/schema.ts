@@ -1,7 +1,7 @@
 import { z } from 'zod'
 import type { MemberQueryRow } from './queries'
 import { num, str, fullName } from '@/db/mapper-utils'
-import { dateOnly } from '@/lib/date-utils'
+import { toPacificDateString } from '@/lib/date-utils'
 import type { RatingQueryRow } from '@/domains/ratings/queries'
 import { wycDatabase } from '@/db/schema'
 
@@ -93,7 +93,7 @@ export function toMember(row: typeof wycDatabase.$inferSelect): Member {
     phone2: str(row.phone2),
     studentId: row.studentId ?? null,
     outToSea: (row.outToSea ?? 0) !== 0,
-    joinDate: dateOnly(row.joinDate),
+    joinDate: toPacificDateString(row.joinDate),
   }
 }
 
@@ -120,7 +120,7 @@ export function toMemberTableRow(row: MemberQueryRow): MemberTableRow {
     category: row.category ?? '<Unknown>',
     expireQtrSchoolText: row.expireQtrSchoolText ?? '<Unknown>',
     expireQtrIndex: row.expireQtrIndex,
-    joinDate: dateOnly(row.joinDate),
+    joinDate: toPacificDateString(row.joinDate),
   }
 }
 

@@ -2,6 +2,7 @@ import { ErrorAlert } from '@/components/ui/ErrorAlert'
 import { ratingUpdateSchema } from '@/domains/ratings/schema'
 import { useAppForm } from '@/hooks/form'
 import { getExpiryInfo } from '@/lib/rating-expiry'
+import { formatPacificDateTime } from '@/lib/date-utils'
 import {
   getRatingByIdQueryOptions,
   useDeleteRatingMutation,
@@ -98,7 +99,7 @@ function RatingDetailPage() {
             )}
           </dd>
         </div>
-        <InfoField label="Entered on" value={rating.enteredAt.slice(0, 16)} />
+        <InfoField label="Entered on" value={formatPacificDateTime(rating.enteredAt)} />
       </div>
 
       {(() => {

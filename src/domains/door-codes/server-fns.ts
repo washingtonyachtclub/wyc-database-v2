@@ -1,5 +1,5 @@
 import { createServerFn } from '@tanstack/react-start'
-import { eq, inArray } from 'drizzle-orm'
+import { eq, inArray, sql } from 'drizzle-orm'
 import db from '@/db/index'
 import { fullName } from '@/db/mapper-utils'
 import { isMembershipActive } from '@/db/membership-utils'
@@ -119,7 +119,7 @@ export const updateDoorCode = createServerFn({ method: 'POST' })
         .update(doorCodes)
         .set({
           code: data.code,
-          updatedAt: new Date().toISOString().slice(0, 19).replace('T', ' '),
+          updatedAt: sql`UTC_TIMESTAMP()`,
           updatedBy: wycNumber,
         })
         .where(eq(doorCodes.index, data.index))

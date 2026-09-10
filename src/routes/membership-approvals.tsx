@@ -41,6 +41,7 @@ import {
   useDenyExemptionMutation,
 } from '@/domains/renewals/query-options'
 import { requirePrivilegeForRoute } from '@/lib/route-guards'
+import { formatPacificDate, formatPacificDateTime } from '@/lib/date-utils'
 import { useQuery } from '@tanstack/react-query'
 import { createFileRoute, useNavigate } from '@tanstack/react-router'
 import { ChevronDown, ChevronUp, Ellipsis, TriangleAlert } from 'lucide-react'
@@ -338,8 +339,8 @@ function ApplicationReview({ application }: { application: Application }) {
             {application.firstName} {application.lastName}
           </h2>
           <p className="text-sm text-muted-foreground">
-            Applied {new Date(application.createdAt).toLocaleDateString()} ·{' '}
-            {application.targetLabel} · {application.tier}, {application.duration}
+            Applied {formatPacificDate(application.createdAt)} · {application.targetLabel} ·{' '}
+            {application.tier}, {application.duration}
           </p>
         </div>
         {(approved || paymentFollowUp || waitingOnApplicant) && (
@@ -535,7 +536,7 @@ function ApplicationReview({ application }: { application: Application }) {
                 [
                   'Waiver',
                   application.waiverSignedAt
-                    ? `Signed ${new Date(application.waiverSignedAt).toLocaleString()}`
+                    ? `Signed ${formatPacificDateTime(application.waiverSignedAt)}`
                     : 'Not signed',
                 ],
               ]}

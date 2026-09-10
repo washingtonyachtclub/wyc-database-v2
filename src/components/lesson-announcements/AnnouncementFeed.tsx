@@ -16,11 +16,7 @@ import {
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog'
 import { MarkdownContent } from './MarkdownContent'
-
-function formatCreatedAt(value: string): string {
-  const [date, time = ''] = value.split(' ')
-  return `${date} ${time.slice(0, 5)}`.trim()
-}
+import { formatPacificDateTime } from '@/lib/date-utils'
 
 export function AnnouncementFeed({
   lessonId,
@@ -48,7 +44,7 @@ export function AnnouncementFeed({
               <div>
                 <h3 className="font-semibold">{announcement.subject}</h3>
                 <p className="text-xs text-muted-foreground">
-                  {announcement.authorName} · {formatCreatedAt(announcement.createdAt)}
+                  {announcement.authorName} · {formatPacificDateTime(announcement.createdAt)}
                 </p>
               </div>
               {canDelete && (

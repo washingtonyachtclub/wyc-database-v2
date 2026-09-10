@@ -499,7 +499,9 @@ export const checkInBoat = createServerFn({ method: 'POST' })
     try {
       await db
         .update(checkouts)
-        .set({ timeReturn: sql`NOW()` })
+        .set({
+          timeReturn: sql`CONVERT_TZ(UTC_TIMESTAMP(), '+00:00', 'America/Los_Angeles')`,
+        })
         .where(and(eq(checkouts.index, index), isNull(checkouts.timeReturn)))
       return { success: true }
     } catch (error) {
