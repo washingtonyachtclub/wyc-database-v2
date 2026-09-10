@@ -1,14 +1,14 @@
 import { membershipApplicationsForApprovalQueryOptions } from '@/domains/membership-applications/query-options'
 import { getPendingExemptionsQueryOptions } from '@/domains/renewals/query-options'
 import { useCurrentUser } from '@/lib/auth/auth-query-options'
-import { hasRoutePrivilegeAccess } from '@/lib/permissions'
+import { hasRouteAccess } from '@/lib/permissions'
 import { useQuery } from '@tanstack/react-query'
 import { Link } from '@tanstack/react-router'
 import { Button } from './ui/button'
 
 export function MembershipApprovalsBanner() {
-  const { privileges } = useCurrentUser()
-  const canReviewMembers = hasRoutePrivilegeAccess(privileges, '/membership-approvals')
+  const { user, privileges } = useCurrentUser()
+  const canReviewMembers = hasRouteAccess(user?.wycNumber, privileges, '/membership-approvals')
   const { data: applications } = useQuery({
     ...membershipApplicationsForApprovalQueryOptions(),
     enabled: canReviewMembers,

@@ -9,7 +9,7 @@ import {
 } from '@/db/schema'
 import { allocateWycNumber, createMemberCredentials } from '@/domains/members/member-write'
 import { categoryIdForUwStatus, isUwStatus } from '@/domains/renewals/questionnaire'
-import { requirePrivilege } from '@/lib/auth/auth-middleware'
+import { requireRouteAccess } from '@/lib/auth/auth-middleware'
 import { createServerFn } from '@tanstack/react-start'
 import { getRequest } from '@tanstack/react-start/server'
 import { and, eq, inArray, isNull, or } from 'drizzle-orm'
@@ -112,7 +112,7 @@ async function recordWelcomeDelivery(applicationId: string) {
 
 export const listMembershipApplicationsForApproval = createServerFn({ method: 'GET' }).handler(
   async () => {
-    await requirePrivilege('db')
+    await requireRouteAccess('/membership-approvals')
     try {
       const rows = await db
         .select({
@@ -214,7 +214,7 @@ export const updateMembershipApplicationEmails = createServerFn({ method: 'POST'
       .parse(input),
   )
   .handler(async ({ data }) => {
-    const editor = await requirePrivilege('db')
+    const editor = await requireRouteAccess('/membership-approvals')
     try {
       await db.transaction(async (tx) => {
         const [application] = await tx
@@ -257,7 +257,7 @@ export const resendMembershipApplicationCompletionEmail = createServerFn({ metho
     applicationIdSchema.parse(input.applicationId),
   )
   .handler(async ({ data: applicationId }) => {
-    await requirePrivilege('db')
+    await requireRouteAccess('/membership-approvals')
     const [application] = await db
       .select({
         firstName: membershipApplications.firstName,
@@ -307,7 +307,7 @@ export const approveNewMembershipApplication = createServerFn({ method: 'POST' }
       .parse(input),
   )
   .handler(async ({ data }) => {
-    const reviewer = await requirePrivilege('db')
+    const reviewer = await requireRouteAccess('/membership-approvals')
     const credentials = await createMemberCredentials()
     let member:
       | { email: string; firstName: string; lastName: string; wycNumber: number }
@@ -453,7 +453,7 @@ export const applyMembershipApplicationToExistingMember = createServerFn({ metho
       .parse(input),
   )
   .handler(async ({ data }) => {
-    const reviewer = await requirePrivilege('db')
+    const reviewer = await requireRouteAccess('/membership-approvals')
     let notification:
       | {
           email: string
@@ -606,7 +606,7 @@ export const closeMembershipApplication = createServerFn({ method: 'POST' })
       .parse(input),
   )
   .handler(async ({ data }) => {
-    const reviewer = await requirePrivilege('db')
+    const reviewer = await requireRouteAccess('/membership-approvals')
     try {
       const result = await db
         .update(membershipApplications)
@@ -639,7 +639,7 @@ export const retryMembershipApplicationWelcomeEmail = createServerFn({ method: '
     applicationIdSchema.parse(input.applicationId),
   )
   .handler(async ({ data: applicationId }) => {
-    await requirePrivilege('db')
+    await requireRouteAccess('/membership-approvals')
     const [application] = await db
       .select({
         firstName: membershipApplications.firstName,

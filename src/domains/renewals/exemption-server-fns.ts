@@ -8,7 +8,7 @@ import {
   renewalQuestionnaire,
   wycDatabase,
 } from '@/db/schema'
-import { requireAuth, requirePrivilege } from '@/lib/auth/auth-middleware'
+import { requireAuth, requireRouteAccess } from '@/lib/auth/auth-middleware'
 import { sendEmail } from '@/lib/email'
 import { exemptionWaiverRequiredEmail } from '@/lib/emails/membership'
 import { createServerFn } from '@tanstack/react-start'
@@ -205,7 +205,7 @@ export const cancelDuesExemption = createServerFn({ method: 'POST' }).handler(as
 
 /** Pending requests for the approval screen, with requester name, requested quarter, and current ExpireQtr. */
 export const listPendingExemptionRequests = createServerFn({ method: 'GET' }).handler(async () => {
-  await requirePrivilege('db')
+  await requireRouteAccess('/membership-approvals')
 
   const rows = await db
     .select({
@@ -251,7 +251,7 @@ function parseRequestId(input: { requestId: unknown }): { requestId: number } {
 export const approveExemptionRequest = createServerFn({ method: 'POST' })
   .inputValidator(parseRequestId)
   .handler(async ({ data }) => {
-    const approver = await requirePrivilege('db')
+    const approver = await requireRouteAccess('/membership-approvals')
 
     const [request] = await db
       .select({
@@ -352,7 +352,7 @@ export const approveExemptionRequest = createServerFn({ method: 'POST' })
 export const denyExemptionRequest = createServerFn({ method: 'POST' })
   .inputValidator(parseRequestId)
   .handler(async ({ data }) => {
-    const approver = await requirePrivilege('db')
+    const approver = await requireRouteAccess('/membership-approvals')
 
     const [request] = await db
       .select({

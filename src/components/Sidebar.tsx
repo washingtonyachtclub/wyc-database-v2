@@ -3,7 +3,7 @@ import { Link, useLocation } from '@tanstack/react-router'
 import { ExternalLink } from 'lucide-react'
 import type { ReactNode } from 'react'
 import type { ProtectedRoute } from '../lib/permissions'
-import { hasRoutePrivilegeAccess } from '../lib/permissions'
+import { hasRouteAccess } from '../lib/permissions'
 
 export const adminItems = [
   { path: '/members' as const, label: 'Members' },
@@ -49,7 +49,7 @@ export function SidebarNav({ onNavigate }: { onNavigate?: () => void }) {
   const location = useLocation()
   const { user, privileges } = useCurrentUser()
   const filterVisible = (items: { path: ProtectedRoute; label: string }[]) =>
-    items.filter((item) => hasRoutePrivilegeAccess(privileges, item.path))
+    items.filter((item) => hasRouteAccess(user?.wycNumber, privileges, item.path))
 
   const visibleAdminItems = filterVisible(adminItems)
   const visiblePeopleManagementItems = filterVisible(peopleManagementItems)

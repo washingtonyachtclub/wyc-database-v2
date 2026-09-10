@@ -1,7 +1,9 @@
+import { DATABASE_ADMIN_WYC_NUMBER } from '@/db/constants'
+
 export type Privilege = 'db' | 'rtgs'
 
 /**
- * Permission registry — single source of truth for route access control.
+ * Single source of truth for route access control.
  *
  * Every route must be listed. An empty array means "any authenticated user."
  * A non-empty array uses OR logic: user needs ANY ONE of the listed privileges.
@@ -43,6 +45,11 @@ export const routePermissions = {
 
 export type ProtectedRoute = keyof typeof routePermissions
 
+// The approval workflow is limited to the database administrator during beta.
+const routeWycNumberRestrictions: Partial<Record<ProtectedRoute, readonly number[]>> = {
+  '/membership-approvals': [DATABASE_ADMIN_WYC_NUMBER],
+}
+
 /**
  * Check if a user has any of the required privileges (OR logic).
  * Returns true if required is empty (no privilege needed).
@@ -60,4 +67,15 @@ export function hasRoutePrivilegeAccess(
   route: ProtectedRoute,
 ): boolean {
   return hasPrivilege(userPrivileges, routePermissions[route])
+}
+
+export function hasRouteAccess(
+  wycNumber: number | null | undefined,
+  userPrivileges: readonly Privilege[],
+  route: ProtectedRoute,
+): boolean {
+  const allowedWycNumbers = routeWycNumberRestrictions[route]
+  if (!hasRoutePrivilegeAccess(userPrivileges, route)) return false
+  if (!allowedWycNumbers) return true
+  return typeof wycNumber === 'number' && allowedWycNumbers.includes(wycNumber)
 }

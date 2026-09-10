@@ -1,18 +1,21 @@
 import { redirect } from '@tanstack/react-router'
-import { hasPrivilege, routePermissions } from './permissions'
+import { hasRouteAccess, routePermissions } from './permissions'
 import type { Privilege, ProtectedRoute } from './permissions'
 
 /**
- * Route-level privilege check for use in beforeLoad.
- * Looks up the route in the permission registry and checks against context.privileges.
- * Redirects to /login if not authenticated, /forbidden if missing privilege.
+ * Route-level access check for use in beforeLoad.
+ * Redirects to /login if not authenticated, /forbidden if the route policy denies access.
  * Routes not in the registry are denied by default (fail-closed).
  *
  * This lives in its own file (not auth-middleware.ts) so that server function files
  * don't transitively import @tanstack/react-router.
  */
 export function requirePrivilegeForRoute(
-  context: { isAuthenticated: boolean; privileges: Privilege[] },
+  context: {
+    isAuthenticated: boolean
+    privileges: Privilege[]
+    user?: { wycNumber: number } | null
+  },
   routePath: ProtectedRoute,
 ) {
   if (!context.isAuthenticated) {
@@ -24,7 +27,7 @@ export function requirePrivilegeForRoute(
     throw redirect({ to: '/forbidden' })
   }
 
-  if (!hasPrivilege(context.privileges, required)) {
+  if (!hasRouteAccess(context.user?.wycNumber, context.privileges, routePath)) {
     throw redirect({ to: '/forbidden' })
   }
 }

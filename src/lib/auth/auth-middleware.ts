@@ -1,8 +1,8 @@
 import { eq } from 'drizzle-orm'
 import { lessons } from '@/db/schema'
 import db from '@/db/index'
-import { hasPrivilege } from '../permissions'
-import type { Privilege } from '../permissions'
+import { hasPrivilege, hasRouteAccess } from '../permissions'
+import type { Privilege, ProtectedRoute } from '../permissions'
 import { useRefreshedAppSession } from './session'
 
 /**
@@ -39,6 +39,21 @@ export async function requirePrivilege(...required: Privilege[]): Promise<number
     if (!hasPrivilege(userPrivs, required)) {
       throw new Error('Forbidden: Insufficient privileges')
     }
+  }
+
+  return sessionData.userId
+}
+
+export async function requireRouteAccess(route: ProtectedRoute): Promise<number> {
+  const session = await useRefreshedAppSession()
+  const sessionData = session.data
+
+  if (!sessionData.userId) {
+    throw new Error('Unauthorized: No session found')
+  }
+
+  if (!hasRouteAccess(sessionData.userId, sessionData.privileges ?? [], route)) {
+    throw new Error('Forbidden: Insufficient privileges')
   }
 
   return sessionData.userId

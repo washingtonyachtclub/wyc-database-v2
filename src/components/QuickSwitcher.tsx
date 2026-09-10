@@ -1,5 +1,5 @@
 import { useCurrentUser } from '@/lib/auth/auth-query-options'
-import { hasRoutePrivilegeAccess, type ProtectedRoute } from '@/lib/permissions'
+import { hasRouteAccess, type ProtectedRoute } from '@/lib/permissions'
 import { useRouter } from '@tanstack/react-router'
 import { ArrowRight, Search } from 'lucide-react'
 import { useEffect, useState } from 'react'
@@ -42,7 +42,7 @@ export function QuickSwitcher() {
   if (!user) return null
 
   const visible = (items: readonly Destination[]) =>
-    items.filter((item) => hasRoutePrivilegeAccess(privileges, item.path))
+    items.filter((item) => hasRouteAccess(user.wycNumber, privileges, item.path))
 
   const groups = [
     {
