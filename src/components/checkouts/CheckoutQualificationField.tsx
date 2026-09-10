@@ -4,6 +4,7 @@ import { Label } from '@/components/ui/label'
 import { MemberCombobox, type MemberLite } from '@/components/ui/MemberCombobox'
 import { SearchableSelect } from '@/components/ui/SearchableSelect'
 import type { CheckoutQualification } from '@/domains/checkouts/schema'
+import { ratingTypeGroups } from '@/domains/rating-types/grouping'
 import { cn } from '@/lib/utils'
 
 type QualificationMode = 'supervised' | 'unsupervised' | null
@@ -41,16 +42,7 @@ export function CheckoutQualificationField({
     () => members.filter((member) => !excludeSupervisor.includes(member.wycNumber)),
     [excludeSupervisor, members],
   )
-  const ratingGroups = Object.values(
-    ratings.reduce<Record<string, { label: string; options: { value: number; label: string }[] }>>(
-      (groups, rating) => {
-        groups[rating.type] ??= { label: rating.type || '<No Type>', options: [] }
-        groups[rating.type].options.push({ value: rating.index, label: rating.text })
-        return groups
-      },
-      {},
-    ),
-  )
+  const ratingGroups = ratingTypeGroups(ratings)
 
   const selectMode = (nextMode: Exclude<QualificationMode, null>) => {
     if (mode === nextMode) return

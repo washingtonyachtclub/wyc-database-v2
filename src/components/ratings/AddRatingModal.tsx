@@ -1,6 +1,6 @@
-import { useMemo } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import type { RatingInsertData } from '@/domains/ratings/schema'
+import { ratingTypeGroups } from '@/domains/rating-types/grouping'
 import { ErrorAlert } from '../ui/ErrorAlert'
 import { ratingInsertSchema } from '@/domains/ratings/schema'
 import { useAppForm } from '../../hooks/form'
@@ -48,18 +48,7 @@ export function AddRatingModal({ onClose, onSuccess, currentUserWycNumber }: Add
 
   const mutationError = createMutation.error?.message
 
-  const ratingTypeGroups = useMemo(() => {
-    const map = new Map<string, { value: number; label: string }[]>()
-    for (const rt of ratingTypes) {
-      const group = map.get(rt.type) || []
-      group.push({ value: rt.index, label: rt.text ?? `Rating ${rt.index}` })
-      map.set(rt.type, group)
-    }
-    return Array.from(map.entries()).map(([type, options]) => ({
-      label: type || '<No Type>',
-      options,
-    }))
-  }, [ratingTypes])
+  const groups = ratingTypeGroups(ratingTypes)
 
   return (
     <Modal onClose={onClose} title="New Rating">
@@ -93,7 +82,7 @@ export function AddRatingModal({ onClose, onSuccess, currentUserWycNumber }: Add
               <field.GroupedSelectField
                 label="Rating Type"
                 placeholder="Select rating"
-                groups={ratingTypeGroups}
+                groups={groups}
               />
             )}
           />

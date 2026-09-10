@@ -1,4 +1,5 @@
 import type { RatingFilters } from '@/domains/ratings/filter-types'
+import { ratingTypeGroups } from '@/domains/rating-types/grouping'
 import { Button } from '../ui/button'
 import { DatePicker } from '../ui/DatePicker'
 import { Label } from '../ui/label'
@@ -21,7 +22,7 @@ export function RatingFilterControls({
   ratingIndex?: number
   since?: string
   until?: string
-  ratingTypes: Array<{ index: number; text: string | null }>
+  ratingTypes: Array<{ index: number; text: string | null; type: string }>
   onFilterChange: (changes: Partial<RatingFilters>) => void
   onClearFilters: () => void
 }) {
@@ -33,6 +34,13 @@ export function RatingFilterControls({
 
   const activeClass = 'bg-primary/10 border-primary'
   const inactiveClass = 'bg-background border-border'
+  const groups = ratingTypeGroups(ratingTypes).map((group) => ({
+    label: group.label,
+    options: group.options.map((option) => ({
+      value: String(option.value),
+      label: option.label,
+    })),
+  }))
 
   return (
     <div className="mb-4 p-4 border-2 rounded-lg bg-muted/50">
@@ -60,13 +68,8 @@ export function RatingFilterControls({
               ratingIndex !== undefined ? activeClass : inactiveClass,
             )}
             searchPlaceholder="Search rating types..."
-            options={[
-              { value: ALL, label: 'All Ratings' },
-              ...ratingTypes.map((ratingType) => ({
-                value: String(ratingType.index),
-                label: ratingType.text || `Rating ${ratingType.index}`,
-              })),
-            ]}
+            options={[{ value: ALL, label: 'All Ratings' }]}
+            groups={groups}
           />
         </div>
 
