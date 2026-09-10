@@ -12,16 +12,15 @@ Welcome to the WYC!
 Your WYC Number is: ${member.wycNumber}
 Your Temporary Password is: ${password}
 
-You may use these to sign up for lessons at: washingtonyachtclub.org/lessons-events/sign-up-for-lessons
+To get started, set a new password here: database.washingtonyachtclub.org/set-password
 
-Sign out a boat at: checkout.washingtonyachtclub.org
-Or access our database at: database.washingtonyachtclub.org
+Sign up for lessons at: washingtonyachtclub.org/lessons-events/sign-up-for-lessons
 
-The password is unique and you can reset it in the database.
+Check out a boat at: database.washingtonyachtclub.org/checkout
 
 Want to start learning immediately? Check our guides: washingtonyachtclub.org/guides
 
-And here is our discord in case you don't have it already: discord.gg/JRQECaeYKN
+And make sure to join the discord server: discord.washingtonyachtclub.org
 It is definitely the best way to keep up with everything the club is up to.
 
 If you have any questions feel free to ask in discord!
@@ -41,14 +40,15 @@ Welcome to the WYC!
 
 Your WYC Number is: ${member.wycNumber}
 
-To get started, go to database.washingtonyachtclub.org and use "Forgot Password" to set your password.
+To get started, set your password here: database.washingtonyachtclub.org/forgot-password
 
 Sign up for lessons at: washingtonyachtclub.org/lessons-events/sign-up-for-lessons
-Check out a boat at: checkout.washingtonyachtclub.org
+
+Check out a boat at: database.washingtonyachtclub.org/checkout
 
 Want to start learning immediately? Check our guides: washingtonyachtclub.org/guides
 
-And here is our discord in case you don't have it already: discord.gg/JRQECaeYKN
+And make sure to join the discord server: discord.washingtonyachtclub.org
 It is definitely the best way to keep up with everything the club is up to.
 
 If you have any questions feel free to ask in discord!

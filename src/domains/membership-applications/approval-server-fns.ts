@@ -431,6 +431,7 @@ export const approveNewMembershipApplication = createServerFn({ method: 'POST' }
     try {
       const delivery = await sendNewMemberWelcomeEmail({
         applicationId: data.applicationId,
+        password: credentials.password,
         ...member!,
       })
       emailSent = delivery.emailSent

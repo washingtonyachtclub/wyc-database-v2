@@ -3,6 +3,7 @@ import { membershipApplications } from '@/db/schema'
 import { sendEmail } from '@/lib/email'
 import {
   newMemberCompletionEmail,
+  newMemberEmail,
   newMemberEmailFallback,
   returningMemberEmail,
 } from '@/lib/emails/membership'
@@ -49,16 +50,18 @@ export async function sendNewMemberWelcomeEmail(input: {
   email: string
   firstName: string
   lastName: string
+  password?: string
   wycNumber: number
 }) {
+  const member = {
+    first: input.firstName,
+    last: input.lastName,
+    wycNumber: input.wycNumber,
+  }
   const result = await sendEmail({
     idempotencyKey: `new-member-application-welcome/${input.applicationId}`,
     subject: 'Welcome to the Washington Yacht Club!',
-    text: newMemberEmailFallback({
-      first: input.firstName,
-      last: input.lastName,
-      wycNumber: input.wycNumber,
-    }),
+    text: input.password ? newMemberEmail(member, input.password) : newMemberEmailFallback(member),
     to: input.email,
   })
   return { emailSent: true, emailSimulated: result.simulated }

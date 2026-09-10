@@ -2,6 +2,7 @@ import {
   HeadContent,
   Scripts,
   createRootRouteWithContext,
+  redirect,
   useLocation,
 } from '@tanstack/react-router'
 
@@ -31,9 +32,27 @@ interface MyRouterContext {
   sessionExpiresAt?: number
 }
 
+const PUBLIC_PATHS = new Set([
+  '/checkout',
+  '/db.cgi',
+  '/forgot-password',
+  '/guest-waiver',
+  '/join',
+  '/lesson-list',
+  '/login',
+  '/meet-the-team',
+])
+
+function isPublicPath(pathname: string): boolean {
+  return PUBLIC_PATHS.has(pathname) || pathname.startsWith('/api/') || pathname.startsWith('/join/')
+}
+
 export const Route = createRootRouteWithContext<MyRouterContext>()({
-  beforeLoad: async ({ context }) => {
+  beforeLoad: async ({ context, location }) => {
     const authResult = await context.queryClient.ensureQueryData(getCurrentUserQueryOptions())
+    if (!authResult.isValid && !isPublicPath(location.pathname)) {
+      throw redirect({ to: '/login', search: { redirect: location.href } })
+    }
     return {
       user: authResult.isValid ? authResult.user : null,
       isAuthenticated: authResult.isValid,

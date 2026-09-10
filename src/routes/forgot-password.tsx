@@ -21,11 +21,11 @@ function ForgotPasswordPage() {
             <h2 className="mt-4 text-center text-3xl font-bold tracking-tight">WYC Database</h2>
           </div>
 
-          <LookupSection />
+          <ResetSection />
 
           <hr className="border-border" />
 
-          <ResetSection />
+          <LookupSection />
 
           <p className="text-center text-sm text-muted-foreground">
             Forgot which email you used? Email{' '}
@@ -63,7 +63,7 @@ function LookupSection() {
 
   return (
     <div className="space-y-4">
-      <h3 className="text-lg font-semibold">Forgot your WYC ID Number?</h3>
+      <h3 className="text-lg font-semibold">Forgot your WYC ID?</h3>
       <form onSubmit={handleSubmit} className="space-y-3">
         <div>
           <Label htmlFor="lookup-email">Email Address</Label>
@@ -94,7 +94,7 @@ function LookupSection() {
       {lookupMutation.data?.success && lookupMutation.data.emailSent && (
         <>
           <div className="rounded-md bg-green-50 border border-green-200 p-3 text-sm text-green-800">
-            Your WYC number has been sent to <span className="font-semibold">{email}</span>.
+            Your WYC ID has been sent to <span className="font-semibold">{email}</span>.
           </div>
           {lookupMutation.data.emailSimulated && <EmailSimulatedNotice />}
         </>
@@ -131,14 +131,14 @@ function ResetSection() {
       <h3 className="text-lg font-semibold">Reset Password</h3>
       <form onSubmit={handleSubmit} className="space-y-3">
         <div>
-          <Label htmlFor="reset-wyc">WYC Number</Label>
+          <Label htmlFor="reset-wyc">WYC ID</Label>
           <Input
             id="reset-wyc"
             type="text"
             inputMode="numeric"
             value={wycNumber}
             onChange={(e) => setWycNumber(e.target.value.replace(/\D/g, ''))}
-            placeholder="WYC Number"
+            placeholder="WYC ID"
             disabled={resetMutation.isPending}
           />
         </div>
