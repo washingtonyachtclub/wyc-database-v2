@@ -89,7 +89,7 @@ function sameTimes(sessions: LessonSession[]): boolean {
 }
 
 /** 'Sat Jul 11, 11am–4pm', 'Fri May 22 – Mon May 25' */
-function describeSession(s: LessonSession): string {
+export function formatSession(s: LessonSession): string {
   const from = startDate(s)
   const to = endDate(s)
 
@@ -132,5 +132,5 @@ export function formatSessions(sessions: LessonSession[]): string[] {
     ]
   }
 
-  return ordered.map(describeSession)
+  return ordered.map(formatSession)
 }

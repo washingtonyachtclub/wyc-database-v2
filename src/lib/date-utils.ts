@@ -24,6 +24,17 @@ const pacificDateTimeFormatter = new Intl.DateTimeFormat('en-US', {
   timeZoneName: 'short',
 })
 
+const pacificLocalDateTimePartsFormatter = new Intl.DateTimeFormat('en-US', {
+  timeZone: PACIFIC_TIME_ZONE,
+  year: 'numeric',
+  month: '2-digit',
+  day: '2-digit',
+  hour: '2-digit',
+  minute: '2-digit',
+  second: '2-digit',
+  hourCycle: 'h23',
+})
+
 function parseUtcTimestamp(value: Date | string): Date | null {
   const timestamp =
     value instanceof Date
@@ -58,6 +69,15 @@ export function formatPacificDateTime(value: Date | string): string {
 
 export function getTodayPacificDateString(): string {
   return toPacificDateString(new Date())
+}
+
+export function getNowPacificDateTimeString(): string {
+  const parts = Object.fromEntries(
+    pacificLocalDateTimePartsFormatter
+      .formatToParts(new Date())
+      .map(({ type, value }) => [type, value]),
+  )
+  return `${parts.year}-${parts.month}-${parts.day} ${parts.hour}:${parts.minute}:${parts.second}`
 }
 
 export function isLessonUpcoming(calendarDate: string): boolean {

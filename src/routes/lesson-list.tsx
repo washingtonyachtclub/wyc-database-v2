@@ -1,11 +1,14 @@
 import { createFileRoute } from '@tanstack/react-router'
 import { MapPin } from 'lucide-react'
+import { useState } from 'react'
 import { LESSON_CATEGORIES } from '../db/constants'
-import { formatSessions } from '@/domains/lessons/format-sessions'
-import type { RichLesson } from '@/domains/lessons/schema'
+import { formatSession } from '@/domains/lessons/format-sessions'
+import { dateOf, type RichLesson } from '@/domains/lessons/schema'
 import { getPublicLessons } from '@/domains/lessons/server-fns'
+import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
 import { RichText } from '@/components/ui/RichText'
+import { getNowPacificDateTimeString } from '@/lib/date-utils'
 
 export const Route = createFileRoute('/lesson-list')({
   loader: () => getPublicLessons(),
@@ -97,7 +100,15 @@ function LessonCard({ entry, muted }: { entry: PublicLesson; muted?: boolean }) 
   const { lesson, enrolledCount } = entry
   const isFull = isLessonFull(entry)
   const hasTwo = !!lesson.instructor2Name
-  const sessionLines = formatSessions(lesson.sessions)
+  const [showAllSessions, setShowAllSessions] = useState(false)
+  const orderedSessions = [...lesson.sessions].sort((a, b) => a.startsAt.localeCompare(b.startsAt))
+  const hasLongSchedule = orderedSessions.length > 3
+  const now = getNowPacificDateTimeString()
+  const upcomingSessions = orderedSessions.filter((session) =>
+    session.allDay ? dateOf(session.endsAt) >= dateOf(now) : session.endsAt >= now,
+  )
+  const compactSessions = hasLongSchedule ? upcomingSessions.slice(0, 2) : orderedSessions
+  const scheduleId = `lesson-sessions-${lesson.index}`
 
   return (
     <div
@@ -111,11 +122,32 @@ function LessonCard({ entry, muted }: { entry: PublicLesson; muted?: boolean }) 
         {/* Title, day/dates, time */}
         <div className="px-3 pt-2.5 pb-1 md:w-[35%] md:py-2.5">
           <div className="mb-1 text-base font-bold text-[#444]">{lesson.subtype}</div>
-          {sessionLines.map((line) => (
-            <div key={line} className="text-[13px] leading-relaxed text-[#444]">
-              {line}
-            </div>
-          ))}
+          {!showAllSessions && (
+            <>
+              {compactSessions.length > 0 ? (
+                compactSessions.map((session) => (
+                  <div key={session.index} className="text-[13px] leading-relaxed text-[#444]">
+                    {formatSession(session)}
+                  </div>
+                ))
+              ) : (
+                <div className="text-[13px] leading-relaxed text-[#444]">No upcoming sessions</div>
+              )}
+              {hasLongSchedule && (
+                <Button
+                  type="button"
+                  variant="link"
+                  size="sm"
+                  className="h-auto p-0 text-[13px] font-bold text-[#00859b]"
+                  aria-expanded={false}
+                  aria-controls={scheduleId}
+                  onClick={() => setShowAllSessions(true)}
+                >
+                  View all {orderedSessions.length} dates
+                </Button>
+              )}
+            </>
+          )}
         </div>
 
         {/* Instructor + Location + Size: side by side on mobile, separate columns on desktop */}
@@ -172,6 +204,19 @@ function LessonCard({ entry, muted }: { entry: PublicLesson; muted?: boolean }) 
           <EnrollAction lessonIndex={lesson.index} isFull={isFull} />
         </div>
       </div>
+
+      {showAllSessions && (
+        <div
+          id={scheduleId}
+          className="grid grid-cols-1 gap-x-6 gap-y-0.5 border-t border-[#C0C0C0] px-3 py-2.5 sm:grid-cols-2 md:grid-cols-4"
+        >
+          {orderedSessions.map((session) => (
+            <div key={session.index} className="text-[13px] leading-relaxed text-[#444]">
+              {formatSession(session)}
+            </div>
+          ))}
+        </div>
+      )}
 
       {lesson.description && (
         <div className="px-5 pt-1 pb-2.5 text-[13px] leading-relaxed text-[#444]">
