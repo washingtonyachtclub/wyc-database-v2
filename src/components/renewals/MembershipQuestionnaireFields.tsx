@@ -32,12 +32,13 @@ const SPONSEE_OPTIONS: { value: PlusOneResponse; label: string }[] = [
 
 const IMA_PURCHASE_URL = 'https://www.washington.edu/ima/member/'
 const IMA_STATUS_DETAILS: Record<UwStatus, string> = {
-  student: 'Active students already have an IMA Rec Membership.',
+  student:
+    'UW Seattle students who pay the Services and Activities Fee already have a Rec Membership.',
   alumni:
-    'Alumni can get an IMA Rec Membership through the Alumni Association or a Plus One membership (see below).',
-  employee_retiree: 'Employees and retirees are eligible to purchase a membership.',
+    'Alumni can get a Rec Membership through the Alumni Association or a Plus One Rec Membership (see below).',
+  employee_retiree: 'Employees and retirees are eligible to purchase a Rec Membership.',
   public:
-    'You need a student sponsor to get a Plus One IMA Rec Membership. See below to get paired.',
+    'You need an eligible UW student, employee, or retiree sponsor to get a Plus One Rec Membership. See below to get paired.',
 }
 const SPONSOR_HELPER =
   'We will pair you with a WYC member via email so you can coordinate a time to visit the IMA together.'
@@ -86,21 +87,16 @@ function ChoiceGroup<T extends string>({
 export function MembershipQuestionnaireFields({
   errors,
   idPrefix = 'membership',
-  imaAcknowledged,
-  onImaAcknowledgedChange,
   onPlusOneChange,
   onUwStatusChange,
   plusOne,
   uwStatus,
 }: {
   errors?: {
-    imaAcknowledged?: string
     plusOne?: string
     uwStatus?: string
   }
   idPrefix?: string
-  imaAcknowledged: boolean
-  onImaAcknowledgedChange: (value: boolean) => void
   onPlusOneChange: (value: PlusOneResponse) => void
   onUwStatusChange: (value: UwStatus) => void
   plusOne: PlusOneResponse | null
@@ -118,39 +114,26 @@ export function MembershipQuestionnaireFields({
       />
 
       {uwStatus && (
-        <div id={`${idPrefix}-ima-acknowledged`} className="space-y-2">
-          <p className="text-base">
-            An{' '}
-            <a
-              href={IMA_PURCHASE_URL}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="font-medium text-primary underline"
-            >
-              IMA Rec Membership
-            </a>
-            {' is required to use the WAC docks and facilities. '}
-            {IMA_STATUS_DETAILS[uwStatus]}
-          </p>
-          <Button
-            type="button"
-            variant={imaAcknowledged ? 'default' : 'outline'}
-            onClick={() => onImaAcknowledgedChange(!imaAcknowledged)}
-            className="h-auto w-full justify-start whitespace-normal border-2 px-4 py-3 text-left text-base font-normal"
+        <p className="text-base">
+          An{' '}
+          <a
+            href={IMA_PURCHASE_URL}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="font-medium text-primary underline"
           >
-            I understand
-          </Button>
-          {errors?.imaAcknowledged && (
-            <p className="text-sm text-destructive">{errors.imaAcknowledged}</p>
-          )}
-        </div>
+            Rec Membership
+          </a>
+          {' is required to use the WAC docks and facilities. '}
+          {IMA_STATUS_DETAILS[uwStatus]}
+        </p>
       )}
 
       {(uwStatus === 'student' || uwStatus === 'employee_retiree') && (
         <ChoiceGroup
           id={`${idPrefix}-plus-one`}
           error={errors?.plusOne}
-          label="Are you willing to sponsor a WYC member for an IMA Plus One membership?"
+          label="Are you willing to sponsor a WYC member for a Plus One Rec Membership?"
           helper={SPONSOR_HELPER}
           options={SPONSOR_OPTIONS}
           value={plusOne}
@@ -162,7 +145,7 @@ export function MembershipQuestionnaireFields({
         <ChoiceGroup
           id={`${idPrefix}-plus-one`}
           error={errors?.plusOne}
-          label="Would you like to be paired with a student for an IMA Plus One membership?"
+          label="Would you like to be paired with a sponsor for a Plus One Rec Membership?"
           helper={SPONSEE_HELPER}
           options={SPONSEE_OPTIONS}
           value={plusOne}

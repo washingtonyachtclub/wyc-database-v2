@@ -972,7 +972,7 @@ export const dinghyNoviceTest = {
         },
         {
           label:
-            'guests must prove IMA membership and sign the Participant’s Agreement on the website.',
+            'guests must prove Rec Membership and sign the Participant’s Agreement on the website.',
           correct: true,
         },
         {

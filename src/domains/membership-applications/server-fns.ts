@@ -42,7 +42,6 @@ const paymentInputSchema = z
   .object({
     duration: z.enum(['quarterly', 'annual']),
     firstName: requiredText(60),
-    imaAcknowledged: z.boolean().refine(Boolean, 'IMA acknowledgement is required'),
     lastName: requiredText(60),
     primaryEmail: emailSchema,
     questionnaire: z.unknown(),
@@ -231,7 +230,6 @@ export const startNewMemberPayment = createServerFn({ method: 'POST' })
         createdIpHash,
         duration: data.duration,
         firstName: data.firstName,
-        imaAcknowledged: data.imaAcknowledged ? 1 : 0,
         lastName: data.lastName,
         paymentStatus: 'pending',
         plusOneResponse: data.questionnaire.plusOneResponse,

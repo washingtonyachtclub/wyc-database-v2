@@ -8,10 +8,9 @@ membership. A completed application enters the officer review queue.
 
 ## Payment
 
-The signup page collects the applicant's name, primary email, conditional UW email, UW status, IMA
-acknowledgement, Plus One response, duration, and card details. Primary email is checked against
-member records when the field loses focus. A match displays a recovery link but does not block
-signup.
+The signup page collects the applicant's name, primary email, conditional UW email, UW status, Plus
+One Rec Membership response, duration, and card details. Primary email is checked against member
+records when the field loses focus. A match displays a recovery link but does not block signup.
 
 Prices and order totals come from the same Square catalog variations used by renewals. The server
 derives the price tier from UW status. It creates an application before calling Square and stores
@@ -25,6 +24,18 @@ the applicant not to pay again.
 
 After payment, the browser opens `/join/{applicationId}` and an email sends the same recovery link.
 The application UUID is the bearer credential for this page and does not expire.
+
+## Website embedding
+
+The public website embeds `/join?embed=1`. Embedded mode shows the hero, membership information,
+and signup form without the standalone application header. Payment completion keeps `embed=1`
+while navigating to the application page. Direct visits to `/join` use the full standalone
+presentation.
+
+The embedded page reports layout changes to the parent window so the public website can resize the
+iframe and use the website's page scrollbar. Route transitions and final submission ask the parent
+to scroll back to the top of the iframe. Messages are sent only to the public website origin, with
+loopback origins also allowed in development.
 
 ## Application completion
 
@@ -97,6 +108,7 @@ Payment and review are independent states:
 | ------------------------------------------------------------ | ---------------------------------------------------------------------------------- |
 | `src/routes/join.tsx`                                        | Public identity, questionnaire, pricing, and payment page                          |
 | `src/routes/join_.$applicationId.tsx`                        | Resumable contact, questionnaire, and waiver page                                  |
+| `src/components/EmbeddedJoinPage.tsx`                        | Public website iframe sizing and scroll coordination                               |
 | `src/routes/membership-approvals.tsx`                        | Shared new-member and dues-exemption approval inbox                                |
 | `src/routes/api.cron.daily-tasks.ts`                         | Authenticated daily lesson and application-reminder task list                      |
 | `src/domains/membership-applications/server-fns.ts`          | Validation, rate limiting, payment coordination, email, and completion transaction |

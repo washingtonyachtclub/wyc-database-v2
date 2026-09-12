@@ -11,7 +11,7 @@ const CATEGORY_IDS = {
 } as const
 
 /**
- * Plus One responses, split by direction: sponsor_* for UW members who can sponsor a Plus One
+ * Plus One Rec Membership responses, split by direction: sponsor_* for UW members who can sponsor
  * (student / employee-retiree), sponsee_* for non-UW members who need to be sponsored.
  * The *_yes codes are the ones an officer pairs up; the rest need no action.
  */
@@ -71,7 +71,7 @@ export function parseQuestionnaire(input: unknown): QuestionnaireAnswers {
 
   const allowed = plusOneResponsesFor(uwStatus)
   if (!allowed.includes(obj.plusOneResponse as PlusOneResponse)) {
-    throw new Error('Please answer the Plus One question.')
+    throw new Error('Please answer the Plus One Rec Membership question.')
   }
 
   return {
