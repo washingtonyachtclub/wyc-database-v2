@@ -1,7 +1,6 @@
 import { useSuspenseQuery } from '@tanstack/react-query'
 import { createFileRoute, Link, useNavigate, useRouter } from '@tanstack/react-router'
 import { useState } from 'react'
-import { CheckoutBetaBanner } from '@/components/checkouts/CheckoutBetaBanner'
 import { CheckoutCard } from '@/components/checkouts/CheckoutCard'
 import { CheckoutHistoryTable } from '@/components/checkouts/CheckoutHistoryTable'
 import { WindHistoryChart } from '@/components/checkouts/WindHistoryChart'
@@ -37,7 +36,6 @@ function CheckoutPage() {
 
   return (
     <div className="min-h-screen bg-muted/40">
-      <CheckoutBetaBanner />
       <div className="mx-auto max-w-6xl space-y-7 px-3 py-4 sm:space-y-8 sm:px-4 sm:py-6">
         <header className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <div className="min-w-0 space-y-3 sm:flex sm:flex-wrap sm:items-center sm:space-y-0 sm:gap-x-5 sm:gap-y-3">

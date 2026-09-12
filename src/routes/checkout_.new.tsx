@@ -1,5 +1,4 @@
 import { createFileRoute, Link, redirect, useNavigate, useRouter } from '@tanstack/react-router'
-import { CheckoutBetaBanner } from '@/components/checkouts/CheckoutBetaBanner'
 import { CheckoutForm } from '@/components/checkouts/CheckoutForm'
 import { WindHistoryChart } from '@/components/checkouts/WindHistoryChart'
 import { Button } from '@/components/ui/button'
@@ -45,7 +44,6 @@ function NewCheckoutPage() {
 
   return (
     <div className="min-h-screen bg-muted/40">
-      <CheckoutBetaBanner />
       <div className="mx-auto max-w-6xl px-3 py-4 sm:px-4 sm:py-6">
         <div className="mb-4 grid grid-cols-[minmax(0,1fr)_auto] items-center gap-3 sm:grid-cols-[auto_minmax(0,1fr)_auto] sm:gap-4">
           <h1 className="text-2xl font-bold leading-tight sm:text-3xl">Check Out a Boat</h1>
