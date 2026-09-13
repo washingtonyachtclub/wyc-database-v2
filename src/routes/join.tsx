@@ -70,6 +70,7 @@ function JoinPage() {
   const { data: signupOptions } = useSuspenseQuery(newMemberSignupOptionsQueryOptions())
   const navigate = useNavigate()
   const cardRef = useRef<SquareCardHandle>(null)
+  const submittingRef = useRef(false)
   const payment = useStartNewMemberPaymentMutation()
   const emailCheck = useCheckNewMemberEmailMutation()
 
@@ -83,6 +84,7 @@ function JoinPage() {
   const [checkedEmail, setCheckedEmail] = useState('')
   const [existingMember, setExistingMember] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [isSubmitting, setIsSubmitting] = useState(false)
   const [validationErrors, setValidationErrors] = useState<ValidationErrors>({})
   const embedded = search.embed === true
 
@@ -144,6 +146,7 @@ function JoinPage() {
 
   async function submit(event: React.FormEvent) {
     event.preventDefault()
+    if (submittingRef.current) return
     setError(null)
     const errors: ValidationErrors = {}
     if (!firstName.trim()) errors.firstName = 'First name is required.'
@@ -180,6 +183,8 @@ function JoinPage() {
       return
     }
     if (!questionnaire) return
+    submittingRef.current = true
+    setIsSubmitting(true)
     try {
       const sourceId = await cardRef.current!.tokenize()
       const result = await payment.mutateAsync({
@@ -215,6 +220,9 @@ function JoinPage() {
       setError(result.message)
     } catch (caught: any) {
       setError(caught?.message ?? 'Something went wrong. Please try again.')
+    } finally {
+      submittingRef.current = false
+      setIsSubmitting(false)
     }
   }
 
@@ -491,9 +499,9 @@ function JoinPage() {
                 type="submit"
                 size="lg"
                 className="w-full"
-                disabled={payment.isPending || (tier !== null && selectedPrice.isLoading)}
+                disabled={isSubmitting || (tier !== null && selectedPrice.isLoading)}
               >
-                {payment.isPending ? 'Processing…' : 'Pay and Sign Up'}
+                {isSubmitting ? 'Processing…' : 'Pay and Sign Up'}
               </Button>
             </section>
           </form>

@@ -30,16 +30,6 @@ const SPONSEE_OPTIONS: { value: PlusOneResponse; label: string }[] = [
   },
 ]
 
-const IMA_PURCHASE_URL = 'https://www.washington.edu/ima/member/'
-const IMA_STATUS_DETAILS: Record<UwStatus, string> = {
-  student:
-    'UW Seattle students who pay the Services and Activities Fee already have a Rec Membership.',
-  alumni:
-    'Alumni can get a Rec Membership through the Alumni Association or a Plus One Rec Membership (see below).',
-  employee_retiree: 'Employees and retirees are eligible to purchase a Rec Membership.',
-  public:
-    'You need an eligible UW student, employee, or retiree sponsor to get a Plus One Rec Membership. See below to get paired.',
-}
 const SPONSOR_HELPER =
   'We will pair you with a WYC member via email so you can coordinate a time to visit the IMA together.'
 const SPONSEE_HELPER =
@@ -112,22 +102,6 @@ export function MembershipQuestionnaireFields({
         value={uwStatus}
         onChange={onUwStatusChange}
       />
-
-      {uwStatus && (
-        <p className="text-base">
-          An{' '}
-          <a
-            href={IMA_PURCHASE_URL}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="font-medium text-primary underline"
-          >
-            Rec Membership
-          </a>
-          {' is required to use the WAC docks and facilities. '}
-          {IMA_STATUS_DETAILS[uwStatus]}
-        </p>
-      )}
 
       {(uwStatus === 'student' || uwStatus === 'employee_retiree') && (
         <ChoiceGroup
