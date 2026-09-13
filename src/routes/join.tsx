@@ -337,7 +337,7 @@ function JoinPage() {
               <p>
                 <strong>Public:</strong> You can be paired with a Rec Membership holder to receive a
                 Plus One Rec Membership for $112 per quarter if paired with a student or $160 with
-                an employee. You can request a sponsor on the join form.
+                an employee. You can request a sponsor in the sign-up form below.
               </p>
               <a
                 href="https://www.washington.edu/ima/member/"
