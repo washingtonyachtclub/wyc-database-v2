@@ -1,4 +1,5 @@
 import { Button } from '@/components/ui/button'
+import { requestEmbeddedJoinScrollToTop } from '@/components/EmbeddedJoinPage'
 import { Checkbox } from '@/components/ui/checkbox'
 import { EmailSimulatedNotice } from '@/components/ui/EmailSimulatedNotice'
 import { ErrorAlert } from '@/components/ui/ErrorAlert'
@@ -19,6 +20,7 @@ import {
 } from '@/domains/membership-applications/questionnaire'
 import { MemberWaiverAgreementFields } from '@/domains/waivers/MemberWaiverAgreementFields'
 import { isDevEnvironment } from '@/lib/env'
+import { cn } from '@/lib/utils'
 import { useSuspenseQuery } from '@tanstack/react-query'
 import { createFileRoute, Link } from '@tanstack/react-router'
 import { useState } from 'react'
@@ -28,6 +30,13 @@ export const Route = createFileRoute('/join_/$applicationId')({
     const email: 'sent' | 'failed' | undefined =
       search.email === 'sent' || search.email === 'failed' ? search.email : undefined
     return {
+      embed:
+        search.embed === true ||
+        search.embed === 'true' ||
+        search.embed === 1 ||
+        search.embed === '1'
+          ? true
+          : undefined,
       email,
       simulated: search.simulated === true || search.simulated === 'true',
     }
@@ -122,9 +131,9 @@ const validationFieldIds: Record<ValidationField, string> = {
   zipCode: 'application-zip',
 }
 
-function ProcessingConfirmation() {
+function ProcessingConfirmation({ embedded }: { embedded: boolean }) {
   return (
-    <main className="min-h-screen bg-background px-4 py-10 sm:px-6">
+    <main className={cn('bg-background px-4 py-10 sm:px-6', !embedded && 'min-h-screen')}>
       <div className="mx-auto max-w-2xl space-y-5">
         <p className="text-sm font-semibold uppercase tracking-[0.18em] text-primary">
           Washington Yacht Club
@@ -143,10 +152,11 @@ function CompleteNewMemberApplicationPage() {
   const { applicationId } = Route.useParams()
   const search = Route.useSearch()
   const { data } = useSuspenseQuery(newMemberApplicationQueryOptions(applicationId))
+  const embedded = search.embed === true
 
   if (data.status === 'not_found') {
     return (
-      <StatusPage title="Application not found">
+      <StatusPage title="Application not found" embedded={embedded}>
         Check that you copied the complete link from your email.
       </StatusPage>
     )
@@ -158,24 +168,24 @@ function CompleteNewMemberApplicationPage() {
     application.reviewStatus === 'approved_existing'
   ) {
     return (
-      <StatusPage title="Membership processed">
+      <StatusPage title="Membership processed" embedded={embedded}>
         This application has been approved. Check your email for your membership details.
       </StatusPage>
     )
   }
   if (application.reviewStatus === 'closed') {
     return (
-      <StatusPage title="Application closed">
+      <StatusPage title="Application closed" embedded={embedded}>
         This application is closed. Please contact the club if you have questions.
       </StatusPage>
     )
   }
   if (application.requirementsComplete || application.reviewStatus !== 'not_ready') {
-    return <ProcessingConfirmation />
+    return <ProcessingConfirmation embedded={embedded} />
   }
   if (application.paymentStatus === 'reconciliation_required') {
     return (
-      <StatusPage title="Payment needs review">
+      <StatusPage title="Payment needs review" embedded={embedded}>
         We could not confirm the final payment result. Do not pay again. Please contact the club and
         include this application ID: <span className="font-mono text-sm">{applicationId}</span>.
       </StatusPage>
@@ -183,9 +193,13 @@ function CompleteNewMemberApplicationPage() {
   }
   if (application.paymentStatus !== 'completed') {
     return (
-      <StatusPage title="Payment not completed">
+      <StatusPage title="Payment not completed" embedded={embedded}>
         This application does not have a completed payment. Return to the{' '}
-        <Link to="/join" className="font-medium text-primary underline">
+        <Link
+          to="/join"
+          search={{ embed: embedded ? true : undefined }}
+          className="font-medium text-primary underline"
+        >
           membership signup page
         </Link>{' '}
         to try again.
@@ -194,7 +208,7 @@ function CompleteNewMemberApplicationPage() {
   }
   if (application.questionnaireVersion !== CURRENT_NEW_MEMBER_QUESTIONNAIRE_VERSION) {
     return (
-      <StatusPage title="Application unavailable">
+      <StatusPage title="Application unavailable" embedded={embedded}>
         This application uses a questionnaire version that is not available. Please contact the
         club.
       </StatusPage>
@@ -205,15 +219,24 @@ function CompleteNewMemberApplicationPage() {
     <CompletionForm
       application={application}
       applicationId={applicationId}
+      embedded={embedded}
       emailStatus={search.email}
       emailSimulated={search.simulated}
     />
   )
 }
 
-function StatusPage({ children, title }: { children: React.ReactNode; title: string }) {
+function StatusPage({
+  children,
+  embedded,
+  title,
+}: {
+  children: React.ReactNode
+  embedded: boolean
+  title: string
+}) {
   return (
-    <main className="min-h-screen bg-background px-4 py-10 sm:px-6">
+    <main className={cn('bg-background px-4 py-10 sm:px-6', !embedded && 'min-h-screen')}>
       <div className="mx-auto max-w-2xl space-y-5">
         <p className="text-sm font-semibold uppercase tracking-[0.18em] text-primary">
           Washington Yacht Club
@@ -228,6 +251,7 @@ function StatusPage({ children, title }: { children: React.ReactNode; title: str
 function CompletionForm({
   application,
   applicationId,
+  embedded,
   emailSimulated,
   emailStatus,
 }: {
@@ -238,6 +262,7 @@ function CompletionForm({
     targetLabel: string
   }
   applicationId: string
+  embedded: boolean
   emailSimulated: boolean
   emailStatus: 'sent' | 'failed' | undefined
 }) {
@@ -354,16 +379,17 @@ function CompletionForm({
         setServerError(result.message)
         return
       }
+      if (embedded) requestEmbeddedJoinScrollToTop()
       setSubmitted(true)
     } catch (caught: any) {
       setServerError(caught?.message ?? 'Something went wrong. Please try again.')
     }
   }
 
-  if (submitted) return <ProcessingConfirmation />
+  if (submitted) return <ProcessingConfirmation embedded={embedded} />
 
   return (
-    <main className="min-h-screen bg-background">
+    <main className={cn('bg-background', !embedded && 'min-h-screen')}>
       {isMock && (
         <div className="m-4 rounded-lg border-2 border-destructive bg-destructive/10 p-5 text-destructive">
           <p className="text-xl font-black tracking-wide">MOCK WAIVER - TESTING PURPOSES ONLY</p>

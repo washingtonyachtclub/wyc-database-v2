@@ -625,7 +625,6 @@ export const membershipApplications = mysqlTable(
     emailEditedBy: int('email_edited_by'),
     emailEditedAt: timestamp('email_edited_at'),
     uwStatus: varchar('uw_status', { length: 20 }).notNull(),
-    imaAcknowledged: tinyint1('ima_acknowledged').notNull(),
     plusOneResponse: varchar('plus_one_response', { length: 30 }).notNull(),
     tier: varchar({ length: 20 }).notNull(),
     duration: varchar({ length: 20 }).notNull(),

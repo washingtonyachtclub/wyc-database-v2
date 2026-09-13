@@ -1,0 +1,1 @@
+ALTER TABLE `membership_applications` DROP COLUMN `ima_acknowledged`;

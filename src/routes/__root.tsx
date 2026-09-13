@@ -7,6 +7,7 @@ import {
 } from '@tanstack/react-router'
 
 import Header from '../components/Header'
+import { EmbeddedJoinPage } from '../components/EmbeddedJoinPage'
 import { MembershipApprovalsBanner } from '../components/MembershipApprovalsBanner'
 import { MembershipBanner } from '../components/MembershipBanner'
 import { QuarterMaintenanceBanner } from '../components/QuarterMaintenanceBanner'
@@ -118,6 +119,10 @@ function RootDocument({ children }: { children: React.ReactNode }) {
   const isQrLoginApproval = location.pathname === '/qr-login/approve'
   const isGuestWaiverPage = location.pathname === '/guest-waiver'
   const isJoinPage = location.pathname === '/join' || location.pathname.startsWith('/join/')
+  const embedValue = location.search.embed
+  const isEmbeddedJoinPage =
+    isJoinPage &&
+    (embedValue === true || embedValue === '1' || embedValue === 1 || embedValue === 'true')
   const isStandalonePage =
     ['/login', '/forgot-password', '/guest-waiver'].includes(location.pathname) ||
     isJoinPage ||
@@ -152,7 +157,7 @@ function RootDocument({ children }: { children: React.ReactNode }) {
                 <main className="flex-1">{children}</main>
               </div>
             ) : (
-              children
+              <EmbeddedJoinPage enabled={isEmbeddedJoinPage}>{children}</EmbeddedJoinPage>
             )}
             <TanStackDevTools />
           </TooltipProvider>

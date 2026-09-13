@@ -70,7 +70,6 @@ function RenewMembershipPage() {
 
   // Questionnaire (required, shown above duration/card). UW status drives the price tier.
   const [uwStatus, setUwStatus] = useState<UwStatus | null>(null)
-  const [imaAcknowledged, setImaAcknowledged] = useState(false)
   const [plusOne, setPlusOne] = useState<PlusOneResponse | null>(null)
 
   const [duration, setDuration] = useState<RenewalDuration>(
@@ -89,13 +88,12 @@ function RenewMembershipPage() {
   function selectUwStatus(next: UwStatus) {
     setUwStatus(next)
     // Follow-up answers depend on the status, so clear them when it changes.
-    setImaAcknowledged(false)
     setPlusOne(null)
   }
 
   // Complete, validated answers (null until every required follow-up is filled).
   const questionnaire: QuestionnaireAnswers | null =
-    uwStatus && plusOne && imaAcknowledged
+    uwStatus && plusOne
       ? {
           uwStatus,
           plusOneResponse: plusOne,
@@ -243,10 +241,8 @@ function RenewMembershipPage() {
 
       <MembershipQuestionnaireFields
         uwStatus={uwStatus}
-        imaAcknowledged={imaAcknowledged}
         plusOne={plusOne}
         onUwStatusChange={selectUwStatus}
-        onImaAcknowledgedChange={setImaAcknowledged}
         onPlusOneChange={setPlusOne}
       />
       <div className="space-y-2">

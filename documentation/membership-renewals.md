@@ -97,7 +97,7 @@ One funding ledger row per renewal. Paid rows contain the Square payment ID, ord
 
 ### `renewal_questionnaire`
 
-Stores UW status and the Plus One response for the renewal. It is pending while the workflow is open, active after completion, and void after a denied or cancelled exemption.
+Stores UW status and the Plus One Rec Membership response for the renewal. It is pending while the workflow is open, active after completion, and void after a denied or cancelled exemption.
 
 ### `member_waivers`
 

@@ -18,11 +18,18 @@ import type {
   UwStatus,
 } from '@/domains/renewals/questionnaire'
 import { tierForUwStatus } from '@/domains/renewals/questionnaire'
+import { cn } from '@/lib/utils'
 import { useQuery, useSuspenseQuery } from '@tanstack/react-query'
 import { createFileRoute, Link, useNavigate } from '@tanstack/react-router'
 import { useRef, useState } from 'react'
 
 export const Route = createFileRoute('/join')({
+  validateSearch: (search: Record<string, unknown>) => ({
+    embed:
+      search.embed === true || search.embed === 'true' || search.embed === 1 || search.embed === '1'
+        ? true
+        : undefined,
+  }),
   loader: ({ context }) =>
     context.queryClient.ensureQueryData(newMemberSignupOptionsQueryOptions()),
   component: JoinPage,
@@ -37,7 +44,6 @@ type ValidationField =
   | 'lastName'
   | 'primaryEmail'
   | 'uwStatus'
-  | 'imaAcknowledged'
   | 'plusOne'
   | 'uwEmail'
   | 'duration'
@@ -49,7 +55,6 @@ const validationFieldIds: Record<ValidationField, string> = {
   lastName: 'join-last-name',
   primaryEmail: 'join-primary-email',
   uwStatus: 'join-uw-status',
-  imaAcknowledged: 'join-ima-acknowledged',
   plusOne: 'join-plus-one',
   uwEmail: 'join-uw-email',
   duration: 'join-duration',
@@ -61,9 +66,11 @@ function FieldError({ error }: { error?: string }) {
 }
 
 function JoinPage() {
+  const search = Route.useSearch()
   const { data: signupOptions } = useSuspenseQuery(newMemberSignupOptionsQueryOptions())
   const navigate = useNavigate()
   const cardRef = useRef<SquareCardHandle>(null)
+  const submittingRef = useRef(false)
   const payment = useStartNewMemberPaymentMutation()
   const emailCheck = useCheckNewMemberEmailMutation()
 
@@ -72,13 +79,14 @@ function JoinPage() {
   const [primaryEmail, setPrimaryEmail] = useState('')
   const [uwEmail, setUwEmail] = useState('')
   const [uwStatus, setUwStatus] = useState<UwStatus | null>(null)
-  const [imaAcknowledged, setImaAcknowledged] = useState(false)
   const [plusOne, setPlusOne] = useState<PlusOneResponse | null>(null)
   const [duration, setDuration] = useState<RenewalDuration>('annual')
   const [checkedEmail, setCheckedEmail] = useState('')
   const [existingMember, setExistingMember] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [isSubmitting, setIsSubmitting] = useState(false)
   const [validationErrors, setValidationErrors] = useState<ValidationErrors>({})
+  const embedded = search.embed === true
 
   const tier = uwStatus ? tierForUwStatus(uwStatus) : null
   const quarterlyPrice = useQuery({
@@ -105,12 +113,10 @@ function JoinPage() {
 
   function selectUwStatus(value: UwStatus) {
     setUwStatus(value)
-    setImaAcknowledged(false)
     setPlusOne(null)
     setValidationErrors((current) => {
       const next = { ...current }
       delete next.uwStatus
-      delete next.imaAcknowledged
       delete next.plusOne
       delete next.uwEmail
       delete next.duration
@@ -140,6 +146,7 @@ function JoinPage() {
 
   async function submit(event: React.FormEvent) {
     event.preventDefault()
+    if (submittingRef.current) return
     setError(null)
     const errors: ValidationErrors = {}
     if (!firstName.trim()) errors.firstName = 'First name is required.'
@@ -152,7 +159,6 @@ function JoinPage() {
     if (!uwStatus) {
       errors.uwStatus = 'Select your UW status.'
     } else {
-      if (!imaAcknowledged) errors.imaAcknowledged = 'Confirm that you understand.'
       if (!plusOne) errors.plusOne = 'Select an option.'
       if (uwEmailRequired && !uwEmail.trim()) {
         errors.uwEmail = 'UW email is required for students.'
@@ -177,12 +183,13 @@ function JoinPage() {
       return
     }
     if (!questionnaire) return
+    submittingRef.current = true
+    setIsSubmitting(true)
     try {
       const sourceId = await cardRef.current!.tokenize()
       const result = await payment.mutateAsync({
         duration,
         firstName,
-        imaAcknowledged,
         lastName,
         primaryEmail,
         questionnaire,
@@ -195,6 +202,7 @@ function JoinPage() {
           to: '/join/$applicationId',
           params: { applicationId: result.applicationId },
           search: {
+            embed: embedded ? true : undefined,
             email: result.emailSent ? 'sent' : 'failed',
             simulated: result.emailSimulated,
           },
@@ -205,13 +213,16 @@ function JoinPage() {
         await navigate({
           to: '/join/$applicationId',
           params: { applicationId: result.applicationId },
-          search: { email: undefined, simulated: false },
+          search: { embed: embedded ? true : undefined, email: undefined, simulated: false },
         })
         return
       }
       setError(result.message)
     } catch (caught: any) {
       setError(caught?.message ?? 'Something went wrong. Please try again.')
+    } finally {
+      submittingRef.current = false
+      setIsSubmitting(false)
     }
   }
 
@@ -219,20 +230,27 @@ function JoinPage() {
   const showUwEmail = uwEmailRequired || uwStatus === 'employee_retiree'
 
   return (
-    <main className="min-h-screen bg-background [--color-primary:var(--color-wyc-purple)] [--color-ring:var(--color-wyc-purple)]">
-      <header className="mx-auto flex max-w-7xl items-center justify-between border-b px-4 py-5 sm:px-6 lg:px-8">
-        <div className="flex items-center gap-3">
-          <img src="/favicon.png" alt="" className="size-12 object-contain sm:size-14" />
-          <p className="font-wyc-heading text-lg font-black uppercase leading-tight tracking-[0.09em] text-wyc-purple sm:text-xl">
-            Washington
-            <br />
-            Yacht Club
+    <main
+      className={cn(
+        'bg-background [--color-primary:var(--color-wyc-purple)] [--color-ring:var(--color-wyc-purple)]',
+        !embedded && 'min-h-screen',
+      )}
+    >
+      {!embedded && (
+        <header className="mx-auto flex max-w-7xl items-center justify-between border-b px-4 py-5 sm:px-6 lg:px-8">
+          <div className="flex items-center gap-3">
+            <img src="/favicon.png" alt="" className="size-12 object-contain sm:size-14" />
+            <p className="font-wyc-heading text-lg font-black uppercase leading-tight tracking-[0.09em] text-wyc-purple sm:text-xl">
+              Washington
+              <br />
+              Yacht Club
+            </p>
+          </div>
+          <p className="hidden text-sm font-medium text-wyc-purple sm:block">
+            University of Washington · Seattle
           </p>
-        </div>
-        <p className="hidden font-wyc-body text-sm font-medium text-wyc-purple sm:block">
-          University of Washington · Seattle
-        </p>
-      </header>
+        </header>
+      )}
 
       <section className="relative mx-auto h-[24rem] max-w-7xl overflow-hidden sm:h-[30rem] lg:h-[34rem]">
         <img
@@ -246,7 +264,7 @@ function JoinPage() {
           <h1 className="font-wyc-heading text-4xl font-bold tracking-tight sm:text-5xl lg:text-6xl">
             Join the Club
           </h1>
-          <p className="mt-5 max-w-xl font-wyc-body text-base leading-7 sm:text-lg sm:leading-8">
+          <p className="mt-5 max-w-xl text-base leading-7 sm:text-lg sm:leading-8">
             Learn to sail, meet new people,
             <br className="hidden sm:block" /> and find your community on the water.
           </p>
@@ -259,7 +277,7 @@ function JoinPage() {
             <h2 className="font-wyc-heading text-3xl font-bold tracking-tight text-wyc-purple">
               Membership Benefits
             </h2>
-            <ul className="list-disc space-y-3 pl-5 font-wyc-body text-sm leading-6 marker:text-wyc-purple sm:text-base">
+            <ul className="list-disc space-y-3 pl-5 text-sm leading-6 marker:text-wyc-purple sm:text-base">
               <li>Free Sailing &amp; Windsurfing Lessons</li>
               <li>Go sailing on your own or with friends during supervised sailing</li>
               <li>Dinghy, catamaran, and daysailer checkout (no additional reservation fees)</li>
@@ -273,16 +291,12 @@ function JoinPage() {
             <h2 className="font-wyc-heading text-3xl font-bold tracking-tight text-wyc-purple">
               Cost
             </h2>
-            <p className="font-wyc-body text-sm leading-6 text-muted-foreground">
-              WYC memberships are available quarterly or annually. Dues go towards boat maintenance,
-              insurance, fuel, safety equipment, instruction, and social events.
-            </p>
             <div className="border-y text-sm">
               <div className="grid grid-cols-[1.15fr_repeat(3,minmax(0,1fr))] font-wyc-heading text-xs font-bold text-wyc-purple">
-                <span className="py-3 pr-2">Membership</span>
+                <span className="py-3 pr-2"></span>
                 <span className="px-1 py-3 text-center">Initiation fee</span>
-                <span className="px-1 py-3 text-center">Quarterly dues</span>
-                <span className="px-1 py-3 text-center">Annual dues</span>
+                <span className="px-1 py-3 text-center">Quarterly</span>
+                <span className="px-1 py-3 text-center">Annual</span>
               </div>
               <div className="grid grid-cols-[1.15fr_repeat(3,minmax(0,1fr))] items-center border-t">
                 <span className="py-3 pr-2 font-medium">Student</span>
@@ -296,6 +310,43 @@ function JoinPage() {
                 <span className="px-1 py-3 text-center">$100</span>
                 <span className="px-1 py-3 text-center">$280</span>
               </div>
+            </div>
+            <p className="text-sm leading-6 text-muted-foreground">
+              Dues go towards boat maintenance, insurance, fuel, safety equipment, instruction, and
+              social events.
+            </p>
+          </section>
+
+          <section className="space-y-5">
+            <h2 className="font-wyc-heading text-3xl font-bold tracking-tight text-wyc-purple">
+              Rec Membership
+            </h2>
+            <div className="space-y-4 text-sm leading-6 text-foreground sm:text-base">
+              <p>
+                The UW Recreation department requires that all WYC members hold an IMA Rec
+                Membership in addition to a WYC membership to access docks at the WAC (our main
+                location).
+              </p>
+              <p>
+                <strong>UW Students:</strong> Rec Membership is included in your tuition.
+              </p>
+              <p>
+                <strong>UW Employees and Retirees:</strong> You are eligible to purchase Rec
+                Memberships for $145 per quarter or $473 per year.
+              </p>
+              <p>
+                <strong>Public:</strong> You can be paired with a Rec Membership holder to receive a
+                Plus One Rec Membership for $112 per quarter if paired with a student or $160 with
+                an employee. You can request a sponsor on the join form.
+              </p>
+              <a
+                href="https://www.washington.edu/ima/member/"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-block font-medium text-primary underline"
+              >
+                Rec Membership | washington.edu
+              </a>
             </div>
           </section>
         </aside>
@@ -358,7 +409,11 @@ function JoinPage() {
                 {existingMember && (
                   <div className="rounded-md border border-amber-300 bg-amber-50 p-3 text-sm text-amber-950">
                     We already have this email on file. If you are already a member, you can{' '}
-                    <Link to="/forgot-password" className="font-medium underline">
+                    <Link
+                      to="/forgot-password"
+                      target={embedded ? '_blank' : undefined}
+                      className="font-medium underline"
+                    >
                       recover your WYC number or password
                     </Link>
                     . You can still continue if this is a new application.
@@ -372,13 +427,8 @@ function JoinPage() {
                 idPrefix="join"
                 errors={validationErrors}
                 uwStatus={uwStatus}
-                imaAcknowledged={imaAcknowledged}
                 plusOne={plusOne}
                 onUwStatusChange={selectUwStatus}
-                onImaAcknowledgedChange={(value) => {
-                  setImaAcknowledged(value)
-                  if (value) clearValidationError('imaAcknowledged')
-                }}
                 onPlusOneChange={(value) => {
                   setPlusOne(value)
                   clearValidationError('plusOne')
@@ -449,9 +499,9 @@ function JoinPage() {
                 type="submit"
                 size="lg"
                 className="w-full"
-                disabled={payment.isPending || (tier !== null && selectedPrice.isLoading)}
+                disabled={isSubmitting || (tier !== null && selectedPrice.isLoading)}
               >
-                {payment.isPending ? 'Processing…' : 'Pay and Sign Up'}
+                {isSubmitting ? 'Processing…' : 'Pay and Sign Up'}
               </Button>
             </section>
           </form>
