@@ -136,41 +136,41 @@ See [RBAC docs](rbac.md) for detailed coverage.
 
 ### Membership workflows (v2-active)
 
-| Table                       | Purpose                                                        |
-| --------------------------- | -------------------------------------------------------------- |
-| `membership_applications`   | Paid new-member application, completion, and review lifecycle  |
-| `member_emergency_contacts` | Current emergency contact copied from an approved application  |
-| `membership_renewals`       | Existing-member renewal workflow                               |
-| `membership_payments`       | Shared payment and dues-exemption ledger                       |
-| `renewal_questionnaire`     | UW status and Plus One Rec Membership answers for a renewal    |
-| `dues_exemption_requests`   | Officer-reviewed dues-exemption decisions                      |
-| `member_waivers`            | Executed member waivers linked to an application or renewal    |
-| `guest_waivers`             | Executed guest waivers                                         |
-| `processed_form_entries`    | WordPress entries handled by the current membership-processing |
+| Table                       | Purpose                                                       |
+| --------------------------- | ------------------------------------------------------------- |
+| `membership_applications`   | Paid new-member application, completion, and review lifecycle |
+| `member_emergency_contacts` | Current emergency contact copied from an approved application |
+| `membership_renewals`       | Existing-member renewal workflow                              |
+| `membership_payments`       | Shared payment and dues-exemption ledger                      |
+| `renewal_questionnaire`     | UW status and Plus One Rec Membership answers for a renewal   |
+| `dues_exemption_requests`   | Officer-reviewed dues-exemption decisions                     |
+| `member_waivers`            | Executed member waivers linked to an application or renewal   |
+| `guest_waivers`             | Executed guest waivers                                        |
 
 ### Legacy-Only Tables
 
 These are defined in `schema.ts` but not imported or queried in v2 code. They exist because the v2 schema was generated from the production database.
 
-| Table              | Domain   | Purpose                                                 |
-| ------------------ | -------- | ------------------------------------------------------- |
-| `options`          | Config   | Key-value config store (costs, status flags)            |
-| `recip`            | Config   | Reciprocal sailing club directory                       |
-| `sessions`         | Auth     | Legacy session tracking (v2 uses cookie-based sessions) |
-| `calendaradmin`    | Calendar | Calendar admin ACL                                      |
-| `calendarboats`    | Calendar | Old boat reservation boats                              |
-| `calendarcomment`  | Calendar | Calendar event comments                                 |
-| `calendarconfig`   | Calendar | IP whitelist for calendar                               |
-| `calendartable`    | Calendar | Old keelboat reservation system                         |
-| `keelboat_pricing` | Keelboat | Rental pricing tiers                                    |
-| `snc`              | SNC      | Saturday Night Crew signups                             |
-| `snc_food`         | SNC      | SNC menu items                                          |
-| `snc_work`         | SNC      | SNC volunteer duty types                                |
-| `crew`             | Boats    | Checkout crew member records                            |
-| `guests`           | Boats    | Guest crew on checkouts                                 |
-| `noyes`            | Lookup   | Yes/No boolean lookup                                   |
-| `priority_types`   | Misc     | Unused priority classification                          |
-| `wyc_wind`         | Misc     | Historical wind data                                    |
+| Table                    | Domain     | Purpose                                                 |
+| ------------------------ | ---------- | ------------------------------------------------------- |
+| `processed_form_entries` | Membership | Processed WordPress signup entry IDs                    |
+| `options`                | Config     | Key-value config store (costs, status flags)            |
+| `recip`                  | Config     | Reciprocal sailing club directory                       |
+| `sessions`               | Auth       | Legacy session tracking (v2 uses cookie-based sessions) |
+| `calendaradmin`          | Calendar   | Calendar admin ACL                                      |
+| `calendarboats`          | Calendar   | Old boat reservation boats                              |
+| `calendarcomment`        | Calendar   | Calendar event comments                                 |
+| `calendarconfig`         | Calendar   | IP whitelist for calendar                               |
+| `calendartable`          | Calendar   | Old keelboat reservation system                         |
+| `keelboat_pricing`       | Keelboat   | Rental pricing tiers                                    |
+| `snc`                    | SNC        | Saturday Night Crew signups                             |
+| `snc_food`               | SNC        | SNC menu items                                          |
+| `snc_work`               | SNC        | SNC volunteer duty types                                |
+| `crew`                   | Boats      | Checkout crew member records                            |
+| `guests`                 | Boats      | Guest crew on checkouts                                 |
+| `noyes`                  | Lookup     | Yes/No boolean lookup                                   |
+| `priority_types`         | Misc       | Unused priority classification                          |
+| `wyc_wind`               | Misc       | Historical wind data                                    |
 
 ---
 

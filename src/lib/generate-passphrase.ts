@@ -1,4 +1,4 @@
-import { PASSWORD_WORDLIST } from './membership-processing/password-wordlist'
+import { PASSWORD_WORDLIST } from './password-wordlist'
 
 export function generatePassphrase(): string {
   const array = new Uint32Array(3)

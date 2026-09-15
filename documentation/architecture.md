@@ -125,7 +125,7 @@ Form data (validated by Zod schema)
   -> Drizzle INSERT/UPDATE
 ```
 
-Zod schemas for writes (e.g. `CreateMemberSchema`, `MemberProfileUpdateSchema`) are defined in each domain's `schema.ts`. The `fromXxxInsert()` mapper handles type conversions like boolean to tinyint.
+Zod schemas for writes (e.g. `MemberProfileUpdateSchema`) are defined in each domain's `schema.ts`. The `fromXxxInsert()` mapper handles type conversions like boolean to tinyint.
 
 ## Route data flow
 

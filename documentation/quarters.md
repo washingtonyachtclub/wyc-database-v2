@@ -65,7 +65,7 @@ ExpireQtr >= currentQuarter  →  active member
 ExpireQtr <  currentQuarter  →  expired member
 ```
 
-This comparison drives membership validation across the app: page access, boat checkout eligibility, and the membership processing page.
+This comparison drives membership validation across the app, including page access and boat checkout eligibility.
 
 ### Lesson Expiration
 

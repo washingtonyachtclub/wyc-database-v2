@@ -187,7 +187,6 @@ export const routePermissions = {
   '/my-lessons': [], // authenticated only
   '/ratings': ['rtgs'],
   '/officers': ['db'],
-  '/membership-processing': ['db'],
   // ...
 }
 ```

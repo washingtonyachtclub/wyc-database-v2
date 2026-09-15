@@ -15,11 +15,11 @@ While the legacy apps are live, **every** password write must update `password` 
 
 Write sites that must stay dual:
 
-| Path                    | File                                                       |
-| ----------------------- | ---------------------------------------------------------- |
-| Change password         | `src/lib/password-server-fns.ts` (`setPasswordServerFn`)   |
-| Forgot password / reset | `src/lib/password-server-fns.ts` (`resetPasswordServerFn`) |
-| New member creation     | `src/domains/members/server-fns.ts` (`createMember`)       |
+| Path                    | File                                                         |
+| ----------------------- | ------------------------------------------------------------ |
+| Change password         | `src/lib/password-server-fns.ts` (`setPasswordServerFn`)     |
+| Forgot password / reset | `src/lib/password-server-fns.ts` (`resetPasswordServerFn`)   |
+| New member creation     | `src/domains/membership-applications/approval-server-fns.ts` |
 
 Any new write path (imports, admin resets, renewal flows) has to hash both ways too.
 

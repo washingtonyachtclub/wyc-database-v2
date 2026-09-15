@@ -10,7 +10,6 @@ import {
   getMemberRatings,
   getMemberRatingsGiven,
   getMembersTable,
-  getProcessedEntryIds,
   updateMember,
   updateMemberProfile,
 } from './server-fns'
@@ -80,13 +79,6 @@ export const getAllMembersLiteQueryOptions = () =>
   queryOptions({
     queryKey: ['members', 'lite'],
     queryFn: getAllMembersLite,
-    staleTime: 5 * 60 * 1000,
-  })
-
-export const getProcessedEntryIdsQueryOptions = () =>
-  queryOptions({
-    queryKey: ['processedEntryIds'],
-    queryFn: getProcessedEntryIds,
     staleTime: 5 * 60 * 1000,
   })
 

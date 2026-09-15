@@ -33,7 +33,6 @@ export const routePermissions = {
   '/quarters': ['db'],
   '/positions': ['db'],
   '/ratings-examiners': ['db'],
-  '/membership-processing': ['db'],
   '/membership-approvals': ['db'],
   '/membership-stats': ['db'],
   '/set-current-quarter': ['db'],

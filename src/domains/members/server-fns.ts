@@ -15,10 +15,10 @@ import {
 } from '@/domains/members/schema'
 import type { MemberFilters } from '@/domains/members/filter-types'
 import { baseMemberQuery, memberSortColumns, withMemberFilters } from '@/domains/members/queries'
-import { CreateMember, MemberProfileUpdate } from '@/domains/members/schema'
+import { MemberProfileUpdate } from '@/domains/members/schema'
 import { withPagination, withSorting } from '@/db/query-helpers'
 import { baseMemberRatingsQuery, baseRatingsGivenQuery } from '@/domains/ratings/queries'
-import { memcat, processedFormEntries, wycDatabase } from '@/db/schema'
+import { memcat, wycDatabase } from '@/db/schema'
 import db from '@/db/index'
 import {
   requireAuth,
@@ -26,9 +26,6 @@ import {
   requireSelfOrPrivilege,
   sessionHasPrivilege,
 } from '@/lib/auth/auth-middleware'
-import { sendEmail } from '@/lib/email'
-import { newMemberEmail } from '@/lib/emails/membership'
-import { allocateWycNumber, createMemberCredentials } from './member-write'
 
 export const getMembersTable = createServerFn({ method: 'GET' })
   .inputValidator(
@@ -98,60 +95,6 @@ export const getCategories = createServerFn({ method: 'GET' }).handler(async () 
   const result = await db.select().from(memcat).orderBy(memcat.index)
   return result
 })
-
-export const createMember = createServerFn({ method: 'POST' })
-  .inputValidator((data: { member: CreateMember; sendEmail: boolean }) => data)
-  .handler(async ({ data: { member, sendEmail: shouldSendEmail } }) => {
-    await requirePrivilege('db')
-    try {
-      const credentials = await createMemberCredentials()
-      let wycNumber = 0
-      await db.transaction(async (tx) => {
-        wycNumber = await allocateWycNumber(tx)
-        await tx.insert(wycDatabase).values({
-          ...fromMemberInsert(member),
-          wycNumber,
-          password: credentials.legacyHash,
-          passwordArgon2: credentials.passwordArgon2,
-        })
-      })
-
-      let emailSent = false
-      let emailSimulated = false
-      if (shouldSendEmail) {
-        try {
-          const emailText = newMemberEmail(
-            { first: member.first, last: member.last, wycNumber },
-            credentials.password,
-          )
-          const result = await sendEmail({
-            to: member.email,
-            subject: 'Welcome to the Washington Yacht Club!',
-            text: emailText,
-            idempotencyKey: `new-member/${wycNumber}`,
-          })
-          emailSent = true
-          emailSimulated = result.simulated
-        } catch (emailError) {
-          console.error('Failed to send welcome email:', emailError)
-        }
-      }
-
-      return { success: true as const, wycNumber, emailSent, emailSimulated }
-    } catch (error: any) {
-      console.error('Failed to create member:', error)
-
-      if (error?.code === 'ER_NO_DEFAULT_FOR_FIELD') {
-        throw new Error('A required field is missing')
-      } else if (error?.code === 'ER_DATA_TOO_LONG') {
-        throw new Error('Data too long for one or more fields')
-      } else if (error?.code === 'ER_BAD_NULL_ERROR') {
-        throw new Error('A required field is missing')
-      }
-
-      throw new Error('Failed to create member')
-    }
-  })
 
 export const updateMember = createServerFn({ method: 'POST' })
   .inputValidator((input: { wycNumber: number } & MemberProfileUpdate) => ({
@@ -271,16 +214,3 @@ export const getDatabaseName = createServerFn({ method: 'GET' }).handler(async (
   const url = process.env.DATABASE_URL ?? ''
   return url.split('/').pop() ?? 'unknown'
 })
-
-export const getProcessedEntryIds = createServerFn({ method: 'GET' }).handler(async () => {
-  await requirePrivilege('db', 'rtgs')
-  const rows = await db.select({ entryId: processedFormEntries.entryId }).from(processedFormEntries)
-  return rows.map((r) => r.entryId)
-})
-
-export const markEntryProcessed = createServerFn({ method: 'POST' })
-  .inputValidator((input: { entryId: number; wycNumber: number | null }) => input)
-  .handler(async ({ data: { entryId, wycNumber } }) => {
-    await requirePrivilege('db')
-    await db.insert(processedFormEntries).values({ entryId, wycNumber })
-  })

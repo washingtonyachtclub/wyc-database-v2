@@ -9,7 +9,7 @@ import {
   renewalQuestionnaire,
   wycDatabase,
 } from '@/db/schema'
-import { requireAuth, requirePrivilege } from '@/lib/auth/auth-middleware'
+import { requireAuth } from '@/lib/auth/auth-middleware'
 import {
   MembershipPaymentError,
   chargeMembershipOrder,
@@ -17,13 +17,13 @@ import {
   getMembershipPrice,
 } from '@/domains/membership-payments/square-payment'
 import { sendEmail } from '@/lib/email'
-import { renewalWaiverRequiredEmail, returningMemberEmail } from '@/lib/emails/membership'
+import { renewalWaiverRequiredEmail } from '@/lib/emails/membership'
 import { createServerFn } from '@tanstack/react-start'
 import { and, desc, eq, isNull } from 'drizzle-orm'
 import { createHash, randomUUID } from 'node:crypto'
 import type { RenewalDuration, RenewalTier } from './compute-renewal'
 import { MAX_QUARTERS_AHEAD, RENEWAL_QUARTER, computeRenewal } from './compute-renewal'
-import { categoryIdForUwStatus, parseQuestionnaire, tierForUwStatus } from './questionnaire'
+import { parseQuestionnaire, tierForUwStatus } from './questionnaire'
 import type { QuestionnaireAnswers } from './questionnaire'
 
 function parseTier(v: unknown): RenewalTier {
@@ -170,61 +170,6 @@ export const getRenewalPrice = createServerFn({ method: 'GET' })
     }
   })
 
-/** Update membership and log the payment row; throws so the caller can word the error. Questionnaire history is best-effort. */
-async function recordLegacyRenewal(input: {
-  wycNumber: number
-  tier: RenewalTier
-  duration: RenewalDuration
-  prevExpireQtr: number
-  targetExpireQtr: number
-  amountCents: number
-  currency: string
-  squarePaymentId: string | null
-  squareOrderId: string | null
-  questionnaire?: QuestionnaireAnswers
-}): Promise<void> {
-  await db
-    .update(wycDatabase)
-    .set({
-      expireQtrIndex: input.targetExpireQtr,
-      ...(input.questionnaire && {
-        categoryId: categoryIdForUwStatus(input.questionnaire.uwStatus),
-      }),
-    })
-    .where(eq(wycDatabase.wycNumber, input.wycNumber))
-
-  await db.insert(membershipPayments).values({
-    wycNumber: input.wycNumber,
-    squarePaymentId: input.squarePaymentId,
-    squareOrderId: input.squareOrderId,
-    amountCents: input.amountCents,
-    currency: input.currency,
-    tier: input.tier,
-    duration: input.duration,
-    prevExpireQtr: input.prevExpireQtr,
-    newExpireQtr: input.targetExpireQtr,
-    status: 'COMPLETED',
-  })
-
-  if (input.questionnaire) {
-    try {
-      await db.insert(renewalQuestionnaire).values({
-        wycNumber: input.wycNumber,
-        quarter: input.targetExpireQtr,
-        uwStatus: input.questionnaire.uwStatus,
-        plusOneResponse: input.questionnaire.plusOneResponse,
-        status: 'active',
-        source: 'paid',
-      })
-    } catch (error) {
-      console.error('recordRenewal: failed to record questionnaire answers:', {
-        wycNumber: input.wycNumber,
-        error,
-      })
-    }
-  }
-}
-
 async function recordPaidRenewal(input: {
   amountCents: number
   currency: string
@@ -300,45 +245,6 @@ async function sendWaiverRequiredEmail(input: {
     console.error('sendWaiverRequiredEmail failed:', error)
     return { emailSent: false, emailSimulated: false, quarterLabel }
   }
-}
-
-/** Resolve the new ExpireQtr's label and send the renewal confirmation. Non-fatal: never throws. */
-async function sendRenewalConfirmation(input: {
-  member: { first: string | null; last: string | null; email: string | null }
-  wycNumber: number
-  targetExpireQtr: number
-  recipients?: string | string[]
-  mismatch?: { formEmail: string; onFileEmail: string }
-}): Promise<{ emailSent: boolean; emailSimulated: boolean; quarterLabel: string }> {
-  const [quarter] = await db
-    .select({ school: quarters.school })
-    .from(quarters)
-    .where(eq(quarters.index, input.targetExpireQtr))
-  const quarterLabel = quarter?.school ?? `quarter ${input.targetExpireQtr}`
-
-  let emailSent = false
-  let emailSimulated = false
-  try {
-    if (input.member.email) {
-      const result = await sendEmail({
-        to: input.recipients ?? input.member.email,
-        subject: 'WYC Membership Renewed',
-        text: returningMemberEmail(
-          input.member.first ?? '',
-          input.member.last ?? '',
-          input.wycNumber,
-          quarterLabel,
-          input.mismatch,
-        ),
-        idempotencyKey: `renewal/${input.wycNumber}/${input.targetExpireQtr}`,
-      })
-      emailSent = true
-      emailSimulated = result.simulated
-    }
-  } catch (emailError) {
-    console.error('sendRenewalConfirmation: failed to send confirmation email:', emailError)
-  }
-  return { emailSent, emailSimulated, quarterLabel }
 }
 
 /**
@@ -510,128 +416,5 @@ export const payAndRenew = createServerFn({ method: 'POST' })
       currency,
       emailSent,
       emailSimulated,
-    }
-  })
-
-/** Record a renewal with no Square charge, for a member who paid outside the self-service flow (e.g. the new-member form). */
-export const adminRecordRenewal = createServerFn({ method: 'POST' })
-  .inputValidator(
-    (input: {
-      wycNumber: number
-      // The quarter paid for, taken from the form rather than recomputed.
-      targetExpireQtr: number
-      tier: string
-      duration: string
-      amountCents: number
-      currency?: string
-      squareOrderId?: string | null
-      squarePaymentId?: string | null
-      formEmail?: string
-      sendEmail: boolean
-    }) => {
-      const amountCents = Math.round(Number(input.amountCents))
-      if (!Number.isFinite(amountCents) || amountCents < 0) throw new Error('Invalid amount')
-      const targetExpireQtr = Number(input.targetExpireQtr)
-      if (!Number.isInteger(targetExpireQtr) || targetExpireQtr <= 0) {
-        throw new Error('Invalid target quarter')
-      }
-      const trim = (v: string | null | undefined) => {
-        const s = (v ?? '').trim()
-        return s === '' ? null : s
-      }
-      return {
-        wycNumber: Number(input.wycNumber),
-        targetExpireQtr,
-        tier: parseTier(input.tier),
-        duration: parseDuration(input.duration),
-        amountCents,
-        currency: input.currency ?? 'USD',
-        squareOrderId: trim(input.squareOrderId),
-        squarePaymentId: trim(input.squarePaymentId),
-        formEmail: (input.formEmail ?? '').trim(),
-        sendEmail: input.sendEmail,
-      }
-    },
-  )
-  .handler(async ({ data }) => {
-    await requirePrivilege('db')
-
-    const [member] = await db
-      .select({
-        first: wycDatabase.first,
-        last: wycDatabase.last,
-        email: wycDatabase.email,
-        expireQtrIndex: wycDatabase.expireQtrIndex,
-      })
-      .from(wycDatabase)
-      .where(eq(wycDatabase.wycNumber, data.wycNumber))
-    if (!member) {
-      console.error('adminRecordRenewal: member not found for wycNumber', data.wycNumber)
-      throw new Error('Member not found.')
-    }
-
-    const prevExpireQtr = member.expireQtrIndex ?? 0
-    const targetExpireQtr = data.targetExpireQtr
-    if (targetExpireQtr > RENEWAL_QUARTER + MAX_QUARTERS_AHEAD) {
-      throw new Error('That renewal would push the member past the pre-pay limit.')
-    }
-
-    try {
-      await recordLegacyRenewal({
-        wycNumber: data.wycNumber,
-        tier: data.tier,
-        duration: data.duration,
-        prevExpireQtr,
-        targetExpireQtr,
-        amountCents: data.amountCents,
-        currency: data.currency,
-        squarePaymentId: data.squarePaymentId,
-        squareOrderId: data.squareOrderId,
-      })
-    } catch (error) {
-      console.error('adminRecordRenewal: DB write failed:', {
-        wycNumber: data.wycNumber,
-        targetExpireQtr,
-        error,
-      })
-      throw new Error('Failed to record the renewal.')
-    }
-
-    let emailSent = false
-    let emailSimulated = false
-    let emailAddress: string | null = null
-    let quarterLabel: string
-    if (data.sendEmail && member.email) {
-      emailAddress = member.email
-      const formEmailDiffers =
-        data.formEmail !== '' && data.formEmail.toLowerCase() !== member.email.toLowerCase().trim()
-      const res = await sendRenewalConfirmation({
-        member,
-        wycNumber: data.wycNumber,
-        targetExpireQtr,
-        recipients: formEmailDiffers ? [member.email, data.formEmail] : member.email,
-        mismatch: formEmailDiffers
-          ? { formEmail: data.formEmail, onFileEmail: member.email }
-          : undefined,
-      })
-      emailSent = res.emailSent
-      emailSimulated = res.emailSimulated
-      quarterLabel = res.quarterLabel
-    } else {
-      const [quarter] = await db
-        .select({ school: quarters.school })
-        .from(quarters)
-        .where(eq(quarters.index, targetExpireQtr))
-      quarterLabel = quarter?.school ?? `quarter ${targetExpireQtr}`
-    }
-
-    return {
-      success: true as const,
-      wycNumber: data.wycNumber,
-      newExpireQtr: targetExpireQtr,
-      quarterLabel,
-      emailSent,
-      emailSimulated,
-      emailAddress,
     }
   })

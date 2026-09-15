@@ -40,7 +40,7 @@ See `documentation/` for detailed docs:
 - [RBAC](documentation/rbac.md): role-based access control and privilege system
 - [Quarter system](documentation/quarters.md): how quarters work and control membership/enrollment
 - [Database queries](documentation/queries.md): SQL reference for direct DB work
-- [Membership processing](documentation/membership-processing.md): how members enter the system
+- [New member signup](documentation/new-member-signup.md): payment, application, and approval flow
 - [Honorary members](documentation/honorary-members.md): honorary status implementation
 - [Maintenance](documentation/maintenance.md): recurring operational tasks
 - [Password migration](documentation/password-migration-plan.md): legacy to Argon2id transition plan

@@ -42,7 +42,7 @@ Docs in `documentation/` describe how the system works **right now**, declarativ
 - **Be concise.** No unnecessary words, no restating the obvious, much shorter than any plan it came from. No em dashes in prose.
 - **No transient artifacts.** Don't reference planning docs, chat decisions, or TODOs.
 - **Verify against the code, not the plan.** Implementations drift from their plans; document what the code actually does.
-- Follow the structure of existing docs (e.g. `membership-processing.md`): an Overview, "How it works" sections, and a Key Files table. Use relative links to sibling docs.
+- Follow the structure of existing docs (e.g. `new-member-signup.md`): an Overview, workflow sections, and a Key Files table. Use relative links to sibling docs.
 
 ## Type-driven data flow
 
