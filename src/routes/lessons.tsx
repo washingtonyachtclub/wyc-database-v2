@@ -1,4 +1,3 @@
-import { ErrorAlert } from '@/components/ui/ErrorAlert'
 import { getLessonTypesQueryOptions } from '@/domains/lesson-types/query-options'
 import type { LessonFilters } from '@/domains/lessons/filter-types'
 import {
@@ -8,7 +7,6 @@ import {
 import type { RichLessonWithEnrollment } from '@/domains/lessons/schema'
 import { resyncLessonCalendar } from '@/domains/lessons/server-fns'
 import { getQuartersQueryOptions } from '@/domains/quarters/query-options'
-import { isDevEnvironment } from '@/lib/env'
 import { cn } from '@/lib/utils'
 import { useQuery, useSuspenseQuery } from '@tanstack/react-query'
 import { createFileRoute, useNavigate } from '@tanstack/react-router'
@@ -90,8 +88,6 @@ function LessonsPage() {
   const { pageIndex, pageSize, filters, sorting } = Route.useLoaderDeps()
   const expireQtrFilter = filters?.expireQtrFilter
   const [isLessonModalOpen, setIsLessonModalOpen] = useState(false)
-  const [testError, setTestError] = useState<string | null>(null)
-  const [testBoom, setTestBoom] = useState(false)
 
   const { privileges } = Route.useRouteContext()
   const hasPermissions = hasPrivilege(privileges, ['db'])
@@ -234,39 +230,8 @@ function LessonsPage() {
     })
   }
 
-  // TODO: Remove after verifying ErrorAlert and error boundary
-  function Boom() {
-    throw new Error('Test error boundary')
-    return null
-  }
-
   return (
     <div className="p-4 space-y-8">
-      {isDevEnvironment() && (
-        <div className="border border-dashed border-yellow-500 rounded p-4 space-y-3">
-          <p className="text-sm font-medium text-yellow-600">Dev: Error display tests</p>
-          <div className="flex gap-2">
-            <Button
-              variant="destructive"
-              size="sm"
-              onClick={() => setTestError('Failed to create lesson')}
-            >
-              Test ErrorAlert
-            </Button>
-            <Button variant="destructive" size="sm" onClick={() => setTestBoom(true)}>
-              Test Error Boundary
-            </Button>
-            {testError && (
-              <Button variant="outline" size="sm" onClick={() => setTestError(null)}>
-                Clear
-              </Button>
-            )}
-          </div>
-          <ErrorAlert error={testError} action="Creating a lesson" />
-          {testBoom && <Boom />}
-        </div>
-      )}
-
       <div className="mb-4 flex items-center gap-3">
         <Button onClick={() => setIsLessonModalOpen(true)}>
           <Plus className="h-4 w-4" />
