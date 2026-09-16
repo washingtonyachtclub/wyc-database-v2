@@ -1,12 +1,16 @@
 import { Button } from '@/components/ui/button'
 import { Label } from '@/components/ui/label'
 import { Switch } from '@/components/ui/switch'
+import { setHideDevInfo, useHideDevInfo } from '@/hooks/use-hide-dev-info'
 import { useCurrentUser, useLogoutMutation } from '@/lib/auth/auth-query-options'
 import { setSailLockerModeServerFn } from '@/lib/auth/device-settings-server-fns'
+import { isDevEnvironment } from '@/lib/env'
 import { hasPrivilege } from '@/lib/permissions'
 import { requirePrivilegeForRoute } from '@/lib/route-guards'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { createFileRoute, Link, useRouter } from '@tanstack/react-router'
+
+const isDevApp = isDevEnvironment()
 
 export const Route = createFileRoute('/settings')({
   beforeLoad: ({ context }) => {
@@ -20,7 +24,8 @@ function SettingsPage() {
   const queryClient = useQueryClient()
   const { privileges, sailLockerMode } = useCurrentUser()
   const logoutMutation = useLogoutMutation()
-  const canManageSailLocker = hasPrivilege(privileges, ['db'])
+  const hideDevInfo = useHideDevInfo()
+  const canManageDeviceSettings = hasPrivilege(privileges, ['db'])
   const mutation = useMutation({
     mutationFn: (enabled: boolean) => setSailLockerModeServerFn({ data: { enabled } }),
     onSuccess: async () => {
@@ -67,7 +72,7 @@ function SettingsPage() {
             </Button>
           </div>
         )}
-        {canManageSailLocker && (
+        {canManageDeviceSettings && (
           <div className="rounded-xl border bg-card p-6 shadow-sm">
             <div className="flex items-center justify-between gap-6">
               <div className="space-y-1">
@@ -91,6 +96,14 @@ function SettingsPage() {
                 Failed to update Sail Locker mode. Please try again.
               </p>
             )}
+          </div>
+        )}
+        {isDevApp && canManageDeviceSettings && (
+          <div className="flex items-center justify-between gap-6 rounded-xl border bg-card p-6 shadow-sm">
+            <Label htmlFor="hide-dev-info" className="text-base">
+              Hide dev info on banner
+            </Label>
+            <Switch id="hide-dev-info" checked={hideDevInfo} onCheckedChange={setHideDevInfo} />
           </div>
         )}
       </div>

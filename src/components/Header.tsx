@@ -1,5 +1,6 @@
 import { getDatabaseName } from '@/domains/members/server-fns'
 import { getDatabaseAdmin } from '@/domains/officers/server-fns'
+import { useHideDevInfo } from '@/hooks/use-hide-dev-info'
 import { useCurrentUser, useLogoutMutation } from '@/lib/auth/auth-query-options'
 import { isDevEnvironment } from '@/lib/env'
 import { hasPrivilege } from '@/lib/permissions'
@@ -25,6 +26,7 @@ export default function Header() {
   const { user, isAuthenticated, privileges, realPrivileges, sailLockerMode, sessionExpiresAt } =
     useCurrentUser()
   const logoutMutation = useLogoutMutation()
+  const hideDevInfo = useHideDevInfo()
   const [showAdminModal, setShowAdminModal] = useState(false)
   const [sheetOpen, setSheetOpen] = useState(false)
   const isCheckoutPage =
@@ -108,7 +110,7 @@ export default function Header() {
               <img src="/favicon.png" alt="WYC" className="h-6 w-6" />
               WYC Database
             </Link>
-            {isDevApp && dbName && (
+            {isDevApp && !hideDevInfo && dbName && (
               <span className="ml-1 hidden rounded bg-yellow-200 px-2 py-0.5 text-xs font-semibold text-yellow-900 sm:inline">
                 Database: {dbName}
               </span>
@@ -120,7 +122,7 @@ export default function Header() {
           <div className="flex items-center gap-1 sm:gap-4 md:justify-self-end">
             {isAuthenticated && user ? (
               <>
-                {isDevApp && hasPrivilege(realPrivileges ?? privileges, ['db']) && (
+                {isDevApp && !hideDevInfo && hasPrivilege(realPrivileges ?? privileges, ['db']) && (
                   <DevPrivilegeEmulator />
                 )}
                 <Button asChild variant="ghost" size="icon">
