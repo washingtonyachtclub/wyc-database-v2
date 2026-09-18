@@ -354,9 +354,21 @@ function JoinPage() {
         <div className="border-t border-wyc-purple pt-10 lg:border-l lg:border-t-0 lg:pl-12 lg:pt-0">
           <form onSubmit={submit} className="space-y-8" noValidate>
             <section className="space-y-5">
-              <h2 className="font-wyc-heading text-3xl font-bold tracking-tight text-wyc-purple">
-                Membership Sign-up Form
-              </h2>
+              <div className="space-y-2">
+                <h2 className="font-wyc-heading text-3xl font-bold tracking-tight text-wyc-purple">
+                  Membership Sign-up Form
+                </h2>
+                <p className="text-sm text-muted-foreground sm:text-base">
+                  Existing members should renew in the{' '}
+                  <a
+                    href="https://database.washingtonyachtclub.org/renew-membership"
+                    className="font-medium underline"
+                  >
+                    WYC Database
+                  </a>
+                  .
+                </p>
+              </div>
               <div className="grid gap-5 sm:grid-cols-2">
                 <div className="space-y-2">
                   <Label htmlFor="join-first-name">First name *</Label>
