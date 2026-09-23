@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest'
 
 import { dinghyNoviceTest } from './dinghy-test-data'
 import {
+  getCopiedGuideQuestionIndices,
   isQuestionCorrect,
   isTextAnswerAccepted,
   scoreTest,
@@ -115,12 +116,31 @@ describe('Dinghy test scoring', () => {
     })
   })
 
+  it('applies an additional penalty to sailing-guide-order answers', () => {
+    const answers = completeAnswerKey()
+    answers[0] = 'Rudder'
+
+    expect(getCopiedGuideQuestionIndices(dinghyNoviceTest.questions, answers)).toEqual([0])
+    expect(scoreTest(dinghyNoviceTest.questions, answers)).toEqual({
+      correct: 76,
+      points: 75,
+      total: 77,
+      percentage: 97,
+      passed: true,
+      cheatingPenalty: 1,
+      copiedGuideQuestionIndices: [0],
+    })
+  })
+
   it('can produce a complete 100 percent answer key', () => {
     expect(scoreTest(dinghyNoviceTest.questions, completeAnswerKey())).toEqual({
       correct: 77,
+      points: 77,
       total: 77,
       percentage: 100,
       passed: true,
+      cheatingPenalty: 0,
+      copiedGuideQuestionIndices: [],
     })
   })
 })
