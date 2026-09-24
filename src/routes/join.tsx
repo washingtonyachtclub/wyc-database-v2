@@ -230,12 +230,7 @@ function JoinPage() {
   const showUwEmail = uwEmailRequired || uwStatus === 'employee_retiree'
 
   return (
-    <main
-      className={cn(
-        'bg-background [--color-primary:var(--color-wyc-purple)] [--color-ring:var(--color-wyc-purple)]',
-        !embedded && 'min-h-screen',
-      )}
-    >
+    <main className={cn('bg-background', !embedded && 'min-h-screen')}>
       {!embedded && (
         <header className="mx-auto flex max-w-7xl items-center justify-between border-b px-4 py-5 sm:px-6 lg:px-8">
           <div className="flex items-center gap-3">

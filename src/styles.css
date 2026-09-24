@@ -8,7 +8,9 @@
   --color-card-foreground: oklch(9.8% 0.005 285.88);
   --color-popover: oklch(100% 0 0);
   --color-popover-foreground: oklch(9.8% 0.005 285.88);
-  --color-primary: oklch(54.6% 0.245 262.88);
+  --color-wyc-gold: #b7a57a;
+  --color-wyc-purple: #4b2e83;
+  --color-primary: var(--color-wyc-purple);
   --color-primary-foreground: oklch(98% 0.002 285.88);
   --color-secondary: oklch(96.1% 0.001 285.88);
   --color-secondary-foreground: oklch(11.2% 0.006 285.88);
@@ -20,9 +22,7 @@
   --color-destructive-foreground: oklch(98% 0.002 285.88);
   --color-border: oklch(91.4% 0.006 285.88);
   --color-input: oklch(91.4% 0.006 285.88);
-  --color-ring: oklch(54.6% 0.245 262.88);
-  --color-wyc-gold: #b7a57a;
-  --color-wyc-purple: #4b2e83;
+  --color-ring: var(--color-wyc-purple);
   --font-wyc-body: 'Lora', serif;
   --font-wyc-heading: 'Lato', sans-serif;
   --radius: 0.5rem;
