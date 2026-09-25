@@ -39,15 +39,14 @@ The `active` flag is a soft delete. Inactive records are kept for historical pur
 
 Defines all organizational roles.
 
-| Column           | Type        | Description                                            |
-| ---------------- | ----------- | ------------------------------------------------------ |
-| `_index`         | int PK      | Position ID                                            |
-| `name`           | varchar(50) | Display name (e.g., "Commodore")                       |
-| `sortorder`      | int         | Display ordering                                       |
-| `is_dues_exempt` | tinyint(1)  | Whether this position exempts from dues                |
-| `type`           | int FK      | `pos_type._index` (Corporate, Committee, Chief, Other) |
-| `bookmark`       | varchar(50) | Short code reference                                   |
-| `job_desc`       | varchar(50) | Link to job description PDF                            |
+| Column      | Type        | Description                                            |
+| ----------- | ----------- | ------------------------------------------------------ |
+| `_index`    | int PK      | Position ID                                            |
+| `name`      | varchar(50) | Display name (e.g., "Commodore")                       |
+| `sortorder` | int         | Display ordering                                       |
+| `type`      | int FK      | `pos_type._index` (Corporate, Committee, Chief, Other) |
+| `bookmark`  | varchar(50) | Short code reference                                   |
+| `job_desc`  | varchar(50) | Link to job description PDF                            |
 
 Position types group roles into categories: Type 1 (Corporate Leadership), Type 2 (Committee Roles), Type 3 (Chiefs), Type 4 (Other).
 

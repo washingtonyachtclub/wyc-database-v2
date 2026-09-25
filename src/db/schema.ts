@@ -367,7 +367,6 @@ export const positions = mysqlTable(
       .collate('latin1_swedish_ci')
       .notNull(),
     sortorder: int(),
-    isDuesExempt: tinyint1('is_dues_exempt').default(sql`false`),
     type: int(),
     bookmark: varchar({ length: 50 }).charSet('latin1').collate('latin1_swedish_ci'),
     jobDesc: varchar('job_desc', { length: 50 }).charSet('latin1').collate('latin1_swedish_ci'),
