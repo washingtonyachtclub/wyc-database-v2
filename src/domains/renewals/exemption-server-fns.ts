@@ -2,7 +2,6 @@ import db from '@/db/index'
 import {
   duesExemptionRequests,
   memberWaivers,
-  membershipPayments,
   membershipRenewals,
   quarters,
   renewalQuestionnaire,
@@ -11,6 +10,7 @@ import {
 import { requireAuth, requireRouteAccess } from '@/lib/auth/auth-middleware'
 import { sendEmail } from '@/lib/email'
 import { exemptionWaiverRequiredEmail } from '@/lib/emails/membership'
+import { insertExemptMembershipPayment } from '@/domains/membership-payments/exempt-payment'
 import { createServerFn } from '@tanstack/react-start'
 import { and, desc, eq, isNull } from 'drizzle-orm'
 import { randomUUID } from 'node:crypto'
@@ -311,25 +311,18 @@ export const approveExemptionRequest = createServerFn({ method: 'POST' })
           .for('update')
         if (!lockedWaiver) throw new Error('The member waiver is not complete.')
 
-        const result = await tx.insert(membershipPayments).values({
+        const paymentId = await insertExemptMembershipPayment(tx, {
           renewalId: request.renewalId,
           wycNumber: request.wycNumber,
-          squarePaymentId: null,
-          squareOrderId: null,
-          amountCents: 0,
-          currency: 'USD',
-          tier: 'exempt',
-          duration: 'quarterly',
           prevExpireQtr: request.currentExpireQtr ?? 0,
           newExpireQtr: Math.max(request.currentExpireQtr ?? 0, request.requestedExpireQtr),
-          status: 'EXEMPT',
         })
 
         await tx
           .update(duesExemptionRequests)
           .set({
             status: 'approved',
-            paymentId: result[0].insertId,
+            paymentId,
             decidedBy: approver,
             decidedAt: new Date(),
           })

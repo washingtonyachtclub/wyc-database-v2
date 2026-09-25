@@ -3,7 +3,7 @@ import { membershipApplications } from '@/db/schema'
 import { sendEmail } from '@/lib/email'
 import { newMemberIncompleteReminderEmail } from '@/lib/emails/membership'
 import { isDevEnvironment } from '@/lib/env'
-import { and, eq, isNull, lte } from 'drizzle-orm'
+import { and, eq, isNull, lte, or } from 'drizzle-orm'
 import { applicationCompletionUrl } from './email'
 
 const INCOMPLETE_REMINDER_DELAY_MS = 72 * 60 * 60 * 1000
@@ -24,12 +24,20 @@ export async function sendIncompleteApplicationReminders(input: {
     .from(membershipApplications)
     .where(
       and(
-        eq(membershipApplications.paymentStatus, 'completed'),
         eq(membershipApplications.reviewStatus, 'not_ready'),
         isNull(membershipApplications.requirementsCompletedAt),
         isNull(membershipApplications.completionReminderSentAt),
         isNull(membershipApplications.closedAt),
-        lte(membershipApplications.paymentCompletedAt, cutoff),
+        or(
+          and(
+            eq(membershipApplications.paymentStatus, 'completed'),
+            lte(membershipApplications.paymentCompletedAt, cutoff),
+          ),
+          and(
+            eq(membershipApplications.paymentStatus, 'exemption_requested'),
+            lte(membershipApplications.createdAt, cutoff),
+          ),
+        ),
       ),
     )
     .orderBy(membershipApplications.paymentCompletedAt)

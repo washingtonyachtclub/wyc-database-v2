@@ -26,6 +26,10 @@ import {
 } from '@/components/ui/alert-dialog'
 import { listMembershipApplicationsForApproval } from '@/domains/membership-applications/approval-server-fns'
 import {
+  canCompleteMembershipApplication,
+  isDuesExemptionApplication,
+} from '@/domains/membership-applications/funding'
+import {
   membershipApplicationsForApprovalQueryOptions,
   useApplyMembershipApplicationToExistingMemberMutation,
   useApproveNewMembershipApplicationMutation,
@@ -162,7 +166,12 @@ function NewMemberApprovals({
   function statusFor(application: Application) {
     if (application.reviewStatus.startsWith('approved_')) return 'Welcome email not sent'
     if (application.paymentStatus === 'reconciliation_required') return 'Payment outcome unknown'
-    if (!application.requirementsComplete) return 'Waiting on applicant'
+    if (!application.requirementsComplete) {
+      return isDuesExemptionApplication(application.paymentStatus)
+        ? 'Dues exemption · Waiting on applicant'
+        : 'Waiting on applicant'
+    }
+    if (isDuesExemptionApplication(application.paymentStatus)) return 'Dues exemption requested'
     return null
   }
 
@@ -241,10 +250,15 @@ function ApplicationReview({ application }: { application: Application }) {
     retryWelcome.isPending
   const approved = application.reviewStatus.startsWith('approved_')
   const paymentFollowUp = application.paymentStatus === 'reconciliation_required'
+  const exemptionRequested = application.paymentStatus === 'exemption_requested'
   const waitingOnApplicant =
-    !approved && application.paymentStatus === 'completed' && !application.requirementsComplete
+    !approved &&
+    canCompleteMembershipApplication(application.paymentStatus) &&
+    !application.requirementsComplete
   const readyForApproval =
-    !approved && application.paymentStatus === 'completed' && application.requirementsComplete
+    !approved &&
+    canCompleteMembershipApplication(application.paymentStatus) &&
+    application.requirementsComplete
 
   async function saveEmails() {
     setError(null)
@@ -341,15 +355,18 @@ function ApplicationReview({ application }: { application: Application }) {
           <p className="text-sm text-muted-foreground">
             Applied {formatPacificDate(application.createdAt)} · {application.targetLabel} ·{' '}
             {application.tier}, {application.duration}
+            {exemptionRequested ? ' · Dues exemption requested' : ''}
           </p>
         </div>
-        {(approved || paymentFollowUp || waitingOnApplicant) && (
+        {(approved || paymentFollowUp || waitingOnApplicant || exemptionRequested) && (
           <span className="rounded-full border bg-muted px-3 py-1 text-sm font-medium">
             {approved
               ? 'Welcome email not sent'
               : paymentFollowUp
                 ? 'Payment outcome unknown'
-                : 'Waiting on applicant'}
+                : waitingOnApplicant
+                  ? 'Waiting on applicant'
+                  : 'Dues exemption requested'}
           </span>
         )}
       </div>
@@ -501,11 +518,13 @@ function ApplicationReview({ application }: { application: Application }) {
                 ['Membership', `${application.tier}, ${application.duration}`],
                 [
                   'Payment',
-                  application.paymentAmountCents == null
-                    ? paymentFollowUp
-                      ? 'Outcome unknown'
-                      : 'Not recorded'
-                    : `$${(application.paymentAmountCents / 100).toFixed(2)}`,
+                  exemptionRequested
+                    ? 'Dues exemption requested'
+                    : application.paymentAmountCents == null
+                      ? paymentFollowUp
+                        ? 'Outcome unknown'
+                        : 'Not recorded'
+                      : `$${(application.paymentAmountCents / 100).toFixed(2)}`,
                 ],
                 ['Square order', application.squareOrderId ?? 'Not recorded'],
                 ['Square payment', application.squarePaymentId ?? 'Not recorded'],
@@ -608,6 +627,7 @@ function ApplicationReview({ application }: { application: Application }) {
         onConfirm={confirmAction}
         busy={busy}
         hasMatches={application.matches.length > 0}
+        exemptionRequested={exemptionRequested}
       />
     </div>
   )
@@ -618,6 +638,7 @@ function ReviewActionDialog({
   applicantName,
   busy,
   closeNote,
+  exemptionRequested,
   hasMatches,
   onCancel,
   onCloseNoteChange,
@@ -627,6 +648,7 @@ function ReviewActionDialog({
   applicantName: string
   busy: boolean
   closeNote: string
+  exemptionRequested: boolean
   hasMatches: boolean
   onCancel: () => void
   onCloseNoteChange: (value: string) => void
@@ -641,11 +663,13 @@ function ReviewActionDialog({
   const description =
     action?.kind === 'approve-new'
       ? hasMatches
-        ? `${applicantName} has possible member matches. This will intentionally create a separate WYC profile.`
-        : `This will create and activate a new WYC profile for ${applicantName}.`
+        ? `${applicantName} has possible member matches. This will intentionally create a separate WYC profile${exemptionRequested ? ' and approve the dues exemption' : ''}.`
+        : `This will create and activate a new WYC profile for ${applicantName}${exemptionRequested ? ' and approve the dues exemption' : ''}.`
       : action?.kind === 'apply-existing'
-        ? `This will apply the payment, contact information, emergency contact, and membership expiry to WYC member ${action.wycNumber}.`
-        : 'Closing preserves the application and payment record. Any refund must still be handled separately in Square.'
+        ? `This will apply the ${exemptionRequested ? 'dues exemption' : 'payment'}, contact information, emergency contact, and membership expiry to WYC member ${action.wycNumber}.`
+        : exemptionRequested
+          ? 'Closing denies the dues-exemption request and preserves the application record.'
+          : 'Closing preserves the application and payment record. Any refund must still be handled separately in Square.'
 
   return (
     <AlertDialog open={action !== null} onOpenChange={(open) => !open && onCancel()}>

@@ -354,7 +354,7 @@ function DuesExemptSection({
           onClick={() => setShowModal(true)}
           disabled={questionnaire === null}
         >
-          Request Dues Exempt
+          Request Dues Exemption
         </Button>
         <TooltipProvider>
           <Tooltip>
@@ -377,7 +377,7 @@ function DuesExemptSection({
       <Dialog open={showModal} onOpenChange={setShowModal}>
         <DialogContent className="sm:max-w-lg">
           <DialogHeader>
-            <DialogTitle>Request Dues Exempt</DialogTitle>
+            <DialogTitle>Request Dues Exemption</DialogTitle>
             <DialogDescription className="pt-2">
               You're requesting dues-exempt membership for <strong>{targetQuarterLabel}</strong>.
               You should be sure you're eligible.

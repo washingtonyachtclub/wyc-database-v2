@@ -9,6 +9,7 @@ import {
   newMemberPriceQueryOptions,
   newMemberSignupOptionsQueryOptions,
   useCheckNewMemberEmailMutation,
+  useStartNewMemberExemptionMutation,
   useStartNewMemberPaymentMutation,
 } from '@/domains/membership-applications/query-options'
 import type { RenewalDuration } from '@/domains/renewals/compute-renewal'
@@ -72,6 +73,7 @@ function JoinPage() {
   const cardRef = useRef<SquareCardHandle>(null)
   const submittingRef = useRef(false)
   const payment = useStartNewMemberPaymentMutation()
+  const exemption = useStartNewMemberExemptionMutation()
   const emailCheck = useCheckNewMemberEmailMutation()
 
   const [firstName, setFirstName] = useState('')
@@ -144,9 +146,7 @@ function JoinPage() {
     }
   }
 
-  async function submit(event: React.FormEvent) {
-    event.preventDefault()
-    if (submittingRef.current) return
+  function validateApplication(requirePrice: boolean) {
     setError(null)
     const errors: ValidationErrors = {}
     if (!firstName.trim()) errors.firstName = 'First name is required.'
@@ -165,7 +165,7 @@ function JoinPage() {
       } else if (uwEmail.trim() && !/^\S+@\S+\.\S+$/.test(uwEmail.trim())) {
         errors.uwEmail = 'Enter a valid UW email address.'
       }
-      if (!selectedPrice.isLoading && !selectedPrice.data) {
+      if (requirePrice && !selectedPrice.isLoading && !selectedPrice.data) {
         errors.duration = 'Membership pricing is unavailable. Try again.'
       }
     }
@@ -180,9 +180,14 @@ function JoinPage() {
           : field?.querySelector<HTMLElement>('input, button')
         if (focusTarget instanceof HTMLElement) focusTarget.focus({ preventScroll: true })
       })
-      return
+      return false
     }
-    if (!questionnaire) return
+    return questionnaire !== null
+  }
+
+  async function submit(event: React.FormEvent) {
+    event.preventDefault()
+    if (submittingRef.current || !validateApplication(true) || !questionnaire) return
     submittingRef.current = true
     setIsSubmitting(true)
     try {
@@ -214,6 +219,39 @@ function JoinPage() {
           to: '/join/$applicationId',
           params: { applicationId: result.applicationId },
           search: { embed: embedded ? true : undefined, email: undefined, simulated: false },
+        })
+        return
+      }
+      setError(result.message)
+    } catch (caught: any) {
+      setError(caught?.message ?? 'Something went wrong. Please try again.')
+    } finally {
+      submittingRef.current = false
+      setIsSubmitting(false)
+    }
+  }
+
+  async function requestDuesExemption() {
+    if (submittingRef.current || !validateApplication(false) || !questionnaire) return
+    submittingRef.current = true
+    setIsSubmitting(true)
+    try {
+      const result = await exemption.mutateAsync({
+        firstName,
+        lastName,
+        primaryEmail,
+        questionnaire,
+        uwEmail,
+      })
+      if (result.success) {
+        await navigate({
+          to: '/join/$applicationId',
+          params: { applicationId: result.applicationId },
+          search: {
+            embed: embedded ? true : undefined,
+            email: result.emailSent ? 'sent' : 'failed',
+            simulated: result.emailSimulated,
+          },
         })
         return
       }
@@ -509,6 +547,21 @@ function JoinPage() {
                 disabled={isSubmitting || (tier !== null && selectedPrice.isLoading)}
               >
                 {isSubmitting ? 'Processing…' : 'Pay and Sign Up'}
+              </Button>
+              <div className="flex items-center gap-3 text-sm text-muted-foreground">
+                <span className="h-px flex-1 bg-border" />
+                <span>or</span>
+                <span className="h-px flex-1 bg-border" />
+              </div>
+              <Button
+                type="button"
+                size="lg"
+                variant="outline"
+                className="w-full"
+                disabled={isSubmitting}
+                onClick={requestDuesExemption}
+              >
+                Request Dues Exemption
               </Button>
             </section>
           </form>

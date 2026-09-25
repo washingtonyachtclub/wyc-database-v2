@@ -8,6 +8,7 @@ import {
   wycDatabase,
 } from '@/db/schema'
 import { allocateWycNumber, createMemberCredentials } from '@/domains/members/member-write'
+import { insertExemptMembershipPayment } from '@/domains/membership-payments/exempt-payment'
 import { categoryIdForUwStatus, isUwStatus } from '@/domains/renewals/questionnaire'
 import { requireRouteAccess } from '@/lib/auth/auth-middleware'
 import { createServerFn } from '@tanstack/react-start'
@@ -20,6 +21,7 @@ import {
   sendNewMemberWelcomeEmail,
 } from './email'
 import type { NewMemberQuestionnaireSnapshot } from './questionnaire'
+import { canCompleteMembershipApplication } from './funding'
 
 const applicationIdSchema = z.uuid()
 const emailSchema = z.string().trim().email().max(254)
@@ -99,6 +101,39 @@ function combineAddress(line1: string, line2: string | null): string {
   return address
 }
 
+type ApplicationTransaction = Parameters<Parameters<typeof db.transaction>[0]>[0]
+
+async function ensureApplicationFunding(
+  tx: ApplicationTransaction,
+  application: {
+    id: string
+    paymentStatus: string
+    targetExpireQtr: number
+  },
+) {
+  const [payment] = await tx
+    .select({ index: membershipPayments.index })
+    .from(membershipPayments)
+    .where(eq(membershipPayments.applicationId, application.id))
+    .for('update')
+
+  if (application.paymentStatus === 'completed') {
+    if (!payment) throw new Error('Application payment is missing')
+    return 'paid' as const
+  }
+  if (application.paymentStatus !== 'exemption_requested' || payment) {
+    throw new Error('Application funding is invalid')
+  }
+
+  await insertExemptMembershipPayment(tx, {
+    applicationId: application.id,
+    wycNumber: null,
+    prevExpireQtr: 0,
+    newExpireQtr: application.targetExpireQtr,
+  })
+  return 'exempt' as const
+}
+
 async function recordWelcomeDelivery(applicationId: string) {
   try {
     await db
@@ -165,6 +200,7 @@ export const listMembershipApplicationsForApproval = createServerFn({ method: 'G
             and(
               inArray(membershipApplications.paymentStatus, [
                 'completed',
+                'exemption_requested',
                 'reconciliation_required',
               ]),
               inArray(membershipApplications.reviewStatus, ['not_ready', 'pending_review']),
@@ -272,7 +308,7 @@ export const resendMembershipApplicationCompletionEmail = createServerFn({ metho
       .limit(1)
     if (
       !application ||
-      application.paymentStatus !== 'completed' ||
+      !canCompleteMembershipApplication(application.paymentStatus) ||
       application.requirementsCompletedAt ||
       application.reviewStatus !== 'not_ready'
     ) {
@@ -322,7 +358,7 @@ export const approveNewMembershipApplication = createServerFn({ method: 'POST' }
           .for('update')
         if (
           !application ||
-          application.paymentStatus !== 'completed' ||
+          !canCompleteMembershipApplication(application.paymentStatus) ||
           application.reviewStatus !== 'pending_review' ||
           !application.requirementsCompletedAt
         ) {
@@ -335,12 +371,7 @@ export const approveNewMembershipApplication = createServerFn({ method: 'POST' }
           .from(memberWaivers)
           .where(eq(memberWaivers.applicationId, data.applicationId))
           .for('update')
-        const [payment] = await tx
-          .select({ index: membershipPayments.index })
-          .from(membershipPayments)
-          .where(eq(membershipPayments.applicationId, data.applicationId))
-          .for('update')
-        if (!waiver || !payment) throw new Error('Application records are incomplete')
+        if (!waiver) throw new Error('Application records are incomplete')
 
         const memberCandidates = await tx.select(memberMatchSelect).from(wycDatabase)
         const [possibleMatch] = findMemberMatches(
@@ -369,6 +400,8 @@ export const approveNewMembershipApplication = createServerFn({ method: 'POST' }
         ) {
           throw new Error('Application contact information is incomplete')
         }
+
+        const funding = await ensureApplicationFunding(tx, application)
 
         const wycNumber = await allocateWycNumber(tx)
         await tx.insert(wycDatabase).values({
@@ -404,6 +437,7 @@ export const approveNewMembershipApplication = createServerFn({ method: 'POST' }
         await tx
           .update(membershipApplications)
           .set({
+            ...(funding === 'exempt' && { paymentStatus: 'exempt' }),
             resolvedWycNumber: wycNumber,
             reviewedAt: new Date(),
             reviewedBy: reviewer,
@@ -483,7 +517,7 @@ export const applyMembershipApplicationToExistingMember = createServerFn({ metho
         if (
           !application ||
           !existingMember ||
-          application.paymentStatus !== 'completed' ||
+          !canCompleteMembershipApplication(application.paymentStatus) ||
           application.reviewStatus !== 'pending_review' ||
           !application.requirementsCompletedAt
         ) {
@@ -494,12 +528,7 @@ export const applyMembershipApplicationToExistingMember = createServerFn({ metho
           .from(memberWaivers)
           .where(eq(memberWaivers.applicationId, data.applicationId))
           .for('update')
-        const [payment] = await tx
-          .select({ index: membershipPayments.index })
-          .from(membershipPayments)
-          .where(eq(membershipPayments.applicationId, data.applicationId))
-          .for('update')
-        if (!waiver || !payment) throw new Error('Application records are incomplete')
+        if (!waiver) throw new Error('Application records are incomplete')
         if (
           !application.addressLine1 ||
           !application.city ||
@@ -513,6 +542,8 @@ export const applyMembershipApplicationToExistingMember = createServerFn({ metho
         ) {
           throw new Error('Application contact information is incomplete')
         }
+
+        const funding = await ensureApplicationFunding(tx, application)
 
         const expireQtrIndex = Math.max(existingMember.expireQtrIndex, application.targetExpireQtr)
         await tx
@@ -552,6 +583,7 @@ export const applyMembershipApplicationToExistingMember = createServerFn({ metho
         await tx
           .update(membershipApplications)
           .set({
+            ...(funding === 'exempt' && { paymentStatus: 'exempt' }),
             resolvedWycNumber: data.wycNumber,
             reviewedAt: new Date(),
             reviewedBy: reviewer,

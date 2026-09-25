@@ -9,6 +9,7 @@ import {
   newMemberApplicationQueryOptions,
   useCompleteNewMemberApplicationMutation,
 } from '@/domains/membership-applications/query-options'
+import { canCompleteMembershipApplication } from '@/domains/membership-applications/funding'
 import {
   communityOptions,
   CURRENT_NEW_MEMBER_QUESTIONNAIRE_VERSION,
@@ -191,7 +192,7 @@ function CompleteNewMemberApplicationPage() {
       </StatusPage>
     )
   }
-  if (application.paymentStatus !== 'completed') {
+  if (!canCompleteMembershipApplication(application.paymentStatus)) {
     return (
       <StatusPage title="Payment not completed" embedded={embedded}>
         This application does not have a completed payment. Return to the{' '}
