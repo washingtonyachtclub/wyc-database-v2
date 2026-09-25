@@ -1,4 +1,5 @@
 import type { SquareCardHandle } from '@/components/renewals/SquareCardForm'
+import { PromotionCodeField } from '@/components/membership-promotions/PromotionCodeField'
 import { MembershipQuestionnaireFields } from '@/components/renewals/MembershipQuestionnaireFields'
 import { SquareCardForm } from '@/components/renewals/SquareCardForm'
 import { Button } from '@/components/ui/button'
@@ -15,6 +16,7 @@ import { ErrorAlert } from '@/components/ui/ErrorAlert'
 import { Label } from '@/components/ui/label'
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip'
 import type { RenewalDuration } from '@/domains/renewals/compute-renewal'
+import type { PromotionQuote } from '@/domains/membership-promotions/schema'
 import {
   getRenewalPriceQueryOptions,
   getRenewalStatusQueryOptions,
@@ -75,6 +77,7 @@ function RenewMembershipPage() {
   const [duration, setDuration] = useState<RenewalDuration>(
     status.preview.annual.allowed ? 'annual' : 'quarterly',
   )
+  const [promotion, setPromotion] = useState<PromotionQuote | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [submitting, setSubmitting] = useState(false)
   const [result, setResult] = useState<CompletionResult | null>(null)
@@ -124,7 +127,12 @@ function RenewMembershipPage() {
     setSubmitting(true)
     try {
       const sourceId = await cardRef.current!.tokenize()
-      const data = await mutation.mutateAsync({ duration, sourceId, questionnaire })
+      const data = await mutation.mutateAsync({
+        duration,
+        promotion: promotion ? { code: promotion.code, revision: promotion.revision } : null,
+        sourceId,
+        questionnaire,
+      })
       setRequiredEmailSimulated(data.emailSimulated)
     } catch (e: any) {
       setError(e?.message ?? 'Something went wrong. Please try again.')
@@ -287,6 +295,14 @@ function RenewMembershipPage() {
           )}
         </div>
       </div>
+
+      <PromotionCodeField
+        audience="renewals"
+        duration={duration}
+        tier={tier}
+        onApplied={setPromotion}
+        disabled={submitting}
+      />
 
       <div className="space-y-2">
         <Label className="text-base">Card</Label>

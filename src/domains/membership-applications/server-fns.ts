@@ -12,6 +12,11 @@ import {
   createMembershipOrder,
   getMembershipPrice,
 } from '@/domains/membership-payments/square-payment'
+import { parsePromotionSelection } from '@/domains/membership-promotions/schema'
+import {
+  insertMembershipPromotionRedemption,
+  resolveMembershipPromotion,
+} from '@/domains/membership-promotions/service'
 import type { RenewalDuration, RenewalTier } from '@/domains/renewals/compute-renewal'
 import { RENEWAL_QUARTER, computeRenewal } from '@/domains/renewals/compute-renewal'
 import { parseQuestionnaire, tierForUwStatus } from '@/domains/renewals/questionnaire'
@@ -74,9 +79,13 @@ const paymentInputSchema = z
   .object({
     ...applicantInputShape,
     duration: z.enum(['quarterly', 'annual']),
+    promotion: z.unknown().optional(),
     sourceId: requiredText(2_000),
   })
-  .transform(parseApplicantInput)
+  .transform((input) => ({
+    ...parseApplicantInput(input),
+    promotion: parsePromotionSelection(input.promotion),
+  }))
   .superRefine(requireStudentUwEmail)
 
 const exemptionInputSchema = z
@@ -315,13 +324,26 @@ export const startNewMemberExemption = createServerFn({ method: 'POST' })
 export const startNewMemberPayment = createServerFn({ method: 'POST' })
   .inputValidator((input: z.input<typeof paymentInputSchema>) => paymentInputSchema.parse(input))
   .handler(async ({ data }) => {
+    const tier = tierForUwStatus(data.questionnaire.uwStatus)
+    const promotion = data.promotion
+      ? await getMembershipPrice(tier, data.duration).then((price) =>
+          resolveMembershipPromotion({
+            audience: 'new_members',
+            code: data.promotion!.code,
+            currency: price.currency,
+            expectedRevision: data.promotion!.revision,
+            subtotalCents: price.amountCents,
+          }),
+        )
+      : null
     const application = await createMembershipApplication(data, data.duration, 'pending')
     if (!application.success) return application
-    const { applicationId, targetExpireQtr, tier } = application
+    const { applicationId, targetExpireQtr } = application
 
     let order: Awaited<ReturnType<typeof createMembershipOrder>>
     try {
       order = await createMembershipOrder({
+        discount: promotion,
         duration: data.duration,
         idempotencyKey: `join-o/${applicationId}`,
         tier,
@@ -406,7 +428,7 @@ export const startNewMemberPayment = createServerFn({ method: 'POST' })
           throw new Error('Application payment state changed')
         }
 
-        await tx.insert(membershipPayments).values({
+        const result = await tx.insert(membershipPayments).values({
           amountCents: order.amountCents,
           applicationId,
           currency: order.currency,
@@ -419,6 +441,15 @@ export const startNewMemberPayment = createServerFn({ method: 'POST' })
           tier,
           wycNumber: null,
         })
+        if (promotion) {
+          await insertMembershipPromotionRedemption(tx, {
+            discountCents: order.discountCents,
+            finalCents: order.amountCents,
+            paymentId: result[0].insertId,
+            promotion,
+            subtotalCents: order.subtotalCents,
+          })
+        }
         await tx
           .update(membershipApplications)
           .set({ paymentCompletedAt: new Date(), paymentStatus: 'completed' })

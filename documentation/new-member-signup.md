@@ -12,8 +12,9 @@ The signup page collects the applicant's name, primary email, conditional UW ema
 One Rec Membership response, duration, and card details. Primary email is checked against member
 records when the field loses focus. A match displays a recovery link but does not block signup.
 
-Prices and order totals come from the same Square catalog variations used by renewals. The server
-derives the price tier from UW status. It creates an application before calling Square and stores
+Prices and order totals come from the same Square catalog variations used by renewals. An optional
+promotion applies to the catalog price before payment. The server derives the price tier from UW
+status. It creates an application before calling Square and stores
 the Square order ID and payment idempotency key on that application. One IP address can create up to
 eight applications within 30 minutes.
 
@@ -93,9 +94,9 @@ Closing an application does not issue or record a refund. Refunds are handled ma
 
 Payment completion sends a resumable application link immediately. Officers can resend it after an
 email correction. The Vercel cron calls `/api/cron/daily-tasks` once per day; the endpoint runs lesson
-reminders and sends one reminder to paid applications that remain incomplete after 72 hours. A
-successful application reminder records `completion_reminder_sent_at`; a failed attempt remains
-eligible for the next run.
+reminders and sends one reminder to paid or exemption-requested applications that remain incomplete
+after 72 hours. A successful application reminder records `completion_reminder_sent_at`; a failed
+attempt remains eligible for the next run.
 
 ## Application states
 
@@ -130,5 +131,6 @@ Funding and review are independent states:
 | `src/domains/membership-applications/reminders.ts`           | Incomplete-application reminder selection and delivery                             |
 | `src/domains/membership-applications/questionnaire.ts`       | Append-only demographic questionnaire definitions and snapshots                    |
 | `src/domains/membership-payments/square-payment.ts`          | Shared Square catalog, order, and payment operations                               |
+| `src/domains/membership-promotions/server-fns.ts`            | Promotion validation and redemption recording                                      |
 | `src/domains/waivers/MemberWaiverAgreementFields.tsx`        | Shared member waiver presentation and signature fields                             |
 | `src/db/schema.ts`                                           | Application, payment, emergency contact, and waiver relationships                  |

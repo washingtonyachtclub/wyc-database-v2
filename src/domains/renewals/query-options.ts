@@ -9,6 +9,7 @@ import {
 } from './exemption-server-fns'
 import type { RenewalDuration, RenewalTier } from './compute-renewal'
 import type { QuestionnaireAnswers } from './questionnaire'
+import type { PromotionSelection } from '../membership-promotions/schema'
 
 export const getRenewalStatusQueryOptions = () =>
   queryOptions({
@@ -27,6 +28,7 @@ export function usePayAndRenewMutation() {
   return useMutation({
     mutationFn: (input: {
       duration: RenewalDuration
+      promotion: PromotionSelection | null
       sourceId: string
       questionnaire: QuestionnaireAnswers
     }) => payAndRenew({ data: input }),

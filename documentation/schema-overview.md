@@ -136,16 +136,18 @@ See [RBAC docs](rbac.md) for detailed coverage.
 
 ### Membership workflows (v2-active)
 
-| Table                       | Purpose                                                       |
-| --------------------------- | ------------------------------------------------------------- |
-| `membership_applications`   | Paid new-member application, completion, and review lifecycle |
-| `member_emergency_contacts` | Current emergency contact copied from an approved application |
-| `membership_renewals`       | Existing-member renewal workflow                              |
-| `membership_payments`       | Shared payment and dues-exemption ledger                      |
-| `renewal_questionnaire`     | UW status and Plus One Rec Membership answers for a renewal   |
-| `dues_exemption_requests`   | Officer-reviewed dues-exemption decisions                     |
-| `member_waivers`            | Executed member waivers linked to an application or renewal   |
-| `guest_waivers`             | Executed guest waivers                                        |
+| Table                              | Purpose                                                       |
+| ---------------------------------- | ------------------------------------------------------------- |
+| `membership_applications`          | New-member funding, completion, and review lifecycle          |
+| `member_emergency_contacts`        | Current emergency contact copied from an approved application |
+| `membership_renewals`              | Existing-member renewal workflow                              |
+| `membership_payments`              | Shared payment and dues-exemption ledger                      |
+| `membership_promotions`            | Configurable membership discount campaigns                    |
+| `membership_promotion_redemptions` | Applied promotion and payment audit records                   |
+| `renewal_questionnaire`            | UW status and Plus One Rec Membership answers for a renewal   |
+| `dues_exemption_requests`          | Officer-reviewed dues-exemption decisions                     |
+| `member_waivers`                   | Executed member waivers linked to an application or renewal   |
+| `guest_waivers`                    | Executed guest waivers                                        |
 
 ### Legacy-Only Tables
 

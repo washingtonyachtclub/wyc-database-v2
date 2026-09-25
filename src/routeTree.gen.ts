@@ -23,6 +23,7 @@ import { Route as PositionsRouteImport } from './routes/positions'
 import { Route as OfficersRouteImport } from './routes/officers'
 import { Route as MyLessonsRouteImport } from './routes/my-lessons'
 import { Route as MembershipStatsRouteImport } from './routes/membership-stats'
+import { Route as MembershipPromotionsRouteImport } from './routes/membership-promotions'
 import { Route as MembershipApprovalsRouteImport } from './routes/membership-approvals'
 import { Route as MembersRouteImport } from './routes/members'
 import { Route as MeetTheTeamRouteImport } from './routes/meet-the-team'
@@ -125,6 +126,11 @@ const MyLessonsRoute = MyLessonsRouteImport.update({
 const MembershipStatsRoute = MembershipStatsRouteImport.update({
   id: '/membership-stats',
   path: '/membership-stats',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const MembershipPromotionsRoute = MembershipPromotionsRouteImport.update({
+  id: '/membership-promotions',
+  path: '/membership-promotions',
   getParentRoute: () => rootRouteImport,
 } as any)
 const MembershipApprovalsRoute = MembershipApprovalsRouteImport.update({
@@ -315,6 +321,7 @@ export interface FileRoutesByFullPath {
   '/meet-the-team': typeof MeetTheTeamRoute
   '/members': typeof MembersRoute
   '/membership-approvals': typeof MembershipApprovalsRoute
+  '/membership-promotions': typeof MembershipPromotionsRoute
   '/membership-stats': typeof MembershipStatsRoute
   '/my-lessons': typeof MyLessonsRouteWithChildren
   '/officers': typeof OfficersRoute
@@ -364,6 +371,7 @@ export interface FileRoutesByTo {
   '/meet-the-team': typeof MeetTheTeamRoute
   '/members': typeof MembersRoute
   '/membership-approvals': typeof MembershipApprovalsRoute
+  '/membership-promotions': typeof MembershipPromotionsRoute
   '/membership-stats': typeof MembershipStatsRoute
   '/my-lessons': typeof MyLessonsRouteWithChildren
   '/officers': typeof OfficersRoute
@@ -414,6 +422,7 @@ export interface FileRoutesById {
   '/meet-the-team': typeof MeetTheTeamRoute
   '/members': typeof MembersRoute
   '/membership-approvals': typeof MembershipApprovalsRoute
+  '/membership-promotions': typeof MembershipPromotionsRoute
   '/membership-stats': typeof MembershipStatsRoute
   '/my-lessons': typeof MyLessonsRouteWithChildren
   '/officers': typeof OfficersRoute
@@ -465,6 +474,7 @@ export interface FileRouteTypes {
     | '/meet-the-team'
     | '/members'
     | '/membership-approvals'
+    | '/membership-promotions'
     | '/membership-stats'
     | '/my-lessons'
     | '/officers'
@@ -514,6 +524,7 @@ export interface FileRouteTypes {
     | '/meet-the-team'
     | '/members'
     | '/membership-approvals'
+    | '/membership-promotions'
     | '/membership-stats'
     | '/my-lessons'
     | '/officers'
@@ -563,6 +574,7 @@ export interface FileRouteTypes {
     | '/meet-the-team'
     | '/members'
     | '/membership-approvals'
+    | '/membership-promotions'
     | '/membership-stats'
     | '/my-lessons'
     | '/officers'
@@ -613,6 +625,7 @@ export interface RootRouteChildren {
   MeetTheTeamRoute: typeof MeetTheTeamRoute
   MembersRoute: typeof MembersRoute
   MembershipApprovalsRoute: typeof MembershipApprovalsRoute
+  MembershipPromotionsRoute: typeof MembershipPromotionsRoute
   MembershipStatsRoute: typeof MembershipStatsRoute
   MyLessonsRoute: typeof MyLessonsRouteWithChildren
   OfficersRoute: typeof OfficersRoute
@@ -738,6 +751,13 @@ declare module '@tanstack/react-router' {
       path: '/membership-stats'
       fullPath: '/membership-stats'
       preLoaderRoute: typeof MembershipStatsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/membership-promotions': {
+      id: '/membership-promotions'
+      path: '/membership-promotions'
+      fullPath: '/membership-promotions'
+      preLoaderRoute: typeof MembershipPromotionsRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/membership-approvals': {
@@ -1008,6 +1028,7 @@ const rootRouteChildren: RootRouteChildren = {
   MeetTheTeamRoute: MeetTheTeamRoute,
   MembersRoute: MembersRoute,
   MembershipApprovalsRoute: MembershipApprovalsRoute,
+  MembershipPromotionsRoute: MembershipPromotionsRoute,
   MembershipStatsRoute: MembershipStatsRoute,
   MyLessonsRoute: MyLessonsRouteWithChildren,
   OfficersRoute: OfficersRoute,

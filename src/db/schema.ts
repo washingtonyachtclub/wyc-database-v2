@@ -612,6 +612,38 @@ export const doorCodes = mysqlTable(
   (table) => [primaryKey({ columns: [table.index] }), unique('uq_door_codes_slug').on(table.slug)],
 )
 
+export const membershipPromotions = mysqlTable(
+  'membership_promotions',
+  {
+    index: int('_index').autoincrement().notNull(),
+    name: varchar({ length: 100 }).notNull(),
+    code: varchar({ length: 50 }).charSet('utf8mb4').collate('utf8mb4_0900_ai_ci').notNull(),
+    audience: varchar({ length: 20 }).notNull(),
+    percentageOff: int('percentage_off'),
+    amountOffCents: int('amount_off_cents'),
+    startsOn: date('starts_on', { mode: 'string' }).notNull(),
+    endsOn: date('ends_on', { mode: 'string' }).notNull(),
+    maxRedemptions: int('max_redemptions'),
+    active: tinyint1('active')
+      .default(sql`true`)
+      .notNull(),
+    revision: int('revision').default(1).notNull(),
+    createdBy: int('created_by').notNull(),
+    updatedBy: int('updated_by'),
+    createdAt: timestamp('created_at').defaultNow().notNull(),
+    updatedAt: timestamp('updated_at'),
+  },
+  (table) => [
+    primaryKey({ columns: [table.index] }),
+    unique('uq_membership_promotions_code').on(table.code),
+    index('idx_membership_promotions_active_dates').on(table.active, table.startsOn, table.endsOn),
+    check(
+      'chk_membership_promotions_discount',
+      sql`(${table.percentageOff} is not null) <> (${table.amountOffCents} is not null)`,
+    ),
+  ],
+)
+
 export const membershipApplications = mysqlTable(
   'membership_applications',
   {
@@ -741,6 +773,38 @@ export const membershipPayments = mysqlTable(
       columns: [table.applicationId],
       foreignColumns: [membershipApplications.id],
       name: 'fk_membership_payments_application',
+    }),
+  ],
+)
+
+export const membershipPromotionRedemptions = mysqlTable(
+  'membership_promotion_redemptions',
+  {
+    index: int('_index').autoincrement().notNull(),
+    promotionId: int('promotion_id').notNull(),
+    paymentId: int('payment_id').notNull(),
+    code: varchar({ length: 50 }).notNull(),
+    revision: int('revision').notNull(),
+    percentageOff: int('percentage_off'),
+    amountOffCents: int('amount_off_cents'),
+    subtotalCents: int('subtotal_cents').notNull(),
+    discountCents: int('discount_cents').notNull(),
+    finalCents: int('final_cents').notNull(),
+    createdAt: timestamp('created_at').defaultNow().notNull(),
+  },
+  (table) => [
+    primaryKey({ columns: [table.index] }),
+    unique('uq_membership_promotion_redemptions_payment').on(table.paymentId),
+    index('idx_membership_promotion_redemptions_promotion').on(table.promotionId),
+    foreignKey({
+      columns: [table.promotionId],
+      foreignColumns: [membershipPromotions.index],
+      name: 'fk_membership_promotion_redemptions_promotion',
+    }),
+    foreignKey({
+      columns: [table.paymentId],
+      foreignColumns: [membershipPayments.index],
+      name: 'fk_membership_promotion_redemptions_payment',
     }),
   ],
 )
