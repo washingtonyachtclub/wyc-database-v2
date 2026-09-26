@@ -87,7 +87,7 @@ export const listMembershipPromotions = createServerFn({ method: 'GET' }).handle
     }))
   } catch (error) {
     console.error('Failed to list membership promotions:', error)
-    throw new Error('Could not load membership promotions')
+    throw new Error('Could not load discount codes')
   }
 })
 
@@ -112,7 +112,7 @@ export const createMembershipPromotion = createServerFn({ method: 'POST' })
       return { success: true as const }
     } catch (error) {
       console.error('Failed to create membership promotion:', error)
-      throw new Error('Could not create the promotion. Check that the code is unique.')
+      throw new Error('Could not create the discount code. Check that the code is unique.')
     }
   })
 
@@ -140,7 +140,7 @@ export const updateMembershipPromotion = createServerFn({ method: 'POST' })
       return { success: true as const }
     } catch (error) {
       console.error('Failed to update membership promotion:', error)
-      throw new Error('Could not update the promotion')
+      throw new Error('Could not update the discount code')
     }
   })
 
@@ -164,7 +164,7 @@ export const setMembershipPromotionActive = createServerFn({ method: 'POST' })
       return { success: true as const }
     } catch (error) {
       console.error('Failed to update membership promotion status:', error)
-      throw new Error('Could not update the promotion')
+      throw new Error('Could not update the discount code')
     }
   })
 

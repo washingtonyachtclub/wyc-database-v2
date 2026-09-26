@@ -1,14 +1,14 @@
-# Membership Promotions
+# Discount Codes
 
 ## Overview
 
-Database-privileged users manage discount codes on `/membership-promotions`. Promotions can apply
-to new memberships, renewals, or both. A promotion reduces the Square order total and always leaves
+Database-privileged users manage discount codes on `/discount-codes`. Codes can apply
+to new memberships, renewals, or both. A code reduces the Square order total and always leaves
 a positive card payment. Dues exemptions use their separate approval workflows.
 
 ## Campaigns
 
-A campaign has an immutable code and optional redemption limit. Its name, audience, discount, and
+A discount code has an immutable value and optional redemption limit. Its name, audience, discount, and
 active date range can be edited. Percentage discounts use whole percentages from 1 through 99.
 Fixed discounts are stored in cents. Start and end dates are inclusive Pacific calendar dates.
 
@@ -23,7 +23,7 @@ audience, active dates, revision, and redemption count, and reads the base price
 catalog. The Square order contains the catalog membership variation and an order-level percentage
 or fixed-amount discount. The returned Square total is the amount charged.
 
-Codes stack with the existing student or nonstudent base tier. Only one promotion applies to a
+Codes stack with the existing student or nonstudent base tier. Only one discount code applies to a
 checkout. A code can be used for multiple renewal transactions, and every completed transaction
 counts as one redemption.
 
@@ -37,7 +37,7 @@ catalog subtotal, applied discount, and final amount.
 
 | File                                                          | Purpose                                     |
 | ------------------------------------------------------------- | ------------------------------------------- |
-| `src/routes/membership-promotions.tsx`                        | Campaign management                         |
+| `src/routes/discount-codes.tsx`                               | Discount code management                    |
 | `src/components/membership-promotions/PromotionCodeField.tsx` | Shared code entry and quote UI              |
 | `src/components/membership-promotions/PromotionFormModal.tsx` | Campaign create and edit form               |
 | `src/domains/membership-promotions/server-fns.ts`             | Validation, administration, and redemptions |

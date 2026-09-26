@@ -81,14 +81,14 @@ export function PromotionFormModal({
       }
       onClose()
     } catch (caught: any) {
-      setError(caught?.message ?? 'Could not save the promotion.')
+      setError(caught?.message ?? 'Could not save the discount code.')
     }
   }
 
   return (
-    <Modal onClose={onClose} title={promotion ? 'Edit Promotion' : 'New Promotion'}>
+    <Modal onClose={onClose} title={promotion ? 'Edit Discount Code' : 'New Discount Code'}>
       <form onSubmit={submit} className="space-y-5 p-6">
-        <ErrorAlert error={error} action="Save promotion" />
+        <ErrorAlert error={error} action="Save discount code" />
 
         <div className="space-y-2">
           <Label htmlFor="promotion-name">Name</Label>
@@ -204,7 +204,7 @@ export function PromotionFormModal({
             Cancel
           </Button>
           <Button type="submit" disabled={busy}>
-            {busy ? 'Saving…' : 'Save Promotion'}
+            {busy ? 'Saving…' : 'Save Discount Code'}
           </Button>
         </div>
       </form>

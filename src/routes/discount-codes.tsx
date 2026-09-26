@@ -14,8 +14,8 @@ import { useState } from 'react'
 
 type MembershipPromotion = Awaited<ReturnType<typeof listMembershipPromotions>>[number]
 
-export const Route = createFileRoute('/membership-promotions')({
-  beforeLoad: ({ context }) => requirePrivilegeForRoute(context, '/membership-promotions'),
+export const Route = createFileRoute('/discount-codes')({
+  beforeLoad: ({ context }) => requirePrivilegeForRoute(context, '/discount-codes'),
   loader: ({ context }) => context.queryClient.ensureQueryData(membershipPromotionsQueryOptions()),
   component: MembershipPromotionsPage,
 })
@@ -41,22 +41,22 @@ function MembershipPromotionsPage() {
     <div className="mx-auto max-w-5xl space-y-6 p-4 sm:p-6">
       <div className="flex flex-wrap items-center justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">Membership Promotions</h1>
+          <h1 className="text-3xl font-bold tracking-tight">Discount Codes</h1>
           <p className="mt-1 text-sm text-muted-foreground">
-            Manage discount codes for new memberships and renewals.
+            Manage codes for new memberships and renewals.
           </p>
         </div>
         <Button onClick={() => setEditing('new')}>
           <Plus className="h-4 w-4" />
-          New Promotion
+          New Discount Code
         </Button>
       </div>
 
-      <ErrorAlert error={statusMutation.error?.message} action="Update promotion" />
+      <ErrorAlert error={statusMutation.error?.message} action="Update discount code" />
 
       {promotions.length === 0 ? (
         <div className="rounded-lg border bg-muted p-8 text-center text-muted-foreground">
-          No promotions.
+          No discount codes.
         </div>
       ) : (
         <div className="space-y-3">

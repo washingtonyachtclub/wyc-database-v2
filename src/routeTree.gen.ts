@@ -23,7 +23,6 @@ import { Route as PositionsRouteImport } from './routes/positions'
 import { Route as OfficersRouteImport } from './routes/officers'
 import { Route as MyLessonsRouteImport } from './routes/my-lessons'
 import { Route as MembershipStatsRouteImport } from './routes/membership-stats'
-import { Route as MembershipPromotionsRouteImport } from './routes/membership-promotions'
 import { Route as MembershipApprovalsRouteImport } from './routes/membership-approvals'
 import { Route as MembersRouteImport } from './routes/members'
 import { Route as MeetTheTeamRouteImport } from './routes/meet-the-team'
@@ -38,6 +37,7 @@ import { Route as GuestWaiverRouteImport } from './routes/guest-waiver'
 import { Route as ForgotPasswordRouteImport } from './routes/forgot-password'
 import { Route as ForbiddenRouteImport } from './routes/forbidden'
 import { Route as DoorCodesRouteImport } from './routes/door-codes'
+import { Route as DiscountCodesRouteImport } from './routes/discount-codes'
 import { Route as DbDotcgiRouteImport } from './routes/db[.]cgi'
 import { Route as ChiefsRouteImport } from './routes/chiefs'
 import { Route as CheckoutsRouteImport } from './routes/checkouts'
@@ -128,11 +128,6 @@ const MembershipStatsRoute = MembershipStatsRouteImport.update({
   path: '/membership-stats',
   getParentRoute: () => rootRouteImport,
 } as any)
-const MembershipPromotionsRoute = MembershipPromotionsRouteImport.update({
-  id: '/membership-promotions',
-  path: '/membership-promotions',
-  getParentRoute: () => rootRouteImport,
-} as any)
 const MembershipApprovalsRoute = MembershipApprovalsRouteImport.update({
   id: '/membership-approvals',
   path: '/membership-approvals',
@@ -201,6 +196,11 @@ const ForbiddenRoute = ForbiddenRouteImport.update({
 const DoorCodesRoute = DoorCodesRouteImport.update({
   id: '/door-codes',
   path: '/door-codes',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const DiscountCodesRoute = DiscountCodesRouteImport.update({
+  id: '/discount-codes',
+  path: '/discount-codes',
   getParentRoute: () => rootRouteImport,
 } as any)
 const DbDotcgiRoute = DbDotcgiRouteImport.update({
@@ -307,6 +307,7 @@ export interface FileRoutesByFullPath {
   '/checkouts': typeof CheckoutsRoute
   '/chiefs': typeof ChiefsRoute
   '/db.cgi': typeof DbDotcgiRoute
+  '/discount-codes': typeof DiscountCodesRoute
   '/door-codes': typeof DoorCodesRoute
   '/forbidden': typeof ForbiddenRoute
   '/forgot-password': typeof ForgotPasswordRoute
@@ -321,7 +322,6 @@ export interface FileRoutesByFullPath {
   '/meet-the-team': typeof MeetTheTeamRoute
   '/members': typeof MembersRoute
   '/membership-approvals': typeof MembershipApprovalsRoute
-  '/membership-promotions': typeof MembershipPromotionsRoute
   '/membership-stats': typeof MembershipStatsRoute
   '/my-lessons': typeof MyLessonsRouteWithChildren
   '/officers': typeof OfficersRoute
@@ -357,6 +357,7 @@ export interface FileRoutesByTo {
   '/checkouts': typeof CheckoutsRoute
   '/chiefs': typeof ChiefsRoute
   '/db.cgi': typeof DbDotcgiRoute
+  '/discount-codes': typeof DiscountCodesRoute
   '/door-codes': typeof DoorCodesRoute
   '/forbidden': typeof ForbiddenRoute
   '/forgot-password': typeof ForgotPasswordRoute
@@ -371,7 +372,6 @@ export interface FileRoutesByTo {
   '/meet-the-team': typeof MeetTheTeamRoute
   '/members': typeof MembersRoute
   '/membership-approvals': typeof MembershipApprovalsRoute
-  '/membership-promotions': typeof MembershipPromotionsRoute
   '/membership-stats': typeof MembershipStatsRoute
   '/my-lessons': typeof MyLessonsRouteWithChildren
   '/officers': typeof OfficersRoute
@@ -408,6 +408,7 @@ export interface FileRoutesById {
   '/checkouts': typeof CheckoutsRoute
   '/chiefs': typeof ChiefsRoute
   '/db.cgi': typeof DbDotcgiRoute
+  '/discount-codes': typeof DiscountCodesRoute
   '/door-codes': typeof DoorCodesRoute
   '/forbidden': typeof ForbiddenRoute
   '/forgot-password': typeof ForgotPasswordRoute
@@ -422,7 +423,6 @@ export interface FileRoutesById {
   '/meet-the-team': typeof MeetTheTeamRoute
   '/members': typeof MembersRoute
   '/membership-approvals': typeof MembershipApprovalsRoute
-  '/membership-promotions': typeof MembershipPromotionsRoute
   '/membership-stats': typeof MembershipStatsRoute
   '/my-lessons': typeof MyLessonsRouteWithChildren
   '/officers': typeof OfficersRoute
@@ -460,6 +460,7 @@ export interface FileRouteTypes {
     | '/checkouts'
     | '/chiefs'
     | '/db.cgi'
+    | '/discount-codes'
     | '/door-codes'
     | '/forbidden'
     | '/forgot-password'
@@ -474,7 +475,6 @@ export interface FileRouteTypes {
     | '/meet-the-team'
     | '/members'
     | '/membership-approvals'
-    | '/membership-promotions'
     | '/membership-stats'
     | '/my-lessons'
     | '/officers'
@@ -510,6 +510,7 @@ export interface FileRouteTypes {
     | '/checkouts'
     | '/chiefs'
     | '/db.cgi'
+    | '/discount-codes'
     | '/door-codes'
     | '/forbidden'
     | '/forgot-password'
@@ -524,7 +525,6 @@ export interface FileRouteTypes {
     | '/meet-the-team'
     | '/members'
     | '/membership-approvals'
-    | '/membership-promotions'
     | '/membership-stats'
     | '/my-lessons'
     | '/officers'
@@ -560,6 +560,7 @@ export interface FileRouteTypes {
     | '/checkouts'
     | '/chiefs'
     | '/db.cgi'
+    | '/discount-codes'
     | '/door-codes'
     | '/forbidden'
     | '/forgot-password'
@@ -574,7 +575,6 @@ export interface FileRouteTypes {
     | '/meet-the-team'
     | '/members'
     | '/membership-approvals'
-    | '/membership-promotions'
     | '/membership-stats'
     | '/my-lessons'
     | '/officers'
@@ -611,6 +611,7 @@ export interface RootRouteChildren {
   CheckoutsRoute: typeof CheckoutsRoute
   ChiefsRoute: typeof ChiefsRoute
   DbDotcgiRoute: typeof DbDotcgiRoute
+  DiscountCodesRoute: typeof DiscountCodesRoute
   DoorCodesRoute: typeof DoorCodesRoute
   ForbiddenRoute: typeof ForbiddenRoute
   ForgotPasswordRoute: typeof ForgotPasswordRoute
@@ -625,7 +626,6 @@ export interface RootRouteChildren {
   MeetTheTeamRoute: typeof MeetTheTeamRoute
   MembersRoute: typeof MembersRoute
   MembershipApprovalsRoute: typeof MembershipApprovalsRoute
-  MembershipPromotionsRoute: typeof MembershipPromotionsRoute
   MembershipStatsRoute: typeof MembershipStatsRoute
   MyLessonsRoute: typeof MyLessonsRouteWithChildren
   OfficersRoute: typeof OfficersRoute
@@ -753,13 +753,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof MembershipStatsRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/membership-promotions': {
-      id: '/membership-promotions'
-      path: '/membership-promotions'
-      fullPath: '/membership-promotions'
-      preLoaderRoute: typeof MembershipPromotionsRouteImport
-      parentRoute: typeof rootRouteImport
-    }
     '/membership-approvals': {
       id: '/membership-approvals'
       path: '/membership-approvals'
@@ -856,6 +849,13 @@ declare module '@tanstack/react-router' {
       path: '/door-codes'
       fullPath: '/door-codes'
       preLoaderRoute: typeof DoorCodesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/discount-codes': {
+      id: '/discount-codes'
+      path: '/discount-codes'
+      fullPath: '/discount-codes'
+      preLoaderRoute: typeof DiscountCodesRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/db.cgi': {
@@ -1014,6 +1014,7 @@ const rootRouteChildren: RootRouteChildren = {
   CheckoutsRoute: CheckoutsRoute,
   ChiefsRoute: ChiefsRoute,
   DbDotcgiRoute: DbDotcgiRoute,
+  DiscountCodesRoute: DiscountCodesRoute,
   DoorCodesRoute: DoorCodesRoute,
   ForbiddenRoute: ForbiddenRoute,
   ForgotPasswordRoute: ForgotPasswordRoute,
@@ -1028,7 +1029,6 @@ const rootRouteChildren: RootRouteChildren = {
   MeetTheTeamRoute: MeetTheTeamRoute,
   MembersRoute: MembersRoute,
   MembershipApprovalsRoute: MembershipApprovalsRoute,
-  MembershipPromotionsRoute: MembershipPromotionsRoute,
   MembershipStatsRoute: MembershipStatsRoute,
   MyLessonsRoute: MyLessonsRouteWithChildren,
   OfficersRoute: OfficersRoute,
