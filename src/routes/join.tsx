@@ -2,6 +2,14 @@ import { MembershipQuestionnaireFields } from '@/components/renewals/MembershipQ
 import type { SquareCardHandle } from '@/components/renewals/SquareCardForm'
 import { SquareCardForm } from '@/components/renewals/SquareCardForm'
 import { Button } from '@/components/ui/button'
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog'
 import { ErrorAlert } from '@/components/ui/ErrorAlert'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -87,6 +95,7 @@ function JoinPage() {
   const [existingMember, setExistingMember] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [isSubmitting, setIsSubmitting] = useState(false)
+  const [showExemptionModal, setShowExemptionModal] = useState(false)
   const [validationErrors, setValidationErrors] = useState<ValidationErrors>({})
   const embedded = search.embed === true
 
@@ -231,8 +240,13 @@ function JoinPage() {
     }
   }
 
-  async function requestDuesExemption() {
+  function openDuesExemptionConfirmation() {
     if (submittingRef.current || !validateApplication(false) || !questionnaire) return
+    setShowExemptionModal(true)
+  }
+
+  async function requestDuesExemption() {
+    if (submittingRef.current || !questionnaire) return
     submittingRef.current = true
     setIsSubmitting(true)
     try {
@@ -559,11 +573,39 @@ function JoinPage() {
                 variant="outline"
                 className="w-full"
                 disabled={isSubmitting}
-                onClick={requestDuesExemption}
+                onClick={openDuesExemptionConfirmation}
               >
                 Request Dues Exemption
               </Button>
             </section>
+
+            <Dialog open={showExemptionModal} onOpenChange={setShowExemptionModal}>
+              <DialogContent className="sm:max-w-lg">
+                <DialogHeader>
+                  <DialogTitle>Request Dues Exemption</DialogTitle>
+                  <DialogDescription className="pt-2">
+                    You're requesting dues-exempt membership for{' '}
+                    <strong>{signupOptions.quarterly.targetLabel}</strong>. Only do this if you have
+                    been instructed to do so. This is for officers, instructors, and other approved
+                    members.
+                  </DialogDescription>
+                </DialogHeader>
+                <ErrorAlert error={error} action="Request dues exemption" />
+                <DialogFooter className="pt-2">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={() => setShowExemptionModal(false)}
+                    disabled={isSubmitting}
+                  >
+                    Cancel
+                  </Button>
+                  <Button type="button" onClick={requestDuesExemption} disabled={isSubmitting}>
+                    {isSubmitting ? 'Submitting…' : 'I understand'}
+                  </Button>
+                </DialogFooter>
+              </DialogContent>
+            </Dialog>
           </form>
         </div>
       </div>
