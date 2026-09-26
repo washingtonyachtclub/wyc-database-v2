@@ -2,6 +2,14 @@ import { MembershipQuestionnaireFields } from '@/components/renewals/MembershipQ
 import type { SquareCardHandle } from '@/components/renewals/SquareCardForm'
 import { SquareCardForm } from '@/components/renewals/SquareCardForm'
 import { Button } from '@/components/ui/button'
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog'
 import { ErrorAlert } from '@/components/ui/ErrorAlert'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -9,6 +17,7 @@ import {
   newMemberPriceQueryOptions,
   newMemberSignupOptionsQueryOptions,
   useCheckNewMemberEmailMutation,
+  useStartNewMemberExemptionMutation,
   useStartNewMemberPaymentMutation,
 } from '@/domains/membership-applications/query-options'
 import type { RenewalDuration } from '@/domains/renewals/compute-renewal'
@@ -72,6 +81,7 @@ function JoinPage() {
   const cardRef = useRef<SquareCardHandle>(null)
   const submittingRef = useRef(false)
   const payment = useStartNewMemberPaymentMutation()
+  const exemption = useStartNewMemberExemptionMutation()
   const emailCheck = useCheckNewMemberEmailMutation()
 
   const [firstName, setFirstName] = useState('')
@@ -85,6 +95,7 @@ function JoinPage() {
   const [existingMember, setExistingMember] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [isSubmitting, setIsSubmitting] = useState(false)
+  const [showExemptionModal, setShowExemptionModal] = useState(false)
   const [validationErrors, setValidationErrors] = useState<ValidationErrors>({})
   const embedded = search.embed === true
 
@@ -144,9 +155,7 @@ function JoinPage() {
     }
   }
 
-  async function submit(event: React.FormEvent) {
-    event.preventDefault()
-    if (submittingRef.current) return
+  function validateApplication(requirePrice: boolean) {
     setError(null)
     const errors: ValidationErrors = {}
     if (!firstName.trim()) errors.firstName = 'First name is required.'
@@ -165,7 +174,7 @@ function JoinPage() {
       } else if (uwEmail.trim() && !/^\S+@\S+\.\S+$/.test(uwEmail.trim())) {
         errors.uwEmail = 'Enter a valid UW email address.'
       }
-      if (!selectedPrice.isLoading && !selectedPrice.data) {
+      if (requirePrice && !selectedPrice.isLoading && !selectedPrice.data) {
         errors.duration = 'Membership pricing is unavailable. Try again.'
       }
     }
@@ -180,9 +189,14 @@ function JoinPage() {
           : field?.querySelector<HTMLElement>('input, button')
         if (focusTarget instanceof HTMLElement) focusTarget.focus({ preventScroll: true })
       })
-      return
+      return false
     }
-    if (!questionnaire) return
+    return questionnaire !== null
+  }
+
+  async function submit(event: React.FormEvent) {
+    event.preventDefault()
+    if (submittingRef.current || !validateApplication(true) || !questionnaire) return
     submittingRef.current = true
     setIsSubmitting(true)
     try {
@@ -214,6 +228,44 @@ function JoinPage() {
           to: '/join/$applicationId',
           params: { applicationId: result.applicationId },
           search: { embed: embedded ? true : undefined, email: undefined, simulated: false },
+        })
+        return
+      }
+      setError(result.message)
+    } catch (caught: any) {
+      setError(caught?.message ?? 'Something went wrong. Please try again.')
+    } finally {
+      submittingRef.current = false
+      setIsSubmitting(false)
+    }
+  }
+
+  function openDuesExemptionConfirmation() {
+    if (submittingRef.current || !validateApplication(false) || !questionnaire) return
+    setShowExemptionModal(true)
+  }
+
+  async function requestDuesExemption() {
+    if (submittingRef.current || !questionnaire) return
+    submittingRef.current = true
+    setIsSubmitting(true)
+    try {
+      const result = await exemption.mutateAsync({
+        firstName,
+        lastName,
+        primaryEmail,
+        questionnaire,
+        uwEmail,
+      })
+      if (result.success) {
+        await navigate({
+          to: '/join/$applicationId',
+          params: { applicationId: result.applicationId },
+          search: {
+            embed: embedded ? true : undefined,
+            email: result.emailSent ? 'sent' : 'failed',
+            simulated: result.emailSimulated,
+          },
         })
         return
       }
@@ -510,7 +562,50 @@ function JoinPage() {
               >
                 {isSubmitting ? 'Processing…' : 'Pay and Sign Up'}
               </Button>
+              <div className="flex items-center gap-3 text-sm text-muted-foreground">
+                <span className="h-px flex-1 bg-border" />
+                <span>or</span>
+                <span className="h-px flex-1 bg-border" />
+              </div>
+              <Button
+                type="button"
+                size="lg"
+                variant="outline"
+                className="w-full"
+                disabled={isSubmitting}
+                onClick={openDuesExemptionConfirmation}
+              >
+                Request Dues Exemption
+              </Button>
             </section>
+
+            <Dialog open={showExemptionModal} onOpenChange={setShowExemptionModal}>
+              <DialogContent className="sm:max-w-lg">
+                <DialogHeader>
+                  <DialogTitle>Request Dues Exemption</DialogTitle>
+                  <DialogDescription className="pt-2">
+                    You're requesting dues-exempt membership for{' '}
+                    <strong>{signupOptions.quarterly.targetLabel}</strong>. Only do this if you have
+                    been instructed to do so. This is for officers, instructors, and other approved
+                    members.
+                  </DialogDescription>
+                </DialogHeader>
+                <ErrorAlert error={error} action="Request dues exemption" />
+                <DialogFooter className="pt-2">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={() => setShowExemptionModal(false)}
+                    disabled={isSubmitting}
+                  >
+                    Cancel
+                  </Button>
+                  <Button type="button" onClick={requestDuesExemption} disabled={isSubmitting}>
+                    {isSubmitting ? 'Submitting…' : 'I understand'}
+                  </Button>
+                </DialogFooter>
+              </DialogContent>
+            </Dialog>
           </form>
         </div>
       </div>

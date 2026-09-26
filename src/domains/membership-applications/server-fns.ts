@@ -31,6 +31,7 @@ import { and, count, eq, gte, isNull } from 'drizzle-orm'
 import { createHash, createHmac, randomUUID } from 'node:crypto'
 import { z } from 'zod'
 import { sendApplicationCompletionEmail } from './email'
+import { canCompleteMembershipApplication } from './funding'
 
 const APPLICATION_RATE_WINDOW_MS = 30 * 60 * 1000
 const MAX_APPLICATIONS_PER_WINDOW = 8
@@ -38,30 +39,50 @@ const applicationIdSchema = z.uuid()
 const emailSchema = z.string().trim().email().max(254)
 const requiredText = (max: number) => z.string().trim().min(1).max(max)
 
-const paymentInputSchema = z
-  .object({
-    duration: z.enum(['quarterly', 'annual']),
-    firstName: requiredText(60),
-    lastName: requiredText(60),
-    primaryEmail: emailSchema,
-    questionnaire: z.unknown(),
-    sourceId: requiredText(2_000),
-    uwEmail: z.union([emailSchema, z.literal('')]).optional(),
-  })
-  .transform((input) => ({
+const applicantInputShape = {
+  firstName: requiredText(60),
+  lastName: requiredText(60),
+  primaryEmail: emailSchema,
+  questionnaire: z.unknown(),
+  uwEmail: z.union([emailSchema, z.literal('')]).optional(),
+}
+
+function parseApplicantInput<T extends z.output<z.ZodObject<typeof applicantInputShape>>>(
+  input: T,
+) {
+  return {
     ...input,
     questionnaire: parseQuestionnaire(input.questionnaire),
     uwEmail: input.uwEmail || null,
-  }))
-  .superRefine((input, context) => {
-    if (input.questionnaire.uwStatus === 'student' && !input.uwEmail) {
-      context.addIssue({
-        code: 'custom',
-        message: 'UW email is required for students.',
-        path: ['uwEmail'],
-      })
-    }
+  }
+}
+
+function requireStudentUwEmail(
+  input: { questionnaire: { uwStatus: string }; uwEmail: string | null },
+  context: z.RefinementCtx,
+) {
+  if (input.questionnaire.uwStatus === 'student' && !input.uwEmail) {
+    context.addIssue({
+      code: 'custom',
+      message: 'UW email is required for students.',
+      path: ['uwEmail'],
+    })
+  }
+}
+
+const paymentInputSchema = z
+  .object({
+    ...applicantInputShape,
+    duration: z.enum(['quarterly', 'annual']),
+    sourceId: requiredText(2_000),
   })
+  .transform(parseApplicantInput)
+  .superRefine(requireStudentUwEmail)
+
+const exemptionInputSchema = z
+  .object(applicantInputShape)
+  .transform(parseApplicantInput)
+  .superRefine(requireStudentUwEmail)
 
 const completionInputSchema = z
   .object({
@@ -130,6 +151,80 @@ async function updatePaymentStatus(applicationId: string, paymentStatus: string)
   }
 }
 
+type ApplicantInput = z.output<typeof exemptionInputSchema>
+
+async function createMembershipApplication(
+  input: ApplicantInput,
+  duration: RenewalDuration,
+  paymentStatus: 'pending' | 'exemption_requested',
+) {
+  const now = new Date()
+  let createdIpHash: string
+  let applicationCount: number
+  try {
+    createdIpHash = hashRequestIp()
+    const [rateLimit] = await db
+      .select({ applicationCount: count() })
+      .from(membershipApplications)
+      .where(
+        and(
+          eq(membershipApplications.createdIpHash, createdIpHash),
+          gte(
+            membershipApplications.createdAt,
+            new Date(now.getTime() - APPLICATION_RATE_WINDOW_MS),
+          ),
+        ),
+      )
+    applicationCount = rateLimit.applicationCount
+  } catch (error) {
+    console.error('Failed to check new-member application rate limit:', error)
+    return {
+      success: false as const,
+      retryAllowed: true as const,
+      message: 'We could not start your application. Please try again.',
+    }
+  }
+  if (applicationCount >= MAX_APPLICATIONS_PER_WINDOW) {
+    return {
+      success: false as const,
+      retryAllowed: false as const,
+      message: 'Too many application attempts. Please wait and try again later.',
+    }
+  }
+
+  const applicationId = randomUUID()
+  const targetExpireQtr = computeRenewal(0, duration)
+  const tier = tierForUwStatus(input.questionnaire.uwStatus)
+  try {
+    await db.insert(membershipApplications).values({
+      id: applicationId,
+      createdAt: now,
+      createdIpHash,
+      duration,
+      firstName: input.firstName,
+      lastName: input.lastName,
+      paymentStatus,
+      plusOneResponse: input.questionnaire.plusOneResponse,
+      primaryEmail: input.primaryEmail,
+      questionnaireVersion: CURRENT_NEW_MEMBER_QUESTIONNAIRE_VERSION,
+      submittedPrimaryEmail: input.primaryEmail,
+      submittedUwEmail: input.uwEmail,
+      targetExpireQtr,
+      tier,
+      uwEmail: input.uwEmail,
+      uwStatus: input.questionnaire.uwStatus,
+    })
+    return { success: true as const, applicationId, targetExpireQtr, tier }
+  } catch (error) {
+    console.error('Failed to create membership application:', error)
+    return {
+      success: false as const,
+      retryAllowed: true as const,
+      message: 'We could not start your application. Please try again.',
+    }
+  }
+}
+
 export const checkNewMemberEmail = createServerFn({ method: 'POST' })
   .inputValidator((input: { email: string }) => emailSchema.parse(input.email))
   .handler(async ({ data: email }) => {
@@ -186,66 +281,43 @@ export const getNewMemberPrice = createServerFn({ method: 'GET' })
     }
   })
 
+export const startNewMemberExemption = createServerFn({ method: 'POST' })
+  .inputValidator((input: z.input<typeof exemptionInputSchema>) =>
+    exemptionInputSchema.parse(input),
+  )
+  .handler(async ({ data }) => {
+    const application = await createMembershipApplication(data, 'quarterly', 'exemption_requested')
+    if (!application.success) return application
+
+    let email = { emailSent: false, emailSimulated: false }
+    try {
+      email = await sendApplicationCompletionEmail({
+        applicationId: application.applicationId,
+        firstName: data.firstName,
+        lastName: data.lastName,
+        origin: getRequest().url,
+        primaryEmail: data.primaryEmail,
+        type: 'initial',
+      })
+    } catch (error) {
+      console.error('Failed to send new-member exemption completion email:', {
+        applicationId: application.applicationId,
+        error,
+      })
+    }
+    return {
+      applicationId: application.applicationId,
+      success: true as const,
+      ...email,
+    }
+  })
+
 export const startNewMemberPayment = createServerFn({ method: 'POST' })
   .inputValidator((input: z.input<typeof paymentInputSchema>) => paymentInputSchema.parse(input))
   .handler(async ({ data }) => {
-    const now = new Date()
-    let createdIpHash: string
-    let applicationCount: number
-    try {
-      createdIpHash = hashRequestIp()
-      const [rateLimit] = await db
-        .select({ applicationCount: count() })
-        .from(membershipApplications)
-        .where(
-          and(
-            eq(membershipApplications.createdIpHash, createdIpHash),
-            gte(
-              membershipApplications.createdAt,
-              new Date(now.getTime() - APPLICATION_RATE_WINDOW_MS),
-            ),
-          ),
-        )
-      applicationCount = rateLimit.applicationCount
-    } catch (error) {
-      console.error('Failed to check new-member payment rate limit:', error)
-      throw new Error('We could not start your application. Please try again.')
-    }
-    if (applicationCount >= MAX_APPLICATIONS_PER_WINDOW) {
-      return {
-        success: false as const,
-        retryAllowed: false as const,
-        message: 'Too many payment attempts. Please wait and try again later.',
-      }
-    }
-
-    const applicationId = randomUUID()
-    const targetExpireQtr = computeRenewal(0, data.duration)
-    const tier = tierForUwStatus(data.questionnaire.uwStatus)
-
-    try {
-      await db.insert(membershipApplications).values({
-        id: applicationId,
-        createdAt: now,
-        createdIpHash,
-        duration: data.duration,
-        firstName: data.firstName,
-        lastName: data.lastName,
-        paymentStatus: 'pending',
-        plusOneResponse: data.questionnaire.plusOneResponse,
-        primaryEmail: data.primaryEmail,
-        questionnaireVersion: CURRENT_NEW_MEMBER_QUESTIONNAIRE_VERSION,
-        submittedPrimaryEmail: data.primaryEmail,
-        submittedUwEmail: data.uwEmail,
-        targetExpireQtr,
-        tier,
-        uwEmail: data.uwEmail,
-        uwStatus: data.questionnaire.uwStatus,
-      })
-    } catch (error) {
-      console.error('Failed to create membership application:', error)
-      throw new Error('We could not start your application. Please try again.')
-    }
+    const application = await createMembershipApplication(data, data.duration, 'pending')
+    if (!application.success) return application
+    const { applicationId, targetExpireQtr, tier } = application
 
     let order: Awaited<ReturnType<typeof createMembershipOrder>>
     try {
@@ -494,10 +566,10 @@ export const completeNewMemberApplication = createServerFn({ method: 'POST' })
     }
 
     if (!application) return { success: false as const, message: 'Application not found.' }
-    if (application.paymentStatus !== 'completed') {
+    if (!canCompleteMembershipApplication(application.paymentStatus)) {
       return {
         success: false as const,
-        message: 'This application does not have a completed payment.',
+        message: 'This application is not ready for completion.',
       }
     }
     if (application.requirementsCompletedAt) {
@@ -563,7 +635,7 @@ export const completeNewMemberApplication = createServerFn({ method: 'POST' })
           .from(membershipApplications)
           .where(eq(membershipApplications.id, data.applicationId))
           .for('update')
-        if (!current || current.paymentStatus !== 'completed') {
+        if (!current || !canCompleteMembershipApplication(current.paymentStatus)) {
           throw new Error('Application is not eligible for completion')
         }
         if (current.requirementsCompletedAt) {

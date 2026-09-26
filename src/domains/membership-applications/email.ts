@@ -22,7 +22,10 @@ export async function sendApplicationCompletionEmail(input: {
   type: 'initial' | 'resend'
 }) {
   const [delivery] = await db
-    .select({ recoveryEmailSentAt: membershipApplications.recoveryEmailSentAt })
+    .select({
+      paymentStatus: membershipApplications.paymentStatus,
+      recoveryEmailSentAt: membershipApplications.recoveryEmailSentAt,
+    })
     .from(membershipApplications)
     .where(eq(membershipApplications.id, input.applicationId))
     .limit(1)
@@ -34,7 +37,12 @@ export async function sendApplicationCompletionEmail(input: {
   const result = await sendEmail({
     idempotencyKey: `new-member-completion/${input.applicationId}/${attempt}`,
     subject: 'Finish your WYC membership application',
-    text: newMemberCompletionEmail(input.firstName, input.lastName, completionUrl),
+    text: newMemberCompletionEmail(
+      input.firstName,
+      input.lastName,
+      completionUrl,
+      delivery?.paymentStatus === 'exemption_requested',
+    ),
     to: input.primaryEmail,
   })
 

@@ -4,7 +4,8 @@
 
 Logged-in members renew on `/renew-membership` by paying with a card or requesting a dues exemption. Both paths create a renewal workflow. Membership expiry and category are updated only after the workflow has its required funding decision and a signed member waiver.
 
-New member signup is handled separately through `/join` and `/membership-approvals`. See [new member signup](new-member-signup.md).
+New member signup and new-member exemption requests are handled separately through `/join` and
+`/membership-approvals`. See [new member signup](new-member-signup.md).
 
 ## Renewal lifecycle
 

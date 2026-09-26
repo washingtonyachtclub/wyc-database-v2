@@ -2,9 +2,9 @@
 
 ## Overview
 
-New members pay on the public `/join` route, then complete their contact information and member
-waiver through a resumable application link. Payment does not create a member or activate
-membership. A completed application enters the officer review queue.
+New members pay or request a dues exemption on the public `/join` route, then complete their
+contact information and member waiver through a resumable application link. Funding does not
+create a member or activate membership. A completed application enters the officer review queue.
 
 ## Payment
 
@@ -24,6 +24,17 @@ the applicant not to pay again.
 
 After payment, the browser opens `/join/{applicationId}` and an email sends the same recovery link.
 The application UUID is the bearer credential for this page and does not expire.
+
+## Dues exemptions
+
+An applicant can request a dues exemption instead of paying. The request always covers one quarter.
+It creates an application with funding state `exemption_requested` and sends the same resumable
+completion link used after payment. The applicant can immediately submit contact information and
+sign the waiver.
+
+The application stays in the New members approval queue. Approving it also approves the exemption
+and creates a zero-dollar `EXEMPT` membership ledger row. Closing the application denies the
+request. New-member exemption requests do not use the existing-member renewal workflow.
 
 ## Website embedding
 
@@ -88,7 +99,7 @@ eligible for the next run.
 
 ## Application states
 
-Payment and review are independent states:
+Funding and review are independent states:
 
 | State                     | Meaning                                                            |
 | ------------------------- | ------------------------------------------------------------------ |
@@ -96,6 +107,8 @@ Payment and review are independent states:
 | `failed`                  | The order or payment definitely failed and another attempt is safe |
 | `reconciliation_required` | The outcome may include a charge and requires manual review        |
 | `completed`               | The financial ledger row exists and requirements may be submitted  |
+| `exemption_requested`     | The applicant requested one dues-exempt quarter                    |
+| `exempt`                  | Approval created the zero-dollar exemption ledger row              |
 | `not_ready`               | Contact information and waiver are incomplete                      |
 | `pending_review`          | All public requirements are stored                                 |
 | `approved_new`            | Review created a new member                                        |

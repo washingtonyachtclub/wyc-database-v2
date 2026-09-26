@@ -6,6 +6,7 @@ import {
   getNewMemberApplication,
   getNewMemberPrice,
   getNewMemberSignupOptions,
+  startNewMemberExemption,
   startNewMemberPayment,
 } from './server-fns'
 import {
@@ -44,6 +45,13 @@ export function useStartNewMemberPaymentMutation() {
   return useMutation({
     mutationFn: (input: Parameters<typeof startNewMemberPayment>[0]['data']) =>
       startNewMemberPayment({ data: input }),
+  })
+}
+
+export function useStartNewMemberExemptionMutation() {
+  return useMutation({
+    mutationFn: (input: Parameters<typeof startNewMemberExemption>[0]['data']) =>
+      startNewMemberExemption({ data: input }),
   })
 }
 

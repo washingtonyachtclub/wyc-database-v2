@@ -108,10 +108,11 @@ export function newMemberCompletionEmail(
   firstName: string,
   _lastName: string,
   completionUrl: string,
+  duesExemptionRequested = false,
 ): string {
   return `Hello ${firstName},
 
-We received your Washington Yacht Club membership payment.
+We received your Washington Yacht Club ${duesExemptionRequested ? 'dues-exemption request' : 'membership payment'}.
 
 Complete your contact information and sign the member waiver here:
 ${completionUrl}
