@@ -17,13 +17,13 @@ import {
   getMembershipPrice,
 } from '@/domains/membership-payments/square-payment'
 import {
-  parsePromotionSelection,
-  type ResolvedPromotion,
-} from '@/domains/membership-promotions/schema'
+  parseDiscountCodeSelection,
+  type ResolvedDiscountCode,
+} from '@/domains/membership-discount-codes/schema'
 import {
-  insertMembershipPromotionRedemption,
-  resolveMembershipPromotion,
-} from '@/domains/membership-promotions/service'
+  insertMembershipDiscountCodeRedemption,
+  resolveMembershipDiscountCode,
+} from '@/domains/membership-discount-codes/service'
 import { sendEmail } from '@/lib/email'
 import { renewalWaiverRequiredEmail } from '@/lib/emails/membership'
 import { createServerFn } from '@tanstack/react-start'
@@ -185,7 +185,7 @@ async function recordPaidRenewal(input: {
   duration: RenewalDuration
   prevExpireQtr: number
   questionnaire: QuestionnaireAnswers
-  promotion: ResolvedPromotion | null
+  discountCode: ResolvedDiscountCode | null
   squareOrderId: string
   squarePaymentId: string
   targetExpireQtr: number
@@ -217,12 +217,12 @@ async function recordPaidRenewal(input: {
       newExpireQtr: input.targetExpireQtr,
       status: 'COMPLETED',
     })
-    if (input.promotion) {
-      await insertMembershipPromotionRedemption(tx, {
+    if (input.discountCode) {
+      await insertMembershipDiscountCodeRedemption(tx, {
         discountCents: input.discountCents,
         finalCents: input.amountCents,
         paymentId: result[0].insertId,
-        promotion: input.promotion,
+        discountCode: input.discountCode,
         subtotalCents: input.subtotalCents,
       })
     }
@@ -275,12 +275,12 @@ export const payAndRenew = createServerFn({ method: 'POST' })
   .inputValidator(
     (input: {
       duration: string
-      promotion?: unknown
+      discountCode?: unknown
       sourceId: string
       questionnaire: unknown
     }) => ({
       duration: parseDuration(input.duration),
-      promotion: parsePromotionSelection(input.promotion),
+      discountCode: parseDiscountCodeSelection(input.discountCode),
       sourceId: String(input.sourceId),
       answers: parseQuestionnaire(input.questionnaire),
     }),
@@ -327,13 +327,13 @@ export const payAndRenew = createServerFn({ method: 'POST' })
         'Your membership is already paid as far ahead as we allow. Please renew again closer to your expiry date.',
       )
     }
-    const promotion = data.promotion
+    const discountCode = data.discountCode
       ? await getMembershipPrice(tier, data.duration).then((price) =>
-          resolveMembershipPromotion({
+          resolveMembershipDiscountCode({
             audience: 'renewals',
-            code: data.promotion!.code,
+            code: data.discountCode!.code,
             currency: price.currency,
-            expectedRevision: data.promotion!.revision,
+            expectedRevision: data.discountCode!.revision,
             subtotalCents: price.amountCents,
           }),
         )
@@ -342,9 +342,9 @@ export const payAndRenew = createServerFn({ method: 'POST' })
     let order: Awaited<ReturnType<typeof createMembershipOrder>>
     try {
       order = await createMembershipOrder({
-        discount: promotion,
+        discount: discountCode,
         duration: data.duration,
-        idempotencyKey: `renew-o/${wycNumber}/${targetExpireQtr}/${promotion?.index ?? 'none'}/${promotion?.revision ?? 0}`,
+        idempotencyKey: `renew-o/${wycNumber}/${targetExpireQtr}/${discountCode?.index ?? 'none'}/${discountCode?.revision ?? 0}`,
         tier,
       })
     } catch (error) {
@@ -417,7 +417,7 @@ export const payAndRenew = createServerFn({ method: 'POST' })
         currency: order.currency,
         discountCents: order.discountCents,
         subtotalCents: order.subtotalCents,
-        promotion,
+        discountCode,
         squarePaymentId: paymentId,
         squareOrderId: order.orderId,
         questionnaire: data.answers,

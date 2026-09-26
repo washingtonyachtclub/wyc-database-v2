@@ -12,11 +12,11 @@ import {
   createMembershipOrder,
   getMembershipPrice,
 } from '@/domains/membership-payments/square-payment'
-import { parsePromotionSelection } from '@/domains/membership-promotions/schema'
+import { parseDiscountCodeSelection } from '@/domains/membership-discount-codes/schema'
 import {
-  insertMembershipPromotionRedemption,
-  resolveMembershipPromotion,
-} from '@/domains/membership-promotions/service'
+  insertMembershipDiscountCodeRedemption,
+  resolveMembershipDiscountCode,
+} from '@/domains/membership-discount-codes/service'
 import type { RenewalDuration, RenewalTier } from '@/domains/renewals/compute-renewal'
 import { RENEWAL_QUARTER, computeRenewal } from '@/domains/renewals/compute-renewal'
 import { parseQuestionnaire, tierForUwStatus } from '@/domains/renewals/questionnaire'
@@ -79,12 +79,12 @@ const paymentInputSchema = z
   .object({
     ...applicantInputShape,
     duration: z.enum(['quarterly', 'annual']),
-    promotion: z.unknown().optional(),
+    discountCode: z.unknown().optional(),
     sourceId: requiredText(2_000),
   })
   .transform((input) => ({
     ...parseApplicantInput(input),
-    promotion: parsePromotionSelection(input.promotion),
+    discountCode: parseDiscountCodeSelection(input.discountCode),
   }))
   .superRefine(requireStudentUwEmail)
 
@@ -325,13 +325,13 @@ export const startNewMemberPayment = createServerFn({ method: 'POST' })
   .inputValidator((input: z.input<typeof paymentInputSchema>) => paymentInputSchema.parse(input))
   .handler(async ({ data }) => {
     const tier = tierForUwStatus(data.questionnaire.uwStatus)
-    const promotion = data.promotion
+    const discountCode = data.discountCode
       ? await getMembershipPrice(tier, data.duration).then((price) =>
-          resolveMembershipPromotion({
+          resolveMembershipDiscountCode({
             audience: 'new_members',
-            code: data.promotion!.code,
+            code: data.discountCode!.code,
             currency: price.currency,
-            expectedRevision: data.promotion!.revision,
+            expectedRevision: data.discountCode!.revision,
             subtotalCents: price.amountCents,
           }),
         )
@@ -343,7 +343,7 @@ export const startNewMemberPayment = createServerFn({ method: 'POST' })
     let order: Awaited<ReturnType<typeof createMembershipOrder>>
     try {
       order = await createMembershipOrder({
-        discount: promotion,
+        discount: discountCode,
         duration: data.duration,
         idempotencyKey: `join-o/${applicationId}`,
         tier,
@@ -441,12 +441,12 @@ export const startNewMemberPayment = createServerFn({ method: 'POST' })
           tier,
           wycNumber: null,
         })
-        if (promotion) {
-          await insertMembershipPromotionRedemption(tx, {
+        if (discountCode) {
+          await insertMembershipDiscountCodeRedemption(tx, {
             discountCents: order.discountCents,
             finalCents: order.amountCents,
             paymentId: result[0].insertId,
-            promotion,
+            discountCode,
             subtotalCents: order.subtotalCents,
           })
         }

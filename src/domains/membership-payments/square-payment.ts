@@ -81,7 +81,7 @@ export async function createMembershipOrder(input: {
                 percentage: String(input.discount.percentageOff),
                 scope: 'ORDER' as const,
                 type: 'FIXED_PERCENTAGE' as const,
-                uid: 'membership-promotion',
+                uid: 'membership-discount-code',
               }
             : {
                 amountMoney: {
@@ -91,7 +91,7 @@ export async function createMembershipOrder(input: {
                 name: input.discount.name,
                 scope: 'ORDER' as const,
                 type: 'FIXED_AMOUNT' as const,
-                uid: 'membership-promotion',
+                uid: 'membership-discount-code',
               },
         ],
       }),

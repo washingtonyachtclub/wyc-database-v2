@@ -612,8 +612,8 @@ export const doorCodes = mysqlTable(
   (table) => [primaryKey({ columns: [table.index] }), unique('uq_door_codes_slug').on(table.slug)],
 )
 
-export const membershipPromotions = mysqlTable(
-  'membership_promotions',
+export const membershipDiscountCodes = mysqlTable(
+  'membership_discount_codes',
   {
     index: int('_index').autoincrement().notNull(),
     name: varchar({ length: 100 }).notNull(),
@@ -635,10 +635,14 @@ export const membershipPromotions = mysqlTable(
   },
   (table) => [
     primaryKey({ columns: [table.index] }),
-    unique('uq_membership_promotions_code').on(table.code),
-    index('idx_membership_promotions_active_dates').on(table.active, table.startsOn, table.endsOn),
+    unique('uq_membership_discount_codes_code').on(table.code),
+    index('idx_membership_discount_codes_active_dates').on(
+      table.active,
+      table.startsOn,
+      table.endsOn,
+    ),
     check(
-      'chk_membership_promotions_discount',
+      'chk_membership_discount_codes_discount',
       sql`(${table.percentageOff} is not null) <> (${table.amountOffCents} is not null)`,
     ),
   ],
@@ -777,11 +781,11 @@ export const membershipPayments = mysqlTable(
   ],
 )
 
-export const membershipPromotionRedemptions = mysqlTable(
-  'membership_promotion_redemptions',
+export const membershipDiscountCodeRedemptions = mysqlTable(
+  'membership_discount_code_redemptions',
   {
     index: int('_index').autoincrement().notNull(),
-    promotionId: int('promotion_id').notNull(),
+    discountCodeId: int('discount_code_id').notNull(),
     paymentId: int('payment_id').notNull(),
     code: varchar({ length: 50 }).notNull(),
     revision: int('revision').notNull(),
@@ -794,17 +798,17 @@ export const membershipPromotionRedemptions = mysqlTable(
   },
   (table) => [
     primaryKey({ columns: [table.index] }),
-    unique('uq_membership_promotion_redemptions_payment').on(table.paymentId),
-    index('idx_membership_promotion_redemptions_promotion').on(table.promotionId),
+    unique('uq_membership_discount_code_redemptions_payment').on(table.paymentId),
+    index('idx_membership_discount_code_redemptions_discount_code').on(table.discountCodeId),
     foreignKey({
-      columns: [table.promotionId],
-      foreignColumns: [membershipPromotions.index],
-      name: 'fk_membership_promotion_redemptions_promotion',
+      columns: [table.discountCodeId],
+      foreignColumns: [membershipDiscountCodes.index],
+      name: 'fk_membership_discount_code_redemptions_discount_code',
     }),
     foreignKey({
       columns: [table.paymentId],
       foreignColumns: [membershipPayments.index],
-      name: 'fk_membership_promotion_redemptions_payment',
+      name: 'fk_membership_discount_code_redemptions_payment',
     }),
   ],
 )

@@ -13,7 +13,7 @@ One Rec Membership response, duration, and card details. Primary email is checke
 records when the field loses focus. A match displays a recovery link but does not block signup.
 
 Prices and order totals come from the same Square catalog variations used by renewals. An optional
-promotion applies to the catalog price before payment. The server derives the price tier from UW
+discount code applies to the catalog price before payment. The server derives the price tier from UW
 status. It creates an application before calling Square and stores
 the Square order ID and payment idempotency key on that application. One IP address can create up to
 eight applications within 30 minutes.
@@ -131,6 +131,6 @@ Funding and review are independent states:
 | `src/domains/membership-applications/reminders.ts`           | Incomplete-application reminder selection and delivery                             |
 | `src/domains/membership-applications/questionnaire.ts`       | Append-only demographic questionnaire definitions and snapshots                    |
 | `src/domains/membership-payments/square-payment.ts`          | Shared Square catalog, order, and payment operations                               |
-| `src/domains/membership-promotions/server-fns.ts`            | Promotion validation and redemption recording                                      |
+| `src/domains/membership-discount-codes/server-fns.ts`        | Discount code validation and redemption recording                                  |
 | `src/domains/waivers/MemberWaiverAgreementFields.tsx`        | Shared member waiver presentation and signature fields                             |
 | `src/db/schema.ts`                                           | Application, payment, emergency contact, and waiver relationships                  |

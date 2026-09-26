@@ -1,8 +1,11 @@
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import { useMembershipPromotionQuoteMutation } from '@/domains/membership-promotions/query-options'
-import type { PromotionAudience, PromotionQuote } from '@/domains/membership-promotions/schema'
+import { useMembershipDiscountCodeQuoteMutation } from '@/domains/membership-discount-codes/query-options'
+import type {
+  DiscountCodeAudience,
+  DiscountCodeQuote,
+} from '@/domains/membership-discount-codes/schema'
 import type { RenewalDuration, RenewalTier } from '@/domains/renewals/compute-renewal'
 import { useEffect, useRef, useState } from 'react'
 
@@ -10,22 +13,22 @@ function formatMoney(cents: number, currency: string) {
   return (cents / 100).toLocaleString('en-US', { style: 'currency', currency })
 }
 
-export function PromotionCodeField({
+export function DiscountCodeField({
   audience,
   disabled,
   duration,
   onApplied,
   tier,
 }: {
-  audience: Exclude<PromotionAudience, 'both'>
+  audience: Exclude<DiscountCodeAudience, 'both'>
   disabled?: boolean
   duration: RenewalDuration
-  onApplied: (promotion: PromotionQuote | null) => void
+  onApplied: (discountCode: DiscountCodeQuote | null) => void
   tier: RenewalTier | null
 }) {
-  const quote = useMembershipPromotionQuoteMutation()
+  const quote = useMembershipDiscountCodeQuoteMutation()
   const [code, setCode] = useState('')
-  const [applied, setApplied] = useState<PromotionQuote | null>(null)
+  const [applied, setApplied] = useState<DiscountCodeQuote | null>(null)
   const [error, setError] = useState<string | null>(null)
   const onAppliedRef = useRef(onApplied)
 
@@ -64,10 +67,10 @@ export function PromotionCodeField({
 
   return (
     <div className="space-y-3">
-      <Label htmlFor={`${audience}-promotion-code`}>Discount code</Label>
+      <Label htmlFor={`${audience}-discount-code`}>Discount code</Label>
       <div className="flex gap-2">
         <Input
-          id={`${audience}-promotion-code`}
+          id={`${audience}-discount-code`}
           value={code}
           onChange={(event) => {
             setCode(event.target.value.toUpperCase())

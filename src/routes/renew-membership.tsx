@@ -1,5 +1,5 @@
 import type { SquareCardHandle } from '@/components/renewals/SquareCardForm'
-import { PromotionCodeField } from '@/components/membership-promotions/PromotionCodeField'
+import { DiscountCodeField } from '@/components/membership-discount-codes/DiscountCodeField'
 import { MembershipQuestionnaireFields } from '@/components/renewals/MembershipQuestionnaireFields'
 import { SquareCardForm } from '@/components/renewals/SquareCardForm'
 import { Button } from '@/components/ui/button'
@@ -16,7 +16,7 @@ import { ErrorAlert } from '@/components/ui/ErrorAlert'
 import { Label } from '@/components/ui/label'
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip'
 import type { RenewalDuration } from '@/domains/renewals/compute-renewal'
-import type { PromotionQuote } from '@/domains/membership-promotions/schema'
+import type { DiscountCodeQuote } from '@/domains/membership-discount-codes/schema'
 import {
   getRenewalPriceQueryOptions,
   getRenewalStatusQueryOptions,
@@ -77,7 +77,7 @@ function RenewMembershipPage() {
   const [duration, setDuration] = useState<RenewalDuration>(
     status.preview.annual.allowed ? 'annual' : 'quarterly',
   )
-  const [promotion, setPromotion] = useState<PromotionQuote | null>(null)
+  const [discountCode, setDiscountCode] = useState<DiscountCodeQuote | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [submitting, setSubmitting] = useState(false)
   const [result, setResult] = useState<CompletionResult | null>(null)
@@ -129,7 +129,9 @@ function RenewMembershipPage() {
       const sourceId = await cardRef.current!.tokenize()
       const data = await mutation.mutateAsync({
         duration,
-        promotion: promotion ? { code: promotion.code, revision: promotion.revision } : null,
+        discountCode: discountCode
+          ? { code: discountCode.code, revision: discountCode.revision }
+          : null,
         sourceId,
         questionnaire,
       })
@@ -296,11 +298,11 @@ function RenewMembershipPage() {
         </div>
       </div>
 
-      <PromotionCodeField
+      <DiscountCodeField
         audience="renewals"
         duration={duration}
         tier={tier}
-        onApplied={setPromotion}
+        onApplied={setDiscountCode}
         disabled={submitting}
       />
 

@@ -1,7 +1,7 @@
 {
   "version": "6",
   "dialect": "mysql",
-  "id": "0613179a-85d5-4256-be09-6a52e29b94e5",
+  "id": "d463ef43-09b5-4dde-9c5d-8d07f3c7883a",
   "prevIds": ["da55a9de-ae41-4bd6-ab3f-077cd0693eed"],
   "ddl": [
     {
@@ -89,15 +89,15 @@
       "entityType": "tables"
     },
     {
+      "name": "membership_discount_code_redemptions",
+      "entityType": "tables"
+    },
+    {
+      "name": "membership_discount_codes",
+      "entityType": "tables"
+    },
+    {
       "name": "membership_payments",
-      "entityType": "tables"
-    },
-    {
-      "name": "membership_promotion_redemptions",
-      "entityType": "tables"
-    },
-    {
-      "name": "membership_promotions",
       "entityType": "tables"
     },
     {
@@ -2634,6 +2634,370 @@
       "generated": null,
       "name": "_index",
       "entityType": "columns",
+      "table": "membership_discount_code_redemptions"
+    },
+    {
+      "type": "int",
+      "notNull": true,
+      "autoIncrement": false,
+      "default": null,
+      "onUpdateNow": false,
+      "onUpdateNowFsp": null,
+      "charSet": null,
+      "collation": null,
+      "generated": null,
+      "name": "discount_code_id",
+      "entityType": "columns",
+      "table": "membership_discount_code_redemptions"
+    },
+    {
+      "type": "int",
+      "notNull": true,
+      "autoIncrement": false,
+      "default": null,
+      "onUpdateNow": false,
+      "onUpdateNowFsp": null,
+      "charSet": null,
+      "collation": null,
+      "generated": null,
+      "name": "payment_id",
+      "entityType": "columns",
+      "table": "membership_discount_code_redemptions"
+    },
+    {
+      "type": "varchar(50)",
+      "notNull": true,
+      "autoIncrement": false,
+      "default": null,
+      "onUpdateNow": false,
+      "onUpdateNowFsp": null,
+      "charSet": null,
+      "collation": null,
+      "generated": null,
+      "name": "code",
+      "entityType": "columns",
+      "table": "membership_discount_code_redemptions"
+    },
+    {
+      "type": "int",
+      "notNull": true,
+      "autoIncrement": false,
+      "default": null,
+      "onUpdateNow": false,
+      "onUpdateNowFsp": null,
+      "charSet": null,
+      "collation": null,
+      "generated": null,
+      "name": "revision",
+      "entityType": "columns",
+      "table": "membership_discount_code_redemptions"
+    },
+    {
+      "type": "int",
+      "notNull": false,
+      "autoIncrement": false,
+      "default": null,
+      "onUpdateNow": false,
+      "onUpdateNowFsp": null,
+      "charSet": null,
+      "collation": null,
+      "generated": null,
+      "name": "percentage_off",
+      "entityType": "columns",
+      "table": "membership_discount_code_redemptions"
+    },
+    {
+      "type": "int",
+      "notNull": false,
+      "autoIncrement": false,
+      "default": null,
+      "onUpdateNow": false,
+      "onUpdateNowFsp": null,
+      "charSet": null,
+      "collation": null,
+      "generated": null,
+      "name": "amount_off_cents",
+      "entityType": "columns",
+      "table": "membership_discount_code_redemptions"
+    },
+    {
+      "type": "int",
+      "notNull": true,
+      "autoIncrement": false,
+      "default": null,
+      "onUpdateNow": false,
+      "onUpdateNowFsp": null,
+      "charSet": null,
+      "collation": null,
+      "generated": null,
+      "name": "subtotal_cents",
+      "entityType": "columns",
+      "table": "membership_discount_code_redemptions"
+    },
+    {
+      "type": "int",
+      "notNull": true,
+      "autoIncrement": false,
+      "default": null,
+      "onUpdateNow": false,
+      "onUpdateNowFsp": null,
+      "charSet": null,
+      "collation": null,
+      "generated": null,
+      "name": "discount_cents",
+      "entityType": "columns",
+      "table": "membership_discount_code_redemptions"
+    },
+    {
+      "type": "int",
+      "notNull": true,
+      "autoIncrement": false,
+      "default": null,
+      "onUpdateNow": false,
+      "onUpdateNowFsp": null,
+      "charSet": null,
+      "collation": null,
+      "generated": null,
+      "name": "final_cents",
+      "entityType": "columns",
+      "table": "membership_discount_code_redemptions"
+    },
+    {
+      "type": "timestamp",
+      "notNull": true,
+      "autoIncrement": false,
+      "default": "(now())",
+      "onUpdateNow": false,
+      "onUpdateNowFsp": null,
+      "charSet": null,
+      "collation": null,
+      "generated": null,
+      "name": "created_at",
+      "entityType": "columns",
+      "table": "membership_discount_code_redemptions"
+    },
+    {
+      "type": "int",
+      "notNull": true,
+      "autoIncrement": true,
+      "default": null,
+      "onUpdateNow": false,
+      "onUpdateNowFsp": null,
+      "charSet": null,
+      "collation": null,
+      "generated": null,
+      "name": "_index",
+      "entityType": "columns",
+      "table": "membership_discount_codes"
+    },
+    {
+      "type": "varchar(100)",
+      "notNull": true,
+      "autoIncrement": false,
+      "default": null,
+      "onUpdateNow": false,
+      "onUpdateNowFsp": null,
+      "charSet": null,
+      "collation": null,
+      "generated": null,
+      "name": "name",
+      "entityType": "columns",
+      "table": "membership_discount_codes"
+    },
+    {
+      "type": "varchar(50)",
+      "notNull": true,
+      "autoIncrement": false,
+      "default": null,
+      "onUpdateNow": false,
+      "onUpdateNowFsp": null,
+      "charSet": "utf8mb4",
+      "collation": "utf8mb4_0900_ai_ci",
+      "generated": null,
+      "name": "code",
+      "entityType": "columns",
+      "table": "membership_discount_codes"
+    },
+    {
+      "type": "varchar(20)",
+      "notNull": true,
+      "autoIncrement": false,
+      "default": null,
+      "onUpdateNow": false,
+      "onUpdateNowFsp": null,
+      "charSet": null,
+      "collation": null,
+      "generated": null,
+      "name": "audience",
+      "entityType": "columns",
+      "table": "membership_discount_codes"
+    },
+    {
+      "type": "int",
+      "notNull": false,
+      "autoIncrement": false,
+      "default": null,
+      "onUpdateNow": false,
+      "onUpdateNowFsp": null,
+      "charSet": null,
+      "collation": null,
+      "generated": null,
+      "name": "percentage_off",
+      "entityType": "columns",
+      "table": "membership_discount_codes"
+    },
+    {
+      "type": "int",
+      "notNull": false,
+      "autoIncrement": false,
+      "default": null,
+      "onUpdateNow": false,
+      "onUpdateNowFsp": null,
+      "charSet": null,
+      "collation": null,
+      "generated": null,
+      "name": "amount_off_cents",
+      "entityType": "columns",
+      "table": "membership_discount_codes"
+    },
+    {
+      "type": "date",
+      "notNull": true,
+      "autoIncrement": false,
+      "default": null,
+      "onUpdateNow": false,
+      "onUpdateNowFsp": null,
+      "charSet": null,
+      "collation": null,
+      "generated": null,
+      "name": "starts_on",
+      "entityType": "columns",
+      "table": "membership_discount_codes"
+    },
+    {
+      "type": "date",
+      "notNull": true,
+      "autoIncrement": false,
+      "default": null,
+      "onUpdateNow": false,
+      "onUpdateNowFsp": null,
+      "charSet": null,
+      "collation": null,
+      "generated": null,
+      "name": "ends_on",
+      "entityType": "columns",
+      "table": "membership_discount_codes"
+    },
+    {
+      "type": "int",
+      "notNull": false,
+      "autoIncrement": false,
+      "default": null,
+      "onUpdateNow": false,
+      "onUpdateNowFsp": null,
+      "charSet": null,
+      "collation": null,
+      "generated": null,
+      "name": "max_redemptions",
+      "entityType": "columns",
+      "table": "membership_discount_codes"
+    },
+    {
+      "type": "tinyint(1)",
+      "notNull": true,
+      "autoIncrement": false,
+      "default": "(true)",
+      "onUpdateNow": false,
+      "onUpdateNowFsp": null,
+      "charSet": null,
+      "collation": null,
+      "generated": null,
+      "name": "active",
+      "entityType": "columns",
+      "table": "membership_discount_codes"
+    },
+    {
+      "type": "int",
+      "notNull": true,
+      "autoIncrement": false,
+      "default": "1",
+      "onUpdateNow": false,
+      "onUpdateNowFsp": null,
+      "charSet": null,
+      "collation": null,
+      "generated": null,
+      "name": "revision",
+      "entityType": "columns",
+      "table": "membership_discount_codes"
+    },
+    {
+      "type": "int",
+      "notNull": true,
+      "autoIncrement": false,
+      "default": null,
+      "onUpdateNow": false,
+      "onUpdateNowFsp": null,
+      "charSet": null,
+      "collation": null,
+      "generated": null,
+      "name": "created_by",
+      "entityType": "columns",
+      "table": "membership_discount_codes"
+    },
+    {
+      "type": "int",
+      "notNull": false,
+      "autoIncrement": false,
+      "default": null,
+      "onUpdateNow": false,
+      "onUpdateNowFsp": null,
+      "charSet": null,
+      "collation": null,
+      "generated": null,
+      "name": "updated_by",
+      "entityType": "columns",
+      "table": "membership_discount_codes"
+    },
+    {
+      "type": "timestamp",
+      "notNull": true,
+      "autoIncrement": false,
+      "default": "(now())",
+      "onUpdateNow": false,
+      "onUpdateNowFsp": null,
+      "charSet": null,
+      "collation": null,
+      "generated": null,
+      "name": "created_at",
+      "entityType": "columns",
+      "table": "membership_discount_codes"
+    },
+    {
+      "type": "timestamp",
+      "notNull": false,
+      "autoIncrement": false,
+      "default": null,
+      "onUpdateNow": false,
+      "onUpdateNowFsp": null,
+      "charSet": null,
+      "collation": null,
+      "generated": null,
+      "name": "updated_at",
+      "entityType": "columns",
+      "table": "membership_discount_codes"
+    },
+    {
+      "type": "int",
+      "notNull": true,
+      "autoIncrement": true,
+      "default": null,
+      "onUpdateNow": false,
+      "onUpdateNowFsp": null,
+      "charSet": null,
+      "collation": null,
+      "generated": null,
+      "name": "_index",
+      "entityType": "columns",
       "table": "membership_payments"
     },
     {
@@ -2817,370 +3181,6 @@
       "name": "created_at",
       "entityType": "columns",
       "table": "membership_payments"
-    },
-    {
-      "type": "int",
-      "notNull": true,
-      "autoIncrement": true,
-      "default": null,
-      "onUpdateNow": false,
-      "onUpdateNowFsp": null,
-      "charSet": null,
-      "collation": null,
-      "generated": null,
-      "name": "_index",
-      "entityType": "columns",
-      "table": "membership_promotion_redemptions"
-    },
-    {
-      "type": "int",
-      "notNull": true,
-      "autoIncrement": false,
-      "default": null,
-      "onUpdateNow": false,
-      "onUpdateNowFsp": null,
-      "charSet": null,
-      "collation": null,
-      "generated": null,
-      "name": "promotion_id",
-      "entityType": "columns",
-      "table": "membership_promotion_redemptions"
-    },
-    {
-      "type": "int",
-      "notNull": true,
-      "autoIncrement": false,
-      "default": null,
-      "onUpdateNow": false,
-      "onUpdateNowFsp": null,
-      "charSet": null,
-      "collation": null,
-      "generated": null,
-      "name": "payment_id",
-      "entityType": "columns",
-      "table": "membership_promotion_redemptions"
-    },
-    {
-      "type": "varchar(50)",
-      "notNull": true,
-      "autoIncrement": false,
-      "default": null,
-      "onUpdateNow": false,
-      "onUpdateNowFsp": null,
-      "charSet": null,
-      "collation": null,
-      "generated": null,
-      "name": "code",
-      "entityType": "columns",
-      "table": "membership_promotion_redemptions"
-    },
-    {
-      "type": "int",
-      "notNull": true,
-      "autoIncrement": false,
-      "default": null,
-      "onUpdateNow": false,
-      "onUpdateNowFsp": null,
-      "charSet": null,
-      "collation": null,
-      "generated": null,
-      "name": "revision",
-      "entityType": "columns",
-      "table": "membership_promotion_redemptions"
-    },
-    {
-      "type": "int",
-      "notNull": false,
-      "autoIncrement": false,
-      "default": null,
-      "onUpdateNow": false,
-      "onUpdateNowFsp": null,
-      "charSet": null,
-      "collation": null,
-      "generated": null,
-      "name": "percentage_off",
-      "entityType": "columns",
-      "table": "membership_promotion_redemptions"
-    },
-    {
-      "type": "int",
-      "notNull": false,
-      "autoIncrement": false,
-      "default": null,
-      "onUpdateNow": false,
-      "onUpdateNowFsp": null,
-      "charSet": null,
-      "collation": null,
-      "generated": null,
-      "name": "amount_off_cents",
-      "entityType": "columns",
-      "table": "membership_promotion_redemptions"
-    },
-    {
-      "type": "int",
-      "notNull": true,
-      "autoIncrement": false,
-      "default": null,
-      "onUpdateNow": false,
-      "onUpdateNowFsp": null,
-      "charSet": null,
-      "collation": null,
-      "generated": null,
-      "name": "subtotal_cents",
-      "entityType": "columns",
-      "table": "membership_promotion_redemptions"
-    },
-    {
-      "type": "int",
-      "notNull": true,
-      "autoIncrement": false,
-      "default": null,
-      "onUpdateNow": false,
-      "onUpdateNowFsp": null,
-      "charSet": null,
-      "collation": null,
-      "generated": null,
-      "name": "discount_cents",
-      "entityType": "columns",
-      "table": "membership_promotion_redemptions"
-    },
-    {
-      "type": "int",
-      "notNull": true,
-      "autoIncrement": false,
-      "default": null,
-      "onUpdateNow": false,
-      "onUpdateNowFsp": null,
-      "charSet": null,
-      "collation": null,
-      "generated": null,
-      "name": "final_cents",
-      "entityType": "columns",
-      "table": "membership_promotion_redemptions"
-    },
-    {
-      "type": "timestamp",
-      "notNull": true,
-      "autoIncrement": false,
-      "default": "(now())",
-      "onUpdateNow": false,
-      "onUpdateNowFsp": null,
-      "charSet": null,
-      "collation": null,
-      "generated": null,
-      "name": "created_at",
-      "entityType": "columns",
-      "table": "membership_promotion_redemptions"
-    },
-    {
-      "type": "int",
-      "notNull": true,
-      "autoIncrement": true,
-      "default": null,
-      "onUpdateNow": false,
-      "onUpdateNowFsp": null,
-      "charSet": null,
-      "collation": null,
-      "generated": null,
-      "name": "_index",
-      "entityType": "columns",
-      "table": "membership_promotions"
-    },
-    {
-      "type": "varchar(100)",
-      "notNull": true,
-      "autoIncrement": false,
-      "default": null,
-      "onUpdateNow": false,
-      "onUpdateNowFsp": null,
-      "charSet": null,
-      "collation": null,
-      "generated": null,
-      "name": "name",
-      "entityType": "columns",
-      "table": "membership_promotions"
-    },
-    {
-      "type": "varchar(50)",
-      "notNull": true,
-      "autoIncrement": false,
-      "default": null,
-      "onUpdateNow": false,
-      "onUpdateNowFsp": null,
-      "charSet": "utf8mb4",
-      "collation": "utf8mb4_0900_ai_ci",
-      "generated": null,
-      "name": "code",
-      "entityType": "columns",
-      "table": "membership_promotions"
-    },
-    {
-      "type": "varchar(20)",
-      "notNull": true,
-      "autoIncrement": false,
-      "default": null,
-      "onUpdateNow": false,
-      "onUpdateNowFsp": null,
-      "charSet": null,
-      "collation": null,
-      "generated": null,
-      "name": "audience",
-      "entityType": "columns",
-      "table": "membership_promotions"
-    },
-    {
-      "type": "int",
-      "notNull": false,
-      "autoIncrement": false,
-      "default": null,
-      "onUpdateNow": false,
-      "onUpdateNowFsp": null,
-      "charSet": null,
-      "collation": null,
-      "generated": null,
-      "name": "percentage_off",
-      "entityType": "columns",
-      "table": "membership_promotions"
-    },
-    {
-      "type": "int",
-      "notNull": false,
-      "autoIncrement": false,
-      "default": null,
-      "onUpdateNow": false,
-      "onUpdateNowFsp": null,
-      "charSet": null,
-      "collation": null,
-      "generated": null,
-      "name": "amount_off_cents",
-      "entityType": "columns",
-      "table": "membership_promotions"
-    },
-    {
-      "type": "date",
-      "notNull": true,
-      "autoIncrement": false,
-      "default": null,
-      "onUpdateNow": false,
-      "onUpdateNowFsp": null,
-      "charSet": null,
-      "collation": null,
-      "generated": null,
-      "name": "starts_on",
-      "entityType": "columns",
-      "table": "membership_promotions"
-    },
-    {
-      "type": "date",
-      "notNull": true,
-      "autoIncrement": false,
-      "default": null,
-      "onUpdateNow": false,
-      "onUpdateNowFsp": null,
-      "charSet": null,
-      "collation": null,
-      "generated": null,
-      "name": "ends_on",
-      "entityType": "columns",
-      "table": "membership_promotions"
-    },
-    {
-      "type": "int",
-      "notNull": false,
-      "autoIncrement": false,
-      "default": null,
-      "onUpdateNow": false,
-      "onUpdateNowFsp": null,
-      "charSet": null,
-      "collation": null,
-      "generated": null,
-      "name": "max_redemptions",
-      "entityType": "columns",
-      "table": "membership_promotions"
-    },
-    {
-      "type": "tinyint(1)",
-      "notNull": true,
-      "autoIncrement": false,
-      "default": "(true)",
-      "onUpdateNow": false,
-      "onUpdateNowFsp": null,
-      "charSet": null,
-      "collation": null,
-      "generated": null,
-      "name": "active",
-      "entityType": "columns",
-      "table": "membership_promotions"
-    },
-    {
-      "type": "int",
-      "notNull": true,
-      "autoIncrement": false,
-      "default": "1",
-      "onUpdateNow": false,
-      "onUpdateNowFsp": null,
-      "charSet": null,
-      "collation": null,
-      "generated": null,
-      "name": "revision",
-      "entityType": "columns",
-      "table": "membership_promotions"
-    },
-    {
-      "type": "int",
-      "notNull": true,
-      "autoIncrement": false,
-      "default": null,
-      "onUpdateNow": false,
-      "onUpdateNowFsp": null,
-      "charSet": null,
-      "collation": null,
-      "generated": null,
-      "name": "created_by",
-      "entityType": "columns",
-      "table": "membership_promotions"
-    },
-    {
-      "type": "int",
-      "notNull": false,
-      "autoIncrement": false,
-      "default": null,
-      "onUpdateNow": false,
-      "onUpdateNowFsp": null,
-      "charSet": null,
-      "collation": null,
-      "generated": null,
-      "name": "updated_by",
-      "entityType": "columns",
-      "table": "membership_promotions"
-    },
-    {
-      "type": "timestamp",
-      "notNull": true,
-      "autoIncrement": false,
-      "default": "(now())",
-      "onUpdateNow": false,
-      "onUpdateNowFsp": null,
-      "charSet": null,
-      "collation": null,
-      "generated": null,
-      "name": "created_at",
-      "entityType": "columns",
-      "table": "membership_promotions"
-    },
-    {
-      "type": "timestamp",
-      "notNull": false,
-      "autoIncrement": false,
-      "default": null,
-      "onUpdateNow": false,
-      "onUpdateNowFsp": null,
-      "charSet": null,
-      "collation": null,
-      "generated": null,
-      "name": "updated_at",
-      "entityType": "columns",
-      "table": "membership_promotions"
     },
     {
       "type": "char(36)",
@@ -5617,19 +5617,19 @@
     {
       "columns": ["_index"],
       "name": "PRIMARY",
+      "table": "membership_discount_code_redemptions",
+      "entityType": "pks"
+    },
+    {
+      "columns": ["_index"],
+      "name": "PRIMARY",
+      "table": "membership_discount_codes",
+      "entityType": "pks"
+    },
+    {
+      "columns": ["_index"],
+      "name": "PRIMARY",
       "table": "membership_payments",
-      "entityType": "pks"
-    },
-    {
-      "columns": ["_index"],
-      "name": "PRIMARY",
-      "table": "membership_promotion_redemptions",
-      "entityType": "pks"
-    },
-    {
-      "columns": ["_index"],
-      "name": "PRIMARY",
-      "table": "membership_promotions",
       "entityType": "pks"
     },
     {
@@ -6183,6 +6183,78 @@
     {
       "columns": [
         {
+          "value": "payment_id",
+          "isExpression": false
+        }
+      ],
+      "isUnique": true,
+      "using": null,
+      "algorithm": null,
+      "lock": null,
+      "nameExplicit": true,
+      "name": "uq_membership_discount_code_redemptions_payment",
+      "entityType": "indexes",
+      "table": "membership_discount_code_redemptions"
+    },
+    {
+      "columns": [
+        {
+          "value": "discount_code_id",
+          "isExpression": false
+        }
+      ],
+      "isUnique": false,
+      "using": null,
+      "algorithm": null,
+      "lock": null,
+      "nameExplicit": true,
+      "name": "idx_membership_discount_code_redemptions_discount_code",
+      "entityType": "indexes",
+      "table": "membership_discount_code_redemptions"
+    },
+    {
+      "columns": [
+        {
+          "value": "code",
+          "isExpression": false
+        }
+      ],
+      "isUnique": true,
+      "using": null,
+      "algorithm": null,
+      "lock": null,
+      "nameExplicit": true,
+      "name": "uq_membership_discount_codes_code",
+      "entityType": "indexes",
+      "table": "membership_discount_codes"
+    },
+    {
+      "columns": [
+        {
+          "value": "active",
+          "isExpression": false
+        },
+        {
+          "value": "starts_on",
+          "isExpression": false
+        },
+        {
+          "value": "ends_on",
+          "isExpression": false
+        }
+      ],
+      "isUnique": false,
+      "using": null,
+      "algorithm": null,
+      "lock": null,
+      "nameExplicit": true,
+      "name": "idx_membership_discount_codes_active_dates",
+      "entityType": "indexes",
+      "table": "membership_discount_codes"
+    },
+    {
+      "columns": [
+        {
           "value": "renewal_id",
           "isExpression": false
         }
@@ -6243,78 +6315,6 @@
       "name": "idx_membership_payments_wyc",
       "entityType": "indexes",
       "table": "membership_payments"
-    },
-    {
-      "columns": [
-        {
-          "value": "payment_id",
-          "isExpression": false
-        }
-      ],
-      "isUnique": true,
-      "using": null,
-      "algorithm": null,
-      "lock": null,
-      "nameExplicit": true,
-      "name": "uq_membership_promotion_redemptions_payment",
-      "entityType": "indexes",
-      "table": "membership_promotion_redemptions"
-    },
-    {
-      "columns": [
-        {
-          "value": "promotion_id",
-          "isExpression": false
-        }
-      ],
-      "isUnique": false,
-      "using": null,
-      "algorithm": null,
-      "lock": null,
-      "nameExplicit": true,
-      "name": "idx_membership_promotion_redemptions_promotion",
-      "entityType": "indexes",
-      "table": "membership_promotion_redemptions"
-    },
-    {
-      "columns": [
-        {
-          "value": "code",
-          "isExpression": false
-        }
-      ],
-      "isUnique": true,
-      "using": null,
-      "algorithm": null,
-      "lock": null,
-      "nameExplicit": true,
-      "name": "uq_membership_promotions_code",
-      "entityType": "indexes",
-      "table": "membership_promotions"
-    },
-    {
-      "columns": [
-        {
-          "value": "active",
-          "isExpression": false
-        },
-        {
-          "value": "starts_on",
-          "isExpression": false
-        },
-        {
-          "value": "ends_on",
-          "isExpression": false
-        }
-      ],
-      "isUnique": false,
-      "using": null,
-      "algorithm": null,
-      "lock": null,
-      "nameExplicit": true,
-      "name": "idx_membership_promotions_active_dates",
-      "entityType": "indexes",
-      "table": "membership_promotions"
     },
     {
       "columns": [
@@ -6660,6 +6660,28 @@
       "table": "member_waivers"
     },
     {
+      "columns": ["discount_code_id"],
+      "tableTo": "membership_discount_codes",
+      "columnsTo": ["_index"],
+      "onUpdate": "NO ACTION",
+      "onDelete": "NO ACTION",
+      "nameExplicit": true,
+      "name": "fk_membership_discount_code_redemptions_discount_code",
+      "entityType": "fks",
+      "table": "membership_discount_code_redemptions"
+    },
+    {
+      "columns": ["payment_id"],
+      "tableTo": "membership_payments",
+      "columnsTo": ["_index"],
+      "onUpdate": "NO ACTION",
+      "onDelete": "NO ACTION",
+      "nameExplicit": true,
+      "name": "fk_membership_discount_code_redemptions_payment",
+      "entityType": "fks",
+      "table": "membership_discount_code_redemptions"
+    },
+    {
       "columns": ["renewal_id"],
       "tableTo": "membership_renewals",
       "columnsTo": ["id"],
@@ -6682,28 +6704,6 @@
       "table": "membership_payments"
     },
     {
-      "columns": ["promotion_id"],
-      "tableTo": "membership_promotions",
-      "columnsTo": ["_index"],
-      "onUpdate": "NO ACTION",
-      "onDelete": "NO ACTION",
-      "nameExplicit": true,
-      "name": "fk_membership_promotion_redemptions_promotion",
-      "entityType": "fks",
-      "table": "membership_promotion_redemptions"
-    },
-    {
-      "columns": ["payment_id"],
-      "tableTo": "membership_payments",
-      "columnsTo": ["_index"],
-      "onUpdate": "NO ACTION",
-      "onDelete": "NO ACTION",
-      "nameExplicit": true,
-      "name": "fk_membership_promotion_redemptions_payment",
-      "entityType": "fks",
-      "table": "membership_promotion_redemptions"
-    },
-    {
       "columns": ["renewal_id"],
       "tableTo": "membership_renewals",
       "columnsTo": ["id"],
@@ -6721,10 +6721,10 @@
       "table": "member_waivers"
     },
     {
-      "value": "(`membership_promotions`.`percentage_off` is not null) <> (`membership_promotions`.`amount_off_cents` is not null)",
-      "name": "chk_membership_promotions_discount",
+      "value": "(`membership_discount_codes`.`percentage_off` is not null) <> (`membership_discount_codes`.`amount_off_cents` is not null)",
+      "name": "chk_membership_discount_codes_discount",
       "entityType": "checks",
-      "table": "membership_promotions"
+      "table": "membership_discount_codes"
     }
   ],
   "renames": []

@@ -11,41 +11,43 @@ import {
   SelectValue,
 } from '@/components/ui/select'
 import {
-  useCreateMembershipPromotionMutation,
-  useUpdateMembershipPromotionMutation,
-} from '@/domains/membership-promotions/query-options'
-import type { listMembershipPromotions } from '@/domains/membership-promotions/server-fns'
-import type { PromotionAudience } from '@/domains/membership-promotions/schema'
+  useCreateMembershipDiscountCodeMutation,
+  useUpdateMembershipDiscountCodeMutation,
+} from '@/domains/membership-discount-codes/query-options'
+import type { listMembershipDiscountCodes } from '@/domains/membership-discount-codes/server-fns'
+import type { DiscountCodeAudience } from '@/domains/membership-discount-codes/schema'
 import { getTodayPacificDateString, pacificDatePlusDays } from '@/lib/date-utils'
 import { useState } from 'react'
 
-type MembershipPromotion = Awaited<ReturnType<typeof listMembershipPromotions>>[number]
+type MembershipDiscountCode = Awaited<ReturnType<typeof listMembershipDiscountCodes>>[number]
 type DiscountType = 'percentage' | 'fixed'
 
-export function PromotionFormModal({
+export function DiscountCodeFormModal({
   onClose,
-  promotion,
+  discountCode,
 }: {
   onClose: () => void
-  promotion: MembershipPromotion | null
+  discountCode: MembershipDiscountCode | null
 }) {
-  const create = useCreateMembershipPromotionMutation()
-  const update = useUpdateMembershipPromotionMutation()
-  const [name, setName] = useState(promotion?.name ?? '')
-  const [code, setCode] = useState(promotion?.code ?? '')
-  const [audience, setAudience] = useState<PromotionAudience>(
-    (promotion?.audience as PromotionAudience) ?? 'both',
+  const create = useCreateMembershipDiscountCodeMutation()
+  const update = useUpdateMembershipDiscountCodeMutation()
+  const [name, setName] = useState(discountCode?.name ?? '')
+  const [code, setCode] = useState(discountCode?.code ?? '')
+  const [audience, setAudience] = useState<DiscountCodeAudience>(
+    (discountCode?.audience as DiscountCodeAudience) ?? 'both',
   )
   const [discountType, setDiscountType] = useState<DiscountType>(
-    promotion?.percentageOff !== null ? 'percentage' : 'fixed',
+    discountCode?.percentageOff !== null ? 'percentage' : 'fixed',
   )
   const [discountValue, setDiscountValue] = useState(
-    promotion ? String(promotion.percentageOff ?? (promotion.amountOffCents ?? 0) / 100) : '20',
+    discountCode
+      ? String(discountCode.percentageOff ?? (discountCode.amountOffCents ?? 0) / 100)
+      : '20',
   )
-  const [startsOn, setStartsOn] = useState(promotion?.startsOn ?? getTodayPacificDateString())
-  const [endsOn, setEndsOn] = useState(promotion?.endsOn ?? pacificDatePlusDays(30))
+  const [startsOn, setStartsOn] = useState(discountCode?.startsOn ?? getTodayPacificDateString())
+  const [endsOn, setEndsOn] = useState(discountCode?.endsOn ?? pacificDatePlusDays(30))
   const [maxRedemptions, setMaxRedemptions] = useState(
-    promotion?.maxRedemptions == null ? '' : String(promotion.maxRedemptions),
+    discountCode?.maxRedemptions == null ? '' : String(discountCode.maxRedemptions),
   )
   const [error, setError] = useState<string | null>(null)
   const busy = create.isPending || update.isPending
@@ -59,12 +61,13 @@ export function PromotionFormModal({
         ? { type: 'percentage' as const, percentage: numericValue }
         : { type: 'fixed' as const, amountCents: Math.round(numericValue * 100) }
     try {
-      if (promotion) {
+      if (discountCode) {
         await update.mutateAsync({
           audience,
           discount,
           endsOn,
-          index: promotion.index,
+          index: discountCode.index,
+          maxRedemptions: maxRedemptions ? Number(maxRedemptions) : null,
           name,
           startsOn,
         })
@@ -86,14 +89,14 @@ export function PromotionFormModal({
   }
 
   return (
-    <Modal onClose={onClose} title={promotion ? 'Edit Discount Code' : 'New Discount Code'}>
+    <Modal onClose={onClose} title={discountCode ? 'Edit Discount Code' : 'New Discount Code'}>
       <form onSubmit={submit} className="space-y-5 p-6">
         <ErrorAlert error={error} action="Save discount code" />
 
         <div className="space-y-2">
-          <Label htmlFor="promotion-name">Name</Label>
+          <Label htmlFor="discount-code-name">Name</Label>
           <Input
-            id="promotion-name"
+            id="discount-code-name"
             value={name}
             onChange={(event) => setName(event.target.value)}
             maxLength={100}
@@ -102,13 +105,13 @@ export function PromotionFormModal({
         </div>
 
         <div className="space-y-2">
-          <Label htmlFor="promotion-code">Code</Label>
+          <Label htmlFor="discount-code-code">Code</Label>
           <Input
-            id="promotion-code"
+            id="discount-code-code"
             value={code}
             onChange={(event) => setCode(event.target.value.toUpperCase())}
             maxLength={50}
-            disabled={promotion !== null}
+            disabled={discountCode !== null}
             required
           />
         </div>
@@ -117,7 +120,7 @@ export function PromotionFormModal({
           <Label>Applies to</Label>
           <Select
             value={audience}
-            onValueChange={(value) => setAudience(value as PromotionAudience)}
+            onValueChange={(value) => setAudience(value as DiscountCodeAudience)}
           >
             <SelectTrigger>
               <SelectValue />
@@ -147,11 +150,11 @@ export function PromotionFormModal({
             </Select>
           </div>
           <div className="space-y-2">
-            <Label htmlFor="promotion-value">
+            <Label htmlFor="discount-code-value">
               {discountType === 'percentage' ? 'Percent off' : 'Dollars off'}
             </Label>
             <Input
-              id="promotion-value"
+              id="discount-code-value"
               type="number"
               min={discountType === 'percentage' ? 1 : 0.01}
               max={discountType === 'percentage' ? 99 : undefined}
@@ -165,9 +168,9 @@ export function PromotionFormModal({
 
         <div className="grid gap-4 sm:grid-cols-2">
           <div className="space-y-2">
-            <Label htmlFor="promotion-start">Starts</Label>
+            <Label htmlFor="discount-code-start">Starts</Label>
             <Input
-              id="promotion-start"
+              id="discount-code-start"
               type="date"
               value={startsOn}
               onChange={(event) => setStartsOn(event.target.value)}
@@ -175,9 +178,9 @@ export function PromotionFormModal({
             />
           </div>
           <div className="space-y-2">
-            <Label htmlFor="promotion-end">Ends</Label>
+            <Label htmlFor="discount-code-end">Ends</Label>
             <Input
-              id="promotion-end"
+              id="discount-code-end"
               type="date"
               value={endsOn}
               onChange={(event) => setEndsOn(event.target.value)}
@@ -187,15 +190,19 @@ export function PromotionFormModal({
         </div>
 
         <div className="space-y-2">
-          <Label htmlFor="promotion-cap">Redemption limit (optional)</Label>
+          <Label htmlFor="discount-code-cap">
+            Redemption limit
+            {discountCode && discountCode.redemptionCount > 0
+              ? ` (minimum ${discountCode.redemptionCount})`
+              : ' (optional)'}
+          </Label>
           <Input
-            id="promotion-cap"
+            id="discount-code-cap"
             type="number"
-            min={1}
+            min={Math.max(1, discountCode?.redemptionCount ?? 0)}
             step={1}
             value={maxRedemptions}
             onChange={(event) => setMaxRedemptions(event.target.value)}
-            disabled={promotion !== null}
           />
         </div>
 
