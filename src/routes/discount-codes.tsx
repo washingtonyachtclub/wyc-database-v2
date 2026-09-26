@@ -15,6 +15,11 @@ import { Pencil, Plus } from 'lucide-react'
 import { useState } from 'react'
 
 type MembershipDiscountCode = Awaited<ReturnType<typeof listMembershipDiscountCodes>>[number]
+type DiscountCodeStatus = {
+  label: string
+  section: 'active' | 'scheduled' | 'inactive'
+  toggleable: boolean
+}
 
 export const Route = createFileRoute('/discount-codes')({
   beforeLoad: ({ context }) => requirePrivilegeForRoute(context, '/discount-codes'),
@@ -35,27 +40,26 @@ function formatAudience(audience: string) {
   return 'New members and renewals'
 }
 
-function getDiscountCodeStatus(discountCode: MembershipDiscountCode, today: string) {
+function getDiscountCodeStatus(
+  discountCode: MembershipDiscountCode,
+  today: string,
+): DiscountCodeStatus {
   if (discountCode.endsOn < today) {
-    return { label: 'Expired', toggleable: false, usable: false }
+    return { label: 'Expired', section: 'inactive', toggleable: false }
   }
   if (
     discountCode.maxRedemptions !== null &&
     discountCode.redemptionCount >= discountCode.maxRedemptions
   ) {
-    return { label: 'Redemption limit reached', toggleable: false, usable: false }
-  }
-  if (discountCode.startsOn > today) {
-    return {
-      label: discountCode.active ? 'Scheduled' : 'Scheduled · Disabled',
-      toggleable: true,
-      usable: false,
-    }
+    return { label: 'Redemption limit reached', section: 'inactive', toggleable: false }
   }
   if (!discountCode.active) {
-    return { label: 'Disabled', toggleable: true, usable: false }
+    return { label: 'Disabled', section: 'inactive', toggleable: true }
   }
-  return { label: 'Active', toggleable: true, usable: true }
+  if (discountCode.startsOn > today) {
+    return { label: 'Scheduled', section: 'scheduled', toggleable: true }
+  }
+  return { label: 'Active', section: 'active', toggleable: true }
 }
 
 function DiscountCodeCard({
@@ -72,7 +76,7 @@ function DiscountCodeCard({
     <div
       className={cn(
         'flex flex-col gap-4 rounded-lg border p-4 sm:flex-row sm:items-center sm:justify-between',
-        !status.usable && 'bg-muted/40 opacity-50',
+        status.section === 'inactive' && 'bg-muted/40 opacity-50',
       )}
     >
       <div className="min-w-0">
@@ -82,7 +86,9 @@ function DiscountCodeCard({
             {discountCode.code}
           </span>
         </div>
-        {!status.usable && <p className="mt-1 text-sm font-medium">{status.label}</p>}
+        {status.section === 'inactive' && (
+          <p className="mt-1 text-sm font-medium">{status.label}</p>
+        )}
         <p className="mt-1 text-sm text-muted-foreground">
           {formatDiscount(discountCode)} · {formatAudience(discountCode.audience)} ·{' '}
           {discountCode.startsOn} through {discountCode.endsOn}
@@ -149,10 +155,13 @@ function MembershipDiscountCodesPage() {
   const [editing, setEditing] = useState<MembershipDiscountCode | null | 'new'>(null)
   const today = getTodayPacificDateString()
   const activeDiscountCodes = discountCodes.filter(
-    (discountCode) => getDiscountCodeStatus(discountCode, today).usable,
+    (discountCode) => getDiscountCodeStatus(discountCode, today).section === 'active',
+  )
+  const scheduledDiscountCodes = discountCodes.filter(
+    (discountCode) => getDiscountCodeStatus(discountCode, today).section === 'scheduled',
   )
   const inactiveDiscountCodes = discountCodes.filter(
-    (discountCode) => !getDiscountCodeStatus(discountCode, today).usable,
+    (discountCode) => getDiscountCodeStatus(discountCode, today).section === 'inactive',
   )
 
   return (
@@ -179,6 +188,11 @@ function MembershipDiscountCodesPage() {
           <DiscountCodeSection
             name="Active"
             discountCodes={activeDiscountCodes}
+            onEdit={setEditing}
+          />
+          <DiscountCodeSection
+            name="Scheduled"
+            discountCodes={scheduledDiscountCodes}
             onEdit={setEditing}
           />
           <DiscountCodeSection

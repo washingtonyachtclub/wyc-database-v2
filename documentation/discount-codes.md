@@ -13,10 +13,10 @@ All fields except the code itself can be edited. A redemption limit cannot be re
 number of completed redemptions. Percentage discounts use whole percentages from 1 through 99.
 Fixed discounts are stored in cents. Start and end dates are inclusive Pacific calendar dates.
 
-The management page separates codes usable today from inactive codes. Disabled codes can be
-enabled. Expired codes must have their end date extended before they can be enabled, and codes at
-their redemption limit require a higher or removed limit. Scheduled codes remain inactive until
-their start date.
+The management page separates codes into Active, Scheduled, and Inactive sections. Scheduled codes
+are enabled but remain unavailable until their start date; they can be disabled. Manually disabled
+codes appear under Inactive and can be enabled. Expired codes must have their end date extended
+before they can be enabled, and codes at their redemption limit require a higher or removed limit.
 
 Disabling or editing a discount code prevents stale checkout quotes by incrementing its revision. A
 checkout quoted against an older revision must apply the code again before payment. Redemption limits
