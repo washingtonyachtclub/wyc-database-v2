@@ -12,7 +12,6 @@ export const officerSelectFields = {
   positionName: positions.name,
   positionTypeId: posType.index,
   positionType: posType.text,
-  isDuesExempt: positions.isDuesExempt,
   active: officers.active,
 }
 
