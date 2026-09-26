@@ -28,7 +28,8 @@ The renewal page resumes an open workflow after a reload. It shows the waiver wh
 2. UW status determines the price tier. Student uses the student tier; every other status uses the non-student tier.
 3. The member chooses quarterly or annual membership. The page fetches the matching live price from Square.
 4. The Square Web Payments SDK tokenizes the card into a single-use source ID.
-5. `payAndRenew` creates a Square order from the configured catalog variation and charges the order total.
+5. `payAndRenew` creates a Square order from the configured catalog variation, applies an optional
+   discount code, and charges the order total.
 6. A completed charge creates `membership_renewals`, `membership_payments`, and `renewal_questionnaire` rows in one database transaction. The questionnaire remains pending.
 7. The member receives the `Complete your WYC renewal` email and signs the member waiver.
 8. Storing the waiver completes the renewal and sends the `WYC Membership Renewed` email.
@@ -123,17 +124,18 @@ Square uses Sandbox in development and Production in production, selected by `is
 
 ## Key files
 
-| File                                              | Purpose                                                                 |
-| ------------------------------------------------- | ----------------------------------------------------------------------- |
-| `src/routes/renew-membership.tsx`                 | Renewal questionnaire, payment form, workflow status, and member waiver |
-| `src/routes/membership-approvals.tsx`             | New-member and dues-exemption review                                    |
-| `src/components/renewals/SquareCardForm.tsx`      | Square Web Payments SDK card form                                       |
-| `src/domains/renewals/server-fns.ts`              | Renewal status, live pricing, payment, and paid workflow creation       |
-| `src/domains/renewals/exemption-server-fns.ts`    | Exemption request, cancellation, review, approval, and denial           |
-| `src/domains/renewals/renewal-coordinator.ts`     | Shared workflow completion and completion email                         |
-| `src/domains/renewals/compute-renewal.ts`         | Quarter math and prepay cap                                             |
-| `src/domains/renewals/catalog.ts`                 | Square catalog variation configuration                                  |
-| `src/domains/waivers/member-waiver-server-fns.ts` | Member waiver storage and renewal reconciliation                        |
-| `src/domains/waivers/member-waiver-pdf.ts`        | Executed member waiver PDF generation                                   |
-| `src/lib/square.ts`                               | Server-only Square SDK client                                           |
-| `src/db/schema.ts`                                | Renewal, payment, questionnaire, exemption, and waiver tables           |
+| File                                                  | Purpose                                                                 |
+| ----------------------------------------------------- | ----------------------------------------------------------------------- |
+| `src/routes/renew-membership.tsx`                     | Renewal questionnaire, payment form, workflow status, and member waiver |
+| `src/routes/membership-approvals.tsx`                 | New-member and dues-exemption review                                    |
+| `src/components/renewals/SquareCardForm.tsx`          | Square Web Payments SDK card form                                       |
+| `src/domains/renewals/server-fns.ts`                  | Renewal status, live pricing, payment, and paid workflow creation       |
+| `src/domains/renewals/exemption-server-fns.ts`        | Exemption request, cancellation, review, approval, and denial           |
+| `src/domains/renewals/renewal-coordinator.ts`         | Shared workflow completion and completion email                         |
+| `src/domains/renewals/compute-renewal.ts`             | Quarter math and prepay cap                                             |
+| `src/domains/renewals/catalog.ts`                     | Square catalog variation configuration                                  |
+| `src/domains/membership-discount-codes/server-fns.ts` | Discount code validation and redemption recording                       |
+| `src/domains/waivers/member-waiver-server-fns.ts`     | Member waiver storage and renewal reconciliation                        |
+| `src/domains/waivers/member-waiver-pdf.ts`            | Executed member waiver PDF generation                                   |
+| `src/lib/square.ts`                                   | Server-only Square SDK client                                           |
+| `src/db/schema.ts`                                    | Renewal, payment, questionnaire, exemption, and waiver tables           |

@@ -1,4 +1,5 @@
 import { MembershipQuestionnaireFields } from '@/components/renewals/MembershipQuestionnaireFields'
+import { DiscountCodeField } from '@/components/membership-discount-codes/DiscountCodeField'
 import type { SquareCardHandle } from '@/components/renewals/SquareCardForm'
 import { SquareCardForm } from '@/components/renewals/SquareCardForm'
 import { Button } from '@/components/ui/button'
@@ -21,6 +22,7 @@ import {
   useStartNewMemberPaymentMutation,
 } from '@/domains/membership-applications/query-options'
 import type { RenewalDuration } from '@/domains/renewals/compute-renewal'
+import type { DiscountCodeQuote } from '@/domains/membership-discount-codes/schema'
 import type {
   PlusOneResponse,
   QuestionnaireAnswers,
@@ -91,6 +93,7 @@ function JoinPage() {
   const [uwStatus, setUwStatus] = useState<UwStatus | null>(null)
   const [plusOne, setPlusOne] = useState<PlusOneResponse | null>(null)
   const [duration, setDuration] = useState<RenewalDuration>('annual')
+  const [discountCode, setDiscountCode] = useState<DiscountCodeQuote | null>(null)
   const [checkedEmail, setCheckedEmail] = useState('')
   const [existingMember, setExistingMember] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -206,6 +209,9 @@ function JoinPage() {
         firstName,
         lastName,
         primaryEmail,
+        discountCode: discountCode
+          ? { code: discountCode.code, revision: discountCode.revision }
+          : null,
         questionnaire,
         sourceId,
         uwEmail,
@@ -549,6 +555,13 @@ function JoinPage() {
 
             <section className="space-y-5 border-t pt-8">
               <h2 className="font-wyc-heading text-xl font-bold text-wyc-purple">Payment</h2>
+              <DiscountCodeField
+                audience="new_members"
+                duration={duration}
+                tier={tier}
+                onApplied={setDiscountCode}
+                disabled={isSubmitting}
+              />
               <div className="space-y-2">
                 <Label>Card</Label>
                 <SquareCardForm ref={cardRef} onError={setError} />

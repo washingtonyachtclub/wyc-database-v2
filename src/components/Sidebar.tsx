@@ -34,6 +34,7 @@ export const toolsItems = [
   { path: '/set-current-quarter' as const, label: 'Set Current Quarter' },
   { path: '/tests' as const, label: 'Written Tests' },
   { path: '/membership-approvals' as const, label: 'Membership Approvals' },
+  { path: '/discount-codes' as const, label: 'Discount Codes' },
 ]
 
 function SidebarSectionHeading({ children }: { children: ReactNode }) {

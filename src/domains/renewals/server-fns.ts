@@ -16,6 +16,14 @@ import {
   createMembershipOrder,
   getMembershipPrice,
 } from '@/domains/membership-payments/square-payment'
+import {
+  parseDiscountCodeSelection,
+  type ResolvedDiscountCode,
+} from '@/domains/membership-discount-codes/schema'
+import {
+  insertMembershipDiscountCodeRedemption,
+  resolveMembershipDiscountCode,
+} from '@/domains/membership-discount-codes/service'
 import { sendEmail } from '@/lib/email'
 import { renewalWaiverRequiredEmail } from '@/lib/emails/membership'
 import { createServerFn } from '@tanstack/react-start'
@@ -173,13 +181,16 @@ export const getRenewalPrice = createServerFn({ method: 'GET' })
 async function recordPaidRenewal(input: {
   amountCents: number
   currency: string
+  discountCents: number
   duration: RenewalDuration
   prevExpireQtr: number
   questionnaire: QuestionnaireAnswers
+  discountCode: ResolvedDiscountCode | null
   squareOrderId: string
   squarePaymentId: string
   targetExpireQtr: number
   tier: RenewalTier
+  subtotalCents: number
   wycNumber: number
 }) {
   const renewalId = randomUUID()
@@ -193,7 +204,7 @@ async function recordPaidRenewal(input: {
       previousExpireQtr: input.prevExpireQtr,
       targetExpireQtr: input.targetExpireQtr,
     })
-    await tx.insert(membershipPayments).values({
+    const result = await tx.insert(membershipPayments).values({
       renewalId,
       wycNumber: input.wycNumber,
       squarePaymentId: input.squarePaymentId,
@@ -206,6 +217,15 @@ async function recordPaidRenewal(input: {
       newExpireQtr: input.targetExpireQtr,
       status: 'COMPLETED',
     })
+    if (input.discountCode) {
+      await insertMembershipDiscountCodeRedemption(tx, {
+        discountCents: input.discountCents,
+        finalCents: input.amountCents,
+        paymentId: result[0].insertId,
+        discountCode: input.discountCode,
+        subtotalCents: input.subtotalCents,
+      })
+    }
     await tx.insert(renewalQuestionnaire).values({
       renewalId,
       wycNumber: input.wycNumber,
@@ -252,11 +272,19 @@ async function sendWaiverRequiredEmail(input: {
  * member waiver. The session user is the member (requireAuth).
  */
 export const payAndRenew = createServerFn({ method: 'POST' })
-  .inputValidator((input: { duration: string; sourceId: string; questionnaire: unknown }) => ({
-    duration: parseDuration(input.duration),
-    sourceId: String(input.sourceId),
-    answers: parseQuestionnaire(input.questionnaire),
-  }))
+  .inputValidator(
+    (input: {
+      duration: string
+      discountCode?: unknown
+      sourceId: string
+      questionnaire: unknown
+    }) => ({
+      duration: parseDuration(input.duration),
+      discountCode: parseDiscountCodeSelection(input.discountCode),
+      sourceId: String(input.sourceId),
+      answers: parseQuestionnaire(input.questionnaire),
+    }),
+  )
   .handler(async ({ data }) => {
     const wycNumber = await requireAuth()
 
@@ -299,19 +327,26 @@ export const payAndRenew = createServerFn({ method: 'POST' })
         'Your membership is already paid as far ahead as we allow. Please renew again closer to your expiry date.',
       )
     }
+    const discountCode = data.discountCode
+      ? await getMembershipPrice(tier, data.duration).then((price) =>
+          resolveMembershipDiscountCode({
+            audience: 'renewals',
+            code: data.discountCode!.code,
+            currency: price.currency,
+            expectedRevision: data.discountCode!.revision,
+            subtotalCents: price.amountCents,
+          }),
+        )
+      : null
     // Orders computes the total from the catalog item.
-    let orderId: string
-    let amountCents: number
-    let currency: string
+    let order: Awaited<ReturnType<typeof createMembershipOrder>>
     try {
-      const order = await createMembershipOrder({
+      order = await createMembershipOrder({
+        discount: discountCode,
         duration: data.duration,
-        idempotencyKey: `renew-o/${wycNumber}/${targetExpireQtr}`,
+        idempotencyKey: `renew-o/${wycNumber}/${targetExpireQtr}/${discountCode?.index ?? 'none'}/${discountCode?.revision ?? 0}`,
         tier,
       })
-      orderId = order.orderId
-      amountCents = order.amountCents
-      currency = order.currency
     } catch (error) {
       console.error('payAndRenew: Square order creation failed:', {
         wycNumber,
@@ -330,7 +365,7 @@ export const payAndRenew = createServerFn({ method: 'POST' })
           .update(data.sourceId)
           .digest('hex')
           .slice(0, 16)}`,
-        order: { amountCents, currency, orderId },
+        order,
         sourceId: data.sourceId,
       })
       paymentId = payment.id!
@@ -338,7 +373,7 @@ export const payAndRenew = createServerFn({ method: 'POST' })
       if (error instanceof MembershipPaymentError && error.kind === 'declined') {
         console.error('payAndRenew: Square declined payment:', {
           wycNumber,
-          orderId,
+          orderId: order.orderId,
           targetExpireQtr,
           error,
         })
@@ -348,8 +383,8 @@ export const payAndRenew = createServerFn({ method: 'POST' })
       if (error instanceof MembershipPaymentError && error.kind === 'unknown') {
         console.error('payAndRenew: Square payment outcome unknown:', {
           wycNumber,
-          orderId,
-          amountCents,
+          orderId: order.orderId,
+          amountCents: order.amountCents,
           targetExpireQtr,
           error,
         })
@@ -358,7 +393,7 @@ export const payAndRenew = createServerFn({ method: 'POST' })
 
       console.error('payAndRenew: Square payment failed:', {
         wycNumber,
-        orderId,
+        orderId: order.orderId,
         targetExpireQtr,
         error,
       })
@@ -378,10 +413,13 @@ export const payAndRenew = createServerFn({ method: 'POST' })
         duration: data.duration,
         prevExpireQtr,
         targetExpireQtr,
-        amountCents,
-        currency,
+        amountCents: order.amountCents,
+        currency: order.currency,
+        discountCents: order.discountCents,
+        subtotalCents: order.subtotalCents,
+        discountCode,
         squarePaymentId: paymentId,
-        squareOrderId: orderId,
+        squareOrderId: order.orderId,
         questionnaire: data.answers,
       })
     } catch (error) {
@@ -389,7 +427,7 @@ export const payAndRenew = createServerFn({ method: 'POST' })
       console.error('payAndRenew: payment COMPLETED but DB update failed:', {
         wycNumber,
         paymentId,
-        orderId,
+        orderId: order.orderId,
         targetExpireQtr,
         error,
       })
@@ -412,8 +450,8 @@ export const payAndRenew = createServerFn({ method: 'POST' })
       renewalId,
       targetExpireQtr,
       quarterLabel,
-      amountCents,
-      currency,
+      amountCents: order.amountCents,
+      currency: order.currency,
       emailSent,
       emailSimulated,
     }

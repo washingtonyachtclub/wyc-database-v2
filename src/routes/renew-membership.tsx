@@ -1,4 +1,5 @@
 import type { SquareCardHandle } from '@/components/renewals/SquareCardForm'
+import { DiscountCodeField } from '@/components/membership-discount-codes/DiscountCodeField'
 import { MembershipQuestionnaireFields } from '@/components/renewals/MembershipQuestionnaireFields'
 import { SquareCardForm } from '@/components/renewals/SquareCardForm'
 import { Button } from '@/components/ui/button'
@@ -15,6 +16,7 @@ import { ErrorAlert } from '@/components/ui/ErrorAlert'
 import { Label } from '@/components/ui/label'
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip'
 import type { RenewalDuration } from '@/domains/renewals/compute-renewal'
+import type { DiscountCodeQuote } from '@/domains/membership-discount-codes/schema'
 import {
   getRenewalPriceQueryOptions,
   getRenewalStatusQueryOptions,
@@ -75,6 +77,7 @@ function RenewMembershipPage() {
   const [duration, setDuration] = useState<RenewalDuration>(
     status.preview.annual.allowed ? 'annual' : 'quarterly',
   )
+  const [discountCode, setDiscountCode] = useState<DiscountCodeQuote | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [submitting, setSubmitting] = useState(false)
   const [result, setResult] = useState<CompletionResult | null>(null)
@@ -124,7 +127,14 @@ function RenewMembershipPage() {
     setSubmitting(true)
     try {
       const sourceId = await cardRef.current!.tokenize()
-      const data = await mutation.mutateAsync({ duration, sourceId, questionnaire })
+      const data = await mutation.mutateAsync({
+        duration,
+        discountCode: discountCode
+          ? { code: discountCode.code, revision: discountCode.revision }
+          : null,
+        sourceId,
+        questionnaire,
+      })
       setRequiredEmailSimulated(data.emailSimulated)
     } catch (e: any) {
       setError(e?.message ?? 'Something went wrong. Please try again.')
@@ -287,6 +297,14 @@ function RenewMembershipPage() {
           )}
         </div>
       </div>
+
+      <DiscountCodeField
+        audience="renewals"
+        duration={duration}
+        tier={tier}
+        onApplied={setDiscountCode}
+        disabled={submitting}
+      />
 
       <div className="space-y-2">
         <Label className="text-base">Card</Label>
