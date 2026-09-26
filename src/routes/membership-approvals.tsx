@@ -8,7 +8,10 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 import {
   Select,
   SelectContent,
+  SelectGroup,
   SelectItem,
+  SelectLabel,
+  SelectSeparator,
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
@@ -28,6 +31,7 @@ import { listMembershipApplicationsForApproval } from '@/domains/membership-appl
 import {
   canCompleteMembershipApplication,
   isDuesExemptionApplication,
+  isMembershipApplicationActionable,
 } from '@/domains/membership-applications/funding'
 import {
   membershipApplicationsForApprovalQueryOptions,
@@ -46,6 +50,7 @@ import {
 } from '@/domains/renewals/query-options'
 import { requirePrivilegeForRoute } from '@/lib/route-guards'
 import { formatPacificDate, formatPacificDateTime } from '@/lib/date-utils'
+import { cn } from '@/lib/utils'
 import { useQuery } from '@tanstack/react-query'
 import { createFileRoute, useNavigate } from '@tanstack/react-router'
 import { ChevronDown, ChevronUp, Ellipsis, TriangleAlert } from 'lucide-react'
@@ -53,11 +58,19 @@ import { useEffect, useState } from 'react'
 
 type ApprovalCategory = 'dues-exemptions' | 'new-members'
 type Application = Awaited<ReturnType<typeof listMembershipApplicationsForApproval>>[number]
-type ReviewAction =
-  | { kind: 'approve-new' }
-  | { kind: 'apply-existing'; wycNumber: number }
-  | { kind: 'close' }
-  | null
+type ReviewAction = { kind: 'apply-existing'; wycNumber: number } | { kind: 'close' } | null
+
+function applicationStatus(application: Application) {
+  if (application.reviewStatus.startsWith('approved_')) return 'Welcome email not sent'
+  if (application.paymentStatus === 'reconciliation_required') return 'Payment outcome unknown'
+  if (!application.requirementsComplete) {
+    return isDuesExemptionApplication(application.paymentStatus)
+      ? 'Dues exemption · Waiting on applicant'
+      : 'Waiting on applicant'
+  }
+  if (isDuesExemptionApplication(application.paymentStatus)) return 'Dues exemption requested'
+  return null
+}
 
 export const Route = createFileRoute('/membership-approvals')({
   validateSearch: (search: Record<string, unknown>) => ({
@@ -114,7 +127,7 @@ function MembershipApprovalsPage() {
             variant={category === 'dues-exemptions' ? 'default' : 'outline'}
             onClick={() => selectCategory('dues-exemptions')}
           >
-            Dues exemptions ({exemptions.data?.length ?? 0})
+            Dues Exemption Renewals ({exemptions.data?.length ?? 0})
           </Button>
         )}
       </div>
@@ -146,8 +159,14 @@ function NewMemberApprovals({
   loading: boolean
 }) {
   const [selectedId, setSelectedId] = useState<string | null>(null)
+  const actionableApplications = applications.filter(isMembershipApplicationActionable)
+  const waitingApplications = applications.filter(
+    (application) => !isMembershipApplicationActionable(application),
+  )
+  const sortedApplications = [...actionableApplications, ...waitingApplications]
   const selected =
-    applications.find((application) => application.applicationId === selectedId) ?? applications[0]
+    sortedApplications.find((application) => application.applicationId === selectedId) ??
+    sortedApplications[0]
 
   useEffect(() => {
     if (selected && selected.applicationId !== selectedId) setSelectedId(selected.applicationId)
@@ -163,18 +182,6 @@ function NewMemberApprovals({
     )
   }
 
-  function statusFor(application: Application) {
-    if (application.reviewStatus.startsWith('approved_')) return 'Welcome email not sent'
-    if (application.paymentStatus === 'reconciliation_required') return 'Payment outcome unknown'
-    if (!application.requirementsComplete) {
-      return isDuesExemptionApplication(application.paymentStatus)
-        ? 'Dues exemption · Waiting on applicant'
-        : 'Waiting on applicant'
-    }
-    if (isDuesExemptionApplication(application.paymentStatus)) return 'Dues exemption requested'
-    return null
-  }
-
   return (
     <div className="grid items-start gap-6 md:grid-cols-[16rem_minmax(0,1fr)] lg:grid-cols-[20rem_minmax(0,1fr)]">
       <div className="md:hidden">
@@ -183,42 +190,111 @@ function NewMemberApprovals({
             <SelectValue placeholder="Select an application" />
           </SelectTrigger>
           <SelectContent>
-            {applications.map((application) => {
-              const status = statusFor(application)
-              return (
-                <SelectItem key={application.applicationId} value={application.applicationId}>
-                  {application.firstName} {application.lastName}
-                  {status ? ` · ${status}` : ''}
-                </SelectItem>
-              )
-            })}
+            {actionableApplications.length > 0 && (
+              <SelectGroup>
+                <SelectLabel>Action needed</SelectLabel>
+                {actionableApplications.map((application) => {
+                  const status = applicationStatus(application)
+                  return (
+                    <SelectItem key={application.applicationId} value={application.applicationId}>
+                      {application.firstName} {application.lastName}
+                      {status ? ` · ${status}` : ''}
+                    </SelectItem>
+                  )
+                })}
+              </SelectGroup>
+            )}
+            {actionableApplications.length > 0 && waitingApplications.length > 0 && (
+              <SelectSeparator />
+            )}
+            {waitingApplications.length > 0 && (
+              <SelectGroup>
+                <SelectLabel className="text-muted-foreground">Waiting on applicant</SelectLabel>
+                {waitingApplications.map((application) => {
+                  const status = applicationStatus(application)
+                  return (
+                    <SelectItem
+                      key={application.applicationId}
+                      value={application.applicationId}
+                      className="text-muted-foreground"
+                    >
+                      {application.firstName} {application.lastName}
+                      {status ? ` · ${status}` : ''}
+                    </SelectItem>
+                  )
+                })}
+              </SelectGroup>
+            )}
           </SelectContent>
         </Select>
       </div>
-      <div className="hidden space-y-3 md:block">
-        {applications.map((application) => {
-          const active = application.applicationId === selected?.applicationId
-          const status = statusFor(application)
-          return (
-            <Button
-              key={application.applicationId}
-              type="button"
-              variant={active ? 'default' : 'outline'}
-              onClick={() => setSelectedId(application.applicationId)}
-              className="h-auto w-full justify-start whitespace-normal px-4 py-3 text-left"
-            >
-              <span>
-                <span className="block font-semibold">
-                  {application.firstName} {application.lastName}
-                </span>
-                {status && <span className="mt-1 block text-sm opacity-80">{status}</span>}
-              </span>
-            </Button>
-          )
-        })}
+      <div className="hidden space-y-5 md:block">
+        {actionableApplications.length > 0 && (
+          <ApplicationListSection
+            title="Action needed"
+            applications={actionableApplications}
+            selectedId={selected?.applicationId ?? null}
+            onSelect={setSelectedId}
+          />
+        )}
+        {waitingApplications.length > 0 && (
+          <ApplicationListSection
+            title="Waiting on applicant"
+            applications={waitingApplications}
+            selectedId={selected?.applicationId ?? null}
+            onSelect={setSelectedId}
+            muted
+          />
+        )}
       </div>
       {selected && <ApplicationReview key={selected.applicationId} application={selected} />}
     </div>
+  )
+}
+
+function ApplicationListSection({
+  applications,
+  muted = false,
+  onSelect,
+  selectedId,
+  title,
+}: {
+  applications: Application[]
+  muted?: boolean
+  onSelect: (applicationId: string) => void
+  selectedId: string | null
+  title: string
+}) {
+  return (
+    <section className="space-y-2">
+      <h2 className="px-1 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+        {title}
+      </h2>
+      {applications.map((application) => {
+        const active = application.applicationId === selectedId
+        const status = applicationStatus(application)
+        return (
+          <Button
+            key={application.applicationId}
+            type="button"
+            variant={active && !muted ? 'default' : 'outline'}
+            onClick={() => onSelect(application.applicationId)}
+            className={cn(
+              'h-auto w-full justify-start whitespace-normal px-4 py-3 text-left',
+              muted && 'bg-muted/40 text-muted-foreground hover:bg-muted/70 hover:text-foreground',
+              active && muted && 'border-ring ring-1 ring-ring',
+            )}
+          >
+            <span>
+              <span className="block font-semibold">
+                {application.firstName} {application.lastName}
+              </span>
+              {status && <span className="mt-1 block text-sm opacity-80">{status}</span>}
+            </span>
+          </Button>
+        )
+      })}
+    </section>
   )
 }
 
@@ -309,12 +385,7 @@ function ApplicationReview({ application }: { application: Application }) {
     setNotice(null)
     try {
       let result: unknown
-      if (reviewAction.kind === 'approve-new') {
-        result = await approveNew.mutateAsync({
-          applicationId: application.applicationId,
-          confirmPossibleMatches: application.matches.length > 0,
-        })
-      } else if (reviewAction.kind === 'apply-existing') {
+      if (reviewAction.kind === 'apply-existing') {
         result = await applyExisting.mutateAsync({
           applicationId: application.applicationId,
           wycNumber: reviewAction.wycNumber,
@@ -339,6 +410,24 @@ function ApplicationReview({ application }: { application: Application }) {
       setReviewAction(null)
     } catch (caught: any) {
       setReviewAction(null)
+      setError(caught?.message ?? 'Could not process the application.')
+    }
+  }
+
+  async function createMember() {
+    setError(null)
+    setNotice(null)
+    try {
+      const result = (await approveNew.mutateAsync({
+        applicationId: application.applicationId,
+        confirmPossibleMatches: application.matches.length > 0,
+      })) as {
+        emailSimulated?: boolean
+        wycNumber?: number
+      }
+      setEmailSimulated(Boolean(result.emailSimulated))
+      setNotice(`Application approved as WYC member ${result.wycNumber}.`)
+    } catch (caught: any) {
       setError(caught?.message ?? 'Could not process the application.')
     }
   }
@@ -425,12 +514,8 @@ function ApplicationReview({ application }: { application: Application }) {
           </Button>
         )}
         {readyForApproval && (
-          <Button
-            type="button"
-            onClick={() => setReviewAction({ kind: 'approve-new' })}
-            disabled={busy}
-          >
-            Create member
+          <Button type="button" onClick={createMember} disabled={busy}>
+            {approveNew.isPending ? 'Creating…' : 'Create member'}
           </Button>
         )}
 
@@ -620,13 +705,11 @@ function ApplicationReview({ application }: { application: Application }) {
 
       <ReviewActionDialog
         action={reviewAction}
-        applicantName={`${application.firstName} ${application.lastName}`}
         closeNote={closeNote}
         onCloseNoteChange={setCloseNote}
         onCancel={() => setReviewAction(null)}
         onConfirm={confirmAction}
         busy={busy}
-        hasMatches={application.matches.length > 0}
         exemptionRequested={exemptionRequested}
       />
     </div>
@@ -635,41 +718,29 @@ function ApplicationReview({ application }: { application: Application }) {
 
 function ReviewActionDialog({
   action,
-  applicantName,
   busy,
   closeNote,
   exemptionRequested,
-  hasMatches,
   onCancel,
   onCloseNoteChange,
   onConfirm,
 }: {
   action: ReviewAction
-  applicantName: string
   busy: boolean
   closeNote: string
   exemptionRequested: boolean
-  hasMatches: boolean
   onCancel: () => void
   onCloseNoteChange: (value: string) => void
   onConfirm: () => void
 }) {
   const title =
-    action?.kind === 'approve-new'
-      ? 'Create a new member?'
-      : action?.kind === 'apply-existing'
-        ? 'Apply to the selected member?'
-        : 'Close this application?'
+    action?.kind === 'apply-existing' ? 'Apply to the selected member?' : 'Close this application?'
   const description =
-    action?.kind === 'approve-new'
-      ? hasMatches
-        ? `${applicantName} has possible member matches. This will intentionally create a separate WYC profile${exemptionRequested ? ' and approve the dues exemption' : ''}.`
-        : `This will create and activate a new WYC profile for ${applicantName}${exemptionRequested ? ' and approve the dues exemption' : ''}.`
-      : action?.kind === 'apply-existing'
-        ? `This will apply the ${exemptionRequested ? 'dues exemption' : 'payment'}, contact information, emergency contact, and membership expiry to WYC member ${action.wycNumber}.`
-        : exemptionRequested
-          ? 'Closing denies the dues-exemption request and preserves the application record.'
-          : 'Closing preserves the application and payment record. Any refund must still be handled separately in Square.'
+    action?.kind === 'apply-existing'
+      ? `This will apply the ${exemptionRequested ? 'dues exemption' : 'payment'}, contact information, emergency contact, and membership expiry to WYC member ${action.wycNumber}.`
+      : exemptionRequested
+        ? 'Closing denies the dues-exemption request and preserves the application record.'
+        : 'Closing preserves the application and payment record. Any refund must still be handled separately in Square.'
 
   return (
     <AlertDialog open={action !== null} onOpenChange={(open) => !open && onCancel()}>
@@ -741,6 +812,8 @@ function DuesExemptionApprovals({
   const deny = useDenyExemptionMutation()
   const [error, setError] = useState<string | null>(null)
   const busyId = approve.isPending ? approve.variables : deny.isPending ? deny.variables : null
+  const actionableRequests = requests.filter((request) => request.waiverComplete)
+  const waitingRequests = requests.filter((request) => !request.waiverComplete)
 
   async function decide(action: 'approve' | 'deny', requestId: number) {
     setError(null)
@@ -762,43 +835,87 @@ function DuesExemptionApprovals({
           No pending dues-exemption requests.
         </div>
       ) : (
-        requests.map((request) => (
-          <div
-            key={request.index}
-            className="flex flex-wrap items-center justify-between gap-4 rounded-lg border p-4"
-          >
-            <div className="space-y-1">
-              <p className="font-semibold">
-                {request.name || 'Unknown'}{' '}
-                <span className="text-muted-foreground">#{request.wycNumber}</span>
-              </p>
-              <p className="text-sm text-muted-foreground">
-                Requesting {request.requestedLabel} · paid through {request.currentLabel}
-              </p>
-              {!request.waiverComplete && (
-                <p className="text-sm font-medium text-muted-foreground">Waiting for waiver</p>
-              )}
-            </div>
-            <div className="flex gap-2">
-              <Button
-                type="button"
-                variant="outline"
-                disabled={busyId === request.index}
-                onClick={() => decide('deny', request.index)}
-              >
-                Deny
-              </Button>
-              <Button
-                type="button"
-                disabled={busyId === request.index || !request.waiverComplete}
-                onClick={() => decide('approve', request.index)}
-              >
-                {busyId === request.index ? 'Working…' : 'Approve'}
-              </Button>
-            </div>
-          </div>
-        ))
+        <div className="space-y-6">
+          {actionableRequests.length > 0 && (
+            <ExemptionRequestSection
+              title="Action needed"
+              requests={actionableRequests}
+              busyId={busyId}
+              onDecide={decide}
+            />
+          )}
+          {waitingRequests.length > 0 && (
+            <ExemptionRequestSection
+              title="Waiting on applicant"
+              requests={waitingRequests}
+              busyId={busyId}
+              onDecide={decide}
+              muted
+            />
+          )}
+        </div>
       )}
     </div>
+  )
+}
+
+function ExemptionRequestSection({
+  busyId,
+  muted = false,
+  onDecide,
+  requests,
+  title,
+}: {
+  busyId: number | null | undefined
+  muted?: boolean
+  onDecide: (action: 'approve' | 'deny', requestId: number) => void
+  requests: ExemptionRequest[]
+  title: string
+}) {
+  return (
+    <section className="space-y-3">
+      <h2 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+        {title}
+      </h2>
+      {requests.map((request) => (
+        <div
+          key={request.index}
+          className={cn(
+            'flex flex-wrap items-center justify-between gap-4 rounded-lg border p-4',
+            muted && 'bg-muted/40 text-muted-foreground',
+          )}
+        >
+          <div className="space-y-1">
+            <p className="font-semibold">
+              {request.name || 'Unknown'}{' '}
+              <span className="text-muted-foreground">#{request.wycNumber}</span>
+            </p>
+            <p className="text-sm text-muted-foreground">
+              Requesting {request.requestedLabel} · paid through {request.currentLabel}
+            </p>
+            {!request.waiverComplete && (
+              <p className="text-sm font-medium text-muted-foreground">Waiting for waiver</p>
+            )}
+          </div>
+          <div className="flex gap-2">
+            <Button
+              type="button"
+              variant="outline"
+              disabled={busyId === request.index}
+              onClick={() => onDecide('deny', request.index)}
+            >
+              Deny
+            </Button>
+            <Button
+              type="button"
+              disabled={busyId === request.index || !request.waiverComplete}
+              onClick={() => onDecide('approve', request.index)}
+            >
+              {busyId === request.index ? 'Working…' : 'Approve'}
+            </Button>
+          </div>
+        </div>
+      ))}
+    </section>
   )
 }
