@@ -54,7 +54,7 @@ import { cn } from '@/lib/utils'
 import { useQuery } from '@tanstack/react-query'
 import { createFileRoute, useNavigate } from '@tanstack/react-router'
 import { ChevronDown, ChevronUp, Ellipsis, TriangleAlert } from 'lucide-react'
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 
 type ApprovalCategory = 'dues-exemptions' | 'new-members'
 type Application = Awaited<ReturnType<typeof listMembershipApplicationsForApproval>>[number]
@@ -159,18 +159,27 @@ function NewMemberApprovals({
   loading: boolean
 }) {
   const [selectedId, setSelectedId] = useState<string | null>(null)
+  const selectedIndexRef = useRef(0)
   const actionableApplications = applications.filter(isMembershipApplicationActionable)
   const waitingApplications = applications.filter(
     (application) => !isMembershipApplicationActionable(application),
   )
   const sortedApplications = [...actionableApplications, ...waitingApplications]
+  const selectedIndex = sortedApplications.findIndex(
+    (application) => application.applicationId === selectedId,
+  )
   const selected =
-    sortedApplications.find((application) => application.applicationId === selectedId) ??
-    sortedApplications[0]
+    sortedApplications[selectedIndex >= 0 ? selectedIndex : selectedIndexRef.current] ??
+    sortedApplications.at(-1)
 
   useEffect(() => {
-    if (selected && selected.applicationId !== selectedId) setSelectedId(selected.applicationId)
-  }, [selected, selectedId])
+    if (!selected) {
+      selectedIndexRef.current = 0
+      return
+    }
+    if (selectedIndex >= 0) selectedIndexRef.current = selectedIndex
+    if (selected.applicationId !== selectedId) setSelectedId(selected.applicationId)
+  }, [selected, selectedId, selectedIndex])
 
   if (loading) return <p className="text-muted-foreground">Loading applications…</p>
   if (loadError) return <ErrorAlert error={loadError} action="Load membership applications" />
