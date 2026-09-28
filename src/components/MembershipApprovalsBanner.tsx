@@ -1,4 +1,5 @@
 import { membershipApplicationsForApprovalQueryOptions } from '@/domains/membership-applications/query-options'
+import { isMembershipApplicationActionable } from '@/domains/membership-applications/funding'
 import { getPendingExemptionsQueryOptions } from '@/domains/renewals/query-options'
 import { useCurrentUser } from '@/lib/auth/auth-query-options'
 import { hasRouteAccess } from '@/lib/permissions'
@@ -21,8 +22,10 @@ export function MembershipApprovalsBanner() {
   const applicationCount = applications?.length ?? 0
   const exemptionCount = exemptions?.length ?? 0
   const count = applicationCount + exemptionCount
-  if (count === 0) return null
-  const category = applicationCount > 0 ? 'new-members' : 'dues-exemptions'
+  const hasActionableApplication = applications?.some(isMembershipApplicationActionable) ?? false
+  const hasActionableExemption = exemptions?.some((request) => request.waiverComplete) ?? false
+  if (!hasActionableApplication && !hasActionableExemption) return null
+  const category = hasActionableApplication ? 'new-members' : 'dues-exemptions'
 
   return (
     <div className="bg-primary text-primary-foreground">
