@@ -40,7 +40,35 @@ export const Route = createFileRoute('/my-lessons')({
 function MyLessonsPage() {
   const { data: lessonsTaught } = useSuspenseQuery(getMyLessonsTaughtQueryOptions())
   const { data: signedUpLessons = [] } = useQuery(getMySignedUpLessonsQueryOptions())
+  const [showPastLessons, setShowPastLessons] = useState(false)
+  const [showPastTeaching, setShowPastTeaching] = useState(false)
   const navigate = useNavigate()
+  const upcomingLessons = signedUpLessons.filter((lesson) => isLessonUpcoming(lesson.calendarDate))
+  const pastLessons = signedUpLessons
+    .filter((lesson) => !isLessonUpcoming(lesson.calendarDate))
+    .reverse()
+  const upcomingTeaching = lessonsTaught.filter((lesson) => isLessonUpcoming(lesson.calendarDate))
+  const pastTeaching = lessonsTaught
+    .filter((lesson) => !isLessonUpcoming(lesson.calendarDate))
+    .reverse()
+  const teachingCards = (lessons: typeof lessonsTaught) => (
+    <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+      {lessons.map((lesson) => (
+        <LessonCard
+          key={lesson.index}
+          lesson={lesson}
+          dimmed={!lesson.display || !isLessonUpcoming(lesson.calendarDate)}
+          onClick={() =>
+            navigate({
+              to: '/lessons/$lessonIndex',
+              params: { lessonIndex: String(lesson.index) },
+              search: { signedUp: undefined },
+            })
+          }
+        />
+      ))}
+    </div>
+  )
 
   return (
     <div className="p-4 space-y-8">
@@ -48,41 +76,56 @@ function MyLessonsPage() {
 
       <section>
         <h2 className="text-xl font-semibold mb-4">Signed Up</h2>
-        {signedUpLessons.length === 0 ? (
-          <p className="text-muted-foreground">
-            You are not signed up for any current or upcoming lessons.
-          </p>
-        ) : (
-          <div className="space-y-4">
-            {signedUpLessons.map((lesson) => (
-              <SignedUpLessonCard key={lesson.index} lesson={lesson} />
-            ))}
-          </div>
-        )}
+        <div className="space-y-4">
+          {upcomingLessons.length === 0 && (
+            <p className="text-muted-foreground">You are not signed up for any upcoming lessons.</p>
+          )}
+          {upcomingLessons.map((lesson) => (
+            <SignedUpLessonCard key={lesson.index} lesson={lesson} />
+          ))}
+          {pastLessons.length > 0 && (
+            <>
+              <Button
+                type="button"
+                variant="outline"
+                aria-expanded={showPastLessons}
+                onClick={() => setShowPastLessons((visible) => !visible)}
+              >
+                {showPastLessons ? 'Hide past lessons' : 'Show past lessons'}
+              </Button>
+              {showPastLessons && (
+                <div className="space-y-4">
+                  {pastLessons.map((lesson) => (
+                    <SignedUpLessonCard key={lesson.index} lesson={lesson} />
+                  ))}
+                </div>
+              )}
+            </>
+          )}
+        </div>
       </section>
 
       <section>
         <h2 className="text-xl font-semibold mb-4">Teaching</h2>
-        {lessonsTaught.length === 0 ? (
-          <p className="text-muted-foreground">You are not teaching any upcoming lessons.</p>
-        ) : (
-          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-            {lessonsTaught.map((lesson) => (
-              <LessonCard
-                key={lesson.index}
-                lesson={lesson}
-                dimmed={!lesson.display}
-                onClick={() =>
-                  navigate({
-                    to: '/lessons/$lessonIndex',
-                    params: { lessonIndex: String(lesson.index) },
-                    search: { signedUp: undefined },
-                  })
-                }
-              />
-            ))}
-          </div>
-        )}
+        <div className="space-y-4">
+          {upcomingTeaching.length === 0 && (
+            <p className="text-muted-foreground">You are not teaching any upcoming lessons.</p>
+          )}
+          {upcomingTeaching.length > 0 && teachingCards(upcomingTeaching)}
+          {pastTeaching.length > 0 && (
+            <>
+              <Button
+                type="button"
+                variant="outline"
+                aria-expanded={showPastTeaching}
+                onClick={() => setShowPastTeaching((visible) => !visible)}
+              >
+                {showPastTeaching ? 'Hide past teaching' : 'Show past teaching'}
+              </Button>
+              {showPastTeaching && teachingCards(pastTeaching)}
+            </>
+          )}
+        </div>
       </section>
     </div>
   )
