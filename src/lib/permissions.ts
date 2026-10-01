@@ -1,4 +1,4 @@
-import { DATABASE_ADMIN_WYC_NUMBER } from '@/db/constants'
+import { DATABASE_ADMIN_WYC_NUMBER, HARRY_HUANG_WYC_NUMBER } from '@/db/constants'
 
 export type Privilege = 'db' | 'rtgs'
 
@@ -45,9 +45,9 @@ export const routePermissions = {
 
 export type ProtectedRoute = keyof typeof routePermissions
 
-// The approval workflow is limited to the database administrator during beta.
+// The approval workflow is limited to named reviewers during beta.
 const routeWycNumberRestrictions: Partial<Record<ProtectedRoute, readonly number[]>> = {
-  '/membership-approvals': [DATABASE_ADMIN_WYC_NUMBER],
+  '/membership-approvals': [DATABASE_ADMIN_WYC_NUMBER, HARRY_HUANG_WYC_NUMBER],
 }
 
 /**
