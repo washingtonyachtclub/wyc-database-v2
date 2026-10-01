@@ -61,8 +61,7 @@ export const LESSON_LOCATION_PRESETS = [
 /** class_type index for Windsurfing, which defaults to SSP rather than the WAC. */
 export const WINDSURFING_TYPE_ID = 12
 
-/** WYC number of the database administrator */
-export const DATABASE_ADMIN_WYC_NUMBER = 23757
+export const ESHAN_ARORA_WYC_NUMBER = 23757
 
 /** WYC number of Harry Huang */
 export const HARRY_HUANG_WYC_NUMBER = 24186

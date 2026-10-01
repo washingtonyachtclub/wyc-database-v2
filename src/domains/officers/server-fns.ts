@@ -1,7 +1,7 @@
 import { and, eq } from 'drizzle-orm'
 import { createServerFn } from '@tanstack/react-start'
 import db from '@/db/index'
-import { DATABASE_ADMIN_WYC_NUMBER } from '@/db/constants'
+import { ESHAN_ARORA_WYC_NUMBER } from '@/db/constants'
 import { toOfficer } from '@/domains/officers/schema'
 import type { OfficerInsert } from '@/domains/officers/schema'
 import {
@@ -18,7 +18,7 @@ export const getDatabaseAdmin = createServerFn({ method: 'GET' }).handler(async 
     const [row] = await db
       .select({ first: wycDatabase.first, last: wycDatabase.last, email: wycDatabase.email })
       .from(wycDatabase)
-      .where(eq(wycDatabase.wycNumber, DATABASE_ADMIN_WYC_NUMBER))
+      .where(eq(wycDatabase.wycNumber, ESHAN_ARORA_WYC_NUMBER))
       .limit(1)
     if (!row) return null
     return {
