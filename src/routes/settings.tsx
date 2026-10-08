@@ -1,6 +1,7 @@
 import { Button } from '@/components/ui/button'
 import { Label } from '@/components/ui/label'
 import { Switch } from '@/components/ui/switch'
+import { EmailPreferencesCard } from '@/components/settings/email-preferences-card'
 import { setHideDevInfo, useHideDevInfo } from '@/hooks/use-hide-dev-info'
 import { useCurrentUser, useLogoutMutation } from '@/lib/auth/auth-query-options'
 import { setSailLockerModeServerFn } from '@/lib/auth/device-settings-server-fns'
@@ -22,7 +23,7 @@ export const Route = createFileRoute('/settings')({
 function SettingsPage() {
   const router = useRouter()
   const queryClient = useQueryClient()
-  const { privileges, sailLockerMode } = useCurrentUser()
+  const { user, privileges, sailLockerMode } = useCurrentUser()
   const logoutMutation = useLogoutMutation()
   const hideDevInfo = useHideDevInfo()
   const canManageDeviceSettings = hasPrivilege(privileges, ['db'])
@@ -56,6 +57,7 @@ function SettingsPage() {
     <div className="mx-auto max-w-2xl p-6">
       <h1 className="mb-6 text-2xl font-bold">Settings</h1>
       <div className="space-y-4">
+        {user && <EmailPreferencesCard key={user.wycNumber} wycNumber={user.wycNumber} />}
         <div className="flex items-center justify-between gap-6 rounded-xl border bg-card p-6 shadow-sm">
           <div className="space-y-1">
             <h2 className="text-base font-medium">Set Password</h2>
