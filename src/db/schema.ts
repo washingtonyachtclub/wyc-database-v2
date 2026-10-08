@@ -708,6 +708,16 @@ export const membershipApplications = mysqlTable(
   ],
 )
 
+export const memberEmailPreferences = mysqlTable(
+  'member_email_preferences',
+  {
+    wycNumber: int('wyc_number').notNull(),
+    sailingOpportunities: tinyint1('sailing_opportunities').default(1).notNull(),
+    updatedAt: timestamp('updated_at', { mode: 'string' }).defaultNow().notNull(),
+  },
+  (table) => [primaryKey({ columns: [table.wycNumber] })],
+)
+
 export const memberEmergencyContacts = mysqlTable(
   'member_emergency_contacts',
   {
