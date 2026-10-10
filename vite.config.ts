@@ -1,3 +1,4 @@
+import { builtinModules } from 'node:module'
 import { defineConfig } from 'vite'
 import { tanstackStart } from '@tanstack/react-start/plugin/vite'
 import viteReact from '@vitejs/plugin-react'
@@ -7,7 +8,11 @@ import { nitro } from 'nitro/vite'
 
 export default defineConfig(async ({ mode }) => {
   const plugins = [
-    nitro(),
+    nitro({
+      rollupConfig: {
+        external: [...builtinModules, /^node:/],
+      },
+    }),
     // this is the plugin that enables path aliases
     viteTsConfigPaths({
       projects: ['./tsconfig.json'],
