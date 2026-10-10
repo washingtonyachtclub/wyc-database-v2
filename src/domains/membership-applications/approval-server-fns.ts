@@ -9,6 +9,7 @@ import {
 } from '@/db/schema'
 import { allocateWycNumber, createMemberCredentials } from '@/domains/members/member-write'
 import { insertExemptMembershipPayment } from '@/domains/membership-payments/exempt-payment'
+import { computeRenewal, withinAdvanceLimit } from '@/domains/renewals/compute-renewal'
 import { categoryIdForUwStatus, isUwStatus } from '@/domains/renewals/questionnaire'
 import { requireRouteAccess } from '@/lib/auth/auth-middleware'
 import { createServerFn } from '@tanstack/react-start'
@@ -478,10 +479,68 @@ export const approveNewMembershipApplication = createServerFn({ method: 'POST' }
     return { success: true as const, wycNumber: member!.wycNumber, emailSent, emailSimulated }
   })
 
+const existingMemberApplicationSchema = z.object({
+  applicationId: applicationIdSchema,
+  wycNumber: z.number().int().positive(),
+})
+
+function applicationRenewalDuration(duration: string, paymentStatus: string) {
+  if (paymentStatus === 'exemption_requested') return 'quarterly' as const
+  return z.enum(['quarterly', 'annual']).parse(duration)
+}
+
+export const previewMembershipApplicationRenewal = createServerFn({ method: 'GET' })
+  .validator((input) => existingMemberApplicationSchema.parse(input))
+  .handler(async ({ data }) => {
+    await requireRouteAccess('/membership-approvals')
+    try {
+      const [application] = await db
+        .select()
+        .from(membershipApplications)
+        .where(eq(membershipApplications.id, data.applicationId))
+        .limit(1)
+      const [member] = await db
+        .select({ expireQtrIndex: wycDatabase.expireQtrIndex })
+        .from(wycDatabase)
+        .where(eq(wycDatabase.wycNumber, data.wycNumber))
+        .limit(1)
+      if (
+        !application ||
+        !member ||
+        application.reviewStatus !== 'pending_review' ||
+        !canCompleteMembershipApplication(application.paymentStatus)
+      ) {
+        throw new Error('Application is not ready for renewal')
+      }
+      const duration = applicationRenewalDuration(application.duration, application.paymentStatus)
+      const targetExpireQtr = computeRenewal(member.expireQtrIndex, duration)
+      const labels = await db
+        .select({ index: quarters.index, label: quarters.school })
+        .from(quarters)
+        .where(inArray(quarters.index, [member.expireQtrIndex, targetExpireQtr]))
+      const labelFor = (index: number) =>
+        labels.find((quarter) => quarter.index === index)?.label ?? `quarter ${index}`
+      return {
+        previousExpireQtr: member.expireQtrIndex,
+        targetExpireQtr,
+        currentLabel: labelFor(member.expireQtrIndex),
+        targetLabel: labelFor(targetExpireQtr),
+        duration,
+        withinAdvanceLimit: withinAdvanceLimit(member.expireQtrIndex, duration),
+      }
+    } catch (error) {
+      console.error('Failed to preview application renewal:', error)
+      throw new Error('Could not load the renewal preview. Close this dialog and try again.')
+    }
+  })
+
 export const applyMembershipApplicationToExistingMember = createServerFn({ method: 'POST' })
   .validator((input) =>
-    z
-      .object({ applicationId: applicationIdSchema, wycNumber: z.number().int().positive() })
+    existingMemberApplicationSchema
+      .extend({
+        expectedPreviousExpireQtr: z.number().int(),
+        expectedTargetExpireQtr: z.number().int(),
+      })
       .parse(input),
   )
   .handler(async ({ data }) => {
@@ -541,9 +600,19 @@ export const applyMembershipApplicationToExistingMember = createServerFn({ metho
           throw new Error('Application contact information is incomplete')
         }
 
-        const funding = await ensureApplicationFunding(tx, application)
-
-        const expireQtrIndex = Math.max(existingMember.expireQtrIndex, application.targetExpireQtr)
+        const duration = applicationRenewalDuration(application.duration, application.paymentStatus)
+        const expireQtrIndex = computeRenewal(existingMember.expireQtrIndex, duration)
+        if (
+          existingMember.expireQtrIndex !== data.expectedPreviousExpireQtr ||
+          expireQtrIndex !== data.expectedTargetExpireQtr ||
+          !withinAdvanceLimit(existingMember.expireQtrIndex, duration)
+        ) {
+          throw new Error('Renewal preview is stale or exceeds the advance limit')
+        }
+        const funding = await ensureApplicationFunding(tx, {
+          ...application,
+          targetExpireQtr: expireQtrIndex,
+        })
         await tx
           .update(wycDatabase)
           .set({
@@ -576,7 +645,11 @@ export const applyMembershipApplicationToExistingMember = createServerFn({ metho
           })
         await tx
           .update(membershipPayments)
-          .set({ wycNumber: data.wycNumber })
+          .set({
+            wycNumber: data.wycNumber,
+            prevExpireQtr: existingMember.expireQtrIndex,
+            newExpireQtr: expireQtrIndex,
+          })
           .where(eq(membershipPayments.applicationId, data.applicationId))
         await tx
           .update(membershipApplications)
@@ -586,6 +659,7 @@ export const applyMembershipApplicationToExistingMember = createServerFn({ metho
             reviewedAt: new Date(),
             reviewedBy: reviewer,
             reviewStatus: 'approved_existing',
+            targetExpireQtr: expireQtrIndex,
           })
           .where(eq(membershipApplications.id, data.applicationId))
         const [quarter] = await tx
@@ -607,7 +681,9 @@ export const applyMembershipApplicationToExistingMember = createServerFn({ metho
         wycNumber: data.wycNumber,
         error,
       })
-      throw new Error('Could not apply the application to the selected member')
+      throw new Error(
+        'Could not apply the renewal. Reopen the preview and check the membership before trying again.',
+      )
     }
 
     let emailSent = false

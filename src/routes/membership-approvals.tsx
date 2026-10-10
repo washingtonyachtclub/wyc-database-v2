@@ -27,7 +27,10 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog'
-import { listMembershipApplicationsForApproval } from '@/domains/membership-applications/approval-server-fns'
+import {
+  listMembershipApplicationsForApproval,
+  previewMembershipApplicationRenewal,
+} from '@/domains/membership-applications/approval-server-fns'
 import {
   canCompleteMembershipApplication,
   isDuesExemptionApplication,
@@ -58,6 +61,7 @@ import { useEffect, useRef, useState } from 'react'
 
 type ApprovalCategory = 'dues-exemptions' | 'new-members'
 type Application = Awaited<ReturnType<typeof listMembershipApplicationsForApproval>>[number]
+type RenewalPreview = Awaited<ReturnType<typeof previewMembershipApplicationRenewal>>
 type ReviewAction = { kind: 'apply-existing'; wycNumber: number } | { kind: 'close' } | null
 
 function applicationStatus(application: Application) {
@@ -388,16 +392,19 @@ function ApplicationReview({ application }: { application: Application }) {
     }
   }
 
-  async function confirmAction() {
+  async function confirmAction(preview?: RenewalPreview) {
     if (!reviewAction) return
     setError(null)
     setNotice(null)
     try {
       let result: unknown
       if (reviewAction.kind === 'apply-existing') {
+        if (!preview || !preview.withinAdvanceLimit) return
         result = await applyExisting.mutateAsync({
           applicationId: application.applicationId,
           wycNumber: reviewAction.wycNumber,
+          expectedPreviousExpireQtr: preview.previousExpireQtr,
+          expectedTargetExpireQtr: preview.targetExpireQtr,
         })
       } else {
         result = await close.mutateAsync({
@@ -562,7 +569,7 @@ function ApplicationReview({ application }: { application: Application }) {
                     }}
                     disabled={busy || selectedMember === null}
                   >
-                    Apply to existing member
+                    Apply as renewal
                   </Button>
                 </div>
               )}
@@ -713,6 +720,7 @@ function ApplicationReview({ application }: { application: Application }) {
       )}
 
       <ReviewActionDialog
+        applicationId={application.applicationId}
         action={reviewAction}
         closeNote={closeNote}
         onCloseNoteChange={setCloseNote}
@@ -726,6 +734,7 @@ function ApplicationReview({ application }: { application: Application }) {
 }
 
 function ReviewActionDialog({
+  applicationId,
   action,
   busy,
   closeNote,
@@ -734,19 +743,29 @@ function ReviewActionDialog({
   onCloseNoteChange,
   onConfirm,
 }: {
+  applicationId: string
   action: ReviewAction
   busy: boolean
   closeNote: string
   exemptionRequested: boolean
   onCancel: () => void
   onCloseNoteChange: (value: string) => void
-  onConfirm: () => void
+  onConfirm: (preview?: RenewalPreview) => void
 }) {
-  const title =
-    action?.kind === 'apply-existing' ? 'Apply to the selected member?' : 'Close this application?'
+  const wycNumber = action?.kind === 'apply-existing' ? action.wycNumber : null
+  const preview = useQuery({
+    queryKey: ['membership-applications', 'renewal-preview', applicationId, wycNumber],
+    queryFn: () =>
+      previewMembershipApplicationRenewal({ data: { applicationId, wycNumber: wycNumber! } }),
+    enabled: wycNumber !== null,
+    staleTime: 0,
+    gcTime: 0,
+    retry: false,
+  })
+  const title = action?.kind === 'apply-existing' ? 'Apply as renewal?' : 'Close this application?'
   const description =
     action?.kind === 'apply-existing'
-      ? `This will apply the ${exemptionRequested ? 'dues exemption' : 'payment'}, contact information, emergency contact, and membership expiry to WYC member ${action.wycNumber}.`
+      ? `This will renew WYC member ${action.wycNumber} using this ${exemptionRequested ? 'dues exemption' : 'payment'}. It will also update their contact information and emergency contact.`
       : exemptionRequested
         ? 'Closing denies the dues-exemption request and preserves the application record.'
         : 'Closing preserves the application and payment record. Any refund must still be handled separately in Square.'
@@ -758,6 +777,37 @@ function ReviewActionDialog({
           <AlertDialogTitle>{title}</AlertDialogTitle>
           <AlertDialogDescription>{description}</AlertDialogDescription>
         </AlertDialogHeader>
+        {action?.kind === 'apply-existing' && (
+          <div className="space-y-3" aria-live="polite">
+            {preview.isFetching ? (
+              <p>Loading renewal preview…</p>
+            ) : preview.isError ? (
+              <ErrorAlert error="Could not load the renewal preview. Close this dialog and try again." />
+            ) : preview.data ? (
+              <>
+                <ReviewGrid
+                  rows={[
+                    ['Current membership', preview.data.currentLabel],
+                    [
+                      'Renewal term',
+                      preview.data.duration === 'annual' ? 'Four quarters' : 'One quarter',
+                    ],
+                    ['Membership after approval', preview.data.targetLabel],
+                    ...(exemptionRequested
+                      ? [['Dues exemption for', preview.data.targetLabel] as [string, string]]
+                      : []),
+                  ]}
+                />
+                {!preview.data.withinAdvanceLimit && (
+                  <p className="text-sm text-destructive">
+                    This renewal exceeds the four-quarter advance limit. Resolve the extra payment
+                    or exemption request before approval.
+                  </p>
+                )}
+              </>
+            ) : null}
+          </div>
+        )}
         {action?.kind === 'close' && (
           <div className="space-y-2">
             <Label htmlFor="application-close-note">Internal note (optional)</Label>
@@ -771,7 +821,14 @@ function ReviewActionDialog({
         )}
         <AlertDialogFooter>
           <AlertDialogCancel disabled={busy}>Cancel</AlertDialogCancel>
-          <AlertDialogAction onClick={onConfirm} disabled={busy}>
+          <AlertDialogAction
+            onClick={() => onConfirm(preview.data)}
+            disabled={
+              busy ||
+              (action?.kind === 'apply-existing' &&
+                (preview.isFetching || preview.isError || !preview.data?.withinAdvanceLimit))
+            }
+          >
             {busy
               ? 'Working…'
               : action?.kind === 'close'

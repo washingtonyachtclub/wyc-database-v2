@@ -9,223 +9,58 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
-import { Route as TestsRouteImport } from './routes/tests'
-import { Route as SettingsRouteImport } from './routes/settings'
-import { Route as SetPasswordRouteImport } from './routes/set-password'
-import { Route as SetCurrentQuarterRouteImport } from './routes/set-current-quarter'
-import { Route as RenewMembershipRouteImport } from './routes/renew-membership'
-import { Route as RatingsExaminersRouteImport } from './routes/ratings-examiners'
-import { Route as RatingsRouteImport } from './routes/ratings'
-import { Route as RatingTypesRouteImport } from './routes/rating-types'
-import { Route as QuartersRouteImport } from './routes/quarters'
-import { Route as PrivilegesRouteImport } from './routes/privileges'
-import { Route as PositionsRouteImport } from './routes/positions'
-import { Route as OfficersRouteImport } from './routes/officers'
-import { Route as MyLessonsRouteImport } from './routes/my-lessons'
-import { Route as MembershipStatsRouteImport } from './routes/membership-stats'
-import { Route as MembershipApprovalsRouteImport } from './routes/membership-approvals'
-import { Route as MembersRouteImport } from './routes/members'
-import { Route as MeetTheTeamRouteImport } from './routes/meet-the-team'
-import { Route as MaintenanceTrackerRouteImport } from './routes/maintenance-tracker'
-import { Route as LoginRouteImport } from './routes/login'
-import { Route as LessonsRouteImport } from './routes/lessons'
-import { Route as LessonTypesRouteImport } from './routes/lesson-types'
-import { Route as LessonListRouteImport } from './routes/lesson-list'
-import { Route as JoinRouteImport } from './routes/join'
-import { Route as HonoraryRouteImport } from './routes/honorary'
-import { Route as GuestWaiverRouteImport } from './routes/guest-waiver'
-import { Route as ForgotPasswordRouteImport } from './routes/forgot-password'
-import { Route as ForbiddenRouteImport } from './routes/forbidden'
-import { Route as DoorCodesRouteImport } from './routes/door-codes'
-import { Route as DiscountCodesRouteImport } from './routes/discount-codes'
-import { Route as DbDotcgiRouteImport } from './routes/db[.]cgi'
-import { Route as ChiefsRouteImport } from './routes/chiefs'
-import { Route as CheckoutsRouteImport } from './routes/checkouts'
-import { Route as CheckoutRouteImport } from './routes/checkout'
-import { Route as BoatTypesRouteImport } from './routes/boat-types'
-import { Route as ApproveExemptionsRouteImport } from './routes/approve-exemptions'
 import { Route as IndexRouteImport } from './routes/index'
-import { Route as SignupLessonIndexRouteImport } from './routes/signup.$lessonIndex'
-import { Route as RatingsRatingIndexRouteImport } from './routes/ratings_.$ratingIndex'
-import { Route as QrLoginApproveRouteImport } from './routes/qr-login.approve'
-import { Route as MyLessonsLessonIndexRouteImport } from './routes/my-lessons.$lessonIndex'
-import { Route as MembersWycNumberRouteImport } from './routes/members_.$wycNumber'
-import { Route as LessonsLessonIndexRouteImport } from './routes/lessons_.$lessonIndex'
-import { Route as JoinApplicationIdRouteImport } from './routes/join_.$applicationId'
-import { Route as GuidesKnotsRouteImport } from './routes/guides.knots'
-import { Route as GuidesFjRouteImport } from './routes/guides.fj'
+import { Route as ApproveExemptionsRouteImport } from './routes/approve-exemptions'
+import { Route as BoatTypesRouteImport } from './routes/boat-types'
+import { Route as CheckoutRouteImport } from './routes/checkout'
+import { Route as CheckoutsRouteImport } from './routes/checkouts'
+import { Route as ChiefsRouteImport } from './routes/chiefs'
+import { Route as DbDotcgiRouteImport } from './routes/db[.]cgi'
+import { Route as DiscountCodesRouteImport } from './routes/discount-codes'
+import { Route as DoorCodesRouteImport } from './routes/door-codes'
+import { Route as ForbiddenRouteImport } from './routes/forbidden'
+import { Route as ForgotPasswordRouteImport } from './routes/forgot-password'
+import { Route as GuestWaiverRouteImport } from './routes/guest-waiver'
+import { Route as HonoraryRouteImport } from './routes/honorary'
+import { Route as JoinRouteImport } from './routes/join'
+import { Route as LessonListRouteImport } from './routes/lesson-list'
+import { Route as LessonTypesRouteImport } from './routes/lesson-types'
+import { Route as LessonsRouteImport } from './routes/lessons'
+import { Route as LoginRouteImport } from './routes/login'
+import { Route as MaintenanceTrackerRouteImport } from './routes/maintenance-tracker'
+import { Route as MeetTheTeamRouteImport } from './routes/meet-the-team'
+import { Route as MembersRouteImport } from './routes/members'
+import { Route as MembershipApprovalsRouteImport } from './routes/membership-approvals'
+import { Route as MembershipStatsRouteImport } from './routes/membership-stats'
+import { Route as MyLessonsRouteImport } from './routes/my-lessons'
+import { Route as OfficersRouteImport } from './routes/officers'
+import { Route as PositionsRouteImport } from './routes/positions'
+import { Route as PrivilegesRouteImport } from './routes/privileges'
+import { Route as QuartersRouteImport } from './routes/quarters'
+import { Route as RatingTypesRouteImport } from './routes/rating-types'
+import { Route as RatingsRouteImport } from './routes/ratings'
+import { Route as RatingsExaminersRouteImport } from './routes/ratings-examiners'
+import { Route as RenewMembershipRouteImport } from './routes/renew-membership'
+import { Route as SetCurrentQuarterRouteImport } from './routes/set-current-quarter'
+import { Route as SetPasswordRouteImport } from './routes/set-password'
+import { Route as SettingsRouteImport } from './routes/settings'
+import { Route as TestsRouteImport } from './routes/tests'
 import { Route as CheckoutNewRouteImport } from './routes/checkout_.new'
-import { Route as ApiCronLessonRemindersRouteImport } from './routes/api.cron.lesson-reminders'
+import { Route as GuidesFjRouteImport } from './routes/guides.fj'
+import { Route as GuidesKnotsRouteImport } from './routes/guides.knots'
+import { Route as JoinApplicationIdRouteImport } from './routes/join_.$applicationId'
+import { Route as LessonsLessonIndexRouteImport } from './routes/lessons_.$lessonIndex'
+import { Route as MembersWycNumberRouteImport } from './routes/members_.$wycNumber'
+import { Route as MyLessonsLessonIndexRouteImport } from './routes/my-lessons.$lessonIndex'
+import { Route as QrLoginApproveRouteImport } from './routes/qr-login.approve'
+import { Route as RatingsRatingIndexRouteImport } from './routes/ratings_.$ratingIndex'
+import { Route as SignupLessonIndexRouteImport } from './routes/signup.$lessonIndex'
 import { Route as ApiCronDailyTasksRouteImport } from './routes/api.cron.daily-tasks'
+import { Route as ApiCronLessonRemindersRouteImport } from './routes/api.cron.lesson-reminders'
 
-const TestsRoute = TestsRouteImport.update({
-  id: '/tests',
-  path: '/tests',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const SettingsRoute = SettingsRouteImport.update({
-  id: '/settings',
-  path: '/settings',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const SetPasswordRoute = SetPasswordRouteImport.update({
-  id: '/set-password',
-  path: '/set-password',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const SetCurrentQuarterRoute = SetCurrentQuarterRouteImport.update({
-  id: '/set-current-quarter',
-  path: '/set-current-quarter',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const RenewMembershipRoute = RenewMembershipRouteImport.update({
-  id: '/renew-membership',
-  path: '/renew-membership',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const RatingsExaminersRoute = RatingsExaminersRouteImport.update({
-  id: '/ratings-examiners',
-  path: '/ratings-examiners',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const RatingsRoute = RatingsRouteImport.update({
-  id: '/ratings',
-  path: '/ratings',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const RatingTypesRoute = RatingTypesRouteImport.update({
-  id: '/rating-types',
-  path: '/rating-types',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const QuartersRoute = QuartersRouteImport.update({
-  id: '/quarters',
-  path: '/quarters',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const PrivilegesRoute = PrivilegesRouteImport.update({
-  id: '/privileges',
-  path: '/privileges',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const PositionsRoute = PositionsRouteImport.update({
-  id: '/positions',
-  path: '/positions',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const OfficersRoute = OfficersRouteImport.update({
-  id: '/officers',
-  path: '/officers',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const MyLessonsRoute = MyLessonsRouteImport.update({
-  id: '/my-lessons',
-  path: '/my-lessons',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const MembershipStatsRoute = MembershipStatsRouteImport.update({
-  id: '/membership-stats',
-  path: '/membership-stats',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const MembershipApprovalsRoute = MembershipApprovalsRouteImport.update({
-  id: '/membership-approvals',
-  path: '/membership-approvals',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const MembersRoute = MembersRouteImport.update({
-  id: '/members',
-  path: '/members',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const MeetTheTeamRoute = MeetTheTeamRouteImport.update({
-  id: '/meet-the-team',
-  path: '/meet-the-team',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const MaintenanceTrackerRoute = MaintenanceTrackerRouteImport.update({
-  id: '/maintenance-tracker',
-  path: '/maintenance-tracker',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const LoginRoute = LoginRouteImport.update({
-  id: '/login',
-  path: '/login',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const LessonsRoute = LessonsRouteImport.update({
-  id: '/lessons',
-  path: '/lessons',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const LessonTypesRoute = LessonTypesRouteImport.update({
-  id: '/lesson-types',
-  path: '/lesson-types',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const LessonListRoute = LessonListRouteImport.update({
-  id: '/lesson-list',
-  path: '/lesson-list',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const JoinRoute = JoinRouteImport.update({
-  id: '/join',
-  path: '/join',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const HonoraryRoute = HonoraryRouteImport.update({
-  id: '/honorary',
-  path: '/honorary',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const GuestWaiverRoute = GuestWaiverRouteImport.update({
-  id: '/guest-waiver',
-  path: '/guest-waiver',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const ForgotPasswordRoute = ForgotPasswordRouteImport.update({
-  id: '/forgot-password',
-  path: '/forgot-password',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const ForbiddenRoute = ForbiddenRouteImport.update({
-  id: '/forbidden',
-  path: '/forbidden',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const DoorCodesRoute = DoorCodesRouteImport.update({
-  id: '/door-codes',
-  path: '/door-codes',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const DiscountCodesRoute = DiscountCodesRouteImport.update({
-  id: '/discount-codes',
-  path: '/discount-codes',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const DbDotcgiRoute = DbDotcgiRouteImport.update({
-  id: '/db.cgi',
-  path: '/db.cgi',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const ChiefsRoute = ChiefsRouteImport.update({
-  id: '/chiefs',
-  path: '/chiefs',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const CheckoutsRoute = CheckoutsRouteImport.update({
-  id: '/checkouts',
-  path: '/checkouts',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const CheckoutRoute = CheckoutRouteImport.update({
-  id: '/checkout',
-  path: '/checkout',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const BoatTypesRoute = BoatTypesRouteImport.update({
-  id: '/boat-types',
-  path: '/boat-types',
+const IndexRoute = IndexRouteImport.update({
+  id: '/',
+  path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ApproveExemptionsRoute = ApproveExemptionsRouteImport.update({
@@ -233,54 +68,174 @@ const ApproveExemptionsRoute = ApproveExemptionsRouteImport.update({
   path: '/approve-exemptions',
   getParentRoute: () => rootRouteImport,
 } as any)
-const IndexRoute = IndexRouteImport.update({
-  id: '/',
-  path: '/',
+const BoatTypesRoute = BoatTypesRouteImport.update({
+  id: '/boat-types',
+  path: '/boat-types',
   getParentRoute: () => rootRouteImport,
 } as any)
-const SignupLessonIndexRoute = SignupLessonIndexRouteImport.update({
-  id: '/signup/$lessonIndex',
-  path: '/signup/$lessonIndex',
+const CheckoutRoute = CheckoutRouteImport.update({
+  id: '/checkout',
+  path: '/checkout',
   getParentRoute: () => rootRouteImport,
 } as any)
-const RatingsRatingIndexRoute = RatingsRatingIndexRouteImport.update({
-  id: '/ratings_/$ratingIndex',
-  path: '/ratings/$ratingIndex',
+const CheckoutsRoute = CheckoutsRouteImport.update({
+  id: '/checkouts',
+  path: '/checkouts',
   getParentRoute: () => rootRouteImport,
 } as any)
-const QrLoginApproveRoute = QrLoginApproveRouteImport.update({
-  id: '/qr-login/approve',
-  path: '/qr-login/approve',
+const ChiefsRoute = ChiefsRouteImport.update({
+  id: '/chiefs',
+  path: '/chiefs',
   getParentRoute: () => rootRouteImport,
 } as any)
-const MyLessonsLessonIndexRoute = MyLessonsLessonIndexRouteImport.update({
-  id: '/$lessonIndex',
-  path: '/$lessonIndex',
-  getParentRoute: () => MyLessonsRoute,
-} as any)
-const MembersWycNumberRoute = MembersWycNumberRouteImport.update({
-  id: '/members_/$wycNumber',
-  path: '/members/$wycNumber',
+const DbDotcgiRoute = DbDotcgiRouteImport.update({
+  id: '/db.cgi',
+  path: '/db.cgi',
   getParentRoute: () => rootRouteImport,
 } as any)
-const LessonsLessonIndexRoute = LessonsLessonIndexRouteImport.update({
-  id: '/lessons_/$lessonIndex',
-  path: '/lessons/$lessonIndex',
+const DiscountCodesRoute = DiscountCodesRouteImport.update({
+  id: '/discount-codes',
+  path: '/discount-codes',
   getParentRoute: () => rootRouteImport,
 } as any)
-const JoinApplicationIdRoute = JoinApplicationIdRouteImport.update({
-  id: '/join_/$applicationId',
-  path: '/join/$applicationId',
+const DoorCodesRoute = DoorCodesRouteImport.update({
+  id: '/door-codes',
+  path: '/door-codes',
   getParentRoute: () => rootRouteImport,
 } as any)
-const GuidesKnotsRoute = GuidesKnotsRouteImport.update({
-  id: '/guides/knots',
-  path: '/guides/knots',
+const ForbiddenRoute = ForbiddenRouteImport.update({
+  id: '/forbidden',
+  path: '/forbidden',
   getParentRoute: () => rootRouteImport,
 } as any)
-const GuidesFjRoute = GuidesFjRouteImport.update({
-  id: '/guides/fj',
-  path: '/guides/fj',
+const ForgotPasswordRoute = ForgotPasswordRouteImport.update({
+  id: '/forgot-password',
+  path: '/forgot-password',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const GuestWaiverRoute = GuestWaiverRouteImport.update({
+  id: '/guest-waiver',
+  path: '/guest-waiver',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const HonoraryRoute = HonoraryRouteImport.update({
+  id: '/honorary',
+  path: '/honorary',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const JoinRoute = JoinRouteImport.update({
+  id: '/join',
+  path: '/join',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const LessonListRoute = LessonListRouteImport.update({
+  id: '/lesson-list',
+  path: '/lesson-list',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const LessonTypesRoute = LessonTypesRouteImport.update({
+  id: '/lesson-types',
+  path: '/lesson-types',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const LessonsRoute = LessonsRouteImport.update({
+  id: '/lessons',
+  path: '/lessons',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const LoginRoute = LoginRouteImport.update({
+  id: '/login',
+  path: '/login',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const MaintenanceTrackerRoute = MaintenanceTrackerRouteImport.update({
+  id: '/maintenance-tracker',
+  path: '/maintenance-tracker',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const MeetTheTeamRoute = MeetTheTeamRouteImport.update({
+  id: '/meet-the-team',
+  path: '/meet-the-team',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const MembersRoute = MembersRouteImport.update({
+  id: '/members',
+  path: '/members',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const MembershipApprovalsRoute = MembershipApprovalsRouteImport.update({
+  id: '/membership-approvals',
+  path: '/membership-approvals',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const MembershipStatsRoute = MembershipStatsRouteImport.update({
+  id: '/membership-stats',
+  path: '/membership-stats',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const MyLessonsRoute = MyLessonsRouteImport.update({
+  id: '/my-lessons',
+  path: '/my-lessons',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const OfficersRoute = OfficersRouteImport.update({
+  id: '/officers',
+  path: '/officers',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const PositionsRoute = PositionsRouteImport.update({
+  id: '/positions',
+  path: '/positions',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const PrivilegesRoute = PrivilegesRouteImport.update({
+  id: '/privileges',
+  path: '/privileges',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const QuartersRoute = QuartersRouteImport.update({
+  id: '/quarters',
+  path: '/quarters',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const RatingTypesRoute = RatingTypesRouteImport.update({
+  id: '/rating-types',
+  path: '/rating-types',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const RatingsRoute = RatingsRouteImport.update({
+  id: '/ratings',
+  path: '/ratings',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const RatingsExaminersRoute = RatingsExaminersRouteImport.update({
+  id: '/ratings-examiners',
+  path: '/ratings-examiners',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const RenewMembershipRoute = RenewMembershipRouteImport.update({
+  id: '/renew-membership',
+  path: '/renew-membership',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const SetCurrentQuarterRoute = SetCurrentQuarterRouteImport.update({
+  id: '/set-current-quarter',
+  path: '/set-current-quarter',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const SetPasswordRoute = SetPasswordRouteImport.update({
+  id: '/set-password',
+  path: '/set-password',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const SettingsRoute = SettingsRouteImport.update({
+  id: '/settings',
+  path: '/settings',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const TestsRoute = TestsRouteImport.update({
+  id: '/tests',
+  path: '/tests',
   getParentRoute: () => rootRouteImport,
 } as any)
 const CheckoutNewRoute = CheckoutNewRouteImport.update({
@@ -288,14 +243,59 @@ const CheckoutNewRoute = CheckoutNewRouteImport.update({
   path: '/checkout/new',
   getParentRoute: () => rootRouteImport,
 } as any)
-const ApiCronLessonRemindersRoute = ApiCronLessonRemindersRouteImport.update({
-  id: '/api/cron/lesson-reminders',
-  path: '/api/cron/lesson-reminders',
+const GuidesFjRoute = GuidesFjRouteImport.update({
+  id: '/guides/fj',
+  path: '/guides/fj',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const GuidesKnotsRoute = GuidesKnotsRouteImport.update({
+  id: '/guides/knots',
+  path: '/guides/knots',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const JoinApplicationIdRoute = JoinApplicationIdRouteImport.update({
+  id: '/join_/$applicationId',
+  path: '/join/$applicationId',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const LessonsLessonIndexRoute = LessonsLessonIndexRouteImport.update({
+  id: '/lessons_/$lessonIndex',
+  path: '/lessons/$lessonIndex',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const MembersWycNumberRoute = MembersWycNumberRouteImport.update({
+  id: '/members_/$wycNumber',
+  path: '/members/$wycNumber',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const MyLessonsLessonIndexRoute = MyLessonsLessonIndexRouteImport.update({
+  id: '/$lessonIndex',
+  path: '/$lessonIndex',
+  getParentRoute: () => MyLessonsRoute,
+} as any)
+const QrLoginApproveRoute = QrLoginApproveRouteImport.update({
+  id: '/qr-login/approve',
+  path: '/qr-login/approve',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const RatingsRatingIndexRoute = RatingsRatingIndexRouteImport.update({
+  id: '/ratings_/$ratingIndex',
+  path: '/ratings/$ratingIndex',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const SignupLessonIndexRoute = SignupLessonIndexRouteImport.update({
+  id: '/signup/$lessonIndex',
+  path: '/signup/$lessonIndex',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ApiCronDailyTasksRoute = ApiCronDailyTasksRouteImport.update({
   id: '/api/cron/daily-tasks',
   path: '/api/cron/daily-tasks',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiCronLessonRemindersRoute = ApiCronLessonRemindersRouteImport.update({
+  id: '/api/cron/lesson-reminders',
+  path: '/api/cron/lesson-reminders',
   getParentRoute: () => rootRouteImport,
 } as any)
 
@@ -655,242 +655,11 @@ export interface RootRouteChildren {
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
-    '/tests': {
-      id: '/tests'
-      path: '/tests'
-      fullPath: '/tests'
-      preLoaderRoute: typeof TestsRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/settings': {
-      id: '/settings'
-      path: '/settings'
-      fullPath: '/settings'
-      preLoaderRoute: typeof SettingsRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/set-password': {
-      id: '/set-password'
-      path: '/set-password'
-      fullPath: '/set-password'
-      preLoaderRoute: typeof SetPasswordRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/set-current-quarter': {
-      id: '/set-current-quarter'
-      path: '/set-current-quarter'
-      fullPath: '/set-current-quarter'
-      preLoaderRoute: typeof SetCurrentQuarterRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/renew-membership': {
-      id: '/renew-membership'
-      path: '/renew-membership'
-      fullPath: '/renew-membership'
-      preLoaderRoute: typeof RenewMembershipRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/ratings-examiners': {
-      id: '/ratings-examiners'
-      path: '/ratings-examiners'
-      fullPath: '/ratings-examiners'
-      preLoaderRoute: typeof RatingsExaminersRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/ratings': {
-      id: '/ratings'
-      path: '/ratings'
-      fullPath: '/ratings'
-      preLoaderRoute: typeof RatingsRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/rating-types': {
-      id: '/rating-types'
-      path: '/rating-types'
-      fullPath: '/rating-types'
-      preLoaderRoute: typeof RatingTypesRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/quarters': {
-      id: '/quarters'
-      path: '/quarters'
-      fullPath: '/quarters'
-      preLoaderRoute: typeof QuartersRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/privileges': {
-      id: '/privileges'
-      path: '/privileges'
-      fullPath: '/privileges'
-      preLoaderRoute: typeof PrivilegesRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/positions': {
-      id: '/positions'
-      path: '/positions'
-      fullPath: '/positions'
-      preLoaderRoute: typeof PositionsRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/officers': {
-      id: '/officers'
-      path: '/officers'
-      fullPath: '/officers'
-      preLoaderRoute: typeof OfficersRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/my-lessons': {
-      id: '/my-lessons'
-      path: '/my-lessons'
-      fullPath: '/my-lessons'
-      preLoaderRoute: typeof MyLessonsRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/membership-stats': {
-      id: '/membership-stats'
-      path: '/membership-stats'
-      fullPath: '/membership-stats'
-      preLoaderRoute: typeof MembershipStatsRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/membership-approvals': {
-      id: '/membership-approvals'
-      path: '/membership-approvals'
-      fullPath: '/membership-approvals'
-      preLoaderRoute: typeof MembershipApprovalsRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/members': {
-      id: '/members'
-      path: '/members'
-      fullPath: '/members'
-      preLoaderRoute: typeof MembersRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/meet-the-team': {
-      id: '/meet-the-team'
-      path: '/meet-the-team'
-      fullPath: '/meet-the-team'
-      preLoaderRoute: typeof MeetTheTeamRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/maintenance-tracker': {
-      id: '/maintenance-tracker'
-      path: '/maintenance-tracker'
-      fullPath: '/maintenance-tracker'
-      preLoaderRoute: typeof MaintenanceTrackerRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/login': {
-      id: '/login'
-      path: '/login'
-      fullPath: '/login'
-      preLoaderRoute: typeof LoginRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/lessons': {
-      id: '/lessons'
-      path: '/lessons'
-      fullPath: '/lessons'
-      preLoaderRoute: typeof LessonsRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/lesson-types': {
-      id: '/lesson-types'
-      path: '/lesson-types'
-      fullPath: '/lesson-types'
-      preLoaderRoute: typeof LessonTypesRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/lesson-list': {
-      id: '/lesson-list'
-      path: '/lesson-list'
-      fullPath: '/lesson-list'
-      preLoaderRoute: typeof LessonListRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/join': {
-      id: '/join'
-      path: '/join'
-      fullPath: '/join'
-      preLoaderRoute: typeof JoinRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/honorary': {
-      id: '/honorary'
-      path: '/honorary'
-      fullPath: '/honorary'
-      preLoaderRoute: typeof HonoraryRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/guest-waiver': {
-      id: '/guest-waiver'
-      path: '/guest-waiver'
-      fullPath: '/guest-waiver'
-      preLoaderRoute: typeof GuestWaiverRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/forgot-password': {
-      id: '/forgot-password'
-      path: '/forgot-password'
-      fullPath: '/forgot-password'
-      preLoaderRoute: typeof ForgotPasswordRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/forbidden': {
-      id: '/forbidden'
-      path: '/forbidden'
-      fullPath: '/forbidden'
-      preLoaderRoute: typeof ForbiddenRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/door-codes': {
-      id: '/door-codes'
-      path: '/door-codes'
-      fullPath: '/door-codes'
-      preLoaderRoute: typeof DoorCodesRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/discount-codes': {
-      id: '/discount-codes'
-      path: '/discount-codes'
-      fullPath: '/discount-codes'
-      preLoaderRoute: typeof DiscountCodesRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/db.cgi': {
-      id: '/db.cgi'
-      path: '/db.cgi'
-      fullPath: '/db.cgi'
-      preLoaderRoute: typeof DbDotcgiRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/chiefs': {
-      id: '/chiefs'
-      path: '/chiefs'
-      fullPath: '/chiefs'
-      preLoaderRoute: typeof ChiefsRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/checkouts': {
-      id: '/checkouts'
-      path: '/checkouts'
-      fullPath: '/checkouts'
-      preLoaderRoute: typeof CheckoutsRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/checkout': {
-      id: '/checkout'
-      path: '/checkout'
-      fullPath: '/checkout'
-      preLoaderRoute: typeof CheckoutRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/boat-types': {
-      id: '/boat-types'
-      path: '/boat-types'
-      fullPath: '/boat-types'
-      preLoaderRoute: typeof BoatTypesRouteImport
+    '/': {
+      id: '/'
+      path: '/'
+      fullPath: '/'
+      preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/approve-exemptions': {
@@ -900,74 +669,242 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApproveExemptionsRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/': {
-      id: '/'
-      path: '/'
-      fullPath: '/'
-      preLoaderRoute: typeof IndexRouteImport
+    '/boat-types': {
+      id: '/boat-types'
+      path: '/boat-types'
+      fullPath: '/boat-types'
+      preLoaderRoute: typeof BoatTypesRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/signup/$lessonIndex': {
-      id: '/signup/$lessonIndex'
-      path: '/signup/$lessonIndex'
-      fullPath: '/signup/$lessonIndex'
-      preLoaderRoute: typeof SignupLessonIndexRouteImport
+    '/checkout': {
+      id: '/checkout'
+      path: '/checkout'
+      fullPath: '/checkout'
+      preLoaderRoute: typeof CheckoutRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/ratings_/$ratingIndex': {
-      id: '/ratings_/$ratingIndex'
-      path: '/ratings/$ratingIndex'
-      fullPath: '/ratings/$ratingIndex'
-      preLoaderRoute: typeof RatingsRatingIndexRouteImport
+    '/checkouts': {
+      id: '/checkouts'
+      path: '/checkouts'
+      fullPath: '/checkouts'
+      preLoaderRoute: typeof CheckoutsRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/qr-login/approve': {
-      id: '/qr-login/approve'
-      path: '/qr-login/approve'
-      fullPath: '/qr-login/approve'
-      preLoaderRoute: typeof QrLoginApproveRouteImport
+    '/chiefs': {
+      id: '/chiefs'
+      path: '/chiefs'
+      fullPath: '/chiefs'
+      preLoaderRoute: typeof ChiefsRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/my-lessons/$lessonIndex': {
-      id: '/my-lessons/$lessonIndex'
-      path: '/$lessonIndex'
-      fullPath: '/my-lessons/$lessonIndex'
-      preLoaderRoute: typeof MyLessonsLessonIndexRouteImport
-      parentRoute: typeof MyLessonsRoute
-    }
-    '/members_/$wycNumber': {
-      id: '/members_/$wycNumber'
-      path: '/members/$wycNumber'
-      fullPath: '/members/$wycNumber'
-      preLoaderRoute: typeof MembersWycNumberRouteImport
+    '/db.cgi': {
+      id: '/db.cgi'
+      path: '/db.cgi'
+      fullPath: '/db.cgi'
+      preLoaderRoute: typeof DbDotcgiRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/lessons_/$lessonIndex': {
-      id: '/lessons_/$lessonIndex'
-      path: '/lessons/$lessonIndex'
-      fullPath: '/lessons/$lessonIndex'
-      preLoaderRoute: typeof LessonsLessonIndexRouteImport
+    '/discount-codes': {
+      id: '/discount-codes'
+      path: '/discount-codes'
+      fullPath: '/discount-codes'
+      preLoaderRoute: typeof DiscountCodesRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/join_/$applicationId': {
-      id: '/join_/$applicationId'
-      path: '/join/$applicationId'
-      fullPath: '/join/$applicationId'
-      preLoaderRoute: typeof JoinApplicationIdRouteImport
+    '/door-codes': {
+      id: '/door-codes'
+      path: '/door-codes'
+      fullPath: '/door-codes'
+      preLoaderRoute: typeof DoorCodesRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/guides/knots': {
-      id: '/guides/knots'
-      path: '/guides/knots'
-      fullPath: '/guides/knots'
-      preLoaderRoute: typeof GuidesKnotsRouteImport
+    '/forbidden': {
+      id: '/forbidden'
+      path: '/forbidden'
+      fullPath: '/forbidden'
+      preLoaderRoute: typeof ForbiddenRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/guides/fj': {
-      id: '/guides/fj'
-      path: '/guides/fj'
-      fullPath: '/guides/fj'
-      preLoaderRoute: typeof GuidesFjRouteImport
+    '/forgot-password': {
+      id: '/forgot-password'
+      path: '/forgot-password'
+      fullPath: '/forgot-password'
+      preLoaderRoute: typeof ForgotPasswordRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/guest-waiver': {
+      id: '/guest-waiver'
+      path: '/guest-waiver'
+      fullPath: '/guest-waiver'
+      preLoaderRoute: typeof GuestWaiverRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/honorary': {
+      id: '/honorary'
+      path: '/honorary'
+      fullPath: '/honorary'
+      preLoaderRoute: typeof HonoraryRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/join': {
+      id: '/join'
+      path: '/join'
+      fullPath: '/join'
+      preLoaderRoute: typeof JoinRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/lesson-list': {
+      id: '/lesson-list'
+      path: '/lesson-list'
+      fullPath: '/lesson-list'
+      preLoaderRoute: typeof LessonListRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/lesson-types': {
+      id: '/lesson-types'
+      path: '/lesson-types'
+      fullPath: '/lesson-types'
+      preLoaderRoute: typeof LessonTypesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/lessons': {
+      id: '/lessons'
+      path: '/lessons'
+      fullPath: '/lessons'
+      preLoaderRoute: typeof LessonsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/login': {
+      id: '/login'
+      path: '/login'
+      fullPath: '/login'
+      preLoaderRoute: typeof LoginRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/maintenance-tracker': {
+      id: '/maintenance-tracker'
+      path: '/maintenance-tracker'
+      fullPath: '/maintenance-tracker'
+      preLoaderRoute: typeof MaintenanceTrackerRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/meet-the-team': {
+      id: '/meet-the-team'
+      path: '/meet-the-team'
+      fullPath: '/meet-the-team'
+      preLoaderRoute: typeof MeetTheTeamRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/members': {
+      id: '/members'
+      path: '/members'
+      fullPath: '/members'
+      preLoaderRoute: typeof MembersRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/membership-approvals': {
+      id: '/membership-approvals'
+      path: '/membership-approvals'
+      fullPath: '/membership-approvals'
+      preLoaderRoute: typeof MembershipApprovalsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/membership-stats': {
+      id: '/membership-stats'
+      path: '/membership-stats'
+      fullPath: '/membership-stats'
+      preLoaderRoute: typeof MembershipStatsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/my-lessons': {
+      id: '/my-lessons'
+      path: '/my-lessons'
+      fullPath: '/my-lessons'
+      preLoaderRoute: typeof MyLessonsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/officers': {
+      id: '/officers'
+      path: '/officers'
+      fullPath: '/officers'
+      preLoaderRoute: typeof OfficersRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/positions': {
+      id: '/positions'
+      path: '/positions'
+      fullPath: '/positions'
+      preLoaderRoute: typeof PositionsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/privileges': {
+      id: '/privileges'
+      path: '/privileges'
+      fullPath: '/privileges'
+      preLoaderRoute: typeof PrivilegesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/quarters': {
+      id: '/quarters'
+      path: '/quarters'
+      fullPath: '/quarters'
+      preLoaderRoute: typeof QuartersRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/rating-types': {
+      id: '/rating-types'
+      path: '/rating-types'
+      fullPath: '/rating-types'
+      preLoaderRoute: typeof RatingTypesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/ratings': {
+      id: '/ratings'
+      path: '/ratings'
+      fullPath: '/ratings'
+      preLoaderRoute: typeof RatingsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/ratings-examiners': {
+      id: '/ratings-examiners'
+      path: '/ratings-examiners'
+      fullPath: '/ratings-examiners'
+      preLoaderRoute: typeof RatingsExaminersRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/renew-membership': {
+      id: '/renew-membership'
+      path: '/renew-membership'
+      fullPath: '/renew-membership'
+      preLoaderRoute: typeof RenewMembershipRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/set-current-quarter': {
+      id: '/set-current-quarter'
+      path: '/set-current-quarter'
+      fullPath: '/set-current-quarter'
+      preLoaderRoute: typeof SetCurrentQuarterRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/set-password': {
+      id: '/set-password'
+      path: '/set-password'
+      fullPath: '/set-password'
+      preLoaderRoute: typeof SetPasswordRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/settings': {
+      id: '/settings'
+      path: '/settings'
+      fullPath: '/settings'
+      preLoaderRoute: typeof SettingsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/tests': {
+      id: '/tests'
+      path: '/tests'
+      fullPath: '/tests'
+      preLoaderRoute: typeof TestsRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/checkout_/new': {
@@ -977,11 +914,67 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof CheckoutNewRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/api/cron/lesson-reminders': {
-      id: '/api/cron/lesson-reminders'
-      path: '/api/cron/lesson-reminders'
-      fullPath: '/api/cron/lesson-reminders'
-      preLoaderRoute: typeof ApiCronLessonRemindersRouteImport
+    '/guides/fj': {
+      id: '/guides/fj'
+      path: '/guides/fj'
+      fullPath: '/guides/fj'
+      preLoaderRoute: typeof GuidesFjRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/guides/knots': {
+      id: '/guides/knots'
+      path: '/guides/knots'
+      fullPath: '/guides/knots'
+      preLoaderRoute: typeof GuidesKnotsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/join_/$applicationId': {
+      id: '/join_/$applicationId'
+      path: '/join/$applicationId'
+      fullPath: '/join/$applicationId'
+      preLoaderRoute: typeof JoinApplicationIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/lessons_/$lessonIndex': {
+      id: '/lessons_/$lessonIndex'
+      path: '/lessons/$lessonIndex'
+      fullPath: '/lessons/$lessonIndex'
+      preLoaderRoute: typeof LessonsLessonIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/members_/$wycNumber': {
+      id: '/members_/$wycNumber'
+      path: '/members/$wycNumber'
+      fullPath: '/members/$wycNumber'
+      preLoaderRoute: typeof MembersWycNumberRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/my-lessons/$lessonIndex': {
+      id: '/my-lessons/$lessonIndex'
+      path: '/$lessonIndex'
+      fullPath: '/my-lessons/$lessonIndex'
+      preLoaderRoute: typeof MyLessonsLessonIndexRouteImport
+      parentRoute: typeof MyLessonsRoute
+    }
+    '/qr-login/approve': {
+      id: '/qr-login/approve'
+      path: '/qr-login/approve'
+      fullPath: '/qr-login/approve'
+      preLoaderRoute: typeof QrLoginApproveRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/ratings_/$ratingIndex': {
+      id: '/ratings_/$ratingIndex'
+      path: '/ratings/$ratingIndex'
+      fullPath: '/ratings/$ratingIndex'
+      preLoaderRoute: typeof RatingsRatingIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/signup/$lessonIndex': {
+      id: '/signup/$lessonIndex'
+      path: '/signup/$lessonIndex'
+      fullPath: '/signup/$lessonIndex'
+      preLoaderRoute: typeof SignupLessonIndexRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/api/cron/daily-tasks': {
@@ -989,6 +982,13 @@ declare module '@tanstack/react-router' {
       path: '/api/cron/daily-tasks'
       fullPath: '/api/cron/daily-tasks'
       preLoaderRoute: typeof ApiCronDailyTasksRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/cron/lesson-reminders': {
+      id: '/api/cron/lesson-reminders'
+      path: '/api/cron/lesson-reminders'
+      fullPath: '/api/cron/lesson-reminders'
+      preLoaderRoute: typeof ApiCronLessonRemindersRouteImport
       parentRoute: typeof rootRouteImport
     }
   }

@@ -2,6 +2,8 @@ import { MembershipQuestionnaireFields } from '@/components/renewals/MembershipQ
 import { DiscountCodeField } from '@/components/membership-discount-codes/DiscountCodeField'
 import type { SquareCardHandle } from '@/components/renewals/SquareCardForm'
 import { SquareCardForm } from '@/components/renewals/SquareCardForm'
+import { Checkbox } from '@/components/ui/checkbox'
+import { TriangleAlert } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import {
   Dialog,
@@ -54,6 +56,7 @@ type ValidationField =
   | 'firstName'
   | 'lastName'
   | 'primaryEmail'
+  | 'newMember'
   | 'uwStatus'
   | 'plusOne'
   | 'uwEmail'
@@ -65,6 +68,7 @@ const validationFieldIds: Record<ValidationField, string> = {
   firstName: 'join-first-name',
   lastName: 'join-last-name',
   primaryEmail: 'join-primary-email',
+  newMember: 'join-new-member',
   uwStatus: 'join-uw-status',
   plusOne: 'join-plus-one',
   uwEmail: 'join-uw-email',
@@ -94,7 +98,9 @@ function JoinPage() {
   const [plusOne, setPlusOne] = useState<PlusOneResponse | null>(null)
   const [duration, setDuration] = useState<RenewalDuration>('annual')
   const [discountCode, setDiscountCode] = useState<DiscountCodeQuote | null>(null)
-  const [checkedEmail, setCheckedEmail] = useState('')
+  const emailVersion = useRef(0)
+  const [newMember, setNewMember] = useState(false)
+  const [emailOverride, setEmailOverride] = useState(false)
   const [existingMember, setExistingMember] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [isSubmitting, setIsSubmitting] = useState(false)
@@ -145,18 +151,58 @@ function JoinPage() {
     return query.data ? formatMoney(query.data.amountCents, query.data.currency) : 'Unavailable'
   }
 
-  async function checkEmail() {
-    const email = primaryEmail.trim()
-    if (!/^\S+@\S+\.\S+$/.test(email) || email === checkedEmail) return
-    setCheckedEmail(email)
+  async function checkEmail(): Promise<boolean> {
+    const email = primaryEmail.trim().toLowerCase()
+    if (!/^\S+@\S+\.\S+$/.test(email)) return false
+    const version = emailVersion.current
     try {
       const result = await emailCheck.mutateAsync(email)
+      if (version !== emailVersion.current) return false
       setExistingMember(result.existingMember)
+      return !result.existingMember || emailOverride
     } catch {
-      setExistingMember(false)
-      setCheckedEmail('')
+      if (version === emailVersion.current) {
+        setError('Could not check your email. Please try again before you continue.')
+      }
+      return false
     }
   }
+
+  const duplicateBlocked = existingMember && !emailOverride
+  const memberWarning = existingMember ? (
+    <div
+      role="status"
+      className="space-y-3 rounded-md border border-amber-300 bg-amber-50 p-4 text-sm leading-6 text-amber-950"
+    >
+      <div className="flex items-start gap-2">
+        <TriangleAlert className="mt-0.5 size-5 shrink-0" aria-hidden="true" />
+        <div className="space-y-1">
+          <p className="font-semibold">This email is already linked to a WYC member.</p>
+          <p>
+            Existing members should{' '}
+            <Link
+              to="/renew-membership"
+              target={embedded ? '_blank' : undefined}
+              className="font-medium text-primary underline underline-offset-4"
+            >
+              renew in the WYC database
+            </Link>
+            .
+          </p>
+        </div>
+      </div>
+      <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
+        <Button
+          type="button"
+          variant="default"
+          disabled={isSubmitting}
+          onClick={() => setEmailOverride(!emailOverride)}
+        >
+          {emailOverride ? 'Cancel override' : 'Override'}
+        </Button>
+      </div>
+    </div>
+  ) : null
 
   function validateApplication(requirePrice: boolean) {
     setError(null)
@@ -168,6 +214,7 @@ function JoinPage() {
     } else if (!/^\S+@\S+\.\S+$/.test(primaryEmail.trim())) {
       errors.primaryEmail = 'Enter a valid email address.'
     }
+    if (!newMember) errors.newMember = 'Confirm that you are a new WYC member.'
     if (!uwStatus) {
       errors.uwStatus = 'Select your UW status.'
     } else {
@@ -203,6 +250,7 @@ function JoinPage() {
     submittingRef.current = true
     setIsSubmitting(true)
     try {
+      if (!(await checkEmail())) return
       const sourceId = await cardRef.current!.tokenize()
       const result = await payment.mutateAsync({
         duration,
@@ -246,9 +294,16 @@ function JoinPage() {
     }
   }
 
-  function openDuesExemptionConfirmation() {
+  async function openDuesExemptionConfirmation() {
     if (submittingRef.current || !validateApplication(false) || !questionnaire) return
-    setShowExemptionModal(true)
+    submittingRef.current = true
+    setIsSubmitting(true)
+    try {
+      if (await checkEmail()) setShowExemptionModal(true)
+    } finally {
+      submittingRef.current = false
+      setIsSubmitting(false)
+    }
   }
 
   async function requestDuesExemption() {
@@ -256,6 +311,10 @@ function JoinPage() {
     submittingRef.current = true
     setIsSubmitting(true)
     try {
+      if (!(await checkEmail())) {
+        setShowExemptionModal(false)
+        return
+      }
       const result = await exemption.mutateAsync({
         firstName,
         lastName,
@@ -411,16 +470,6 @@ function JoinPage() {
                 <h2 className="font-wyc-heading text-3xl font-bold tracking-tight text-wyc-purple">
                   Membership Sign-up Form
                 </h2>
-                <p className="text-sm text-muted-foreground sm:text-base">
-                  Existing members should renew in the{' '}
-                  <a
-                    href="https://database.washingtonyachtclub.org/renew-membership"
-                    className="font-medium underline"
-                  >
-                    WYC Database
-                  </a>
-                  .
-                </p>
               </div>
               <div className="grid gap-5 sm:grid-cols-2">
                 <div className="space-y-2">
@@ -461,33 +510,65 @@ function JoinPage() {
                   type="email"
                   value={primaryEmail}
                   onChange={(event) => {
+                    emailVersion.current += 1
+                    setEmailOverride(false)
                     setPrimaryEmail(event.target.value)
                     setExistingMember(false)
                     clearValidationError('primaryEmail')
                   }}
-                  onBlur={checkEmail}
+                  onBlur={() => void checkEmail()}
+                  disabled={isSubmitting}
                   autoComplete="email"
                   required
                   maxLength={254}
                 />
                 <FieldError error={validationErrors.primaryEmail} />
-                {existingMember && (
-                  <div className="rounded-md border border-amber-300 bg-amber-50 p-3 text-sm text-amber-950">
-                    We already have this email on file. If you are already a member, you can{' '}
-                    <Link
-                      to="/forgot-password"
-                      target={embedded ? '_blank' : undefined}
-                      className="font-medium underline"
-                    >
-                      recover your WYC number or password
-                    </Link>
-                    . You can still continue if this is a new application.
-                  </div>
-                )}
+                {memberWarning}
               </div>
             </section>
 
             <div className="space-y-6">
+              <div className="space-y-2">
+                <Label className="text-base">This form is for new members only. *</Label>
+                <p className="text-sm leading-6 text-muted-foreground">
+                  If you have been a WYC member before, renew in the{' '}
+                  <Link
+                    to="/renew-membership"
+                    target={embedded ? '_blank' : undefined}
+                    className="font-medium text-primary underline underline-offset-4"
+                  >
+                    WYC database
+                  </Link>
+                  . This includes members whose membership has expired.
+                </p>
+                <Label
+                  htmlFor="join-new-member"
+                  className={cn(
+                    'flex cursor-pointer items-center gap-3 rounded-md border-2 px-4 py-3 text-base font-normal shadow-sm transition-colors',
+                    newMember
+                      ? 'border-primary bg-primary text-primary-foreground'
+                      : 'border-input hover:bg-accent hover:text-accent-foreground',
+                  )}
+                >
+                  <Checkbox
+                    id="join-new-member"
+                    className={
+                      newMember
+                        ? 'border-primary-foreground data-[state=checked]:bg-primary-foreground data-[state=checked]:text-primary'
+                        : undefined
+                    }
+                    checked={newMember}
+                    required
+                    aria-invalid={Boolean(validationErrors.newMember)}
+                    onCheckedChange={(value) => {
+                      setNewMember(value === true)
+                      clearValidationError('newMember')
+                    }}
+                  />
+                  <span>I am a new WYC member.</span>
+                </Label>
+                <FieldError error={validationErrors.newMember} />
+              </div>
               <MembershipQuestionnaireFields
                 idPrefix="join"
                 errors={validationErrors}
@@ -566,12 +647,15 @@ function JoinPage() {
                 <Label>Card</Label>
                 <SquareCardForm ref={cardRef} onError={setError} />
               </div>
+              {memberWarning}
               <ErrorAlert error={error} action="Pay membership dues" />
               <Button
                 type="submit"
                 size="lg"
                 className="w-full"
-                disabled={isSubmitting || (tier !== null && selectedPrice.isLoading)}
+                disabled={
+                  isSubmitting || duplicateBlocked || (tier !== null && selectedPrice.isLoading)
+                }
               >
                 {isSubmitting ? 'Processing…' : 'Pay and Sign Up'}
               </Button>
@@ -585,7 +669,7 @@ function JoinPage() {
                 size="lg"
                 variant="outline"
                 className="w-full"
-                disabled={isSubmitting}
+                disabled={isSubmitting || duplicateBlocked}
                 onClick={openDuesExemptionConfirmation}
               >
                 Request Dues Exemption

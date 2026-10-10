@@ -32,7 +32,7 @@ import {
 } from './questionnaire'
 import { createServerFn } from '@tanstack/react-start'
 import { getRequest, getRequestIP } from '@tanstack/react-start/server'
-import { and, count, eq, gte, isNull } from 'drizzle-orm'
+import { and, count, eq, gte, isNull, sql } from 'drizzle-orm'
 import { createHash, createHmac, randomUUID } from 'node:crypto'
 import { z } from 'zod'
 import { sendApplicationCompletionEmail } from './email'
@@ -241,7 +241,7 @@ export const checkNewMemberEmail = createServerFn({ method: 'POST' })
       const [member] = await db
         .select({ wycNumber: wycDatabase.wycNumber })
         .from(wycDatabase)
-        .where(eq(wycDatabase.email, email))
+        .where(sql`lower(trim(${wycDatabase.email})) = ${email.trim().toLowerCase()}`)
         .limit(1)
       return { existingMember: Boolean(member) }
     } catch (error) {

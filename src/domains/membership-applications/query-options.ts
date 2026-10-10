@@ -100,8 +100,13 @@ export function useApproveNewMembershipApplicationMutation() {
 }
 
 export function useApplyMembershipApplicationToExistingMemberMutation() {
-  return useApprovalMutation((input: { applicationId: string; wycNumber: number }) =>
-    applyMembershipApplicationToExistingMember({ data: input }),
+  return useApprovalMutation(
+    (input: {
+      applicationId: string
+      wycNumber: number
+      expectedPreviousExpireQtr: number
+      expectedTargetExpireQtr: number
+    }) => applyMembershipApplicationToExistingMember({ data: input }),
   )
 }
 
