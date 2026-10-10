@@ -113,7 +113,7 @@ export const createQrLoginRequestServerFn = createServerFn({ method: 'POST' }).h
 )
 
 export const approveQrLoginRequestServerFn = createServerFn({ method: 'POST' })
-  .inputValidator((input: { approvalSecret: string }) => ({
+  .validator((input: { approvalSecret: string }) => ({
     approvalSecret: String(input.approvalSecret),
   }))
   .handler(async ({ data }): Promise<ApproveQrLoginResponse> => {
@@ -181,7 +181,7 @@ export const approveQrLoginRequestServerFn = createServerFn({ method: 'POST' })
   })
 
 export const pollQrLoginRequestServerFn = createServerFn({ method: 'POST' })
-  .inputValidator((input: { pollingSecret: string }) => ({
+  .validator((input: { pollingSecret: string }) => ({
     pollingSecret: String(input.pollingSecret),
   }))
   .handler(async ({ data }): Promise<PollQrLoginResponse> => {
@@ -257,7 +257,7 @@ export const pollQrLoginRequestServerFn = createServerFn({ method: 'POST' })
   })
 
 export const cancelQrLoginRequestServerFn = createServerFn({ method: 'POST' })
-  .inputValidator((input: { pollingSecret: string }) => ({
+  .validator((input: { pollingSecret: string }) => ({
     pollingSecret: String(input.pollingSecret),
   }))
   .handler(async ({ data }) => {

@@ -56,7 +56,7 @@ async function sendExemptionWaiverEmail(input: {
  * is frozen here (one quarter only, same baseline as a quarterly renewal).
  */
 export const requestDuesExemption = createServerFn({ method: 'POST' })
-  .inputValidator((input: { questionnaire: unknown }) => ({
+  .validator((input: { questionnaire: unknown }) => ({
     answers: parseQuestionnaire(input.questionnaire),
   }))
   .handler(async ({ data }) => {
@@ -249,7 +249,7 @@ function parseRequestId(input: { requestId: unknown }): { requestId: number } {
 }
 
 export const approveExemptionRequest = createServerFn({ method: 'POST' })
-  .inputValidator(parseRequestId)
+  .validator(parseRequestId)
   .handler(async ({ data }) => {
     const approver = await requireRouteAccess('/membership-approvals')
 
@@ -343,7 +343,7 @@ export const approveExemptionRequest = createServerFn({ method: 'POST' })
 
 /** Deny a pending request. No reason is captured; a denied member may re-request. */
 export const denyExemptionRequest = createServerFn({ method: 'POST' })
-  .inputValidator(parseRequestId)
+  .validator(parseRequestId)
   .handler(async ({ data }) => {
     const approver = await requireRouteAccess('/membership-approvals')
 

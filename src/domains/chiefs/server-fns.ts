@@ -73,7 +73,7 @@ export const getChiefTypes = createServerFn({ method: 'GET' }).handler(async () 
 })
 
 export const deleteChief = createServerFn({ method: 'POST' })
-  .inputValidator((input: { officerIndex: number }) => input)
+  .validator((input: { officerIndex: number }) => input)
   .handler(async ({ data: { officerIndex } }) => {
     await requirePrivilege('db')
     try {

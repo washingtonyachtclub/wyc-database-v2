@@ -107,7 +107,7 @@ export const getMyDoorCodes = createServerFn({ method: 'GET' }).handler(async ()
 })
 
 export const updateDoorCode = createServerFn({ method: 'POST' })
-  .inputValidator((input: DoorCodeUpdateData) => doorCodeUpdateSchema.parse(input))
+  .validator((input: DoorCodeUpdateData) => doorCodeUpdateSchema.parse(input))
   .handler(async ({ data }) => {
     const wycNumber = await requireAuth()
     if (!(await canEditDoorCodes())) {

@@ -35,7 +35,7 @@ const guestWaiverSchema = z.object({
 export type GuestWaiverInput = z.infer<typeof guestWaiverSchema>
 
 export const submitGuestWaiver = createServerFn({ method: 'POST' })
-  .inputValidator((input: GuestWaiverInput) => guestWaiverSchema.parse(input))
+  .validator((input: GuestWaiverInput) => guestWaiverSchema.parse(input))
   .handler(async ({ data }) => {
     const isMock = isDevEnvironment()
     if (isMock && !data.testAcknowledged) {

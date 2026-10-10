@@ -11,7 +11,7 @@ import { officers } from '@/db/schema'
 import { requirePrivilege } from '@/lib/auth/auth-middleware'
 
 export const getHonoraryTable = createServerFn({ method: 'GET' })
-  .inputValidator((input: { filters?: HonoraryFilters }) => ({
+  .validator((input: { filters?: HonoraryFilters }) => ({
     filters: input.filters,
   }))
   .handler(async ({ data }) => {
@@ -29,7 +29,7 @@ export const getHonoraryTable = createServerFn({ method: 'GET' })
   })
 
 export const deleteHonorary = createServerFn({ method: 'POST' })
-  .inputValidator((input: { officerIndex: number }) => input)
+  .validator((input: { officerIndex: number }) => input)
   .handler(async ({ data: { officerIndex } }) => {
     await requirePrivilege('db')
     try {

@@ -104,7 +104,7 @@ export const listMembershipDiscountCodes = createServerFn({ method: 'GET' }).han
 })
 
 export const createMembershipDiscountCode = createServerFn({ method: 'POST' })
-  .inputValidator((input: z.input<typeof createDiscountCodeSchema>) =>
+  .validator((input: z.input<typeof createDiscountCodeSchema>) =>
     createDiscountCodeSchema.parse(input),
   )
   .handler(async ({ data }) => {
@@ -129,7 +129,7 @@ export const createMembershipDiscountCode = createServerFn({ method: 'POST' })
   })
 
 export const updateMembershipDiscountCode = createServerFn({ method: 'POST' })
-  .inputValidator((input: z.input<typeof updateDiscountCodeSchema>) =>
+  .validator((input: z.input<typeof updateDiscountCodeSchema>) =>
     updateDiscountCodeSchema.parse(input),
   )
   .handler(async ({ data }) => {
@@ -168,7 +168,7 @@ export const updateMembershipDiscountCode = createServerFn({ method: 'POST' })
   })
 
 export const setMembershipDiscountCodeActive = createServerFn({ method: 'POST' })
-  .inputValidator((input: { active: boolean; index: number }) =>
+  .validator((input: { active: boolean; index: number }) =>
     z.object({ active: z.boolean(), index: z.number().int().positive() }).parse(input),
   )
   .handler(async ({ data }) => {
@@ -228,7 +228,7 @@ export const setMembershipDiscountCodeActive = createServerFn({ method: 'POST' }
   })
 
 export const getMembershipDiscountCodeQuote = createServerFn({ method: 'POST' })
-  .inputValidator((input: { audience: string; code: string; duration: string; tier: string }) => ({
+  .validator((input: { audience: string; code: string; duration: string; tier: string }) => ({
     audience: z.enum(['new_members', 'renewals']).parse(input.audience),
     code: codeSchema.parse(input.code),
     duration: parseDuration(input.duration),

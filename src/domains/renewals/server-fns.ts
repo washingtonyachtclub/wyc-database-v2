@@ -164,7 +164,7 @@ export const getRenewalStatus = createServerFn({ method: 'GET' }).handler(async 
 
 /** Live price (cents) for a tier×duration, read from the Square catalog. */
 export const getRenewalPrice = createServerFn({ method: 'GET' })
-  .inputValidator((input: { tier: string; duration: string }) => ({
+  .validator((input: { tier: string; duration: string }) => ({
     tier: parseTier(input.tier),
     duration: parseDuration(input.duration),
   }))
@@ -272,7 +272,7 @@ async function sendWaiverRequiredEmail(input: {
  * member waiver. The session user is the member (requireAuth).
  */
 export const payAndRenew = createServerFn({ method: 'POST' })
-  .inputValidator(
+  .validator(
     (input: {
       duration: string
       discountCode?: unknown

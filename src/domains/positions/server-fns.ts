@@ -59,7 +59,7 @@ export const getAllPosTypes = createServerFn({ method: 'GET' }).handler(async ()
 })
 
 export const createPosition = createServerFn({ method: 'POST' })
-  .inputValidator((input: PositionInsertData) => input)
+  .validator((input: PositionInsertData) => input)
   .handler(async ({ data }) => {
     await requirePrivilege('db')
     try {
@@ -77,7 +77,7 @@ export const createPosition = createServerFn({ method: 'POST' })
   })
 
 export const setPositionActive = createServerFn({ method: 'POST' })
-  .inputValidator((input: { index: number; active: boolean }) => input)
+  .validator((input: { index: number; active: boolean }) => input)
   .handler(async ({ data: { index, active } }) => {
     await requirePrivilege('db')
     try {
@@ -93,7 +93,7 @@ export const setPositionActive = createServerFn({ method: 'POST' })
   })
 
 export const deletePosition = createServerFn({ method: 'POST' })
-  .inputValidator((input: { index: number }) => input)
+  .validator((input: { index: number }) => input)
   .handler(async ({ data: { index } }) => {
     await requirePrivilege('db')
     const [{ n: officerN }] = await db

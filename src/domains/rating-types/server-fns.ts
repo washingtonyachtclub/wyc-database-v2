@@ -34,7 +34,7 @@ export const getDistinctRatingTypeNames = createServerFn({ method: 'GET' }).hand
 })
 
 export const deleteRatingType = createServerFn({ method: 'POST' })
-  .inputValidator((input: { index: number }) => input)
+  .validator((input: { index: number }) => input)
   .handler(async ({ data: { index } }) => {
     await requirePrivilege('rtgs')
     const [{ n }] = await db
@@ -52,7 +52,7 @@ export const deleteRatingType = createServerFn({ method: 'POST' })
   })
 
 export const createRatingType = createServerFn({ method: 'POST' })
-  .inputValidator((input: RatingTypeInsertData) => input)
+  .validator((input: RatingTypeInsertData) => input)
   .handler(async ({ data }) => {
     await requirePrivilege('rtgs')
     try {

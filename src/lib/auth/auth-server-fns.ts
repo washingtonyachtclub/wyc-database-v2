@@ -63,7 +63,7 @@ export type VerifyOtpResponse = {
  * Validates credentials and creates a session
  */
 export const loginServerFn = createServerFn({ method: 'POST' })
-  .inputValidator((input: { wycNumber: number; password: string }) => {
+  .validator((input: { wycNumber: number; password: string }) => {
     if (!input.wycNumber || !input.password) {
       throw new Error('WYC Number and password are required')
     }
@@ -148,7 +148,7 @@ export const loginServerFn = createServerFn({ method: 'POST' })
  * Enforces rate limits and avoids leaking whether the member or email exists.
  */
 export const requestEmailOtpServerFn = createServerFn({ method: 'POST' })
-  .inputValidator((input: { wycNumber: number }) => {
+  .validator((input: { wycNumber: number }) => {
     if (!input.wycNumber) {
       throw new Error('WYC Number is required')
     }
@@ -230,7 +230,7 @@ export const requestEmailOtpServerFn = createServerFn({ method: 'POST' })
  * Verify an email OTP and create a session identical to a password login.
  */
 export const verifyEmailOtpServerFn = createServerFn({ method: 'POST' })
-  .inputValidator((input: { wycNumber: number; code: string }) => {
+  .validator((input: { wycNumber: number; code: string }) => {
     if (!input.wycNumber || !input.code) {
       throw new Error('WYC Number and code are required')
     }
@@ -356,7 +356,7 @@ export const getCurrentUserServerFn = createServerFn({ method: 'GET' }).handler(
  * Pass null to clear the override and restore real privileges.
  */
 export const setDevPrivilegesServerFn = createServerFn({ method: 'POST' })
-  .inputValidator((input: { privileges: Privilege[] | null }) => input)
+  .validator((input: { privileges: Privilege[] | null }) => input)
   .handler(async ({ data }) => {
     if (!isDevEnvironment()) {
       throw new Error('Dev privilege override is only available in development')
@@ -407,7 +407,7 @@ export const setDevPrivilegesServerFn = createServerFn({ method: 'POST' })
  * Pass null to restore the original identity.
  */
 export const setDevMemberServerFn = createServerFn({ method: 'POST' })
-  .inputValidator((input: { wycNumber: number | null }) => input)
+  .validator((input: { wycNumber: number | null }) => input)
   .handler(async ({ data }) => {
     if (!isDevEnvironment()) {
       throw new Error('Dev member emulation is only available in development')

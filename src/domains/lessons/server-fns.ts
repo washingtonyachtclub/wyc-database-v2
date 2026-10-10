@@ -122,7 +122,7 @@ export const getCurrentQuarter = createServerFn({ method: 'GET' }).handler(async
 })
 
 export const getAllLessons = createServerFn({ method: 'GET' })
-  .inputValidator(
+  .validator(
     (input: {
       pageIndex: number
       pageSize: number
@@ -179,7 +179,7 @@ async function fetchLessonDetails(id: number) {
 }
 
 export const getLessonById = createServerFn({ method: 'GET' })
-  .inputValidator((input: { id: number }) => ({ id: input.id }))
+  .validator((input: { id: number }) => ({ id: input.id }))
   .handler(async ({ data: { id } }) => {
     await requireInstructorOrPrivilege(id, 'db', 'rtgs')
     return fetchLessonDetails(id)
@@ -254,7 +254,7 @@ async function reconcileCalendar(lessonId: number, removedSessionIds: number[] =
 }
 
 export const resyncLessonCalendar = createServerFn({ method: 'POST' })
-  .inputValidator((input: { lessonId?: number }) => input)
+  .validator((input: { lessonId?: number }) => input)
   .handler(async ({ data }) => {
     await requirePrivilege('db', 'rtgs')
     if (!gcalEnabled()) return { success: false, synced: 0 }
@@ -275,7 +275,7 @@ export const resyncLessonCalendar = createServerFn({ method: 'POST' })
   })
 
 export const createLesson = createServerFn({ method: 'POST' })
-  .inputValidator((data: LessonInsert) => data)
+  .validator((data: LessonInsert) => data)
   .handler(async ({ data }) => {
     await requirePrivilege('db', 'rtgs')
     const mismatch = quarterMismatchError(
@@ -292,7 +292,7 @@ export const createLesson = createServerFn({ method: 'POST' })
   })
 
 export const updateLesson = createServerFn({ method: 'POST' })
-  .inputValidator((input: { index: number } & LessonInsert) => ({
+  .validator((input: { index: number } & LessonInsert) => ({
     ...input,
     index: Number(input.index),
   }))
@@ -313,7 +313,7 @@ export const updateLesson = createServerFn({ method: 'POST' })
   })
 
 export const deleteLesson = createServerFn({ method: 'POST' })
-  .inputValidator((input: { index: number }) => input)
+  .validator((input: { index: number }) => input)
   .handler(async ({ data: { index } }) => {
     await requirePrivilege('db', 'rtgs')
     const removed = await db
@@ -332,7 +332,7 @@ export const deleteLesson = createServerFn({ method: 'POST' })
   })
 
 export const setLessonDisplay = createServerFn({ method: 'POST' })
-  .inputValidator((input: { index: number; display: boolean }) => input)
+  .validator((input: { index: number; display: boolean }) => input)
   .handler(async ({ data: { index, display } }) => {
     await requirePrivilege('db', 'rtgs')
     await db
@@ -344,7 +344,7 @@ export const setLessonDisplay = createServerFn({ method: 'POST' })
   })
 
 export const removeStudentFromLesson = createServerFn({ method: 'POST' })
-  .inputValidator((input: { lessonId: number; studentWycNumber: number }) => ({
+  .validator((input: { lessonId: number; studentWycNumber: number }) => ({
     lessonId: input.lessonId,
     studentWycNumber: input.studentWycNumber,
   }))
@@ -401,7 +401,7 @@ export const removeStudentFromLesson = createServerFn({ method: 'POST' })
   })
 
 export const unenrollFromLesson = createServerFn({ method: 'POST' })
-  .inputValidator((input: { lessonId: number }) => ({ lessonId: input.lessonId }))
+  .validator((input: { lessonId: number }) => ({ lessonId: input.lessonId }))
   .handler(async ({ data: { lessonId } }) => {
     const userId = await requireAuth()
 
@@ -478,7 +478,7 @@ export const getMySignedUpLessons = createServerFn({ method: 'GET' }).handler(as
 })
 
 export const getLessonForSignup = createServerFn({ method: 'GET' })
-  .inputValidator((input: { id: number }) => ({ id: input.id }))
+  .validator((input: { id: number }) => ({ id: input.id }))
   .handler(async ({ data: { id } }) => {
     const userId = await requireAuth()
 
@@ -526,7 +526,7 @@ export const getLessonForSignup = createServerFn({ method: 'GET' })
   })
 
 export const enrollInLesson = createServerFn({ method: 'POST' })
-  .inputValidator((input: { lessonIndex: number }) => ({ lessonIndex: input.lessonIndex }))
+  .validator((input: { lessonIndex: number }) => ({ lessonIndex: input.lessonIndex }))
   .handler(async ({ data: { lessonIndex } }) => {
     const userId = await requireAuth()
 

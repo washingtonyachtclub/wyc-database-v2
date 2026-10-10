@@ -240,7 +240,7 @@ export const listMembershipApplicationsForApproval = createServerFn({ method: 'G
 )
 
 export const updateMembershipApplicationEmails = createServerFn({ method: 'POST' })
-  .inputValidator((input) =>
+  .validator((input) =>
     z
       .object({
         applicationId: applicationIdSchema,
@@ -289,9 +289,7 @@ export const updateMembershipApplicationEmails = createServerFn({ method: 'POST'
   })
 
 export const resendMembershipApplicationCompletionEmail = createServerFn({ method: 'POST' })
-  .inputValidator((input: { applicationId: string }) =>
-    applicationIdSchema.parse(input.applicationId),
-  )
+  .validator((input: { applicationId: string }) => applicationIdSchema.parse(input.applicationId))
   .handler(async ({ data: applicationId }) => {
     await requireRouteAccess('/membership-approvals')
     const [application] = await db
@@ -334,7 +332,7 @@ export const resendMembershipApplicationCompletionEmail = createServerFn({ metho
   })
 
 export const approveNewMembershipApplication = createServerFn({ method: 'POST' })
-  .inputValidator((input) =>
+  .validator((input) =>
     z
       .object({
         applicationId: applicationIdSchema,
@@ -481,7 +479,7 @@ export const approveNewMembershipApplication = createServerFn({ method: 'POST' }
   })
 
 export const applyMembershipApplicationToExistingMember = createServerFn({ method: 'POST' })
-  .inputValidator((input) =>
+  .validator((input) =>
     z
       .object({ applicationId: applicationIdSchema, wycNumber: z.number().int().positive() })
       .parse(input),
@@ -632,7 +630,7 @@ export const applyMembershipApplicationToExistingMember = createServerFn({ metho
   })
 
 export const closeMembershipApplication = createServerFn({ method: 'POST' })
-  .inputValidator((input) =>
+  .validator((input) =>
     z
       .object({ applicationId: applicationIdSchema, note: z.string().trim().max(1_000) })
       .parse(input),
@@ -667,9 +665,7 @@ export const closeMembershipApplication = createServerFn({ method: 'POST' })
   })
 
 export const retryMembershipApplicationWelcomeEmail = createServerFn({ method: 'POST' })
-  .inputValidator((input: { applicationId: string }) =>
-    applicationIdSchema.parse(input.applicationId),
-  )
+  .validator((input: { applicationId: string }) => applicationIdSchema.parse(input.applicationId))
   .handler(async ({ data: applicationId }) => {
     await requireRouteAccess('/membership-approvals')
     const [application] = await db

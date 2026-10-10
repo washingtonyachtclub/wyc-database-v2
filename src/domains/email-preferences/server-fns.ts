@@ -18,7 +18,7 @@ export const getEmailPreferences = createServerFn({ method: 'GET' }).handler(asy
 })
 
 export const setEmailPreferences = createServerFn({ method: 'POST' })
-  .inputValidator((input) => z.object({ sailingOpportunities: z.boolean() }).parse(input))
+  .validator((input) => z.object({ sailingOpportunities: z.boolean() }).parse(input))
   .handler(async ({ data }) => {
     const wycNumber = await requireAuth()
     const values = {

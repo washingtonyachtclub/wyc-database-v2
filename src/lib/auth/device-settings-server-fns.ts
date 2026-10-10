@@ -4,7 +4,7 @@ import { setSailLockerMode } from './device-mode'
 import { useAppSession } from './session'
 
 export const setSailLockerModeServerFn = createServerFn({ method: 'POST' })
-  .inputValidator((input: { enabled: boolean }) => {
+  .validator((input: { enabled: boolean }) => {
     if (typeof input.enabled !== 'boolean') {
       throw new Error('Sail Locker mode must be enabled or disabled')
     }
