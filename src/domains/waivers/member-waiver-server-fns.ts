@@ -32,7 +32,7 @@ const memberWaiverSchema = z.object({
 export type MemberWaiverInput = z.infer<typeof memberWaiverSchema>
 
 export const submitMemberWaiver = createServerFn({ method: 'POST' })
-  .inputValidator((input: MemberWaiverInput) => memberWaiverSchema.parse(input))
+  .validator((input: MemberWaiverInput) => memberWaiverSchema.parse(input))
   .handler(async ({ data }) => {
     const wycNumber = await requireAuth()
     const isMock = isDevEnvironment()

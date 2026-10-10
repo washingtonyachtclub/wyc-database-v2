@@ -124,7 +124,8 @@ function RootDocument({ children }: { children: React.ReactNode }) {
   const isQrLoginApproval = location.pathname === '/qr-login/approve'
   const isGuestWaiverPage = location.pathname === '/guest-waiver'
   const isJoinPage = location.pathname === '/join' || location.pathname.startsWith('/join/')
-  const embedValue = location.search.embed
+  // Location search retains raw URL values before route search validation.
+  const embedValue: unknown = location.search.embed
   const isEmbeddedJoinPage =
     isJoinPage &&
     (embedValue === true || embedValue === '1' || embedValue === 1 || embedValue === 'true')

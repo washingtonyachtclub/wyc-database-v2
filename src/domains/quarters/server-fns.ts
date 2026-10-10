@@ -40,7 +40,7 @@ export const getAllQuarters = createServerFn({ method: 'GET' }).handler(async ()
 })
 
 export const createQuarter = createServerFn({ method: 'POST' })
-  .inputValidator((input: QuarterInsertData) => input)
+  .validator((input: QuarterInsertData) => input)
   .handler(async ({ data }) => {
     await requirePrivilege('db')
     try {
@@ -117,7 +117,7 @@ export const getQuarterHealth = createServerFn({ method: 'GET' }).handler(async 
 })
 
 export const updateQuarter = createServerFn({ method: 'POST' })
-  .inputValidator((input: { index: number } & QuarterInsertData) => input)
+  .validator((input: { index: number } & QuarterInsertData) => input)
   .handler(async ({ data }) => {
     await requirePrivilege('db')
     try {
@@ -133,7 +133,7 @@ export const updateQuarter = createServerFn({ method: 'POST' })
   })
 
 export const getQuarterChangeImpact = createServerFn({ method: 'GET' })
-  .inputValidator((input: { newQuarter: number }) => input)
+  .validator((input: { newQuarter: number }) => input)
   .handler(async ({ data: { newQuarter } }) => {
     await requirePrivilege('db')
 
@@ -170,7 +170,7 @@ export const getQuarterChangeImpact = createServerFn({ method: 'GET' })
   })
 
 export const updateCurrentQuarter = createServerFn({ method: 'POST' })
-  .inputValidator((input: { newQuarter: number }) => input)
+  .validator((input: { newQuarter: number }) => input)
   .handler(async ({ data: { newQuarter } }) => {
     await requirePrivilege('db')
 
@@ -191,7 +191,7 @@ export const updateCurrentQuarter = createServerFn({ method: 'POST' })
   })
 
 export const deleteQuarter = createServerFn({ method: 'POST' })
-  .inputValidator((input: { index: number }) => input)
+  .validator((input: { index: number }) => input)
   .handler(async ({ data: { index } }) => {
     await requirePrivilege('db')
     const [{ n: memberN }] = await db

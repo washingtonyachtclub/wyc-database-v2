@@ -18,7 +18,7 @@ export const getAllLessonTypes = createServerFn({ method: 'GET' }).handler(async
 })
 
 export const createLessonType = createServerFn({ method: 'POST' })
-  .inputValidator((input: LessonTypeInsertData) => input)
+  .validator((input: LessonTypeInsertData) => input)
   .handler(async ({ data }) => {
     await requirePrivilege('db')
     try {
@@ -31,7 +31,7 @@ export const createLessonType = createServerFn({ method: 'POST' })
   })
 
 export const deleteLessonType = createServerFn({ method: 'POST' })
-  .inputValidator((input: { index: number }) => input)
+  .validator((input: { index: number }) => input)
   .handler(async ({ data: { index } }) => {
     await requirePrivilege('db')
     const [{ n }] = await db.select({ n: count() }).from(lessons).where(eq(lessons.type, index))

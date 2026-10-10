@@ -235,7 +235,7 @@ async function createMembershipApplication(
 }
 
 export const checkNewMemberEmail = createServerFn({ method: 'POST' })
-  .inputValidator((input: { email: string }) => emailSchema.parse(input.email))
+  .validator((input: { email: string }) => emailSchema.parse(input.email))
   .handler(async ({ data: email }) => {
     try {
       const [member] = await db
@@ -277,7 +277,7 @@ export const getNewMemberSignupOptions = createServerFn({ method: 'GET' }).handl
 })
 
 export const getNewMemberPrice = createServerFn({ method: 'GET' })
-  .inputValidator((input: { duration: string; tier: string }) => ({
+  .validator((input: { duration: string; tier: string }) => ({
     duration: parseDuration(input.duration),
     tier: parseTier(input.tier),
   }))
@@ -291,9 +291,7 @@ export const getNewMemberPrice = createServerFn({ method: 'GET' })
   })
 
 export const startNewMemberExemption = createServerFn({ method: 'POST' })
-  .inputValidator((input: z.input<typeof exemptionInputSchema>) =>
-    exemptionInputSchema.parse(input),
-  )
+  .validator((input: z.input<typeof exemptionInputSchema>) => exemptionInputSchema.parse(input))
   .handler(async ({ data }) => {
     const application = await createMembershipApplication(data, 'quarterly', 'exemption_requested')
     if (!application.success) return application
@@ -322,7 +320,7 @@ export const startNewMemberExemption = createServerFn({ method: 'POST' })
   })
 
 export const startNewMemberPayment = createServerFn({ method: 'POST' })
-  .inputValidator((input: z.input<typeof paymentInputSchema>) => paymentInputSchema.parse(input))
+  .validator((input: z.input<typeof paymentInputSchema>) => paymentInputSchema.parse(input))
   .handler(async ({ data }) => {
     const tier = tierForUwStatus(data.questionnaire.uwStatus)
     const discountCode = data.discountCode
@@ -495,7 +493,7 @@ export const startNewMemberPayment = createServerFn({ method: 'POST' })
   })
 
 export const getNewMemberApplication = createServerFn({ method: 'GET' })
-  .inputValidator((input: { applicationId: string }) => String(input.applicationId))
+  .validator((input: { applicationId: string }) => String(input.applicationId))
   .handler(async ({ data: applicationId }) => {
     if (!applicationIdSchema.safeParse(applicationId).success) {
       return { status: 'not_found' as const }
@@ -551,9 +549,7 @@ function questionnaireVersion(value: string): NewMemberQuestionnaireVersion {
 }
 
 export const completeNewMemberApplication = createServerFn({ method: 'POST' })
-  .inputValidator((input: z.input<typeof completionInputSchema>) =>
-    completionInputSchema.parse(input),
-  )
+  .validator((input: z.input<typeof completionInputSchema>) => completionInputSchema.parse(input))
   .handler(async ({ data }) => {
     const isMock = isDevEnvironment()
     if (isMock && !data.testAcknowledged) {

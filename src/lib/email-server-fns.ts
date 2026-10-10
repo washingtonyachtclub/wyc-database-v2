@@ -3,7 +3,7 @@ import { sendEmail } from './email'
 import { requirePrivilege } from '@/lib/auth/auth-middleware'
 
 export const sendTestEmailServerFn = createServerFn({ method: 'POST' })
-  .inputValidator((input: { to: string }) => {
+  .validator((input: { to: string }) => {
     if (!input.to || !input.to.includes('@')) {
       throw new Error('Valid email address required')
     }

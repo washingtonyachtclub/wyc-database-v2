@@ -56,7 +56,7 @@ async function sendExemptionWaiverEmail(input: {
  * is frozen here (one quarter only, same baseline as a quarterly renewal).
  */
 export const requestDuesExemption = createServerFn({ method: 'POST' })
-  .inputValidator((input: { questionnaire: unknown }) => ({
+  .validator((input: { questionnaire: unknown }) => ({
     answers: parseQuestionnaire(input.questionnaire),
   }))
   .handler(async ({ data }) => {
@@ -249,7 +249,7 @@ function parseRequestId(input: { requestId: unknown }): { requestId: number } {
 }
 
 export const approveExemptionRequest = createServerFn({ method: 'POST' })
-  .inputValidator(parseRequestId)
+  .validator(parseRequestId)
   .handler(async ({ data }) => {
     const approver = await requireRouteAccess('/membership-approvals')
 
@@ -281,7 +281,8 @@ export const approveExemptionRequest = createServerFn({ method: 'POST' })
       })
       throw new Error('We could not read the request questionnaire.')
     }
-    if (!request.renewalId) throw new Error('This request has no renewal workflow.')
+    const renewalId = request.renewalId
+    if (!renewalId) throw new Error('This request has no renewal workflow.')
     if (!request.waiverId) throw new Error('The member must sign the waiver before approval.')
 
     const alreadyCovered = (request.currentExpireQtr ?? 0) >= request.requestedExpireQtr
@@ -299,7 +300,7 @@ export const approveExemptionRequest = createServerFn({ method: 'POST' })
         if (
           !lockedRequest ||
           lockedRequest.status !== 'pending' ||
-          lockedRequest.renewalId !== request.renewalId
+          lockedRequest.renewalId !== renewalId
         ) {
           throw new Error('The request is no longer pending.')
         }
@@ -307,12 +308,12 @@ export const approveExemptionRequest = createServerFn({ method: 'POST' })
         const [lockedWaiver] = await tx
           .select({ id: memberWaivers.id })
           .from(memberWaivers)
-          .where(eq(memberWaivers.renewalId, request.renewalId!))
+          .where(eq(memberWaivers.renewalId, renewalId))
           .for('update')
         if (!lockedWaiver) throw new Error('The member waiver is not complete.')
 
         const paymentId = await insertExemptMembershipPayment(tx, {
-          renewalId: request.renewalId,
+          renewalId,
           wycNumber: request.wycNumber,
           prevExpireQtr: request.currentExpireQtr ?? 0,
           newExpireQtr: Math.max(request.currentExpireQtr ?? 0, request.requestedExpireQtr),
@@ -328,7 +329,7 @@ export const approveExemptionRequest = createServerFn({ method: 'POST' })
           })
           .where(eq(duesExemptionRequests.index, data.requestId))
 
-        completion = await reconcileRenewal(tx, request.renewalId!)
+        completion = await reconcileRenewal(tx, renewalId)
         if (!completion) throw new Error('The renewal requirements are incomplete.')
       })
     } catch (error) {
@@ -343,7 +344,7 @@ export const approveExemptionRequest = createServerFn({ method: 'POST' })
 
 /** Deny a pending request. No reason is captured; a denied member may re-request. */
 export const denyExemptionRequest = createServerFn({ method: 'POST' })
-  .inputValidator(parseRequestId)
+  .validator(parseRequestId)
   .handler(async ({ data }) => {
     const approver = await requireRouteAccess('/membership-approvals')
 

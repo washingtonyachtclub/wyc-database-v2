@@ -44,7 +44,7 @@ export const getOfficerPageOfficers = createServerFn({ method: 'GET' }).handler(
 })
 
 export const setOfficerActive = createServerFn({ method: 'POST' })
-  .inputValidator((input: { index: number; active: boolean }) => ({
+  .validator((input: { index: number; active: boolean }) => ({
     index: Number(input.index),
     active: input.active,
   }))
@@ -63,7 +63,7 @@ export const getPositionsForOfficerPage = createServerFn({ method: 'GET' }).hand
 })
 
 export const createOfficer = createServerFn({ method: 'POST' })
-  .inputValidator((data: OfficerInsert) => data)
+  .validator((data: OfficerInsert) => data)
   .handler(async ({ data }) => {
     await requirePrivilege('db')
     const [existing] = await db
@@ -79,7 +79,7 @@ export const createOfficer = createServerFn({ method: 'POST' })
   })
 
 export const getMemberPositions = createServerFn({ method: 'GET' })
-  .inputValidator((input: { wycNumber: number }) => ({ wycNumber: Number(input.wycNumber) }))
+  .validator((input: { wycNumber: number }) => ({ wycNumber: Number(input.wycNumber) }))
   .handler(async ({ data: { wycNumber } }) => {
     await requireSelfOrPrivilege(wycNumber, 'db', 'rtgs')
     const raw = await baseMemberPositionsQuery(wycNumber)

@@ -13,7 +13,7 @@ import { requirePrivilege } from '@/lib/auth/auth-middleware'
 import { str } from '@/db/mapper-utils'
 
 export const getExaminerTable = createServerFn({ method: 'GET' })
-  .inputValidator((input: { filters?: ExaminerFilters }) => ({
+  .validator((input: { filters?: ExaminerFilters }) => ({
     filters: input.filters,
   }))
   .handler(async ({ data }) => {
@@ -49,7 +49,7 @@ export const getExaminerTable = createServerFn({ method: 'GET' })
   })
 
 export const deactivateExaminer = createServerFn({ method: 'POST' })
-  .inputValidator((input: { officerIndex: number }) => input)
+  .validator((input: { officerIndex: number }) => input)
   .handler(async ({ data: { officerIndex } }) => {
     await requirePrivilege('db')
     try {

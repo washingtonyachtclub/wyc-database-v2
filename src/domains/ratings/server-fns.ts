@@ -20,7 +20,7 @@ import db from '@/db/index'
 import { requirePrivilege } from '@/lib/auth/auth-middleware'
 
 export const getAllRatings = createServerFn({ method: 'GET' })
-  .inputValidator(
+  .validator(
     (input: {
       pageIndex: number
       pageSize: number
@@ -57,7 +57,7 @@ export const getAllRatings = createServerFn({ method: 'GET' })
   })
 
 export const getRatingById = createServerFn({ method: 'GET' })
-  .inputValidator((input: { index: number }) => ({ index: input.index }))
+  .validator((input: { index: number }) => ({ index: input.index }))
   .handler(async ({ data: { index } }) => {
     await requirePrivilege('rtgs')
     try {
@@ -85,7 +85,7 @@ export const getRatingTypes = createServerFn({ method: 'GET' }).handler(async ()
 })
 
 export const updateRatingComments = createServerFn({ method: 'POST' })
-  .inputValidator((input: { index: number; comments: string }) => input)
+  .validator((input: { index: number; comments: string }) => input)
   .handler(async ({ data: { index, comments } }) => {
     await requirePrivilege('rtgs')
     try {
@@ -98,7 +98,7 @@ export const updateRatingComments = createServerFn({ method: 'POST' })
   })
 
 export const createRating = createServerFn({ method: 'POST' })
-  .inputValidator((input: RatingInsertData) => input)
+  .validator((input: RatingInsertData) => input)
   .handler(async ({ data }) => {
     const userId = await requirePrivilege('rtgs')
 
@@ -120,7 +120,7 @@ export const createRating = createServerFn({ method: 'POST' })
   })
 
 export const deleteRating = createServerFn({ method: 'POST' })
-  .inputValidator((input: { index: number }) => input)
+  .validator((input: { index: number }) => input)
   .handler(async ({ data: { index } }) => {
     await requirePrivilege('rtgs')
     try {

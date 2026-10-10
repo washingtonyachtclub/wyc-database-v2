@@ -49,7 +49,7 @@ import { getTodayPacificDateString } from '@/lib/date-utils'
 import type { CheckoutFilters } from './filter-types'
 
 export const getCheckouts = createServerFn({ method: 'GET' })
-  .inputValidator((input: { wycNumber?: number; since?: string }) => ({
+  .validator((input: { wycNumber?: number; since?: string }) => ({
     wycNumber: input.wycNumber ? Number(input.wycNumber) : undefined,
     since: input.since,
   }))
@@ -61,7 +61,7 @@ export const getCheckouts = createServerFn({ method: 'GET' })
   })
 
 export const getMemberCheckoutExport = createServerFn({ method: 'GET' })
-  .inputValidator((input) => z.object({ wycNumber: z.number().int().positive() }).parse(input))
+  .validator((input) => z.object({ wycNumber: z.number().int().positive() }).parse(input))
   .handler(async ({ data: { wycNumber } }) => {
     await requireSelfOrPrivilege(wycNumber, 'db', 'rtgs')
 
@@ -126,7 +126,7 @@ export const getMemberCheckoutExport = createServerFn({ method: 'GET' })
   })
 
 export const getAllCheckouts = createServerFn({ method: 'GET' })
-  .inputValidator(
+  .validator(
     (input: {
       pageIndex: number
       pageSize: number
@@ -379,7 +379,7 @@ export const getCheckoutFormMembers = createServerFn({ method: 'GET' }).handler(
 })
 
 export const searchCheckoutMembers = createServerFn({ method: 'GET' })
-  .inputValidator((input) => z.object({ query: z.string().trim().min(2).max(80) }).parse(input))
+  .validator((input) => z.object({ query: z.string().trim().min(2).max(80) }).parse(input))
   .handler(async ({ data: { query } }) => {
     await requireAuth()
     try {
@@ -428,7 +428,7 @@ export const getCheckoutMembers = createServerFn({ method: 'GET' }).handler(asyn
 })
 
 export const createCheckout = createServerFn({ method: 'POST' })
-  .inputValidator((data) => checkoutInsertSchema.parse(data))
+  .validator((data) => checkoutInsertSchema.parse(data))
   .handler(async ({ data }) => {
     const me = await requireAuth()
     try {
@@ -453,7 +453,7 @@ export const createCheckout = createServerFn({ method: 'POST' })
   })
 
 export const createManualCheckout = createServerFn({ method: 'POST' })
-  .inputValidator((data) => manualCheckoutInsertSchema.parse(data))
+  .validator((data) => manualCheckoutInsertSchema.parse(data))
   .handler(async ({ data }) => {
     await requirePrivilege('db')
     try {
@@ -478,7 +478,7 @@ export const createManualCheckout = createServerFn({ method: 'POST' })
   })
 
 export const checkInBoat = createServerFn({ method: 'POST' })
-  .inputValidator((input) => z.object({ index: z.coerce.number().int().min(1) }).parse(input))
+  .validator((input) => z.object({ index: z.coerce.number().int().min(1) }).parse(input))
   .handler(async ({ data: { index } }) => {
     let row: { wycNumber: number; timeReturn: string | null } | undefined
     try {

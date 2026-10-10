@@ -41,7 +41,7 @@ async function fetchAccessibleLesson(lessonId: number, userId: number) {
 }
 
 export const getLessonAnnouncements = createServerFn({ method: 'GET' })
-  .inputValidator((input: { lessonId: number }) => ({ lessonId: Number(input.lessonId) }))
+  .validator((input: { lessonId: number }) => ({ lessonId: Number(input.lessonId) }))
   .handler(async ({ data: { lessonId } }) => {
     const userId = await requireAuth()
     try {
@@ -57,7 +57,7 @@ export const getLessonAnnouncements = createServerFn({ method: 'GET' })
   })
 
 export const getMemberLessonPage = createServerFn({ method: 'GET' })
-  .inputValidator((input: { lessonId: number }) => ({ lessonId: Number(input.lessonId) }))
+  .validator((input: { lessonId: number }) => ({ lessonId: Number(input.lessonId) }))
   .handler(async ({ data: { lessonId } }) => {
     const userId = await requireAuth()
     try {
@@ -92,7 +92,7 @@ export const getMemberLessonPage = createServerFn({ method: 'GET' })
   })
 
 export const postLessonAnnouncement = createServerFn({ method: 'POST' })
-  .inputValidator((input) => postLessonAnnouncementSchema.parse(input))
+  .validator((input) => postLessonAnnouncementSchema.parse(input))
   .handler(async ({ data }) => {
     const authorWycNumber = await requireInstructorOrPrivilege(data.lessonId, 'db')
 
@@ -105,7 +105,7 @@ export const postLessonAnnouncement = createServerFn({ method: 'POST' })
   })
 
 export const deleteLessonAnnouncement = createServerFn({ method: 'POST' })
-  .inputValidator((input: { announcementId: number }) => ({
+  .validator((input: { announcementId: number }) => ({
     announcementId: Number(input.announcementId),
   }))
   .handler(async ({ data: { announcementId } }) => {

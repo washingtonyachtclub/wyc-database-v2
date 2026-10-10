@@ -43,7 +43,7 @@ export const getDistinctBoatFleetNames = createServerFn({ method: 'GET' }).handl
 })
 
 export const deleteBoatType = createServerFn({ method: 'POST' })
-  .inputValidator((input: { index: number }) => input)
+  .validator((input: { index: number }) => input)
   .handler(async ({ data: { index } }) => {
     await requirePrivilege('db')
     const [{ n }] = await db
@@ -61,7 +61,7 @@ export const deleteBoatType = createServerFn({ method: 'POST' })
   })
 
 export const createBoatType = createServerFn({ method: 'POST' })
-  .inputValidator((input) => boatTypeInsertSchema.parse(input))
+  .validator((input) => boatTypeInsertSchema.parse(input))
   .handler(async ({ data }) => {
     await requirePrivilege('db')
     try {
@@ -74,7 +74,7 @@ export const createBoatType = createServerFn({ method: 'POST' })
   })
 
 export const updateBoatType = createServerFn({ method: 'POST' })
-  .inputValidator((input) => boatTypeUpdateSchema.parse(input))
+  .validator((input) => boatTypeUpdateSchema.parse(input))
   .handler(async ({ data }) => {
     await requirePrivilege('db')
     try {
@@ -90,7 +90,7 @@ export const updateBoatType = createServerFn({ method: 'POST' })
   })
 
 export const setBoatTypeActive = createServerFn({ method: 'POST' })
-  .inputValidator((input) => boatTypeActiveSchema.parse(input))
+  .validator((input) => boatTypeActiveSchema.parse(input))
   .handler(async ({ data: { index, active } }) => {
     await requirePrivilege('db')
     try {

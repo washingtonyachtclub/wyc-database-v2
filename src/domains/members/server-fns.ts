@@ -28,7 +28,7 @@ import {
 } from '@/lib/auth/auth-middleware'
 
 export const getMembersTable = createServerFn({ method: 'GET' })
-  .inputValidator(
+  .validator(
     (input: {
       pageIndex: number
       pageSize: number
@@ -76,7 +76,7 @@ export const getMembersTable = createServerFn({ method: 'GET' })
   })
 
 export const getMemberEmails = createServerFn({ method: 'GET' })
-  .inputValidator((input: { filters?: MemberFilters }) => ({ filters: input.filters }))
+  .validator((input: { filters?: MemberFilters }) => ({ filters: input.filters }))
   .handler(async ({ data }) => {
     await requirePrivilege('db')
     try {
@@ -97,7 +97,7 @@ export const getCategories = createServerFn({ method: 'GET' }).handler(async () 
 })
 
 export const updateMember = createServerFn({ method: 'POST' })
-  .inputValidator((input: { wycNumber: number } & MemberProfileUpdate) => ({
+  .validator((input: { wycNumber: number } & MemberProfileUpdate) => ({
     ...input,
     wycNumber: Number(input.wycNumber),
   }))
@@ -127,7 +127,7 @@ export const getAllMembersLite = createServerFn({ method: 'GET' }).handler(async
 })
 
 export const getMemberById = createServerFn({ method: 'GET' })
-  .inputValidator((input: { wycNumber: number }) => ({ wycNumber: Number(input.wycNumber) }))
+  .validator((input: { wycNumber: number }) => ({ wycNumber: Number(input.wycNumber) }))
   .handler(async ({ data: { wycNumber } }) => {
     const userId = await requireSelfOrPrivilege(wycNumber, 'db', 'rtgs')
     const [row] = await db.select().from(wycDatabase).where(eq(wycDatabase.wycNumber, wycNumber))
@@ -137,7 +137,7 @@ export const getMemberById = createServerFn({ method: 'GET' })
   })
 
 export const updateMemberProfile = createServerFn({ method: 'POST' })
-  .inputValidator((input: { wycNumber: number } & MemberProfileUpdate) => ({
+  .validator((input: { wycNumber: number } & MemberProfileUpdate) => ({
     ...input,
     wycNumber: Number(input.wycNumber),
   }))
@@ -168,7 +168,7 @@ export const updateMemberProfile = createServerFn({ method: 'POST' })
   })
 
 export const getMemberRatings = createServerFn({ method: 'GET' })
-  .inputValidator((input: { wycNumber: number }) => ({ wycNumber: Number(input.wycNumber) }))
+  .validator((input: { wycNumber: number }) => ({ wycNumber: Number(input.wycNumber) }))
   .handler(async ({ data: { wycNumber } }) => {
     await requireSelfOrPrivilege(wycNumber, 'db', 'rtgs')
     const raw = await baseMemberRatingsQuery(wycNumber)
@@ -176,7 +176,7 @@ export const getMemberRatings = createServerFn({ method: 'GET' })
   })
 
 export const getMemberRatingsGiven = createServerFn({ method: 'GET' })
-  .inputValidator((input: { wycNumber: number; since?: string }) => ({
+  .validator((input: { wycNumber: number; since?: string }) => ({
     wycNumber: Number(input.wycNumber),
     since: input.since,
   }))
@@ -187,7 +187,7 @@ export const getMemberRatingsGiven = createServerFn({ method: 'GET' })
   })
 
 export const getMemberLessonsTaught = createServerFn({ method: 'GET' })
-  .inputValidator((input: { wycNumber: number; since?: string }) => ({
+  .validator((input: { wycNumber: number; since?: string }) => ({
     wycNumber: Number(input.wycNumber),
     since: input.since,
   }))
@@ -199,7 +199,7 @@ export const getMemberLessonsTaught = createServerFn({ method: 'GET' })
   })
 
 export const getMemberLessonsSignedUp = createServerFn({ method: 'GET' })
-  .inputValidator((input: { wycNumber: number; since?: string }) => ({
+  .validator((input: { wycNumber: number; since?: string }) => ({
     wycNumber: Number(input.wycNumber),
     since: input.since,
   }))

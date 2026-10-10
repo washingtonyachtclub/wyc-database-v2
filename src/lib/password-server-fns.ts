@@ -9,7 +9,7 @@ import { passwordResetEmail, wycNumberLookupEmail } from './emails/auth'
 import { generatePassphrase } from './generate-passphrase'
 
 export const setPasswordServerFn = createServerFn({ method: 'POST' })
-  .inputValidator((input: { newPassword: string }) => {
+  .validator((input: { newPassword: string }) => {
     if (!input.newPassword || input.newPassword.length < 6) {
       throw new Error('Password must be at least 6 characters')
     }
@@ -38,7 +38,7 @@ export const setPasswordServerFn = createServerFn({ method: 'POST' })
   })
 
 export const lookupWycNumberServerFn = createServerFn({ method: 'POST' })
-  .inputValidator((input: { email: string }) => {
+  .validator((input: { email: string }) => {
     if (!input.email?.trim()) throw new Error('Email is required')
     return { email: String(input.email).trim().toLowerCase() }
   })
@@ -89,7 +89,7 @@ export const lookupWycNumberServerFn = createServerFn({ method: 'POST' })
   })
 
 export const resetPasswordServerFn = createServerFn({ method: 'POST' })
-  .inputValidator((input: { wycNumber: number; email: string }) => {
+  .validator((input: { wycNumber: number; email: string }) => {
     if (!input.wycNumber || !input.email?.trim()) {
       throw new Error('WYC Number and email are required')
     }
