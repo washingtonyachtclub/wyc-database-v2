@@ -29,5 +29,20 @@ export default defineConfig(async ({ mode }) => {
 
   return {
     plugins,
+    environments: {
+      client: {
+        build: {
+          rollupOptions: {
+            output: {
+              manualChunks(id) {
+                if (/\/node_modules\/(react|react-dom|scheduler)\//.test(id)) return 'react-vendor'
+                if (/\/node_modules\/zod\//.test(id)) return 'validation-vendor'
+                if (/\/node_modules\/(lexical|@lexical\/[^/]+)\//.test(id)) return 'editor-core'
+              },
+            },
+          },
+        },
+      },
+    },
   }
 })
