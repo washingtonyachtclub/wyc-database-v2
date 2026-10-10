@@ -18,10 +18,10 @@ export const Route = createFileRoute('/guides/fj')({
   component: FjRiggingGuide,
 })
 
-// TODO(pre-commit): This R2 development URL is intentionally hard-coded until the
+// TODO: This R2 URL is intentionally hard-coded until the
 // permanent public-media domain is available.
 const publicMediaBaseUrl = 'https://pub-5a3e3c50b33c4b70b19b652343752a89.r2.dev'
-const riggingVideoUrl = 'https://www.youtube.com/watch?v=N4N_PYAmEHI&t=93s'
+const riggingVideoUrl = 'https://www.youtube.com/watch?v=N4N_PYAmEHI'
 
 const guideSections = {
   setup: 'Setup',
@@ -284,7 +284,7 @@ function Figure({
         className="block h-auto w-full object-contain"
       />
       {caption && (
-        <figcaption className="mt-[0.6rem] text-base leading-[1.6] text-foreground">
+        <figcaption className="bg-wyc-purple/15 px-3 py-2 text-base leading-[1.6] text-foreground">
           {caption}
         </figcaption>
       )}
@@ -302,18 +302,15 @@ function FjRiggingGuide() {
   return (
     <main className="min-h-screen bg-background px-4 pt-7 pb-20 font-[Arial,Helvetica,sans-serif] text-foreground [--color-primary:var(--color-wyc-purple)] [--color-ring:var(--color-wyc-purple)] min-[481px]:pt-10 print:p-0">
       <div className="mx-auto max-w-[68rem] lg:grid lg:max-w-[87rem] lg:grid-cols-[14rem_minmax(0,1fr)] lg:gap-x-10 xl:gap-x-14 print:block">
-        <GuideHeader title="FJ Rigging Guide" className="lg:col-start-2">
-          <p className="text-base font-bold text-wyc-purple">
-            TODO: watch kevins video and consider adding to top
-          </p>
-        </GuideHeader>
+        <GuideHeader title="FJ Rigging Guide" className="lg:col-start-2"></GuideHeader>
 
         <GuideContents />
 
         <div className="min-w-0 space-y-20">
           <GuideSection id="setup">
             <Warning className="-mb-4">
-              DO NOT STEP INTO THE BOAT WHEN IT IS NOT IN THE WATER. It can damage the hull.
+              Warning: Do not step into the boat when it is not in the water. It can damage the
+              hull.
             </Warning>
 
             <GuideStep id="equipment" title="Equipment">
@@ -552,23 +549,12 @@ function FjRiggingGuide() {
               >
                 Have your crew pull on the forestay to create tension on the mast while you pull on
                 the halyard.
-                <ul>
-                  <li>
-                    See the{' '}
-                    <a href={riggingVideoUrl} target="_blank" rel="noreferrer">
-                      rigging video
-                    </a>{' '}
-                    for more detail about mast tension.
-                  </li>
-                </ul>
               </GuideAction>
 
               <GuideAction
                 media={
                   <figure className="m-0 flex aspect-[4/3] items-center justify-center border border-dashed border-border bg-muted p-6 text-center text-base leading-[1.6] text-foreground">
-                    <figcaption>
-                      Photo placeholder: jib halyard secured to the mast cleat.
-                    </figcaption>
+                    <figcaption>jib halyard secured to the mast cleat.</figcaption>
                   </figure>
                 }
               >
@@ -646,7 +632,7 @@ function FjRiggingGuide() {
               <GuideAction
                 media={
                   <figure className="m-0 flex aspect-[4/3] items-center justify-center border border-dashed border-border bg-muted p-6 text-center text-base leading-[1.6] text-foreground">
-                    <figcaption>Photo placeholder: rubber slug in the boom slot.</figcaption>
+                    <figcaption>rubber slug in the boom slot.</figcaption>
                   </figure>
                 }
               >
@@ -889,15 +875,14 @@ function FjRiggingGuide() {
                       width={480}
                       height={640}
                       alt="Close view of the rudder retaining clip and gudgeon"
-                      caption="Check that the retaining clip is in."
+                      caption="Ensure that the retaining clip prevents the rudder from coming out"
                     />
                   </PhotoGrid>
                 }
               >
                 <p>
-                  Lower the rudder onto the pins. Make sure the retaining clip is in so the bottom
-                  of the rudder does not hang up on it. When you take the rudder off, you may need
-                  to push this clip in so the rudder can come out.
+                  Lower the rudder onto the pins. You may need to push the retaining clip in so the
+                  bottom of the rudder does not hang up on it.
                 </p>
               </GuideAction>
 
@@ -1046,7 +1031,6 @@ function FjRiggingGuide() {
                 </p>
               </GuideAction>
             </GuideStep>
-
             <GuideStep id="roll-sails" title="Roll the sails">
               <GuideAction
                 media={
@@ -1072,7 +1056,6 @@ function FjRiggingGuide() {
                 </p>
               </GuideAction>
             </GuideStep>
-
             <GuideStep id="return-sail-bag" title="Return the sail bag">
               <GuideAction
                 media={
@@ -1088,10 +1071,18 @@ function FjRiggingGuide() {
                 <p>Return the sail bag to the shelf in the sail locker.</p>
               </GuideAction>
             </GuideStep>
-
             <p className="m-0 mt-4 text-[1.3rem] font-bold">
               Thank you for taking good care of the club&apos;s FJ.
             </p>
+            <Button
+              asChild
+              variant="link"
+              className="h-auto justify-self-start p-0 text-base underline"
+            >
+              <a href={riggingVideoUrl} target="_blank" rel="noreferrer">
+                Video guide
+              </a>
+            </Button>
           </GuideSection>
         </div>
       </div>
