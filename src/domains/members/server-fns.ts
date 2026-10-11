@@ -1,3 +1,5 @@
+import { memberSearchQuery } from './queries'
+import { toMemberSearchResult } from './schema'
 import { createServerFn } from '@tanstack/react-start'
 import { asc, count, desc, eq } from 'drizzle-orm'
 import {
@@ -213,4 +215,14 @@ export const getMemberLessonsSignedUp = createServerFn({ method: 'GET' })
 export const getDatabaseName = createServerFn({ method: 'GET' }).handler(async () => {
   const url = process.env.DATABASE_URL ?? ''
   return url.split('/').pop() ?? 'unknown'
+})
+
+export const getMemberSearchIndex = createServerFn({ method: 'GET' }).handler(async () => {
+  await requirePrivilege('db', 'rtgs')
+  try {
+    return (await memberSearchQuery()).map(toMemberSearchResult)
+  } catch (error) {
+    console.error('Failed to fetch member search index:', error)
+    throw new Error('Failed to load members')
+  }
 })

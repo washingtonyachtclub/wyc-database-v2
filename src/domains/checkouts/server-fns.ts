@@ -1,5 +1,8 @@
+import { memberSearchQuery } from '@/domains/members/queries'
+import { toMemberSearchResult } from '@/domains/members/schema'
+import { rankMembers, MAX_MEMBER_SEARCH_RESULTS } from '@/domains/members/search'
 import { createServerFn } from '@tanstack/react-start'
-import { and, desc, eq, gte, inArray, isNotNull, isNull, like, or, sql } from 'drizzle-orm'
+import { and, desc, eq, gte, inArray, isNotNull, isNull, sql } from 'drizzle-orm'
 import { z } from 'zod'
 import db from '@/db/index'
 import { fullName, str } from '@/db/mapper-utils'
@@ -368,6 +371,7 @@ export const getCheckoutFormMembers = createServerFn({ method: 'GET' }).handler(
         wycNumber: wycDatabase.wycNumber,
         first: wycDatabase.first,
         last: wycDatabase.last,
+        expireQtrIndex: wycDatabase.expireQtrIndex,
       })
       .from(wycDatabase)
       .where(gte(wycDatabase.expireQtrIndex, currentQuarter.index))
@@ -379,31 +383,12 @@ export const getCheckoutFormMembers = createServerFn({ method: 'GET' }).handler(
 })
 
 export const searchCheckoutMembers = createServerFn({ method: 'GET' })
-  .validator((input) => z.object({ query: z.string().trim().min(2).max(80) }).parse(input))
+  .validator((input) => z.object({ query: z.string().trim().min(1).max(80) }).parse(input))
   .handler(async ({ data: { query } }) => {
     await requireAuth()
     try {
-      const numericQuery = /^\d+$/.test(query)
-      const conditions = numericQuery
-        ? eq(wycDatabase.wycNumber, Number(query))
-        : and(
-            ...query.split(/\s+/).map((token) => {
-              const escaped = token.replace(/[\\%_]/g, '\\$&')
-              const pattern = `%${escaped}%`
-              return or(like(wycDatabase.first, pattern), like(wycDatabase.last, pattern))
-            }),
-          )
-
-      return await db
-        .select({
-          wycNumber: wycDatabase.wycNumber,
-          first: wycDatabase.first,
-          last: wycDatabase.last,
-        })
-        .from(wycDatabase)
-        .where(conditions)
-        .orderBy(desc(wycDatabase.expireQtrIndex), wycDatabase.first, wycDatabase.last)
-        .limit(30)
+      const members = (await memberSearchQuery()).map(toMemberSearchResult)
+      return rankMembers(members, query, true).slice(0, MAX_MEMBER_SEARCH_RESULTS)
     } catch (error) {
       console.error('Failed to search checkout members:', error)
       throw new Error('Failed to search members')
@@ -418,6 +403,7 @@ export const getCheckoutMembers = createServerFn({ method: 'GET' }).handler(asyn
         wycNumber: wycDatabase.wycNumber,
         first: wycDatabase.first,
         last: wycDatabase.last,
+        expireQtrIndex: wycDatabase.expireQtrIndex,
       })
       .from(wycDatabase)
       .orderBy(desc(wycDatabase.expireQtrIndex), wycDatabase.first, wycDatabase.last)

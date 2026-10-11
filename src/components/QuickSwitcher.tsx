@@ -1,8 +1,14 @@
+import { useQuery } from '@tanstack/react-query'
+import { getMemberSearchIndexQueryOptions } from '@/domains/members/query-options'
+import { getCurrentQuarterQueryOptions } from '@/domains/lessons/query-options'
+import { canSearchMembers, rankMembers, MAX_MEMBER_SEARCH_RESULTS } from '@/domains/members/search'
+import { isMembershipActive } from '@/db/membership-utils'
+import { fuzzyScore } from '@/lib/fuzzy-search'
 import { useCurrentUser } from '@/lib/auth/auth-query-options'
 import { hasRouteAccess, type ProtectedRoute } from '@/lib/permissions'
 import { useRouter } from '@tanstack/react-router'
 import { ArrowRight, Search } from 'lucide-react'
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { adminItems, peopleManagementItems, supportTableItems, toolsItems } from './Sidebar'
 import { Button } from './ui/button'
 import {
@@ -22,9 +28,33 @@ type Destination = {
 
 export function QuickSwitcher() {
   const [open, setOpen] = useState(false)
+  const [search, setSearch] = useState('')
   const [shortcut, setShortcut] = useState('Ctrl K')
   const router = useRouter()
   const { user, privileges } = useCurrentUser()
+  const canBrowseMembers =
+    !!user && hasRouteAccess(user.wycNumber, privileges, '/members/$wycNumber')
+  const memberSearch = useQuery({
+    ...getMemberSearchIndexQueryOptions(),
+    enabled: open && canBrowseMembers,
+  })
+  const quarter = useQuery({
+    ...getCurrentQuarterQueryOptions(),
+    enabled: open && canBrowseMembers,
+  })
+  const matchingMembers = useMemo(
+    () => (canBrowseMembers ? rankMembers(memberSearch.data ?? [], search) : []),
+    [canBrowseMembers, memberSearch.data, search],
+  )
+  const displayedMembers = matchingMembers.slice(0, MAX_MEMBER_SEARCH_RESULTS)
+  const searchingMembers = canBrowseMembers && canSearchMembers(search)
+  const changeOpen = (nextOpen: boolean) => {
+    setOpen(nextOpen)
+    setSearch('')
+  }
+  useEffect(() => {
+    if (!open) setSearch('')
+  }, [open])
   useEffect(() => {
     const isMac = /Mac|iPhone|iPad|iPod/.test(navigator.platform)
     if (isMac) setShortcut('⌘K')
@@ -61,10 +91,17 @@ export function QuickSwitcher() {
     },
     { label: 'People Management', items: visible(peopleManagementItems) },
     { label: 'Support Tables', items: visible(supportTableItems) },
-  ].filter((group) => group.items.length > 0)
+  ]
+    .map((group) => ({
+      ...group,
+      items: group.items.filter(
+        (item) => fuzzyScore(search, item.label + ' ' + group.label) !== null,
+      ),
+    }))
+    .filter((group) => group.items.length > 0)
 
   const goTo = (path: string) => {
-    setOpen(false)
+    changeOpen(false)
     void router.navigate({ to: path })
   }
 
@@ -74,7 +111,7 @@ export function QuickSwitcher() {
         type="button"
         variant="outline"
         size="sm"
-        onClick={() => setOpen(true)}
+        onClick={() => changeOpen(true)}
         className="hidden md:flex w-44 justify-between text-muted-foreground font-normal"
       >
         <span className="flex items-center gap-2">
@@ -86,16 +123,28 @@ export function QuickSwitcher() {
         </kbd>
       </Button>
 
-      <Dialog open={open} onOpenChange={setOpen}>
+      <Dialog open={open} onOpenChange={changeOpen}>
         <DialogContent className="max-w-lg gap-0 overflow-hidden p-0">
           <DialogTitle className="sr-only">Quick switcher</DialogTitle>
           <DialogDescription className="sr-only">
-            Search the database navigation and press Enter to open a page.
+            Search pages and member profiles and press Enter to open a result.
           </DialogDescription>
-          <Command>
-            <CommandInput autoFocus className="pr-8" placeholder="Where do you want to go?" />
+          <Command shouldFilter={false}>
+            <CommandInput
+              autoFocus
+              className="pr-8"
+              value={search}
+              onValueChange={setSearch}
+              placeholder={
+                canBrowseMembers ? 'Search pages or members...' : 'Where do you want to go?'
+              }
+            />
             <CommandList className="max-h-[min(420px,70vh)] p-1">
-              <CommandEmpty>No pages found.</CommandEmpty>
+              {groups.length === 0 &&
+                displayedMembers.length === 0 &&
+                !(searchingMembers && (memberSearch.isPending || memberSearch.isError)) && (
+                  <CommandEmpty>No results found.</CommandEmpty>
+                )}
               {groups.map((group) => (
                 <CommandGroup key={group.label} heading={group.label}>
                   {group.items.map((item) => (
@@ -111,6 +160,52 @@ export function QuickSwitcher() {
                   ))}
                 </CommandGroup>
               ))}
+              {displayedMembers.length > 0 && (
+                <CommandGroup heading="Members">
+                  {displayedMembers.map((member) => (
+                    <CommandItem
+                      key={member.wycNumber}
+                      value={`member:${member.wycNumber}`}
+                      onSelect={() => goTo(`/members/${member.wycNumber}`)}
+                      className="group py-2"
+                    >
+                      <span className="flex-1">
+                        {member.first} {member.last}
+                        <span className="ml-2 text-muted-foreground">#{member.wycNumber}</span>
+                      </span>
+                      <span className="text-xs text-muted-foreground">
+                        {quarter.data != null
+                          ? isMembershipActive(member.expireQtrIndex, quarter.data)
+                            ? 'Active'
+                            : 'Expired'
+                          : quarter.isError
+                            ? 'Status unavailable'
+                            : '…'}
+                      </span>
+                      <ArrowRight className="opacity-0 group-data-[selected=true]:opacity-50" />
+                    </CommandItem>
+                  ))}
+                </CommandGroup>
+              )}
+              {searchingMembers && memberSearch.isPending && (
+                <div role="status" className="px-3 py-3 text-sm text-muted-foreground">
+                  Loading members...
+                </div>
+              )}
+              {searchingMembers && memberSearch.isError && (
+                <div role="alert" className="px-3 py-3 text-sm text-destructive">
+                  Could not load members.
+                  <Button variant="ghost" size="sm" onClick={() => void memberSearch.refetch()}>
+                    Retry
+                  </Button>
+                </div>
+              )}
+              {matchingMembers.length > MAX_MEMBER_SEARCH_RESULTS && (
+                <div className="border-t px-3 py-2 text-center text-xs text-muted-foreground">
+                  {matchingMembers.length - MAX_MEMBER_SEARCH_RESULTS} more — keep typing to narrow
+                  down
+                </div>
+              )}
             </CommandList>
           </Command>
         </DialogContent>

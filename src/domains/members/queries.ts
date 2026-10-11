@@ -72,3 +72,14 @@ export function withMemberFilters<T extends MySqlSelect>(
 
   return qb
 }
+
+export function memberSearchQuery() {
+  return db
+    .select({
+      wycNumber: wycDatabase.wycNumber,
+      first: wycDatabase.first,
+      last: wycDatabase.last,
+      expireQtrIndex: wycDatabase.expireQtrIndex,
+    })
+    .from(wycDatabase)
+}

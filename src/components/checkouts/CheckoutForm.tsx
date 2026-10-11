@@ -73,7 +73,9 @@ export function CheckoutForm({
   const boatGroups = useMemo(() => boatTypeGroups(boatTypes), [boatTypes])
   const excludedMembers = useMemo(() => [skipperWycNumber], [skipperWycNumber])
   const selectableMembers = useMemo(() => {
-    const byWycNumber = new Map(members.map((member) => [member.wycNumber, member]))
+    const byWycNumber = new Map<number, MemberLite>(
+      members.map((member) => [member.wycNumber, member]),
+    )
     for (const member of additionalMembers) byWycNumber.set(member.wycNumber, member)
     return [...byWycNumber.values()]
   }, [additionalMembers, members])
