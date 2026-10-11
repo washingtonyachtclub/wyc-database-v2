@@ -3,6 +3,7 @@ import { useEffect, useRef, useState, type ReactNode } from 'react'
 
 import { GuideHeader } from '@/components/GuideHeader'
 import { Button } from '@/components/ui/button'
+import { guideImageUrl } from '@/lib/guide-media'
 import { cn } from '@/lib/utils'
 
 export const Route = createFileRoute('/guides/fj')({
@@ -18,9 +19,6 @@ export const Route = createFileRoute('/guides/fj')({
   component: FjRiggingGuide,
 })
 
-// TODO: This R2 URL is intentionally hard-coded until the
-// permanent public-media domain is available.
-const publicMediaBaseUrl = 'https://pub-5a3e3c50b33c4b70b19b652343752a89.r2.dev'
 const riggingVideoUrl = 'https://www.youtube.com/watch?v=N4N_PYAmEHI'
 
 const guideSections = {
@@ -31,10 +29,6 @@ const guideSections = {
   'final-sail-setup': 'Final Sail Setup',
   derigging: 'Derigging',
 } as const
-
-function guideImage(file: string) {
-  return `${publicMediaBaseUrl}/website/guides/fj/${file}`
-}
 
 type GuideContentsItem = {
   id: string
@@ -275,7 +269,7 @@ function Figure({
   return (
     <figure className={cn('m-0 min-w-0 print:break-inside-avoid', className)}>
       <img
-        src={guideImage(file)}
+        src={guideImageUrl('fj', file)}
         alt={alt}
         width={width}
         height={height}
