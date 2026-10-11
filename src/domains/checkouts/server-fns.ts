@@ -252,7 +252,7 @@ export const getWindHistory = createServerFn({ method: 'GET' }).handler(async ()
 export const getCheckoutCards = createServerFn({ method: 'GET' }).handler(async () => {
   try {
     const me = await optionalAuth()
-    const canAdminCheckIn = me !== null && (await sessionHasPrivilege('db'))
+    const canAdminCheckIn = me !== null && (await sessionHasPrivilege('db', 'rtgs'))
     const [active, returned] = await Promise.all([
       baseCheckoutCardsQuery().where(isNull(checkouts.timeReturn)).orderBy(desc(checkouts.index)),
       baseCheckoutCardsQuery()
@@ -480,7 +480,7 @@ export const checkInBoat = createServerFn({ method: 'POST' })
     }
     if (!row) throw new Error('Checkout not found')
 
-    await requireSelfOrPrivilege(row.wycNumber, 'db')
+    await requireSelfOrPrivilege(row.wycNumber, 'db', 'rtgs')
 
     try {
       await db
