@@ -146,3 +146,20 @@ export function toMemberRating(row: RatingQueryRow): MemberRating {
     comments: str(row.comments),
   }
 }
+
+export type MemberSearchResult = {
+  wycNumber: number
+  first: string
+  last: string
+  expireQtrIndex: number
+}
+export function toMemberSearchResult(
+  row: Pick<typeof wycDatabase.$inferSelect, 'wycNumber' | 'first' | 'last' | 'expireQtrIndex'>,
+): MemberSearchResult {
+  return {
+    wycNumber: row.wycNumber,
+    first: str(row.first),
+    last: str(row.last),
+    expireQtrIndex: num(row.expireQtrIndex),
+  }
+}

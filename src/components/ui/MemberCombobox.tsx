@@ -3,7 +3,14 @@
 import { Check, ChevronsUpDown } from 'lucide-react'
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
-import { getAllMembersLiteQueryOptions } from '@/domains/members/query-options'
+import { getMemberSearchIndexQueryOptions } from '@/domains/members/query-options'
+import {
+  canSearchMembers,
+  memberNumberQuery,
+  rankMembers,
+  MIN_MEMBER_SEARCH_LENGTH as MIN_SEARCH_LENGTH,
+  MAX_MEMBER_SEARCH_RESULTS as MAX_RESULTS,
+} from '@/domains/members/search'
 import { useDesktopSelectControl } from '@/hooks/use-desktop-select-control'
 import { cn } from '../../lib/utils'
 import { Button } from './button'
@@ -13,7 +20,12 @@ import { Label } from './label'
 import { Modal } from './Modal'
 import { Popover, PopoverContent, PopoverTrigger } from './popover'
 
-export type MemberLite = { wycNumber: number; first: string | null; last: string | null }
+export type MemberLite = {
+  wycNumber: number
+  first: string | null
+  last: string | null
+  expireQtrIndex?: number | null
+}
 
 type MemberComboboxProps = {
   value: number | null
@@ -29,9 +41,6 @@ type MemberComboboxProps = {
   showWycNumbers?: boolean
   exactWycNumberSearch?: boolean
 }
-
-const MIN_SEARCH_LENGTH = 2
-const MAX_RESULTS = 50
 
 export function MemberCombobox({
   value,
@@ -56,7 +65,7 @@ export function MemberCombobox({
   const desktopControl = useDesktopSelectControl()
 
   const { data: fetched = [] } = useQuery({
-    ...getAllMembersLiteQueryOptions(),
+    ...getMemberSearchIndexQueryOptions(),
     enabled: membersProp === undefined,
   })
   const members = membersProp ?? fetched
@@ -71,20 +80,14 @@ export function MemberCombobox({
   const selectedLabel = selectedMember
     ? `${selectedMember.first ?? ''} ${selectedMember.last ?? ''}`.trim()
     : null
-  const searchTokens = trimmedSearch.toLowerCase().split(/\s+/)
-  const isWycNumberSearch = exactWycNumberSearch && /^\d+$/.test(trimmedSearch)
-  const localMatches =
-    trimmedSearch.length < MIN_SEARCH_LENGTH
-      ? []
-      : members.filter((member) => {
-          if (isWycNumberSearch) return String(member.wycNumber) === trimmedSearch
-          const fullName = `${member.first ?? ''} ${member.last ?? ''}`.toLowerCase()
-          const searchable = exactWycNumberSearch ? fullName : `${fullName} ${member.wycNumber}`
-          return searchTokens.every((token) => searchable.includes(token))
-        })
+  const isWycNumberSearch = exactWycNumberSearch && memberNumberQuery(trimmedSearch) !== null
+  const localMatches = useMemo(
+    () => rankMembers(members, trimmedSearch, exactWycNumberSearch),
+    [members, trimmedSearch, exactWycNumberSearch],
+  )
   const remoteSearchEnabled =
     searchAllMembers !== undefined &&
-    debouncedSearch.length >= MIN_SEARCH_LENGTH &&
+    canSearchMembers(debouncedSearch) &&
     debouncedSearch === trimmedSearch &&
     (searchingAllMembers || localMatches.length === 0) &&
     (open || mobileSearchOpen)
@@ -101,17 +104,18 @@ export function MemberCombobox({
   const currentRemoteMembers = remoteSearchEnabled ? remoteMembers : []
   const matchingMembers = useMemo(() => {
     const seen = new Set<number>()
-    return [...localMatches, ...currentRemoteMembers].filter((member) => {
+    const unique = [...localMatches, ...currentRemoteMembers].filter((member) => {
       if (seen.has(member.wycNumber)) return false
       seen.add(member.wycNumber)
       return true
     })
-  }, [currentRemoteMembers, localMatches])
+    return rankMembers(unique, trimmedSearch, exactWycNumberSearch)
+  }, [currentRemoteMembers, localMatches, trimmedSearch, exactWycNumberSearch])
   const displayedMembers = matchingMembers.slice(0, MAX_RESULTS)
   const hasMore = matchingMembers.length > MAX_RESULTS
   const waitingForRemoteSearch =
     searchAllMembers !== undefined &&
-    trimmedSearch.length >= MIN_SEARCH_LENGTH &&
+    canSearchMembers(trimmedSearch) &&
     (debouncedSearch !== trimmedSearch || (remoteSearchEnabled && remoteSearchFetching))
 
   const chooseMember = (member: MemberLite) => {
@@ -127,7 +131,8 @@ export function MemberCombobox({
     const isSelected = member.wycNumber === value
     const displayName = `${member.first ?? ''} ${member.last ?? ''}`.trim()
     const displayWycNumber =
-      showWycNumbers || (isWycNumberSearch && trimmedSearch === String(member.wycNumber))
+      showWycNumbers ||
+      (isWycNumberSearch && Number(memberNumberQuery(trimmedSearch)) === member.wycNumber)
     return (
       <CommandItem
         key={member.wycNumber}
@@ -164,7 +169,7 @@ export function MemberCombobox({
         </div>
       )}
       {searchAllMembers &&
-        trimmedSearch.length >= MIN_SEARCH_LENGTH &&
+        canSearchMembers(trimmedSearch) &&
         localMatches.length > 0 &&
         !searchingAllMembers && (
           <Button
@@ -232,7 +237,7 @@ export function MemberCombobox({
                 className="max-h-60 touch-pan-y overscroll-contain overflow-y-auto"
                 onWheel={(event) => event.stopPropagation()}
               >
-                {trimmedSearch.length < MIN_SEARCH_LENGTH ? (
+                {!canSearchMembers(trimmedSearch) ? (
                   <div className="py-6 text-center text-sm text-muted-foreground">
                     Type at least {MIN_SEARCH_LENGTH} characters to search...
                   </div>
@@ -285,7 +290,7 @@ export function MemberCombobox({
                 />
                 <Command shouldFilter={false} className="min-h-0 flex-1 border">
                   <CommandList className="max-h-none flex-1 touch-pan-y space-y-2 overscroll-contain overflow-y-auto p-2">
-                    {trimmedSearch.length < MIN_SEARCH_LENGTH ? (
+                    {!canSearchMembers(trimmedSearch) ? (
                       <div className="py-8 text-center text-base text-muted-foreground">
                         Type at least {MIN_SEARCH_LENGTH} characters to search...
                       </div>

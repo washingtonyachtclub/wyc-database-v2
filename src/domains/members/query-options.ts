@@ -2,6 +2,7 @@ import { queryOptions, useMutation, useQueryClient } from '@tanstack/react-query
 import type { MemberFilters } from '@/domains/members/filter-types'
 import {
   getAllMembersLite,
+  getMemberSearchIndex,
   getCategories,
   getMemberById,
   getMemberEmails,
@@ -103,3 +104,10 @@ export function useUpdateMemberProfileMutation() {
     },
   })
 }
+
+export const getMemberSearchIndexQueryOptions = () =>
+  queryOptions({
+    queryKey: ['members', 'searchIndex'],
+    queryFn: getMemberSearchIndex,
+    staleTime: 5 * 60 * 1000,
+  })
