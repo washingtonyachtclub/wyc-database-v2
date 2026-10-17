@@ -39,6 +39,7 @@ function LoginPage() {
   const router = useRouter()
   const { sailLockerMode } = Route.useRouteContext()
   const [mode, setMode] = useState<Mode>('password')
+  const showQr = sailLockerMode && mode === 'email'
   const [qrPollingSecret, setQrPollingSecret] = useState<string | null>(null)
   const finishAuthentication = async () => {
     if (qrPollingSecret) {
@@ -50,13 +51,13 @@ function LoginPage() {
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-muted px-4 py-12 sm:px-6 lg:px-8">
-      <div className={cn('w-full', sailLockerMode ? 'max-w-4xl' : 'max-w-md')}>
+      <div className={cn('w-full', showQr ? 'max-w-4xl' : 'max-w-md')}>
         <div className="rounded-xl bg-card p-8 shadow-lg space-y-8">
           <div className="flex flex-col items-center">
             <img src="/favicon.png" alt="WYC" className="h-12 w-12" />
             <h2 className="mt-4 text-center text-3xl font-bold tracking-tight">WYC Database</h2>
             <p className="mt-2 text-center text-sm text-muted-foreground">
-              {sailLockerMode
+              {showQr
                 ? 'Scan with your phone or use another sign-in option'
                 : mode === 'password'
                   ? 'Sign in with your WYC ID and password'
@@ -64,11 +65,12 @@ function LoginPage() {
             </p>
           </div>
 
-          <div className={cn(sailLockerMode && 'grid gap-8 md:grid-cols-2')}>
-            {sailLockerMode && <QrLoginPanel onPollingSecretChange={setQrPollingSecret} />}
+          <div className={cn(showQr && 'grid gap-8 md:grid-cols-2')}>
+            {showQr && <QrLoginPanel onPollingSecretChange={setQrPollingSecret} />}
             <div>
               {mode === 'password' ? (
                 <PasswordForm
+                  offerQr={sailLockerMode}
                   onSwitchMode={() => setMode('email')}
                   onAuthenticated={finishAuthentication}
                 />
@@ -87,9 +89,11 @@ function LoginPage() {
 }
 
 function PasswordForm({
+  offerQr,
   onSwitchMode,
   onAuthenticated,
 }: {
+  offerQr: boolean
   onSwitchMode: () => void
   onAuthenticated: () => Promise<void>
 }) {
@@ -166,13 +170,14 @@ function PasswordForm({
       </Button>
 
       <div className="space-y-2 text-center">
-        <button
+        <Button
           type="button"
+          variant="link"
           onClick={onSwitchMode}
-          className="text-sm text-muted-foreground hover:text-primary block w-full"
+          className="text-muted-foreground w-full"
         >
-          Sign in with an email code instead
-        </button>
+          {offerQr ? 'Sign in with email / QR Code' : 'Sign in with an email code instead'}
+        </Button>
         <Link to="/forgot-password" className="text-sm text-muted-foreground hover:text-primary">
           Forgot your password or WYC ID?
         </Link>
