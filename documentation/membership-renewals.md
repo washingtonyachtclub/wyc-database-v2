@@ -51,7 +51,10 @@ All renewal math anchors to `RENEWAL_QUARTER`, a hand-maintained constant in `co
 - Active membership (`expireQtr >= RENEWAL_QUARTER`) stacks the new period on remaining time. Quarterly adds one quarter and annual adds four.
 - Expired membership (`expireQtr < RENEWAL_QUARTER`) starts fresh. Quarterly lands on `RENEWAL_QUARTER` and annual lands on `RENEWAL_QUARTER + 3`.
 
-`MAX_QUARTERS_AHEAD = 4` prevents a renewal from moving expiry more than four quarters past `RENEWAL_QUARTER`.
+`MAX_QUARTERS_AHEAD = 4` prevents paid renewals from moving expiry more than four quarters past
+`RENEWAL_QUARTER`. Dues exemptions have no advance limit, including exemption applications applied
+to existing members. Each approved exemption adds one quarter using the same renewal math.
+Members at the paid-renewal limit can still submit an exemption request.
 
 ### Maintaining `RENEWAL_QUARTER`
 

@@ -67,8 +67,8 @@ function RenewMembershipPage() {
   const { redirect: redirectTo } = Route.useSearch()
   const navigate = useNavigate()
 
-  // Quarterly is the smallest jump, so if it's over the cap nothing can be renewed right now.
-  const canRenew = status.preview.quarterly.allowed
+  // Quarterly is the smallest paid renewal, so it determines whether payment is available.
+  const canPayToRenew = status.preview.quarterly.allowed
 
   // Questionnaire (required, shown above duration/card). UW status drives the price tier.
   const [uwStatus, setUwStatus] = useState<UwStatus | null>(null)
@@ -224,23 +224,6 @@ function RenewMembershipPage() {
     )
   }
 
-  if (!canRenew) {
-    return (
-      <div className="p-4 max-w-md space-y-4">
-        <h1 className="text-2xl font-bold">Renew Membership</h1>
-        <p>
-          Your membership is paid through <strong>{status.expireQtrLabel}</strong>.
-        </p>
-        <div className="rounded-md border bg-muted p-4">
-          <p>
-            You're already paid as far ahead as we allow. You can renew again closer to your expiry
-            date.
-          </p>
-        </div>
-      </div>
-    )
-  }
-
   return (
     <div className="mx-auto max-w-2xl space-y-6 p-4">
       <h1 className="text-2xl font-bold">Renew Membership</h1>
@@ -255,76 +238,84 @@ function RenewMembershipPage() {
         onUwStatusChange={selectUwStatus}
         onPlusOneChange={setPlusOne}
       />
-      <div className="space-y-2">
-        <Label className="text-base">Duration</Label>
-        {uwStatus === null && (
-          <p className="text-base font-medium text-muted-foreground">
-            Answer the questions above to see pricing.
-          </p>
-        )}
-        <div
-          className={`grid gap-3 ${status.preview.annual.allowed ? 'grid-cols-2' : 'grid-cols-1'}`}
-        >
-          <Button
-            type="button"
-            variant={duration === 'quarterly' ? 'default' : 'outline'}
-            onClick={() => setDuration('quarterly')}
-            disabled={uwStatus === null}
-            className="h-auto flex-col items-stretch gap-0 whitespace-normal border-2 px-4 py-3 text-left"
-          >
-            <span className="flex items-baseline justify-between gap-2">
-              <span className="text-base font-semibold">Quarterly</span>
-              <span className="text-base font-semibold">{priceLabel(priceQuarterly)}</span>
-            </span>
-            <span className="my-2 h-px w-full bg-current opacity-25" />
-            <span className="text-base font-normal">{status.preview.quarterly.label}</span>
-          </Button>
-          {status.preview.annual.allowed && (
-            <Button
-              type="button"
-              variant={duration === 'annual' ? 'default' : 'outline'}
-              onClick={() => setDuration('annual')}
-              disabled={uwStatus === null}
-              className="h-auto flex-col items-stretch gap-0 whitespace-normal border-2 px-4 py-3 text-left"
+      {canPayToRenew ? (
+        <>
+          <div className="space-y-2">
+            <Label className="text-base">Duration</Label>
+            {uwStatus === null && (
+              <p className="text-base font-medium text-muted-foreground">
+                Answer the questions above to see pricing.
+              </p>
+            )}
+            <div
+              className={`grid gap-3 ${status.preview.annual.allowed ? 'grid-cols-2' : 'grid-cols-1'}`}
             >
-              <span className="flex items-baseline justify-between gap-2">
-                <span className="text-base font-semibold">Annual</span>
-                <span className="text-base font-semibold">{priceLabel(priceAnnual)}</span>
-              </span>
-              <span className="my-2 h-px w-full bg-current opacity-25" />
-              <span className="text-base font-normal">{status.preview.annual.label}</span>
-            </Button>
-          )}
+              <Button
+                type="button"
+                variant={duration === 'quarterly' ? 'default' : 'outline'}
+                onClick={() => setDuration('quarterly')}
+                disabled={uwStatus === null}
+                className="h-auto flex-col items-stretch gap-0 whitespace-normal border-2 px-4 py-3 text-left"
+              >
+                <span className="flex items-baseline justify-between gap-2">
+                  <span className="text-base font-semibold">Quarterly</span>
+                  <span className="text-base font-semibold">{priceLabel(priceQuarterly)}</span>
+                </span>
+                <span className="my-2 h-px w-full bg-current opacity-25" />
+                <span className="text-base font-normal">{status.preview.quarterly.label}</span>
+              </Button>
+              {status.preview.annual.allowed && (
+                <Button
+                  type="button"
+                  variant={duration === 'annual' ? 'default' : 'outline'}
+                  onClick={() => setDuration('annual')}
+                  disabled={uwStatus === null}
+                  className="h-auto flex-col items-stretch gap-0 whitespace-normal border-2 px-4 py-3 text-left"
+                >
+                  <span className="flex items-baseline justify-between gap-2">
+                    <span className="text-base font-semibold">Annual</span>
+                    <span className="text-base font-semibold">{priceLabel(priceAnnual)}</span>
+                  </span>
+                  <span className="my-2 h-px w-full bg-current opacity-25" />
+                  <span className="text-base font-normal">{status.preview.annual.label}</span>
+                </Button>
+              )}
+            </div>
+          </div>
+
+          <DiscountCodeField
+            audience="renewals"
+            duration={duration}
+            tier={tier}
+            onApplied={setDiscountCode}
+            disabled={submitting}
+          />
+
+          <div className="space-y-2">
+            <Label className="text-base">Card</Label>
+            <SquareCardForm ref={cardRef} onError={setError} />
+          </div>
+
+          <ErrorAlert error={error} action="Renew membership" />
+
+          <Button
+            onClick={handlePay}
+            disabled={
+              submitting ||
+              questionnaire === null ||
+              selectedPrice.isLoading ||
+              !status.preview[duration].allowed
+            }
+            className="w-full"
+          >
+            {submitting ? 'Processing…' : 'Pay & Renew'}
+          </Button>
+        </>
+      ) : (
+        <div className="rounded-md border bg-muted p-4">
+          You've reached the paid-renewal advance limit. You can still request a dues exemption.
         </div>
-      </div>
-
-      <DiscountCodeField
-        audience="renewals"
-        duration={duration}
-        tier={tier}
-        onApplied={setDiscountCode}
-        disabled={submitting}
-      />
-
-      <div className="space-y-2">
-        <Label className="text-base">Card</Label>
-        <SquareCardForm ref={cardRef} onError={setError} />
-      </div>
-
-      <ErrorAlert error={error} action="Renew membership" />
-
-      <Button
-        onClick={handlePay}
-        disabled={
-          submitting ||
-          questionnaire === null ||
-          selectedPrice.isLoading ||
-          !status.preview[duration].allowed
-        }
-        className="w-full"
-      >
-        {submitting ? 'Processing…' : 'Pay & Renew'}
-      </Button>
+      )}
 
       <DuesExemptSection
         targetQuarterLabel={status.preview.quarterly.label}
