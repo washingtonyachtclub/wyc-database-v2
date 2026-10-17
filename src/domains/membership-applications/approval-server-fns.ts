@@ -526,7 +526,9 @@ export const previewMembershipApplicationRenewal = createServerFn({ method: 'GET
         currentLabel: labelFor(member.expireQtrIndex),
         targetLabel: labelFor(targetExpireQtr),
         duration,
-        withinAdvanceLimit: withinAdvanceLimit(member.expireQtrIndex, duration),
+        withinAdvanceLimit:
+          application.paymentStatus === 'exemption_requested' ||
+          withinAdvanceLimit(member.expireQtrIndex, duration),
       }
     } catch (error) {
       console.error('Failed to preview application renewal:', error)
@@ -605,7 +607,8 @@ export const applyMembershipApplicationToExistingMember = createServerFn({ metho
         if (
           existingMember.expireQtrIndex !== data.expectedPreviousExpireQtr ||
           expireQtrIndex !== data.expectedTargetExpireQtr ||
-          !withinAdvanceLimit(existingMember.expireQtrIndex, duration)
+          (application.paymentStatus !== 'exemption_requested' &&
+            !withinAdvanceLimit(existingMember.expireQtrIndex, duration))
         ) {
           throw new Error('Renewal preview is stale or exceeds the advance limit')
         }

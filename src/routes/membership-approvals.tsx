@@ -800,8 +800,8 @@ function ReviewActionDialog({
                 />
                 {!preview.data.withinAdvanceLimit && (
                   <p className="text-sm text-destructive">
-                    This renewal exceeds the four-quarter advance limit. Resolve the extra payment
-                    or exemption request before approval.
+                    This paid renewal exceeds the four-quarter advance limit. Resolve the extra
+                    payment before approval.
                   </p>
                 )}
               </>
