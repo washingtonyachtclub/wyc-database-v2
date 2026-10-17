@@ -9,7 +9,7 @@ import { requireAuth } from './auth-middleware'
 import { loadAuthUser, loadUserPrivileges } from './identity'
 import { createAuthenticatedSessionData, useAppSession } from './session'
 
-const QR_LOGIN_TTL_MS = 2 * 60 * 1000
+const QR_LOGIN_TTL_MS = 60 * 1000
 const QR_LOGIN_RATE_WINDOW_MS = 10 * 60 * 1000
 const QR_LOGIN_MAX_REQUESTS_PER_WINDOW = 10
 const QR_LOGIN_RETENTION_MS = 24 * 60 * 60 * 1000

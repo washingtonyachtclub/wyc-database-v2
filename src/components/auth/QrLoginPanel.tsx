@@ -19,7 +19,7 @@ type ActiveRequest = {
   expiresAt: number
 }
 
-type DisplayStatus = 'creating' | 'pending' | 'connection-error' | 'unavailable'
+type DisplayStatus = 'creating' | 'pending' | 'connection-error' | 'unavailable' | 'expired'
 
 export function QrLoginPanel({
   onPollingSecretChange,
@@ -28,7 +28,8 @@ export function QrLoginPanel({
 }) {
   const router = useRouter()
   const queryClient = useQueryClient()
-  const startedRef = useRef(false)
+  const generationRef = useRef(0)
+  const activeRequestRef = useRef<ActiveRequest | null>(null)
   const authenticatedRef = useRef(false)
   const [request, setRequest] = useState<ActiveRequest | null>(null)
   const [status, setStatus] = useState<DisplayStatus>('creating')
@@ -41,12 +42,19 @@ export function QrLoginPanel({
   }, [request])
 
   const createRequest = useCallback(async () => {
+    const generation = ++generationRef.current
     setStatus('creating')
     setRequest(null)
     onPollingSecretChange(null)
 
     try {
       const result = await createQrLoginRequestServerFn()
+      if (generation !== generationRef.current) {
+        if (result.success) {
+          await cancelQrLoginRequestServerFn({ data: { pollingSecret: result.pollingSecret } })
+        }
+        return
+      }
       if (!result.success) {
         setStatus('unavailable')
         return
@@ -57,42 +65,55 @@ export function QrLoginPanel({
         pollingSecret: result.pollingSecret,
         expiresAt: result.expiresAt,
       }
+      activeRequestRef.current = nextRequest
       setRequest(nextRequest)
       setStatus('pending')
       onPollingSecretChange(nextRequest.pollingSecret)
     } catch (error) {
       console.error('QR login creation error:', error)
-      setStatus('unavailable')
+      if (generation === generationRef.current) setStatus('unavailable')
     }
   }, [onPollingSecretChange])
 
   useEffect(() => {
-    if (startedRef.current) return
-    startedRef.current = true
     void createRequest()
-  }, [createRequest])
+    return () => {
+      generationRef.current += 1
+      onPollingSecretChange(null)
+      const active = activeRequestRef.current
+      activeRequestRef.current = null
+      if (active && Date.now() < active.expiresAt) {
+        void cancelQrLoginRequestServerFn({ data: { pollingSecret: active.pollingSecret } }).catch(
+          (error) => console.error('QR login cancellation error:', error),
+        )
+      }
+    }
+  }, [createRequest, onPollingSecretChange])
 
   useEffect(() => {
     if (!request) return
 
     const timeout = window.setTimeout(
       () => {
-        authenticatedRef.current = false
-        void createRequest()
+        setStatus('expired')
+        setRequest(null)
+        activeRequestRef.current = null
+        onPollingSecretChange(null)
       },
       Math.max(0, request.expiresAt - Date.now()),
     )
 
     return () => window.clearTimeout(timeout)
-  }, [createRequest, request])
+  }, [onPollingSecretChange, request])
 
   useEffect(() => {
-    if (!request || Date.now() >= request.expiresAt || status === 'unavailable') return
+    if (!request || Date.now() >= request.expiresAt) return
 
     let stopped = false
     let timeout: number | undefined
 
     const poll = async () => {
+      if (stopped || Date.now() >= request.expiresAt) return
       try {
         const result = await pollQrLoginRequestServerFn({
           data: { pollingSecret: request.pollingSecret },
@@ -111,6 +132,8 @@ export function QrLoginPanel({
 
         if (result.status === 'unavailable') {
           setStatus('unavailable')
+          setRequest(null)
+          onPollingSecretChange(null)
           return
         }
 
@@ -120,7 +143,7 @@ export function QrLoginPanel({
         if (!stopped) setStatus('connection-error')
       }
 
-      if (!stopped) {
+      if (!stopped && Date.now() < request.expiresAt) {
         timeout = window.setTimeout(() => void poll(), QR_LOGIN_POLL_INTERVAL_MS)
       }
     }
@@ -130,7 +153,7 @@ export function QrLoginPanel({
       stopped = true
       if (timeout !== undefined) window.clearTimeout(timeout)
     }
-  }, [onPollingSecretChange, queryClient, request, router, status])
+  }, [onPollingSecretChange, queryClient, request, router])
 
   const replaceRequest = async () => {
     if (request) {
@@ -147,9 +170,7 @@ export function QrLoginPanel({
           <Smartphone className="h-5 w-5" />
           <h3 className="text-lg font-semibold">Sign in with your phone</h3>
         </div>
-        <p className="text-sm text-muted-foreground">
-          Scan to sign in to this computer immediately.
-        </p>
+        <p className="text-sm text-muted-foreground">Scan to sign in to this computer.</p>
       </div>
 
       <div className="flex min-h-64 items-center justify-center rounded-lg border bg-background p-3">
@@ -166,7 +187,9 @@ export function QrLoginPanel({
           <LoaderCircle className="h-8 w-8 animate-spin text-muted-foreground" />
         ) : (
           <div className="space-y-3">
-            <p className="text-sm text-muted-foreground">A QR code could not be created.</p>
+            <p className="text-sm text-muted-foreground">
+              {status === 'expired' ? 'QR code expired.' : 'A QR code could not be created.'}
+            </p>
             <Button type="button" variant="outline" onClick={() => void replaceRequest()}>
               <RefreshCw />
               Generate a new QR code
