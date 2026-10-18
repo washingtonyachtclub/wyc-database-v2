@@ -1,3 +1,5 @@
+import { PUBLIC_APP_ORIGIN } from '@/lib/urls'
+
 import type { DoorCodeSlug } from '@/domains/door-codes/rules'
 
 const SAIL_LOCKER_DIRECTIONS =
@@ -26,7 +28,7 @@ export function doorUnlockedEmail({
     `Hello ${first},`,
     `${congrats} This rating gives you access to the ${doorName}.`,
     slug === 'sail-locker' ? SAIL_LOCKER_DIRECTIONS : '',
-    'You can find the code at database.washingtonyachtclub.org/door-codes.',
+    `You can find the code at ${PUBLIC_APP_ORIGIN}/door-codes.`,
   ]
     .filter(Boolean)
     .join('\n\n')

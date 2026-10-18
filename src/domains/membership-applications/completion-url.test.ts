@@ -3,7 +3,7 @@ import { applicationCompletionUrl } from './completion-url'
 
 describe('applicationCompletionUrl', () => {
   it('uses the public domain even on a protected Vercel deployment', () => {
-    const applicationId = '97a6b0dd-0076-48ff-a890-ee1b8ca0e9e1'
+    const applicationId = '00000000-0000-4000-8000-000000000001'
     expect(applicationCompletionUrl(applicationId)).toBe(
       `https://database.washingtonyachtclub.org/join/${applicationId}`,
     )

@@ -1,8 +1,7 @@
+import { PUBLIC_APP_ORIGIN } from '@/lib/urls'
 import { formatSessions } from '@/domains/lessons/format-sessions'
 import type { RichLesson } from '@/domains/lessons/schema'
 import { lessonAnnouncementMarkdownToHtml } from './markdown'
-
-const APP_ORIGIN = 'https://database.washingtonyachtclub.org'
 
 function escapeHtml(value: string): string {
   return value
@@ -14,7 +13,7 @@ function escapeHtml(value: string): string {
 }
 
 export function lessonPageUrl(lessonId: number): string {
-  return `${APP_ORIGIN}/lessons/${lessonId}`
+  return `${PUBLIC_APP_ORIGIN}/lessons/${lessonId}`
 }
 
 export async function lessonAnnouncementEmail(

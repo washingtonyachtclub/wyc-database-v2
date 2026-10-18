@@ -1,3 +1,5 @@
+import { PUBLIC_APP_ORIGIN } from '@/lib/urls'
+
 import { formatSessions } from '@/domains/lessons/format-sessions'
 import type { LessonSession } from '@/domains/lessons/schema'
 
@@ -35,7 +37,7 @@ function formatLessonInfo(lesson: LessonEmailInfo): string {
   return lines.join('\n')
 }
 
-const PLEASE_UNENROLL = `If you can no longer make it, please unenroll at database.washingtonyachtclub.org/my-lessons as soon as you can. Classes fill up, and dropping frees your spot for the next person on the waitlist.`
+const PLEASE_UNENROLL = `If you can no longer make it, please unenroll at ${PUBLIC_APP_ORIGIN}/my-lessons as soon as you can. Classes fill up, and dropping frees your spot for the next person on the waitlist.`
 
 // class_type indices: NOV Dinghy Weekday (1), NOV Dinghy Weekend (2), Catamaran (3), Dinghy Sailing (10)
 const GUIDE_TYPE_IDS = new Set([1, 2, 3, 10])
@@ -97,6 +99,6 @@ ${formatLessonInfo(lesson)}
 
 If enough students drop the class, you will automatically be enrolled.
 
-You can check your waitlist status or drop the class at database.washingtonyachtclub.org/my-lessons.
+You can check your waitlist status or drop the class at ${PUBLIC_APP_ORIGIN}/my-lessons.
 `
 }

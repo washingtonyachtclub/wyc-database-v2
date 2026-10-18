@@ -1,3 +1,5 @@
+import { PUBLIC_APP_ORIGIN } from '@/lib/urls'
+
 const WELCOME_SIGNATURE_NAME = 'Eshan Arora and Zachary Taylor'
 const WELCOME_SIGNATURE_POSITION = 'Co-Commodores, WYC'
 
@@ -12,11 +14,11 @@ Welcome to the WYC!
 Your WYC Number is: ${member.wycNumber}
 Your Temporary Password is: ${password}
 
-To get started, set a new password here: database.washingtonyachtclub.org/set-password
+To get started, set a new password here: ${PUBLIC_APP_ORIGIN}/set-password
 
 Sign up for lessons at: washingtonyachtclub.org/lessons-events/sign-up-for-lessons
 
-Check out a boat at: database.washingtonyachtclub.org/checkout
+Check out a boat at: ${PUBLIC_APP_ORIGIN}/checkout
 
 Want to start learning immediately? Check our guides: washingtonyachtclub.org/guides
 
@@ -40,11 +42,11 @@ Welcome to the WYC!
 
 Your WYC Number is: ${member.wycNumber}
 
-To get started, set your password here: database.washingtonyachtclub.org/forgot-password
+To get started, set your password here: ${PUBLIC_APP_ORIGIN}/forgot-password
 
 Sign up for lessons at: washingtonyachtclub.org/lessons-events/sign-up-for-lessons
 
-Check out a boat at: database.washingtonyachtclub.org/checkout
+Check out a boat at: ${PUBLIC_APP_ORIGIN}/checkout
 
 Want to start learning immediately? Check our guides: washingtonyachtclub.org/guides
 
@@ -65,7 +67,7 @@ export function returningMemberEmail(
   emailMismatch?: { formEmail: string; onFileEmail: string },
 ): string {
   const mismatchNote = emailMismatch
-    ? `\nNote: You renewed with the email ${emailMismatch.formEmail}, but we have ${emailMismatch.onFileEmail} on file. You can update your email at database.washingtonyachtclub.org.\n`
+    ? `\nNote: You renewed with the email ${emailMismatch.formEmail}, but we have ${emailMismatch.onFileEmail} on file. You can update your email at ${PUBLIC_APP_ORIGIN}.\n`
     : ''
 
   return `Hello ${first} ${last},
@@ -74,7 +76,7 @@ Your WYC membership has been renewed!
 
 Your WYC Number is: ${wycNumber}
 Your membership is now active through ${newExpireQtrSchoolText}.
-You can review your ratings and information at database.washingtonyachtclub.org.
+You can review your ratings and information at ${PUBLIC_APP_ORIGIN}.
 ${mismatchNote}`
 }
 
@@ -88,7 +90,7 @@ export function renewalWaiverRequiredEmail(
 We received your WYC membership payment for membership through ${targetQuarter}.
 
 Your membership will not be extended until you sign the member waiver. If you have not already signed it, return here to complete your renewal:
-https://database.washingtonyachtclub.org/renew-membership`
+${PUBLIC_APP_ORIGIN}/renew-membership`
 }
 
 export function exemptionWaiverRequiredEmail(
@@ -101,7 +103,7 @@ export function exemptionWaiverRequiredEmail(
 We received your WYC dues-exemption request for ${targetQuarter}.
 
 An officer cannot approve the request until you sign the member waiver. If you have not already signed it, return here:
-https://database.washingtonyachtclub.org/renew-membership`
+${PUBLIC_APP_ORIGIN}/renew-membership`
 }
 
 export function newMemberCompletionEmail(
