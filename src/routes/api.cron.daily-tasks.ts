@@ -26,7 +26,7 @@ export const Route = createFileRoute('/api/cron/daily-tasks')({
         try {
           const [lessonReminders, applicationReminders] = await Promise.all([
             sendLessonReminders({ daysAhead, dryRun }),
-            sendIncompleteApplicationReminders({ dryRun, origin: url.origin }),
+            sendIncompleteApplicationReminders({ dryRun }),
           ])
           const report = { applicationReminders, dryRun, lessonReminders }
           console.log('Daily tasks:', report)

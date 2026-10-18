@@ -13,7 +13,6 @@ import { computeRenewal, withinAdvanceLimit } from '@/domains/renewals/compute-r
 import { categoryIdForUwStatus, isUwStatus } from '@/domains/renewals/questionnaire'
 import { requireRouteAccess } from '@/lib/auth/auth-middleware'
 import { createServerFn } from '@tanstack/react-start'
-import { getRequest } from '@tanstack/react-start/server'
 import { and, eq, inArray, isNull, or } from 'drizzle-orm'
 import { z } from 'zod'
 import {
@@ -319,7 +318,6 @@ export const resendMembershipApplicationCompletionEmail = createServerFn({ metho
         applicationId,
         firstName: application.firstName,
         lastName: application.lastName,
-        origin: getRequest().url,
         primaryEmail: application.primaryEmail,
         type: 'resend',
       })

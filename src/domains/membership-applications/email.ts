@@ -1,3 +1,4 @@
+import { applicationCompletionUrl } from './completion-url'
 import db from '@/db'
 import { membershipApplications } from '@/db/schema'
 import { sendEmail } from '@/lib/email'
@@ -9,15 +10,10 @@ import {
 } from '@/lib/emails/membership'
 import { eq } from 'drizzle-orm'
 
-export function applicationCompletionUrl(applicationId: string, origin: string): string {
-  return new URL(`/join/${applicationId}`, origin).toString()
-}
-
 export async function sendApplicationCompletionEmail(input: {
   applicationId: string
   firstName: string
   lastName: string
-  origin: string
   primaryEmail: string
   type: 'initial' | 'resend'
 }) {
@@ -33,7 +29,7 @@ export async function sendApplicationCompletionEmail(input: {
     input.type === 'initial'
       ? 'initial'
       : `resend/${delivery?.recoveryEmailSentAt?.toISOString() ?? 'none'}`
-  const completionUrl = applicationCompletionUrl(input.applicationId, input.origin)
+  const completionUrl = applicationCompletionUrl(input.applicationId)
   const result = await sendEmail({
     idempotencyKey: `new-member-completion/${input.applicationId}/${attempt}`,
     subject: 'Finish your WYC membership application',

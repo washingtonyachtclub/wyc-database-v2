@@ -31,7 +31,7 @@ import {
   type NewMemberQuestionnaireVersion,
 } from './questionnaire'
 import { createServerFn } from '@tanstack/react-start'
-import { getRequest, getRequestIP } from '@tanstack/react-start/server'
+import { getRequestIP } from '@tanstack/react-start/server'
 import { and, count, eq, gte, isNull, sql } from 'drizzle-orm'
 import { createHash, createHmac, randomUUID } from 'node:crypto'
 import { z } from 'zod'
@@ -302,7 +302,6 @@ export const startNewMemberExemption = createServerFn({ method: 'POST' })
         applicationId: application.applicationId,
         firstName: data.firstName,
         lastName: data.lastName,
-        origin: getRequest().url,
         primaryEmail: data.primaryEmail,
         type: 'initial',
       })
@@ -476,7 +475,6 @@ export const startNewMemberPayment = createServerFn({ method: 'POST' })
         applicationId,
         firstName: data.firstName,
         lastName: data.lastName,
-        origin: getRequest().url,
         primaryEmail: data.primaryEmail,
         type: 'initial',
       })

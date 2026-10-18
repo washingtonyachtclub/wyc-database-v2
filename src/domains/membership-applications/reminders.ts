@@ -4,14 +4,11 @@ import { sendEmail } from '@/lib/email'
 import { newMemberIncompleteReminderEmail } from '@/lib/emails/membership'
 import { isDevEnvironment } from '@/lib/env'
 import { and, eq, isNull, lte, or } from 'drizzle-orm'
-import { applicationCompletionUrl } from './email'
+import { applicationCompletionUrl } from './completion-url'
 
 const INCOMPLETE_REMINDER_DELAY_MS = 72 * 60 * 60 * 1000
 
-export async function sendIncompleteApplicationReminders(input: {
-  dryRun?: boolean
-  origin: string
-}) {
+export async function sendIncompleteApplicationReminders(input: { dryRun?: boolean }) {
   const dryRun = input.dryRun ?? false
   const cutoff = new Date(Date.now() - INCOMPLETE_REMINDER_DELAY_MS)
   const applications = await db
@@ -57,7 +54,7 @@ export async function sendIncompleteApplicationReminders(input: {
       continue
     }
     try {
-      const completionUrl = applicationCompletionUrl(application.applicationId, input.origin)
+      const completionUrl = applicationCompletionUrl(application.applicationId)
       await sendEmail({
         idempotencyKey: `new-member-incomplete-reminder/${application.applicationId}`,
         subject: 'Reminder: finish your WYC membership application',
