@@ -50,11 +50,11 @@ export const getCheckoutBoatTypesQueryOptions = () =>
 
 // --- Member-facing checkout page ---
 
-export const getCheckoutCardsQueryOptions = () =>
+export const getCheckoutCardsQueryOptions = (wycNumber?: number) =>
   queryOptions({
-    queryKey: ['checkouts', 'cards'],
+    queryKey: ['checkouts', 'cards', wycNumber],
     queryFn: getCheckoutCards,
-    refetchInterval: 30_000,
+    staleTime: 60_000,
   })
 
 export const getMyRatingsQueryOptions = () =>
@@ -90,7 +90,6 @@ export const getWindHistoryQueryOptions = () =>
     queryKey: ['checkouts', 'wind-history'],
     queryFn: getWindHistory,
     staleTime: 5 * 60 * 1000,
-    refetchInterval: 5 * 60 * 1000,
   })
 
 export function useCreateCheckoutMutation(opts: { onSuccess: () => void | Promise<void> }) {
