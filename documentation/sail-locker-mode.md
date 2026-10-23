@@ -35,8 +35,6 @@ The boat checkout dashboard is public. Members log in before opening the checkou
 
 The Sail Locker dashboard and checkout form prominently show the authenticated member so a member can notice if a previous session is still active.
 
-Checkout cards refresh on pointer movement, clicks, keyboard input, scrolling, or returning to the page when their data is at least one minute old. The visible wind chart follows the same activity triggers with a five-minute freshness window. Neither uses periodic polling. Successful checkout and check-in actions invalidate checkout data immediately. The check-in confirmation stays open across refreshes until the member closes it; closing a successful check-in signs the member out in Sail Locker mode. An unattended dashboard retains its displayed data until activity resumes.
-
 ### QR login
 
 In Sail Locker mode, “Sign in with email / QR Code” opens a split view with a one-minute QR code on the left and the email-code form on the right. The password view does not generate QR codes or poll. Scanning it opens an approval URL on the member's phone. An authenticated phone approves the request automatically; an unauthenticated phone returns to the approval page after normal login.
