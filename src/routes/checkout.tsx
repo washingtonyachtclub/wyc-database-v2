@@ -6,17 +6,20 @@ import { CheckoutHistoryTable } from '@/components/checkouts/CheckoutHistoryTabl
 import { WindHistoryChart } from '@/components/checkouts/WindHistoryChart'
 import { Button } from '@/components/ui/button'
 import { getCheckoutCardsQueryOptions } from '@/domains/checkouts/query-options'
+import { useCheckoutActivityRefresh } from '@/domains/checkouts/use-checkout-activity-refresh'
 import { useLogoutMutation } from '@/lib/auth/auth-query-options'
 
 export const Route = createFileRoute('/checkout')({
-  loader: ({ context }) => context.queryClient.ensureQueryData(getCheckoutCardsQueryOptions()),
+  loader: ({ context }) =>
+    context.queryClient.ensureQueryData(getCheckoutCardsQueryOptions(context.user?.wycNumber)),
   head: () => ({ meta: [{ title: 'WYC Boat Checkouts' }] }),
   component: CheckoutPage,
 })
 
 function CheckoutPage() {
-  const { data } = useSuspenseQuery(getCheckoutCardsQueryOptions())
   const { user, isAuthenticated, sailLockerMode } = Route.useRouteContext()
+  const { data } = useSuspenseQuery(getCheckoutCardsQueryOptions(user?.wycNumber))
+  useCheckoutActivityRefresh(user?.wycNumber)
   const logout = useLogoutMutation()
   const navigate = useNavigate()
   const router = useRouter()

@@ -8,6 +8,7 @@ import {
   getMyRatingsQueryOptions,
 } from '@/domains/checkouts/query-options'
 import { useLogoutMutation } from '@/lib/auth/auth-query-options'
+import { useCheckoutActivityRefresh } from '@/domains/checkouts/use-checkout-activity-refresh'
 
 export const Route = createFileRoute('/checkout_/new')({
   beforeLoad: ({ context }) => {
@@ -30,6 +31,7 @@ export const Route = createFileRoute('/checkout_/new')({
 
 function NewCheckoutPage() {
   const { user, sailLockerMode } = Route.useRouteContext()
+  useCheckoutActivityRefresh(user?.wycNumber)
   const navigate = useNavigate()
   const router = useRouter()
   const logout = useLogoutMutation()
