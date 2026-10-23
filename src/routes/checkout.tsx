@@ -1,6 +1,8 @@
 import { useSuspenseQuery } from '@tanstack/react-query'
 import { createFileRoute, Link, useNavigate, useRouter } from '@tanstack/react-router'
 import { useState } from 'react'
+import { CheckInDialog } from '@/components/checkouts/CheckInDialog'
+import type { CheckoutCard as CheckoutCardType } from '@/domains/checkouts/schema'
 import { CheckoutCard } from '@/components/checkouts/CheckoutCard'
 import { CheckoutHistoryTable } from '@/components/checkouts/CheckoutHistoryTable'
 import { WindHistoryChart } from '@/components/checkouts/WindHistoryChart'
@@ -23,6 +25,7 @@ function CheckoutPage() {
   const logout = useLogoutMutation()
   const navigate = useNavigate()
   const router = useRouter()
+  const [checkInCheckout, setCheckInCheckout] = useState<CheckoutCardType | null>(null)
   const [showWindHistory, setShowWindHistory] = useState(false)
 
   const finishSailLockerAction = async () => {
@@ -117,7 +120,7 @@ function CheckoutPage() {
                 <CheckoutCard
                   key={checkout.index}
                   checkout={checkout}
-                  onCheckedIn={sailLockerMode ? finishSailLockerAction : undefined}
+                  onCheckIn={() => setCheckInCheckout(checkout)}
                 />
               ))}
             </div>
@@ -135,6 +138,14 @@ function CheckoutPage() {
           )}
         </section>
       </div>
+      {checkInCheckout && (
+        <CheckInDialog
+          key={checkInCheckout.index}
+          checkout={checkInCheckout}
+          onClose={() => setCheckInCheckout(null)}
+          onCheckedIn={sailLockerMode ? finishSailLockerAction : undefined}
+        />
+      )}
     </div>
   )
 }

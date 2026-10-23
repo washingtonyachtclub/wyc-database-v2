@@ -2,11 +2,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { TooltipProvider } from '@/components/ui/tooltip'
 
 export function getContext() {
-  const queryClient = new QueryClient({
-    defaultOptions: {
-      queries: { staleTime: 60_000 },
-    },
-  })
+  const queryClient = new QueryClient()
   return {
     queryClient,
   }
