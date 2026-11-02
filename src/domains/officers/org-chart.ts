@@ -20,7 +20,7 @@ const DISPLAY_LABELS: Readonly<Record<number, string>> = {
   [ROLE_IDS.commodore]: 'Commodore',
   [ROLE_IDS.headFleetCaptain]: 'Head Fleet Captain',
   [ROLE_IDS.systemAdministrator]: 'System Admin',
-  2190: 'SNC Chair',
+  2190: 'SnC Chair',
   4033: 'Keelboat Instruction',
 }
 
