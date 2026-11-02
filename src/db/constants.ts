@@ -69,5 +69,7 @@ export const ESHAN_ARORA_WYC_NUMBER = 23757
 /** WYC number of Harry Huang */
 export const HARRY_HUANG_WYC_NUMBER = 24186
 
+export const AVA_STONE_WYC_NUMBER = 25359
+
 /** Club webmaster email address */
 export const WEBMASTER_EMAIL = 'webmaster@washingtonyachtclub.org'
