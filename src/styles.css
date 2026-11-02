@@ -10,6 +10,16 @@
   --color-popover-foreground: oklch(9.8% 0.005 285.88);
   --color-wyc-gold: #b7a57a;
   --color-wyc-purple: #4b2e83;
+  --color-org-officer: #e1f3fb;
+  --color-org-position: #f3e6f3;
+  --color-org-fleet: #8fb5d6;
+  --color-org-fleet-foreground: #152e44;
+  --color-org-fleet-muted: #3d536a;
+  --color-org-connector: #7c8696;
+  --color-org-position-group: #fbf7fc;
+  --color-org-group-border: #d8cbdc;
+  --color-org-fleet-group: #f6f9fc;
+  --color-org-fleet-border: #c0d0df;
   --color-primary: var(--color-wyc-purple);
   --color-primary-foreground: oklch(98% 0.002 285.88);
   --color-secondary: oklch(96.1% 0.001 285.88);

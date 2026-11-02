@@ -3,6 +3,7 @@ import { createServerFn } from '@tanstack/react-start'
 import db from '@/db/index'
 import { DATABASE_ADMIN_WYC_NUMBER } from '@/db/constants'
 import { toOfficer } from '@/domains/officers/schema'
+import { toPosition } from '@/domains/positions/schema'
 import type { OfficerInsert } from '@/domains/officers/schema'
 import {
   baseMemberPositionsQuery,
@@ -59,7 +60,8 @@ export const setOfficerActive = createServerFn({ method: 'POST' })
 
 export const getPositionsForOfficerPage = createServerFn({ method: 'GET' }).handler(async () => {
   await requirePrivilege('db')
-  return getOfficerPagePositions()
+  const raw = await getOfficerPagePositions()
+  return raw.map((row) => toPosition(row))
 })
 
 export const createOfficer = createServerFn({ method: 'POST' })
