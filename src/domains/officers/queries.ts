@@ -47,6 +47,7 @@ export function getOfficerPagePositions() {
       name: positions.name,
       type: positions.type,
       typeName: posType.text,
+      active: positions.active,
     })
     .from(positions)
     .leftJoin(posType, eq(positions.type, posType.index))
