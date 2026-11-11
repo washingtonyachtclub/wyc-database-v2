@@ -45,6 +45,7 @@ import { Route as SetCurrentQuarterRouteImport } from './routes/set-current-quar
 import { Route as SetPasswordRouteImport } from './routes/set-password'
 import { Route as SettingsRouteImport } from './routes/settings'
 import { Route as TestsRouteImport } from './routes/tests'
+import { Route as ApiRuntimeRouteImport } from './routes/api.runtime'
 import { Route as CheckoutNewRouteImport } from './routes/checkout_.new'
 import { Route as GuidesFjRouteImport } from './routes/guides.fj'
 import { Route as GuidesKnotsRouteImport } from './routes/guides.knots'
@@ -238,6 +239,11 @@ const TestsRoute = TestsRouteImport.update({
   path: '/tests',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiRuntimeRoute = ApiRuntimeRouteImport.update({
+  id: '/api/runtime',
+  path: '/api/runtime',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const CheckoutNewRoute = CheckoutNewRouteImport.update({
   id: '/checkout_/new',
   path: '/checkout/new',
@@ -336,6 +342,7 @@ export interface FileRoutesByFullPath {
   '/set-password': typeof SetPasswordRoute
   '/settings': typeof SettingsRoute
   '/tests': typeof TestsRoute
+  '/api/runtime': typeof ApiRuntimeRoute
   '/checkout/new': typeof CheckoutNewRoute
   '/guides/fj': typeof GuidesFjRoute
   '/guides/knots': typeof GuidesKnotsRoute
@@ -386,6 +393,7 @@ export interface FileRoutesByTo {
   '/set-password': typeof SetPasswordRoute
   '/settings': typeof SettingsRoute
   '/tests': typeof TestsRoute
+  '/api/runtime': typeof ApiRuntimeRoute
   '/checkout/new': typeof CheckoutNewRoute
   '/guides/fj': typeof GuidesFjRoute
   '/guides/knots': typeof GuidesKnotsRoute
@@ -437,6 +445,7 @@ export interface FileRoutesById {
   '/set-password': typeof SetPasswordRoute
   '/settings': typeof SettingsRoute
   '/tests': typeof TestsRoute
+  '/api/runtime': typeof ApiRuntimeRoute
   '/checkout_/new': typeof CheckoutNewRoute
   '/guides/fj': typeof GuidesFjRoute
   '/guides/knots': typeof GuidesKnotsRoute
@@ -489,6 +498,7 @@ export interface FileRouteTypes {
     | '/set-password'
     | '/settings'
     | '/tests'
+    | '/api/runtime'
     | '/checkout/new'
     | '/guides/fj'
     | '/guides/knots'
@@ -539,6 +549,7 @@ export interface FileRouteTypes {
     | '/set-password'
     | '/settings'
     | '/tests'
+    | '/api/runtime'
     | '/checkout/new'
     | '/guides/fj'
     | '/guides/knots'
@@ -589,6 +600,7 @@ export interface FileRouteTypes {
     | '/set-password'
     | '/settings'
     | '/tests'
+    | '/api/runtime'
     | '/checkout_/new'
     | '/guides/fj'
     | '/guides/knots'
@@ -640,6 +652,7 @@ export interface RootRouteChildren {
   SetPasswordRoute: typeof SetPasswordRoute
   SettingsRoute: typeof SettingsRoute
   TestsRoute: typeof TestsRoute
+  ApiRuntimeRoute: typeof ApiRuntimeRoute
   CheckoutNewRoute: typeof CheckoutNewRoute
   GuidesFjRoute: typeof GuidesFjRoute
   GuidesKnotsRoute: typeof GuidesKnotsRoute
@@ -907,6 +920,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof TestsRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/runtime': {
+      id: '/api/runtime'
+      path: '/api/runtime'
+      fullPath: '/api/runtime'
+      preLoaderRoute: typeof ApiRuntimeRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/checkout_/new': {
       id: '/checkout_/new'
       path: '/checkout/new'
@@ -1043,6 +1063,7 @@ const rootRouteChildren: RootRouteChildren = {
   SetPasswordRoute: SetPasswordRoute,
   SettingsRoute: SettingsRoute,
   TestsRoute: TestsRoute,
+  ApiRuntimeRoute: ApiRuntimeRoute,
   CheckoutNewRoute: CheckoutNewRoute,
   GuidesFjRoute: GuidesFjRoute,
   GuidesKnotsRoute: GuidesKnotsRoute,
