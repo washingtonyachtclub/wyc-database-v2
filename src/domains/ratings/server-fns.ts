@@ -1,3 +1,6 @@
+import { hasPrivilege } from '@/lib/permissions'
+import { canManageRating } from '@/lib/resource-permissions'
+import { useRefreshedAppSession } from '@/lib/auth/session'
 import { createServerFn } from '@tanstack/react-start'
 import { eq } from 'drizzle-orm'
 import { toMemberRating } from '@/domains/members/schema'
@@ -17,7 +20,12 @@ import { withPagination, withSorting } from '@/db/query-helpers'
 import { str } from '@/db/mapper-utils'
 import { ratings, wycRatings } from '@/db/schema'
 import db from '@/db/index'
-import { requirePrivilege } from '@/lib/auth/auth-middleware'
+import {
+  requireAuth,
+  requirePrivilege,
+  requireRatingManagement,
+  sessionHasPrivilege,
+} from '@/lib/auth/auth-middleware'
 
 export const getAllRatings = createServerFn({ method: 'GET' })
   .validator(
@@ -34,7 +42,7 @@ export const getAllRatings = createServerFn({ method: 'GET' })
     }),
   )
   .handler(async ({ data: { pageIndex, pageSize, filters, sorting } }) => {
-    await requirePrivilege('rtgs')
+    await requirePrivilege('db', 'rtgs')
 
     try {
       const query = baseAllRatingsQuery().$dynamic()
@@ -59,11 +67,16 @@ export const getAllRatings = createServerFn({ method: 'GET' })
 export const getRatingById = createServerFn({ method: 'GET' })
   .validator((input: { index: number }) => ({ index: input.index }))
   .handler(async ({ data: { index } }) => {
-    await requirePrivilege('rtgs')
+    await requireAuth()
+    const session = await useRefreshedAppSession()
     try {
       const [row] = await baseAllRatingsQuery().where(eq(wycRatings.index, index))
       if (!row) return null
-      return toMemberRating(row)
+      const canManage = canManageRating(session.data, row)
+      if (!canManage && !hasPrivilege(session.data.privileges ?? [], ['db', 'rtgs'])) {
+        throw new Error('Forbidden: Insufficient privileges')
+      }
+      return { ...toMemberRating(row), canManageRating: canManage }
     } catch (error) {
       console.error('Failed to fetch rating:', error)
       throw new Error('Failed to fetch rating')
@@ -87,7 +100,7 @@ export const getRatingTypes = createServerFn({ method: 'GET' }).handler(async ()
 export const updateRatingComments = createServerFn({ method: 'POST' })
   .validator((input: { index: number; comments: string }) => input)
   .handler(async ({ data: { index, comments } }) => {
-    await requirePrivilege('rtgs')
+    await requireRatingManagement(index)
     try {
       await db.update(wycRatings).set({ comments }).where(eq(wycRatings.index, index))
       return { success: true }
@@ -100,12 +113,13 @@ export const updateRatingComments = createServerFn({ method: 'POST' })
 export const createRating = createServerFn({ method: 'POST' })
   .validator((input: RatingInsertData) => input)
   .handler(async ({ data }) => {
-    const userId = await requirePrivilege('rtgs')
+    const userId = await requirePrivilege('db', 'rtgs')
+    const examiner = (await sessionHasPrivilege('db')) ? data.examiner : userId
 
     let before: DoorCodeSlug[] = []
     try {
       before = unlockedSlugs(await getActiveMemberRatings(data.member))
-      await db.insert(wycRatings).values({ ...data, enteredBy: userId })
+      await db.insert(wycRatings).values({ ...data, examiner, enteredBy: userId })
     } catch (error) {
       console.error('Failed to create rating:', error)
       throw new Error('Failed to create rating')
@@ -122,7 +136,7 @@ export const createRating = createServerFn({ method: 'POST' })
 export const deleteRating = createServerFn({ method: 'POST' })
   .validator((input: { index: number }) => input)
   .handler(async ({ data: { index } }) => {
-    await requirePrivilege('rtgs')
+    await requireRatingManagement(index)
     try {
       await db.delete(wycRatings).where(eq(wycRatings.index, index))
       return { success: true }

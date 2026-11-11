@@ -1,3 +1,5 @@
+import { useCurrentUser } from '@/lib/auth/auth-query-options'
+import { hasPrivilege } from '@/lib/permissions'
 import { useQuery } from '@tanstack/react-query'
 import type { RatingInsertData } from '@/domains/ratings/schema'
 import { ratingTypeGroups } from '@/domains/rating-types/grouping'
@@ -32,6 +34,8 @@ type AddRatingModalProps = {
 }
 
 export function AddRatingModal({ onClose, onSuccess, currentUserWycNumber }: AddRatingModalProps) {
+  const { privileges } = useCurrentUser()
+  const hasDb = hasPrivilege(privileges, ['db'])
   const { data: ratingTypes = [] } = useQuery(getRatingTypesQueryOptions())
 
   const createMutation = useCreateRatingMutation({ onSuccess, onClose })
@@ -92,18 +96,20 @@ export function AddRatingModal({ onClose, onSuccess, currentUserWycNumber }: Add
             children={(field) => <field.TextField label="Date" required type="date" />}
           />
 
-          <form.AppField
-            name="examiner"
-            children={(field) => (
-              <div>
-                <MemberCombobox
-                  label="Examiner"
-                  value={field.state.value || null}
-                  onChange={(wycNumber) => field.handleChange(wycNumber ?? 0)}
-                />
-              </div>
-            )}
-          />
+          {hasDb && (
+            <form.AppField
+              name="examiner"
+              children={(field) => (
+                <div>
+                  <MemberCombobox
+                    label="Examiner"
+                    value={field.state.value || null}
+                    onChange={(wycNumber) => field.handleChange(wycNumber ?? 0)}
+                  />
+                </div>
+              )}
+            />
+          )}
 
           <form.AppField
             name="comments"

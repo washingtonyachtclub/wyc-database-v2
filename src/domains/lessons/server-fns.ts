@@ -32,11 +32,7 @@ import {
   lastSessionDate,
   toRichLesson,
 } from '@/domains/lessons/schema'
-import {
-  requireAuth,
-  requireInstructorOrPrivilege,
-  requirePrivilege,
-} from '@/lib/auth/auth-middleware'
+import { requireAuth, requireLessonManagement, requirePrivilege } from '@/lib/auth/auth-middleware'
 import { sendEmail } from '@/lib/email'
 import { lessonEnrolledEmail, lessonWaitlistedEmail } from '@/lib/emails/lessons'
 import { lessonPageUrl } from '@/domains/lesson-announcements/email'
@@ -81,7 +77,7 @@ export const getPublicLessons = createServerFn({ method: 'GET' }).handler(async 
 })
 
 export const getQuarterLessons = createServerFn({ method: 'GET' }).handler(async () => {
-  const userId = await requirePrivilege('db', 'rtgs')
+  const userId = await requirePrivilege('db')
   const currentQuarter = await getCurrentQuarter()
 
   const raw = await baseLessonQuery()
@@ -136,7 +132,7 @@ export const getAllLessons = createServerFn({ method: 'GET' })
     }),
   )
   .handler(async ({ data: { pageIndex, pageSize, filters, sorting } }) => {
-    await requirePrivilege('db', 'rtgs')
+    await requirePrivilege('db')
 
     const query = baseLessonQuery().$dynamic()
 
@@ -181,7 +177,7 @@ async function fetchLessonDetails(id: number) {
 export const getLessonById = createServerFn({ method: 'GET' })
   .validator((input: { id: number }) => ({ id: input.id }))
   .handler(async ({ data: { id } }) => {
-    await requireInstructorOrPrivilege(id, 'db', 'rtgs')
+    await requireLessonManagement(id)
     return fetchLessonDetails(id)
   })
 
@@ -256,7 +252,7 @@ async function reconcileCalendar(lessonId: number, removedSessionIds: number[] =
 export const resyncLessonCalendar = createServerFn({ method: 'POST' })
   .validator((input: { lessonId?: number }) => input)
   .handler(async ({ data }) => {
-    await requirePrivilege('db', 'rtgs')
+    await requirePrivilege('db')
     if (!gcalEnabled()) return { success: false, synced: 0 }
     // Backfill only pushes in-scope lessons. Deleting an out-of-scope lesson's events
     // is the per-mutation path's job (hide/delete); blind-deleting every past lesson's
@@ -277,7 +273,7 @@ export const resyncLessonCalendar = createServerFn({ method: 'POST' })
 export const createLesson = createServerFn({ method: 'POST' })
   .validator((data: LessonInsert) => data)
   .handler(async ({ data }) => {
-    await requirePrivilege('db', 'rtgs')
+    await requirePrivilege('db')
     const mismatch = quarterMismatchError(
       lastSessionDate(data.sessions),
       data.expire,
@@ -298,7 +294,7 @@ export const updateLesson = createServerFn({ method: 'POST' })
   }))
   .handler(async ({ data }) => {
     const { index, ...rest } = data
-    await requireInstructorOrPrivilege(index, 'db', 'rtgs')
+    await requireLessonManagement(index)
     const mismatch = quarterMismatchError(
       lastSessionDate(rest.sessions),
       rest.expire,
@@ -315,7 +311,7 @@ export const updateLesson = createServerFn({ method: 'POST' })
 export const deleteLesson = createServerFn({ method: 'POST' })
   .validator((input: { index: number }) => input)
   .handler(async ({ data: { index } }) => {
-    await requirePrivilege('db', 'rtgs')
+    await requireLessonManagement(index)
     const removed = await db
       .select({ index: lessonSessions.index })
       .from(lessonSessions)
@@ -334,7 +330,7 @@ export const deleteLesson = createServerFn({ method: 'POST' })
 export const setLessonDisplay = createServerFn({ method: 'POST' })
   .validator((input: { index: number; display: boolean }) => input)
   .handler(async ({ data: { index, display } }) => {
-    await requirePrivilege('db', 'rtgs')
+    await requireLessonManagement(index)
     await db
       .update(lessons)
       .set({ display: display ? 1 : 0 })
@@ -349,10 +345,10 @@ export const removeStudentFromLesson = createServerFn({ method: 'POST' })
     studentWycNumber: input.studentWycNumber,
   }))
   .handler(async ({ data: { lessonId, studentWycNumber } }) => {
-    // Self-removal is always allowed; otherwise require instructor or db privilege
+    // Self-removal
     const userId = await requireAuth()
     if (studentWycNumber !== userId) {
-      await requireInstructorOrPrivilege(lessonId, 'db', 'rtgs')
+      await requireLessonManagement(lessonId)
     }
 
     // Get lesson + enrollment lists to detect waitlist promotion
@@ -418,15 +414,9 @@ export const unenrollFromLesson = createServerFn({ method: 'POST' })
 
 export const getMyLessonsTaught = createServerFn({ method: 'GET' }).handler(async () => {
   const userId = await requireAuth()
-  const currentQuarter = await getCurrentQuarter()
 
   const raw = await baseLessonQuery()
-    .where(
-      and(
-        or(eq(lessons.instructor1, userId), eq(lessons.instructor2, userId)),
-        gte(lessons.expire, currentQuarter),
-      ),
-    )
+    .where(or(eq(lessons.instructor1, userId), eq(lessons.instructor2, userId)))
     .orderBy(asc(lessons.calendarDate))
 
   const sessionsByLesson = await fetchSessionsByLesson(raw.map((r) => r.index))

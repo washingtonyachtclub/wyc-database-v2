@@ -6,7 +6,7 @@ Quarters are the universal time unit in the WYC database. They control:
 
 - **Membership status** — a member is active if their `ExpireQtr >= currentQuarter`
 - **Lesson visibility** — lessons with `expire >= currentQuarter` are shown
-- **Instructor privileges** — teaching a current-quarter lesson grants the `rtgs` privilege
+- **Instructor privileges** — teaching a current or future-quarter lesson grants the `rtgs` privilege
 
 Quarters are stored as **integer indices**, not formatted strings. The `quarters` table maps each index to display text.
 
@@ -80,7 +80,7 @@ expire <  currentQuarter  →  lesson is hidden
 
 ### Instructor Privilege Grant
 
-Users assigned as `instructor1` or `instructor2` for a lesson where `expire >= currentQuarter` receive the `rtgs` privilege.
+Users assigned as `instructor1` or `instructor2` for a lesson where `expire >= currentQuarter` receive the `rtgs` privilege. Hidden lessons and completed sessions qualify. This privilege grants ratings access; management of a lesson requires `db` or an instructor assignment on that specific lesson, regardless of quarter. See [RBAC](rbac.md).
 
 ---
 

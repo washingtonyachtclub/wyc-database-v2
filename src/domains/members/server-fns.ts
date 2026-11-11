@@ -24,6 +24,7 @@ import { memcat, wycDatabase } from '@/db/schema'
 import db from '@/db/index'
 import {
   requireAuth,
+  requireLessonManagement,
   requirePrivilege,
   requireSelfOrPrivilege,
   sessionHasPrivilege,
@@ -183,8 +184,8 @@ export const getMemberRatingsGiven = createServerFn({ method: 'GET' })
     since: input.since,
   }))
   .handler(async ({ data: { wycNumber, since } }) => {
-    await requireSelfOrPrivilege(wycNumber, 'db', 'rtgs')
-    const raw = await baseRatingsGivenQuery(wycNumber, since)
+    const userId = await requireSelfOrPrivilege(wycNumber, 'db', 'rtgs')
+    const raw = await baseRatingsGivenQuery(wycNumber, since, userId === wycNumber)
     return raw.map(toMemberRating)
   })
 
@@ -226,3 +227,15 @@ export const getMemberSearchIndex = createServerFn({ method: 'GET' }).handler(as
     throw new Error('Failed to load members')
   }
 })
+
+export const getLessonInstructorOptions = createServerFn({ method: 'GET' })
+  .validator((input: { lessonId: number }) => ({ lessonId: Number(input.lessonId) }))
+  .handler(async ({ data: { lessonId } }) => {
+    await requireLessonManagement(lessonId)
+    try {
+      return (await memberSearchQuery()).map(toMemberSearchResult)
+    } catch (error) {
+      console.error('Failed to load lesson instructor options', error)
+      throw new Error('Failed to load instructors')
+    }
+  })

@@ -106,7 +106,7 @@ function MemberDetailPage() {
         <MemberRatingsGivenSection
           wycNumber={member.wycNumber}
           since={showAllRatingsGiven ? undefined : since}
-          title={`Ratings Given (${showAllRatingsGiven ? 'All Time' : 'Past 12 Months'})`}
+          title={`${isOwnProfile ? 'Ratings Given or Entered' : 'Ratings Given'} (${showAllRatingsGiven ? 'All Time' : 'Past 12 Months'})`}
           action={<ShowAllToggle showAll={showAllRatingsGiven} onToggle={setShowAllRatingsGiven} />}
         />
       </Suspense>
