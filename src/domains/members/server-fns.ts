@@ -184,8 +184,8 @@ export const getMemberRatingsGiven = createServerFn({ method: 'GET' })
     since: input.since,
   }))
   .handler(async ({ data: { wycNumber, since } }) => {
-    const userId = await requireSelfOrPrivilege(wycNumber, 'db', 'rtgs')
-    const raw = await baseRatingsGivenQuery(wycNumber, since, userId === wycNumber)
+    await requireSelfOrPrivilege(wycNumber, 'db', 'rtgs')
+    const raw = await baseRatingsGivenQuery(wycNumber, since)
     return raw.map(toMemberRating)
   })
 

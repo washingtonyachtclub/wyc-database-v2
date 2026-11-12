@@ -1,5 +1,4 @@
-import { hasPrivilege } from '@/lib/permissions'
-import { canManageRating, isRatingOwner } from '@/lib/resource-permissions'
+import { canManageRating } from '@/lib/resource-permissions'
 import { useRefreshedAppSession } from '@/lib/auth/session'
 import { createServerFn } from '@tanstack/react-start'
 import { eq } from 'drizzle-orm'
@@ -21,7 +20,6 @@ import { str } from '@/db/mapper-utils'
 import { ratings, wycRatings } from '@/db/schema'
 import db from '@/db/index'
 import {
-  requireAuth,
   requirePrivilege,
   requireRatingManagement,
   sessionHasPrivilege,
@@ -67,18 +65,12 @@ export const getAllRatings = createServerFn({ method: 'GET' })
 export const getRatingById = createServerFn({ method: 'GET' })
   .validator((input: { index: number }) => ({ index: input.index }))
   .handler(async ({ data: { index } }) => {
-    await requireAuth()
+    await requirePrivilege('db', 'rtgs')
     const session = await useRefreshedAppSession()
     try {
       const [row] = await baseAllRatingsQuery().where(eq(wycRatings.index, index))
       if (!row) return null
       const canManage = canManageRating(session.data, row)
-      if (
-        !isRatingOwner(session.data, row) &&
-        !hasPrivilege(session.data.privileges ?? [], ['db', 'rtgs'])
-      ) {
-        throw new Error('Forbidden: Insufficient privileges')
-      }
       return { ...toMemberRating(row), canManageRating: canManage }
     } catch (error) {
       console.error('Failed to fetch rating:', error)

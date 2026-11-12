@@ -1,6 +1,3 @@
-import type { ReactNode } from 'react'
-import { useCurrentUser } from '@/lib/auth/auth-query-options'
-import { hasPrivilege } from '@/lib/permissions'
 import { ErrorAlert } from '@/components/ui/ErrorAlert'
 import { ratingUpdateSchema } from '@/domains/ratings/schema'
 import { useAppForm } from '@/hooks/form'
@@ -41,7 +38,6 @@ function RatingDetailPage() {
   const { ratingIndex } = Route.useParams()
   const { data: rating } = useSuspenseQuery(getRatingByIdQueryOptions(Number(ratingIndex)))
   const navigate = useNavigate()
-  const { user, privileges } = useCurrentUser()
 
   const [showDeleteDialog, setShowDeleteDialog] = useState(false)
   const deleteMutation = useDeleteRatingMutation()
@@ -66,22 +62,38 @@ function RatingDetailPage() {
         <div>
           <dt className="text-sm font-medium text-muted-foreground">Member</dt>
           <dd className="text-sm">
-            <RatingMemberLink wycNumber={rating.member}>{rating.memberName}</RatingMemberLink>
+            <Link
+              to="/members/$wycNumber"
+              params={{ wycNumber: String(rating.member) }}
+              className="underline"
+            >
+              {rating.memberName}
+            </Link>
           </dd>
         </div>
         <div>
           <dt className="text-sm font-medium text-muted-foreground">Examiner</dt>
           <dd className="text-sm">
-            <RatingMemberLink wycNumber={rating.examiner}>{rating.examinerName}</RatingMemberLink>
+            <Link
+              to="/members/$wycNumber"
+              params={{ wycNumber: String(rating.examiner) }}
+              className="underline"
+            >
+              {rating.examinerName}
+            </Link>
           </dd>
         </div>
         <div>
           <dt className="text-sm font-medium text-muted-foreground">Entered by</dt>
           <dd className="text-sm">
             {rating.enteredBy ? (
-              <RatingMemberLink wycNumber={rating.enteredBy}>
+              <Link
+                to="/members/$wycNumber"
+                params={{ wycNumber: String(rating.enteredBy) }}
+                className="underline"
+              >
                 {rating.enteredByName}
-              </RatingMemberLink>
+              </Link>
             ) : (
               '—'
             )}
@@ -135,13 +147,7 @@ function RatingDetailPage() {
                 deleteMutation.mutate(
                   { data: { index: rating.index } },
                   {
-                    onSuccess: () =>
-                      hasPrivilege(privileges, ['db', 'rtgs'])
-                        ? navigate({ to: '/ratings', search: {} as any })
-                        : navigate({
-                            to: '/members/$wycNumber',
-                            params: { wycNumber: String(user!.wycNumber) },
-                          }),
+                    onSuccess: () => navigate({ to: '/ratings', search: {} as any }),
                   },
                 )
               }}
@@ -152,18 +158,6 @@ function RatingDetailPage() {
         </AlertDialogContent>
       </AlertDialog>
     </div>
-  )
-}
-
-function RatingMemberLink({ wycNumber, children }: { wycNumber: number; children: ReactNode }) {
-  const { user, privileges } = useCurrentUser()
-  if (user?.wycNumber !== wycNumber && !hasPrivilege(privileges, ['db', 'rtgs'])) {
-    return <>{children}</>
-  }
-  return (
-    <Link to="/members/$wycNumber" params={{ wycNumber: String(wycNumber) }} className="underline">
-      {children}
-    </Link>
   )
 }
 

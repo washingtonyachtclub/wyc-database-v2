@@ -14,7 +14,7 @@ export function canManageLesson(actor: Actor, lesson: LessonInstructors): boolea
   )
 }
 
-export function isRatingOwner(actor: Actor, rating: RatingOwnership): boolean {
+function isRatingOwner(actor: Actor, rating: RatingOwnership): boolean {
   return (
     Boolean(actor.userId) && (rating.examiner === actor.userId || rating.enteredBy === actor.userId)
   )

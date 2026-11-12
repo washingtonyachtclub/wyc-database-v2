@@ -24,7 +24,7 @@ export const routePermissions = {
   '/door-codes': [], // auth only; the server function filters codes by ratings
   '/maintenance-tracker': [],
   '/ratings': ['db', 'rtgs'],
-  '/ratings/$ratingIndex': [], // server checks rating visibility and ownership
+  '/ratings/$ratingIndex': ['db', 'rtgs'],
   '/rating-types': ['db', 'rtgs'],
   '/chiefs': [],
   '/officers': ['db'],

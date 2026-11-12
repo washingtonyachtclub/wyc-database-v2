@@ -1,7 +1,7 @@
 import db from '@/db/index'
 import { ratings, wycDatabase, wycRatings } from '@/db/schema'
 import { isRatingActive } from '@/lib/rating-expiry'
-import { and, count, desc, eq, gte, lte, or } from 'drizzle-orm'
+import { and, count, desc, eq, gte, lte } from 'drizzle-orm'
 import type { MySqlColumn, MySqlSelect } from 'drizzle-orm/mysql-core'
 import { alias } from 'drizzle-orm/mysql-core'
 import type { RatingFilters } from './filter-types'
@@ -135,12 +135,8 @@ export async function getActiveMemberRatings(
     .map(({ type, degree, text, date }) => ({ type, degree, text, date }))
 }
 
-export function baseRatingsGivenQuery(wycNumber: number, since?: string, includeEnteredBy = false) {
-  const conditions = [
-    includeEnteredBy
-      ? or(eq(wycRatings.examiner, wycNumber), eq(wycRatings.enteredBy, wycNumber))!
-      : eq(wycRatings.examiner, wycNumber),
-  ]
+export function baseRatingsGivenQuery(wycNumber: number, since?: string) {
+  const conditions = [eq(wycRatings.examiner, wycNumber)]
   if (since) {
     conditions.push(gte(wycRatings.date, since))
   }

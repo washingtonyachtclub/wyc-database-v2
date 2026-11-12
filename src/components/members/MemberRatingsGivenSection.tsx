@@ -1,4 +1,3 @@
-import { Link } from '@tanstack/react-router'
 import type { ReactNode } from 'react'
 import { getExpiryInfo } from '@/lib/rating-expiry'
 import { getMemberRatingsGivenQueryOptions } from '@/domains/members/query-options'
@@ -41,15 +40,7 @@ export function MemberRatingsGivenSection({
               const expiryInfo = getExpiryInfo(rating)
               return (
                 <tr key={rating.index} className="border-b">
-                  <td className="py-2">
-                    <Link
-                      to="/ratings/$ratingIndex"
-                      params={{ ratingIndex: String(rating.index) }}
-                      className="underline"
-                    >
-                      {rating.ratingText}
-                    </Link>
-                  </td>
+                  <td className="py-2">{rating.ratingText}</td>
                   <td className="py-2">{rating.memberName}</td>
                   <td className="py-2">{rating.date}</td>
                   <td className="py-2">
