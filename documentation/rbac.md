@@ -146,10 +146,6 @@ WHERE (instructor1 = :wycNumber OR instructor2 = :wycNumber)
   AND expire >= :currentQuarter
 ```
 
-Either instructor slot qualifies when the lesson's expiration quarter is at least the configured current quarter. Session dates and visibility do not affect eligibility. A finished class qualifies throughout its expiration quarter. The current quarter is advanced manually.
-
-The automatic grant provides the same `rtgs` powers as a position assignment. It does not grant lesson management.
-
 The current quarter value comes from `lesson_quarter` (a single-row config table, `index = 1`).
 
 ---
@@ -168,37 +164,11 @@ The encrypted session records when its identity data was refreshed. Authorizatio
 
 ---
 
-## Lesson Management
+## Permission Intent
 
-`canManageLesson()` and `requireLessonManagement()` share the rule: an authenticated member has `db` or occupies either instructor slot on the lesson. The TBD placeholder is not an instructor identity. Lesson dates, visibility, membership expiration, and quarter do not limit this access.
+Teaching delegates responsibility for that lesson, including historical records and instructor reassignment. The automatic `rtgs` grant supports ratings work across the club; it does not delegate control of other lessons. Instructors are trusted to delegate access by changing instructor assignments and to affect ratings eligibility by changing the lesson's expiration quarter.
 
-| Operation                                                                           | Permission                        |
-| ----------------------------------------------------------------------------------- | --------------------------------- |
-| Admin Lessons page, creation, manual calendar resync                                | `db`                              |
-| Roster and student contacts, editing, visibility, instructor reassignment, deletion | `db` or that lesson's instructors |
-| Posting, emailing, or deleting announcements                                        | `db` or that lesson's instructors |
-| Self-unenrollment                                                                   | Authenticated signup owner        |
-
-Instructors reach all their teaching assignments through My Lessons, including earlier quarters. Ordinary students see their own enrollment and announcements without the roster. Instructor selection uses a lesson-authorized member lookup, including for instructors without `rtgs`.
-
-Changing instructor assignments delegates lesson management and can grant automatic `rtgs`. Changing expiration quarter can restore automatic `rtgs`. Removing yourself from both instructor slots ends lesson management on subsequent requests unless you have `db`; the editor returns to My Lessons. Session privileges can remain until the hourly refresh.
-
-Deletion permanently removes the lesson, signups, and announcements, reconciles calendar events, and sends no cancellation email. Capacity changes derive enrollment from signup order without sending capacity-change emails. Removing an enrolled student retains the waitlist promotion email behavior.
-
-## Ratings and Other RTGS Access
-
-| Operation                                                               | Permission                                                       |
-| ----------------------------------------------------------------------- | ---------------------------------------------------------------- |
-| Browse all ratings; assign any rating to any member, including yourself | `db` or `rtgs`                                                   |
-| Select another examiner; create/delete rating definitions               | `db`                                                             |
-| Edit comments or delete a rating assignment                             | `db`, recorded examiner, or recorded `entered_by` member         |
-| View a rating detail                                                    | `db`, `rtgs`, recorded examiner, or recorded `entered_by` member |
-
-`canManageRating()` and `requireRatingManagement()` share ownership rules. New ratings record the authenticated user as `entered_by`. Non-DB entries also use that user as examiner. Missing `entered_by` does not prevent examiner ownership. The recipient does not gain management rights by receiving a rating.
-
-Ownership rights survive loss of `rtgs`; creating new ratings still requires `db` or `rtgs`. A member's own profile lists ratings they examined or entered with links to their detail pages. Other profile views list ratings examined by that member.
-
-`rtgs` retains the member directory and member histories, the member email/phone lookup, global checkout records and history exports, and check-in of other members' boats. Bulk member email export and edits to other member profiles require `db`.
+Rating ownership is a lasting responsibility: examiners and the members who entered records can correct or remove their entries after their broader privileges expire. Selecting another examiner and maintaining the rating catalog require DB authority.
 
 ---
 

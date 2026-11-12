@@ -80,7 +80,7 @@ expire <  currentQuarter  →  lesson is hidden
 
 ### Instructor Privilege Grant
 
-Users assigned as `instructor1` or `instructor2` for a lesson where `expire >= currentQuarter` receive the `rtgs` privilege. Hidden lessons and completed sessions qualify. This privilege grants ratings access; management of a lesson requires `db` or an instructor assignment on that specific lesson, regardless of quarter. See [RBAC](rbac.md).
+Users assigned as `instructor1` or `instructor2` for a lesson where `expire >= currentQuarter` receive the `rtgs` privilege.
 
 ---
 
