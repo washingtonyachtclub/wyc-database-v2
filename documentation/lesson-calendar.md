@@ -46,31 +46,11 @@ should become public and receive normal reminders. Review all restoration entrie
 including those without signups. An unwanted saved lesson must be corrected or
 explicitly deleted in the database; otherwise subsequent syncs will include it.
 
-With `DATABASE_URL` and `GOOGLE_CALENDAR_ID` set for the intended environment:
-
-```sh
-npm run calendar:sync -- --preview /tmp/lesson-calendar-review.json
-```
-
-The preview only reads the database and writes a local JSON file. It includes the
-target calendar, eligible session details, enrollment counts, and legacy hidden
-upcoming lessons. It lists desired calendar events, without comparing them with
-live Google Calendar. Use a new filename for each preview.
-
-After review and deployment, with `GOOGLE_SERVICE_ACCOUNT_JSON` also configured:
-
-```sh
-npm run calendar:sync -- --apply /tmp/lesson-calendar-review.json
-```
-
-Apply checks that the calendar target and session contents match the preview
-before writing events. If lessons changed during review, regenerate the preview.
-Enrollment count changes alone do not invalidate it. Do not edit the preview to
-exclude sessions; resolve unwanted database records and regenerate it. Google
-Calendar events are updated or created with confirmed status, including restoration
-of deleted events where Google permits restoring the original ID. Failures are
-reported per session with a nonzero exit code. Repeating the command retries the
-same IDs; it does not send lesson emails or alter database rows.
+After review and deployment, use **Sync calendar** on the production Lessons page.
+The browser sends one authenticated request per lesson to the production server,
+which reads its database and uses its configured Google service account and
+calendar. Keep the page open until it reports completion. Retrying uses the same
+event IDs. Calendar sync does not send lesson emails or alter database rows.
 
 ## Key files
 
@@ -80,4 +60,3 @@ same IDs; it does not send lesson emails or alter database rows.
 | `src/domains/lessons/server-fns.ts` | Public listing, enrollment, and mutation sync |
 | `src/domains/lessons/calendar.ts`   | Calendar selection and event details          |
 | `src/lib/gcal.ts`                   | Google Calendar requests and stable event IDs |
-| `scripts/sync-lesson-calendar.ts`   | Preview and reviewed restoration              |
