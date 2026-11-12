@@ -168,7 +168,7 @@ The encrypted session records when its identity data was refreshed. Authorizatio
 
 Teaching delegates responsibility for that lesson, including historical records and instructor reassignment. The automatic `rtgs` grant supports ratings work across the club; it does not delegate control of other lessons. Instructors are trusted to delegate access by changing instructor assignments and to affect ratings eligibility by changing the lesson's expiration quarter.
 
-Rating ownership is a lasting responsibility: examiners and the members who entered records can correct or remove their entries after their broader privileges expire. Selecting another examiner and maintaining the rating catalog require DB authority.
+Rating ownership limits the scope of current ratings authority; it does not confer permanent write access after that authority expires. Selecting another examiner and maintaining the rating catalog require DB authority.
 
 ---
 
@@ -212,7 +212,7 @@ Server functions apply their own privilege checks independently of route guards.
 | `requirePrivilege(...required)`                        | Requires any one of the listed privileges (OR logic). Returns user ID or throws.                                                        |
 | `requireSelfOrPrivilege(targetWycNumber, ...required)` | Allows access if the user is viewing their own data (WYC number matches), OR if they have a required privilege. Used for profile pages. |
 | `requireLessonManagement(lessonIndex)`                 | Requires `db` or either stored instructor assignment on that lesson, regardless of quarter.                                             |
-| `requireRatingManagement(ratingIndex)`                 | Requires `db`, the recorded examiner, or the member who entered the rating. Ownership survives loss of `rtgs`.                          |
+| `requireRatingManagement(ratingIndex)`                 | Requires `db`, or current `rtgs` with examiner or entered-by ownership.                                                                 |
 | `sessionHasPrivilege(...required)`                     | Non-throwing boolean check. Used for conditional logic within server functions.                                                         |
 | `optionalAuth()`                                       | Returns user ID or null. Does not throw.                                                                                                |
 

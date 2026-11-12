@@ -14,11 +14,16 @@ export function canManageLesson(actor: Actor, lesson: LessonInstructors): boolea
   )
 }
 
+export function isRatingOwner(actor: Actor, rating: RatingOwnership): boolean {
+  return (
+    Boolean(actor.userId) && (rating.examiner === actor.userId || rating.enteredBy === actor.userId)
+  )
+}
+
 export function canManageRating(actor: Actor, rating: RatingOwnership): boolean {
   if (!actor.userId) return false
   return (
     hasPrivilege(actor.privileges ?? [], ['db']) ||
-    rating.examiner === actor.userId ||
-    rating.enteredBy === actor.userId
+    (hasPrivilege(actor.privileges ?? [], ['rtgs']) && isRatingOwner(actor, rating))
   )
 }

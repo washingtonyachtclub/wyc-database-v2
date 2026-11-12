@@ -1,5 +1,5 @@
 import { hasPrivilege } from '@/lib/permissions'
-import { canManageRating } from '@/lib/resource-permissions'
+import { canManageRating, isRatingOwner } from '@/lib/resource-permissions'
 import { useRefreshedAppSession } from '@/lib/auth/session'
 import { createServerFn } from '@tanstack/react-start'
 import { eq } from 'drizzle-orm'
@@ -73,7 +73,10 @@ export const getRatingById = createServerFn({ method: 'GET' })
       const [row] = await baseAllRatingsQuery().where(eq(wycRatings.index, index))
       if (!row) return null
       const canManage = canManageRating(session.data, row)
-      if (!canManage && !hasPrivilege(session.data.privileges ?? [], ['db', 'rtgs'])) {
+      if (
+        !isRatingOwner(session.data, row) &&
+        !hasPrivilege(session.data.privileges ?? [], ['db', 'rtgs'])
+      ) {
         throw new Error('Forbidden: Insufficient privileges')
       }
       return { ...toMemberRating(row), canManageRating: canManage }
