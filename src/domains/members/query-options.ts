@@ -2,6 +2,7 @@ import { queryOptions, useMutation, useQueryClient } from '@tanstack/react-query
 import type { MemberFilters } from '@/domains/members/filter-types'
 import {
   getAllMembersLite,
+  getLessonInstructorOptions,
   getMemberSearchIndex,
   getCategories,
   getMemberById,
@@ -110,4 +111,10 @@ export const getMemberSearchIndexQueryOptions = () =>
     queryKey: ['members', 'searchIndex'],
     queryFn: getMemberSearchIndex,
     staleTime: 5 * 60 * 1000,
+  })
+
+export const getLessonInstructorOptionsQueryOptions = (lessonId: number) =>
+  queryOptions({
+    queryKey: ['lessons', 'instructorOptions', lessonId],
+    queryFn: () => getLessonInstructorOptions({ data: { lessonId } }),
   })

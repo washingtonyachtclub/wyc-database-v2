@@ -7,7 +7,7 @@ import db from '@/db/index'
 import { requirePrivilege } from '@/lib/auth/auth-middleware'
 
 export const getAllRatingTypes = createServerFn({ method: 'GET' }).handler(async () => {
-  await requirePrivilege('rtgs')
+  await requirePrivilege('db', 'rtgs')
   try {
     const raw = await db.select().from(ratings).orderBy(ratings.type, ratings.degree)
     const usage = await db
@@ -23,7 +23,7 @@ export const getAllRatingTypes = createServerFn({ method: 'GET' }).handler(async
 })
 
 export const getDistinctRatingTypeNames = createServerFn({ method: 'GET' }).handler(async () => {
-  await requirePrivilege('rtgs')
+  await requirePrivilege('db', 'rtgs')
   try {
     const rows = await db.selectDistinct({ type: ratings.type }).from(ratings)
     return rows.map((r) => r.type).filter(Boolean)
@@ -36,7 +36,7 @@ export const getDistinctRatingTypeNames = createServerFn({ method: 'GET' }).hand
 export const deleteRatingType = createServerFn({ method: 'POST' })
   .validator((input: { index: number }) => input)
   .handler(async ({ data: { index } }) => {
-    await requirePrivilege('rtgs')
+    await requirePrivilege('db')
     const [{ n }] = await db
       .select({ n: count() })
       .from(wycRatings)
@@ -54,7 +54,7 @@ export const deleteRatingType = createServerFn({ method: 'POST' })
 export const createRatingType = createServerFn({ method: 'POST' })
   .validator((input: RatingTypeInsertData) => input)
   .handler(async ({ data }) => {
-    await requirePrivilege('rtgs')
+    await requirePrivilege('db')
     try {
       await db.insert(ratings).values({
         ...data,

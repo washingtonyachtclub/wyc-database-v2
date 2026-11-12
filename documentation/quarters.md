@@ -6,7 +6,7 @@ Quarters are the universal time unit in the WYC database. They control:
 
 - **Membership status** — a member is active if their `ExpireQtr >= currentQuarter`
 - **Lesson visibility** — lessons with `expire >= currentQuarter` are shown
-- **Instructor privileges** — teaching a current-quarter lesson grants the `rtgs` privilege
+- **Instructor privileges** — teaching a current or future-quarter lesson grants the `rtgs` privilege
 
 Quarters are stored as **integer indices**, not formatted strings. The `quarters` table maps each index to display text.
 
