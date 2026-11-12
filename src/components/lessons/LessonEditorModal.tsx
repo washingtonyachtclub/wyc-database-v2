@@ -28,7 +28,6 @@ const emptyDefaults = (expireDefault: number): LessonInsert => ({
   locationUrl: WAC.url,
   size: 0,
   expire: expireDefault,
-  display: true,
 })
 
 type LessonFormModalProps = {
@@ -174,11 +173,6 @@ export function LessonFormModal({ onClose, currentQuarter, onSuccess }: LessonFo
                 options={quarterOptions}
               />
             )}
-          />
-
-          <form.AppField
-            name="display"
-            children={(field) => <field.BooleanSelectField label="Display (show on website)" />}
           />
         </div>
 

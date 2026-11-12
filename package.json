@@ -20,7 +20,8 @@
     "db:migrate:dev": "dotenv -e .env.local -- drizzle-kit migrate",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
-    "prepare": "husky"
+    "prepare": "husky",
+    "calendar:sync": "tsx scripts/sync-lesson-calendar.ts"
   },
   "lint-staged": {
     "**/*": "prettier --write --ignore-unknown"

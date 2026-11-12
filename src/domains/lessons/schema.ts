@@ -72,7 +72,6 @@ export const lessonInsertSchema = z.object({
   locationUrl: z.string(),
   size: z.number({ error: 'Size is required' }).int(),
   expire: z.number({ error: 'Expire quarter is required' }),
-  display: z.boolean(),
 })
 
 export type LessonInsert = z.infer<typeof lessonInsertSchema>
@@ -121,8 +120,8 @@ export type Lesson = {
   locationUrl: string
   size: number
   expire: number // quarter index (FK)
-  display: boolean
 }
+
 export type RichLesson = {
   index: number
   classTypeId: number // classType index
@@ -141,8 +140,8 @@ export type RichLesson = {
   location: string
   locationUrl: string
   size: number
-  display: boolean
 }
+
 export type RichLessonWithEnrollment = RichLesson & { enrolledCount: number }
 
 export type SignedUpLesson = RichLesson & {
@@ -245,7 +244,6 @@ export function toRichLesson(row: LessonQueryRow, sessions: LessonSession[]): Ri
     location: str(row.location),
     locationUrl: str(row.locationUrl),
     size: num(row.size),
-    display: row.display !== 0,
   }
 }
 
@@ -263,6 +261,5 @@ export function fromLessonInsert(data: LessonInsert) {
     locationUrl: data.locationUrl,
     size: data.size,
     expire: data.expire,
-    display: data.display ? 1 : 0,
   }
 }

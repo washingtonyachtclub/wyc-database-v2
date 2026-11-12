@@ -1,4 +1,3 @@
-import { WORK_PARTY_TYPE_ID } from '@/db/constants'
 import db from '@/db/index'
 import { isMembershipActive } from '@/db/membership-utils'
 import { withPagination, withSorting } from '@/db/query-helpers'
@@ -22,6 +21,7 @@ import {
   fetchLessonStudents,
   fetchSessionsByLesson,
   lessonSortColumns,
+  lessonIdsEndingOnOrAfter,
   withLessonFilters,
 } from '@/domains/lessons/queries'
 import type { LessonInsert, LessonSessionInput, SignedUpLesson } from '@/domains/lessons/schema'
@@ -36,21 +36,17 @@ import { requireAuth, requireLessonManagement, requirePrivilege } from '@/lib/au
 import { sendEmail } from '@/lib/email'
 import { lessonEnrolledEmail, lessonWaitlistedEmail } from '@/lib/emails/lessons'
 import { lessonPageUrl } from '@/domains/lesson-announcements/email'
-import { deleteSessionEvent, gcalEnabled, upsertSessionEvent } from '@/lib/gcal'
+import { deleteSessionEvent, gcalEnabled } from '@/lib/gcal'
+import { calendarLessonIds, syncLessonCalendar } from './calendar'
+import { CALENDAR_SYNC_START_DATE, lessonSignupsOpen } from './visibility'
+import { getTodayPacificDateString } from '@/lib/date-utils'
 import { createServerFn } from '@tanstack/react-start'
 import { and, asc, count, eq, gte, inArray, or } from 'drizzle-orm'
 
 export const getPublicLessons = createServerFn({ method: 'GET' }).handler(async () => {
   // No auth required — this is the public lesson list for the WordPress iframe
-  const quarterRow = await db
-    .select({ quarter: lessonQuarter.quarter })
-    .from(lessonQuarter)
-    .where(eq(lessonQuarter.index, 1))
-    .limit(1)
-  const currentQuarter = quarterRow[0].quarter
-
   const raw = await baseLessonQuery()
-    .where(and(gte(lessons.expire, currentQuarter), eq(lessons.display, 1)))
+    .where(inArray(lessons.index, lessonIdsEndingOnOrAfter(getTodayPacificDateString())))
     .orderBy(asc(lessons.calendarDate))
 
   const lessonIds = raw.map((r) => r.index)
@@ -184,7 +180,7 @@ export const getLessonById = createServerFn({ method: 'GET' })
 // Deltas rather than wipe-and-reinsert
 async function syncLessonSessions(lessonId: number, sessions: LessonSessionInput[]) {
   const existing = await db
-    .select({ index: lessonSessions.index })
+    .select({ index: lessonSessions.index, startsAt: lessonSessions.startsAt })
     .from(lessonSessions)
     .where(eq(lessonSessions.lessonId, lessonId))
   const existingIds = new Set(existing.map((r) => r.index))
@@ -207,67 +203,47 @@ async function syncLessonSessions(lessonId: number, sessions: LessonSessionInput
     }
   }
 
-  return { removedIds }
+  const movedBeforeBoundary = sessions
+    .filter(
+      (session) =>
+        session.index != null &&
+        session.date < CALENDAR_SYNC_START_DATE &&
+        existing.some(
+          (old) =>
+            old.index === session.index && old.startsAt.slice(0, 10) >= CALENDAR_SYNC_START_DATE,
+        ),
+    )
+    .map((session) => session.index!)
+  return { removedIds: [...removedIds, ...movedBeforeBoundary] }
 }
 
-async function fetchCurrentQuarter(): Promise<number> {
-  const [row] = await db
-    .select({ quarter: lessonQuarter.quarter })
-    .from(lessonQuarter)
-    .where(eq(lessonQuarter.index, 1))
-    .limit(1)
-  return row.quarter
-}
-
-// Best-effort: a calendar failure must never break a lesson mutation. resyncLessonCalendar repairs.
 async function reconcileCalendar(lessonId: number, removedSessionIds: number[] = []) {
   if (!gcalEnabled()) return
   try {
     for (const id of removedSessionIds) await deleteSessionEvent(id)
-
-    const [lessonRow] = await baseLessonQuery().where(eq(lessons.index, lessonId))
-    if (!lessonRow) return
-    const lesson = toRichLesson(lessonRow, await fetchLessonSessions(lessonId))
-
-    const inScope = lesson.display && lesson.expire >= (await fetchCurrentQuarter())
-    const cal = {
-      title: lesson.subtype || lesson.type || 'WYC Lesson',
-      location: lesson.location,
-      description: lesson.description,
-      requirements: lesson.requirements,
-      instructors: [lesson.instructor1Name, lesson.instructor2Name].filter(
-        (name) => name !== '' && name !== '<Unknown>',
-      ),
-      colorId: lesson.classTypeId === WORK_PARTY_TYPE_ID ? '4' : undefined, // 4 = Flamingo
-    }
-    for (const session of lesson.sessions) {
-      if (inScope) await upsertSessionEvent(cal, session)
-      else await deleteSessionEvent(session.index)
-    }
+    await syncLessonCalendar(lessonId)
   } catch (err) {
     console.error('Calendar sync failed for lesson', lessonId, err)
   }
 }
 
+export const getCalendarSyncLessons = createServerFn({ method: 'GET' }).handler(async () => {
+  await requirePrivilege('db')
+  return { enabled: gcalEnabled(), ids: await calendarLessonIds() }
+})
+
 export const resyncLessonCalendar = createServerFn({ method: 'POST' })
-  .validator((input: { lessonId?: number }) => input)
+  .validator((input: { lessonId: number }) => input)
   .handler(async ({ data }) => {
     await requirePrivilege('db')
-    if (!gcalEnabled()) return { success: false, synced: 0 }
-    // Backfill only pushes in-scope lessons. Deleting an out-of-scope lesson's events
-    // is the per-mutation path's job (hide/delete); blind-deleting every past lesson's
-    // never-created events here is thousands of wasted calls that blow the quota.
-    const ids =
-      data.lessonId != null
-        ? [data.lessonId]
-        : (
-            await db
-              .select({ id: lessons.index })
-              .from(lessons)
-              .where(and(eq(lessons.display, 1), gte(lessons.expire, await fetchCurrentQuarter())))
-          ).map((r) => r.id)
-    for (const id of ids) await reconcileCalendar(id)
-    return { success: true, synced: ids.length }
+    if (!gcalEnabled()) throw new Error('Calendar sync is not configured')
+    try {
+      await syncLessonCalendar(data.lessonId)
+      return { success: true }
+    } catch (error) {
+      console.error('Calendar sync failed for lesson', data.lessonId, error)
+      throw new Error('Calendar sync failed. Try again.')
+    }
   })
 
 export const createLesson = createServerFn({ method: 'POST' })
@@ -324,18 +300,6 @@ export const deleteLesson = createServerFn({ method: 'POST' })
       index,
       removed.map((r) => r.index),
     )
-    return { success: true }
-  })
-
-export const setLessonDisplay = createServerFn({ method: 'POST' })
-  .validator((input: { index: number; display: boolean }) => input)
-  .handler(async ({ data: { index, display } }) => {
-    await requireLessonManagement(index)
-    await db
-      .update(lessons)
-      .set({ display: display ? 1 : 0 })
-      .where(eq(lessons.index, index))
-    await reconcileCalendar(index)
     return { success: true }
   })
 
@@ -477,8 +441,6 @@ export const getLessonForSignup = createServerFn({ method: 'GET' })
 
     const lesson = toRichLesson(lessonRow, await fetchLessonSessions(id))
 
-    if (!lesson.display) return null
-
     // Membership must cover the lesson's own quarter, not just the current one
     const [member] = await db
       .select({ expireQtrIndex: wycDatabase.expireQtrIndex })
@@ -509,6 +471,7 @@ export const getLessonForSignup = createServerFn({ method: 'GET' })
       lesson,
       enrolledCount: enrolled.length,
       waitlistedCount: waitlisted.length,
+      signupsOpen: lessonSignupsOpen(lesson.sessions),
       isAlreadySignedUp: lessonSignups.some((s) => s.student === userId),
       isMembershipSufficient,
       requiredQuarterName,
@@ -519,6 +482,10 @@ export const enrollInLesson = createServerFn({ method: 'POST' })
   .validator((input: { lessonIndex: number }) => ({ lessonIndex: input.lessonIndex }))
   .handler(async ({ data: { lessonIndex } }) => {
     const userId = await requireAuth()
+
+    if (!lessonSignupsOpen(await fetchLessonSessions(lessonIndex))) {
+      throw new Error('Signups are closed for this lesson')
+    }
 
     try {
       // Fetch lesson (rich query for email template)
@@ -557,6 +524,10 @@ export const enrollInLesson = createServerFn({ method: 'POST' })
         .limit(1)
 
       if (existing) throw new Error('You are already signed up for this lesson.')
+
+      if (!lessonSignupsOpen(await fetchLessonSessions(lessonIndex))) {
+        throw new Error('Signups are closed for this lesson')
+      }
 
       // Insert signup
       await db.insert(signups).values({ class: lessonIndex, student: userId })

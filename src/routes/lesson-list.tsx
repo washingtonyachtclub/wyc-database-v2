@@ -1,3 +1,4 @@
+import { lessonSignupsOpen } from '@/domains/lessons/visibility'
 import { createFileRoute } from '@tanstack/react-router'
 import { MapPin } from 'lucide-react'
 import { useState } from 'react'
@@ -201,7 +202,11 @@ function LessonCard({ entry, muted }: { entry: PublicLesson; muted?: boolean }) 
 
         {/* Enroll button */}
         <div className="px-3 pt-1 pb-2.5 md:flex md:w-[25%] md:items-center md:justify-center md:py-2.5">
-          <EnrollAction lessonIndex={lesson.index} isFull={isFull} />
+          {lessonSignupsOpen(lesson.sessions, now) ? (
+            <EnrollAction lessonIndex={lesson.index} isFull={isFull} />
+          ) : (
+            <span>Signups closed</span>
+          )}
         </div>
       </div>
 

@@ -32,7 +32,6 @@ export const lessonTableSelectFields = {
   locationUrl: lessons.locationUrl,
   size: lessons.size,
   expire: lessons.expire,
-  display: lessons.display,
 }
 
 export type LessonQueryRow = Awaited<ReturnType<typeof baseLessonQuery>>[number]
@@ -56,7 +55,7 @@ export async function fetchSessionsByLesson(
     .select()
     .from(lessonSessions)
     .where(inArray(lessonSessions.lessonId, lessonIds))
-    .orderBy(asc(lessonSessions.startsAt))
+    .orderBy(asc(lessonSessions.startsAt), asc(lessonSessions.index))
 
   for (const row of rows) {
     const arr = byLesson.get(row.lessonId) ?? []
@@ -162,10 +161,6 @@ export function withLessonFilters<T extends MySqlSelect>(
     }
   }
 
-  if (filters?.display === true) {
-    conditions.push(eq(lessons.display, 1))
-  }
-
   if (filters?.search) {
     const pattern = `%${filters.search}%`
     conditions.push(
@@ -234,4 +229,11 @@ export function baseLessonsSignedUpQuery(wycNumber: number, since?: string) {
     .leftJoin(instructor2Table, eq(lessons.instructor2, instructor2Table.wycNumber))
     .where(and(...conditions))
     .orderBy(desc(lessons.calendarDate))
+}
+
+export function lessonIdsEndingOnOrAfter(date: string) {
+  return db
+    .select({ id: lessonSessions.lessonId })
+    .from(lessonSessions)
+    .where(gte(lessonSessions.endsAt, `${date} 00:00:00`))
 }

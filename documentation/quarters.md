@@ -5,7 +5,7 @@
 Quarters are the universal time unit in the WYC database. They control:
 
 - **Membership status** — a member is active if their `ExpireQtr >= currentQuarter`
-- **Lesson visibility** — lessons with `expire >= currentQuarter` are shown
+- **Lesson membership eligibility** — membership must cover the lesson’s `expire` quarter
 - **Instructor privileges** — teaching a current or future-quarter lesson grants the `rtgs` privilege
 
 Quarters are stored as **integer indices**, not formatted strings. The `quarters` table maps each index to display text.
@@ -50,7 +50,7 @@ Single-row configuration table that stores which quarter is "current."
 | `_index`  | int PK | Always 1                                        |
 | `quarter` | int    | Current quarter index (FK to `quarters._index`) |
 
-This value is **manually updated** — there is no automatic rollover. In the legacy system, the Vice Commodore updates it via the Lesson Control Panel. If set incorrectly, membership validation, lesson visibility, and instructor privilege grants will all be wrong.
+This value is **manually updated** — there is no automatic rollover. In the legacy system, the Vice Commodore updates it via the Lesson Control Panel. If set incorrectly, membership validation, administrative lesson lists, and instructor privilege grants will all be wrong.
 
 ---
 
@@ -69,14 +69,10 @@ This comparison drives membership validation across the app, including page acce
 
 ### Lesson Expiration
 
-The `lessons.expire` column stores the last quarter a lesson should be visible.
-
-```
-expire >= currentQuarter  →  lesson is shown
-expire >  currentQuarter  →  lesson is for a future quarter
-expire == currentQuarter  →  lesson is current quarter
-expire <  currentQuarter  →  lesson is hidden
-```
+The `lessons.expire` column identifies the membership quarter required to sign up.
+It also groups lessons in administrative quarter lists. Public visibility depends
+on session dates in Seattle; calendar sync covers sessions from July 21, 2026
+onward. See [lesson visibility and calendar](lesson-calendar.md).
 
 ### Instructor Privilege Grant
 
