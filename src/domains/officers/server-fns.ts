@@ -12,7 +12,12 @@ import {
   officerPageQuery,
 } from '@/domains/officers/queries'
 import { officers, wycDatabase } from '@/db/schema'
-import { requirePrivilege, requireSelfOrPrivilege } from '@/lib/auth/auth-middleware'
+import {
+  requireAuth,
+  requirePrivilege,
+  requireSelfOrPrivilege,
+  sessionHasPrivilege,
+} from '@/lib/auth/auth-middleware'
 
 export const getDatabaseAdmin = createServerFn({ method: 'GET' }).handler(async () => {
   try {
@@ -39,8 +44,9 @@ export const getAllOfficers = createServerFn({ method: 'GET' }).handler(async ()
 })
 
 export const getOfficerPageOfficers = createServerFn({ method: 'GET' }).handler(async () => {
-  await requirePrivilege('db')
-  const raw = await officerPageQuery()
+  await requireAuth()
+  const isAdmin = await sessionHasPrivilege('db')
+  const raw = await officerPageQuery(isAdmin)
   return raw.map(toOfficer)
 })
 
@@ -59,7 +65,7 @@ export const setOfficerActive = createServerFn({ method: 'POST' })
   })
 
 export const getPositionsForOfficerPage = createServerFn({ method: 'GET' }).handler(async () => {
-  await requirePrivilege('db')
+  await requireAuth()
   const raw = await getOfficerPagePositions()
   return raw.map((row) => toPosition(row))
 })

@@ -8,22 +8,29 @@ import {
   getOfficerPageQueryOptions,
   useSetOfficerActiveMutation,
 } from '@/domains/officers/query-options'
+import { hasPrivilege } from '@/lib/permissions'
 import { requirePrivilegeForRoute } from '@/lib/route-guards'
-import { useSuspenseQuery } from '@tanstack/react-query'
+import { useQuery, useSuspenseQuery } from '@tanstack/react-query'
 import { Link, createFileRoute } from '@tanstack/react-router'
 import { useState } from 'react'
 
 export const Route = createFileRoute('/officers')({
   beforeLoad: ({ context }) => {
     requirePrivilegeForRoute(context, '/officers')
+    return { isAdmin: hasPrivilege(context.privileges, ['db']) }
+  },
+  loader: ({ context }) => {
+    context.queryClient.ensureQueryData(getOfficerPagePositionsQueryOptions())
+    return context.queryClient.ensureQueryData(getOfficerPageQueryOptions(context.isAdmin))
   },
   component: OfficersPage,
 })
 
 function OfficersPage() {
+  const { isAdmin } = Route.useRouteContext()
   const [showAddModal, setShowAddModal] = useState(false)
-  const { data: officers } = useSuspenseQuery(getOfficerPageQueryOptions())
-  const { data: positions } = useSuspenseQuery(getOfficerPagePositionsQueryOptions())
+  const { data: officers } = useSuspenseQuery(getOfficerPageQueryOptions(isAdmin))
+  const { data: positions = [] } = useQuery(getOfficerPagePositionsQueryOptions())
   const mutation = useSetOfficerActiveMutation()
 
   const inactive = officers.filter((officer) => !officer.active)
@@ -32,12 +39,14 @@ function OfficersPage() {
     <div className="p-4">
       <div className="flex flex-wrap items-center justify-between gap-3 mb-6">
         <h2 className="text-2xl font-bold">Officers & Position Holders</h2>
-        <Button onClick={() => setShowAddModal(true)}>
-          <Plus className="h-4 w-4" />
-          Add Record
-        </Button>
+        {isAdmin && (
+          <Button onClick={() => setShowAddModal(true)}>
+            <Plus className="h-4 w-4" />
+            Add Record
+          </Button>
+        )}
       </div>
-      {showAddModal && (
+      {isAdmin && showAddModal && (
         <AddOfficerModal
           onClose={() => setShowAddModal(false)}
           onSuccess={() => setShowAddModal(false)}
@@ -49,12 +58,14 @@ function OfficersPage() {
         positions={positions}
         officers={officers}
         isUpdating={mutation.isPending}
-        onDeactivate={(officer) =>
-          mutation.mutate({ data: { index: officer.index, active: false } })
+        onDeactivate={
+          isAdmin
+            ? (officer) => mutation.mutate({ data: { index: officer.index, active: false } })
+            : undefined
         }
       />
 
-      {inactive.length > 0 && (
+      {isAdmin && inactive.length > 0 && (
         <div className="mt-8">
           <h3 className="text-lg font-semibold mb-3">Inactive</h3>
           <div className="overflow-x-auto">

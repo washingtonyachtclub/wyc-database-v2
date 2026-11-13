@@ -28,14 +28,20 @@ export function baseOfficersQuery() {
 }
 
 /** Officers page query — active positions of officer page types */
-export function officerPageQuery() {
+export function officerPageQuery(includeInactive = false) {
   return db
     .select(officerSelectFields)
     .from(officers)
     .leftJoin(wycDatabase, eq(officers.member, wycDatabase.wycNumber))
     .leftJoin(positions, eq(officers.position, positions.index))
     .leftJoin(posType, eq(positions.type, posType.index))
-    .where(and(eq(positions.active, 1), inArray(posType.index, [...OFFICER_PAGE_TYPES])))
+    .where(
+      and(
+        eq(positions.active, 1),
+        inArray(posType.index, [...OFFICER_PAGE_TYPES]),
+        includeInactive ? undefined : eq(officers.active, 1),
+      ),
+    )
     .orderBy(desc(officers.active))
 }
 

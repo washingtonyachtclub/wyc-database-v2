@@ -24,13 +24,15 @@ const CONNECTOR_CLASSES =
 const BRANCH_CLASSES = 'row-start-1 flex min-w-0 flex-col items-center @max-[900px]:w-full'
 const BRANCH_CARD_CLASSES =
   'w-[calc((100cqi-70px)/6)] max-w-[180px] @max-[900px]:w-full @max-[900px]:max-w-none'
+const HOLDER_NAME_CLASSES =
+  'min-w-0 flex-1 text-[0.8125rem] leading-[1.4] [overflow-wrap:anywhere] @max-[900px]:py-[5px] @max-[900px]:text-sm @max-[480px]:py-2.5'
 const SWATCH_CLASSES = 'size-3.5 rounded-[3px] border border-border'
 
 type OfficersOrgChartProps = {
   positions: Position[]
   officers: Officer[]
   isUpdating: boolean
-  onDeactivate: (officer: Officer) => void
+  onDeactivate?: (officer: Officer) => void
 }
 
 function RoleCard({
@@ -44,7 +46,7 @@ function RoleCard({
   position: Position
   holders: Officer[]
   isUpdating: boolean
-  onDeactivate: (officer: Officer) => void
+  onDeactivate?: (officer: Officer) => void
   className?: string
   compact?: 'report' | 'fleet'
 }) {
@@ -84,29 +86,35 @@ function RoleCard({
         <ul className="grid gap-0.5">
           {holders.map((officer) => (
             <li key={officer.index} className="flex min-w-0 items-center gap-1">
-              <Link
-                to="/members/$wycNumber"
-                params={{ wycNumber: String(officer.wycNumber) }}
-                className="min-w-0 flex-1 text-[0.8125rem] leading-[1.4] [overflow-wrap:anywhere] hover:underline @max-[900px]:py-[5px] @max-[900px]:text-sm @max-[480px]:py-2.5"
-              >
-                {officer.memberName}
-              </Link>
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="icon"
-                    className="size-6 shrink-0 text-inherit opacity-65 hover:text-destructive hover:opacity-100 [&>svg]:size-[13px] @max-[900px]:size-9 @max-[480px]:size-11"
-                    aria-label={`Mark ${officer.memberName} inactive as ${position.name}`}
-                    disabled={isUpdating}
-                    onClick={() => onDeactivate(officer)}
-                  >
-                    <X aria-hidden="true" />
-                  </Button>
-                </TooltipTrigger>
-                <TooltipContent>Mark inactive</TooltipContent>
-              </Tooltip>
+              {onDeactivate ? (
+                <Link
+                  to="/members/$wycNumber"
+                  params={{ wycNumber: String(officer.wycNumber) }}
+                  className={cn(HOLDER_NAME_CLASSES, 'hover:underline')}
+                >
+                  {officer.memberName}
+                </Link>
+              ) : (
+                <span className={HOLDER_NAME_CLASSES}>{officer.memberName}</span>
+              )}
+              {onDeactivate && (
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="icon"
+                      className="size-6 shrink-0 text-inherit opacity-65 hover:text-destructive hover:opacity-100 [&>svg]:size-[13px] @max-[900px]:size-9 @max-[480px]:size-11"
+                      aria-label={`Mark ${officer.memberName} inactive as ${position.name}`}
+                      disabled={isUpdating}
+                      onClick={() => onDeactivate(officer)}
+                    >
+                      <X aria-hidden="true" />
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent>Mark inactive</TooltipContent>
+                </Tooltip>
+              )}
             </li>
           ))}
         </ul>
