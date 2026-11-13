@@ -14,9 +14,9 @@ export const getAllOfficersQueryOptions = () =>
     queryFn: getAllOfficers,
   })
 
-export const getOfficerPageQueryOptions = () =>
+export const getOfficerPageQueryOptions = (isAdmin: boolean) =>
   queryOptions({
-    queryKey: ['officers', 'page'],
+    queryKey: ['officers', 'page', { isAdmin }],
     queryFn: getOfficerPageOfficers,
   })
 

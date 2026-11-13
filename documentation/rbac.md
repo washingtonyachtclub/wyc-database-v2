@@ -189,7 +189,7 @@ export const routePermissions = {
   '/lessons': ['db'],
   '/my-lessons': [], // authenticated only
   '/ratings': ['db', 'rtgs'],
-  '/officers': ['db'],
+  '/officers': [],
   // ...
 }
 ```
@@ -203,6 +203,8 @@ Each protected route's `beforeLoad` hook calls `requirePrivilegeForRoute()`, whi
 ### 2. Server Function Guards
 
 **File**: `auth-middleware.ts`
+
+The Officers & Positions page is available to every signed-in member. Everyone sees the same organization chart, colors, active position holders, and vacancies. Only members with `db` see profile links, inactive history, and add or activation controls. The server excludes inactive assignments from non-admin responses and requires `db` for mutations.
 
 Server functions apply their own privilege checks independently of route guards. This is the enforcement layer — even if someone bypasses the client-side route guard, the server function will reject the request.
 
