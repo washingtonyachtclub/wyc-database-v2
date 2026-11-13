@@ -49,8 +49,8 @@ One row per lesson offered.
 | `instructor2`  | int FK      | Secondary instructor (`WYCDatabase.WYCNumber`)                          |
 | `comments`     | blob        | Lesson notes (stored as blob, read as UTF-8 string)                     |
 | `size`         | int         | Enrollment cap                                                          |
-| `expire`       | int FK      | Last quarter shown (`quarters._index`). See [quarters doc](quarters.md) |
-| `display`      | tinyint     | Visibility flag                                                         |
+| `expire`       | int FK      | Membership quarter (`quarters._index`). See [quarters doc](quarters.md) |
+| `display`      | tinyint     | Legacy rollout audit flag; unused by app visibility                     |
 
 ### `ratings` — Rating Type Definitions
 

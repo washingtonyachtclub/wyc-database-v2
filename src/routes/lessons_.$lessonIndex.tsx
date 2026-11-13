@@ -42,8 +42,6 @@ import {
   AlertDialogTitle,
 } from '../components/ui/alert-dialog'
 import { Button } from '../components/ui/button'
-import { Checkbox } from '../components/ui/checkbox'
-import { Label } from '../components/ui/label'
 import { MemberCombobox } from '../components/ui/MemberCombobox'
 
 export const Route = createFileRoute('/lessons_/$lessonIndex')({
@@ -107,7 +105,6 @@ function lessonToDefaults(lesson: RichLesson): LessonInsert {
     locationUrl: lesson.locationUrl,
     size: lesson.size,
     expire: lesson.expire,
-    display: lesson.display,
   }
 }
 
@@ -491,20 +488,6 @@ function LessonEditForm({ lesson }: { lesson: RichLesson }) {
                 placeholder="Select quarter"
                 options={quarterOptions}
               />
-            )}
-          />
-
-          <form.AppField
-            name="display"
-            children={(field) => (
-              <div className="flex items-center gap-2 h-9">
-                <Checkbox
-                  id="display"
-                  checked={field.state.value}
-                  onCheckedChange={(checked) => field.handleChange(checked === true)}
-                />
-                <Label htmlFor="display">Display (show on website)</Label>
-              </div>
             )}
           />
         </div>

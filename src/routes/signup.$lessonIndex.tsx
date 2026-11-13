@@ -51,6 +51,7 @@ function SignupPage() {
     isAlreadySignedUp,
     isMembershipSufficient,
     requiredQuarterName,
+    signupsOpen,
   } = signupData
   const isFull = enrolledCount >= lesson.size
   const sessionLines = formatSessions(lesson.sessions)
@@ -117,7 +118,7 @@ function SignupPage() {
         </div>
 
         {/* Waitlist warning */}
-        {isFull && !isAlreadySignedUp && !enrollMutation.isSuccess && (
+        {signupsOpen && isFull && !isAlreadySignedUp && !enrollMutation.isSuccess && (
           <div className="rounded-md bg-amber-100 text-amber-800 p-3 text-sm">
             This class is full. You will be added to the waitlist.
           </div>
@@ -145,20 +146,30 @@ function SignupPage() {
           </div>
         )}
 
-        {!isMembershipSufficient && !isAlreadySignedUp && !enrollMutation.isSuccess && (
-          <Button asChild className="w-full">
-            <Link to="/renew-membership" search={{ redirect: `/signup/${lesson.index}` }}>
-              Renew to {requiredQuarterName} to sign up
-            </Link>
-          </Button>
+        {signupsOpen &&
+          !isMembershipSufficient &&
+          !isAlreadySignedUp &&
+          !enrollMutation.isSuccess && (
+            <Button asChild className="w-full">
+              <Link to="/renew-membership" search={{ redirect: `/signup/${lesson.index}` }}>
+                Renew to {requiredQuarterName} to sign up
+              </Link>
+            </Button>
+          )}
+
+        {!signupsOpen && !isAlreadySignedUp && (
+          <p className="text-sm text-muted-foreground">Signups closed</p>
         )}
 
         {/* Signup button */}
-        {isMembershipSufficient && !isAlreadySignedUp && !enrollMutation.isSuccess && (
-          <Button onClick={handleSignup} disabled={enrollMutation.isPending} className="w-full">
-            {enrollMutation.isPending ? 'Signing up...' : isFull ? 'Join Waitlist' : 'Sign Up'}
-          </Button>
-        )}
+        {signupsOpen &&
+          isMembershipSufficient &&
+          !isAlreadySignedUp &&
+          !enrollMutation.isSuccess && (
+            <Button onClick={handleSignup} disabled={enrollMutation.isPending} className="w-full">
+              {enrollMutation.isPending ? 'Signing up...' : isFull ? 'Join Waitlist' : 'Sign Up'}
+            </Button>
+          )}
       </div>
     </div>
   )

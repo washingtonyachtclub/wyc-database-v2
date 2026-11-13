@@ -5,7 +5,7 @@ import {
   getQuarterLessonsQueryOptions,
 } from '@/domains/lessons/query-options'
 import type { RichLessonWithEnrollment } from '@/domains/lessons/schema'
-import { resyncLessonCalendar } from '@/domains/lessons/server-fns'
+import { getCalendarSyncLessons, resyncLessonCalendar } from '@/domains/lessons/server-fns'
 import { getQuartersQueryOptions } from '@/domains/quarters/query-options'
 import { cn } from '@/lib/utils'
 import { useQuery, useSuspenseQuery } from '@tanstack/react-query'
@@ -32,7 +32,6 @@ const lessonSearchSchema = z.object({
   instructor: z.number().optional(),
   expireQtr: z.number().optional(),
   expireQtrMode: z.enum(['exactly', 'atLeast']).catch('exactly'),
-  display: z.boolean().optional(),
   search: z.string().optional(),
   sortColumn: z.string().optional(),
   sortDesc: z.boolean().catch(false),
@@ -51,7 +50,6 @@ export const Route = createFileRoute('/lessons')({
       instructor,
       expireQtr,
       expireQtrMode,
-      display,
       search,
       sortColumn,
       sortDesc,
@@ -60,12 +58,8 @@ export const Route = createFileRoute('/lessons')({
     const expireQtrFilter = expireQtr ? { quarter: expireQtr, mode: expireQtrMode } : undefined
 
     const filters: LessonFilters | undefined =
-      classTypeId !== undefined ||
-      instructor !== undefined ||
-      expireQtrFilter ||
-      display === true ||
-      search
-        ? { classTypeId, instructor, expireQtrFilter, display, search }
+      classTypeId !== undefined || instructor !== undefined || expireQtrFilter || search
+        ? { classTypeId, instructor, expireQtrFilter, search }
         : undefined
 
     const sorting =
@@ -84,7 +78,7 @@ export const Route = createFileRoute('/lessons')({
 
 function LessonsPage() {
   const navigate = useNavigate({ from: '/lessons' })
-  const { classTypeId, instructor, display, search } = Route.useSearch()
+  const { classTypeId, instructor, search } = Route.useSearch()
   const { pageIndex, pageSize, filters, sorting } = Route.useLoaderDeps()
   const expireQtrFilter = filters?.expireQtrFilter
   const [isLessonModalOpen, setIsLessonModalOpen] = useState(false)
@@ -98,11 +92,26 @@ function LessonsPage() {
     setSyncing(true)
     setSyncMsg(null)
     try {
-      const res = await resyncLessonCalendar({ data: {} })
+      const { enabled, ids } = await getCalendarSyncLessons()
+      if (!enabled) {
+        setSyncMsg('Calendar sync not configured.')
+        return
+      }
+      let synced = 0
+      let failed = 0
+      for (const lessonId of ids) {
+        try {
+          await resyncLessonCalendar({ data: { lessonId } })
+          synced++
+        } catch {
+          failed++
+        }
+        setSyncMsg(`Synced ${synced} of ${ids.length} lessons; ${failed} failed.`)
+      }
       setSyncMsg(
-        res.success
-          ? `Synced ${res.synced} lessons to the calendar.`
-          : 'Calendar sync not configured.',
+        failed > 0
+          ? `Synced ${synced} lessons; ${failed} failed. Try syncing again.`
+          : `Synced ${synced} lessons to the calendar.`,
       )
     } catch {
       setSyncMsg('Calendar sync failed. Try again.')
@@ -198,7 +207,6 @@ function LessonsPage() {
           expireQtr: changes.expireQtrFilter?.quarter,
           expireQtrMode: changes.expireQtrFilter?.mode,
         }),
-        ...('display' in changes && { display: changes.display }),
         ...('search' in changes && { search: changes.search }),
       }),
       replace: true,
@@ -214,7 +222,6 @@ function LessonsPage() {
         classTypeId: undefined,
         instructor: undefined,
         expireQtr: undefined,
-        display: undefined,
         search: undefined,
       }),
       replace: true,
@@ -292,7 +299,6 @@ function LessonsPage() {
           classTypeId={classTypeId}
           instructor={instructor}
           expireQtrFilter={expireQtrFilter}
-          display={display}
           search={search}
           classTypes={classTypes}
           quarters={quarters}

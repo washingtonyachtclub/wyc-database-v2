@@ -145,7 +145,7 @@ export const getQuarterChangeImpact = createServerFn({ method: 'GET' })
     const currentQuarter = quarterRow[0].quarter
 
     if (newQuarter === currentQuarter) {
-      return { currentQuarter, membersAffected: 0, lessonsAffected: 0, direction: 'same' as const }
+      return { currentQuarter, membersAffected: 0, direction: 'same' as const }
     }
 
     const forward = newQuarter > currentQuarter
@@ -156,15 +156,9 @@ export const getQuarterChangeImpact = createServerFn({ method: 'GET' })
       .from(wycDatabase)
       .where(and(gte(wycDatabase.expireQtrIndex, low), lt(wycDatabase.expireQtrIndex, high)))
 
-    const [lessonResult] = await db
-      .select({ count: count() })
-      .from(lessons)
-      .where(and(gte(lessons.expire, low), lt(lessons.expire, high), eq(lessons.display, 1)))
-
     return {
       currentQuarter,
       membersAffected: memberResult.count,
-      lessonsAffected: lessonResult.count,
       direction: forward ? ('forward' as const) : ('backward' as const),
     }
   })

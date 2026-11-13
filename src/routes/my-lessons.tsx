@@ -57,7 +57,7 @@ function MyLessonsPage() {
         <LessonCard
           key={lesson.index}
           lesson={lesson}
-          dimmed={!lesson.display || !isLessonUpcoming(lesson.calendarDate)}
+          dimmed={!isLessonUpcoming(lesson.calendarDate)}
           onClick={() =>
             navigate({
               to: '/lessons/$lessonIndex',

@@ -1,7 +1,6 @@
 import { formatSessions } from '@/domains/lessons/format-sessions'
 import type { RichLesson } from '@/domains/lessons/schema'
-import { AlertTriangle, ChevronRight, MapPin } from 'lucide-react'
-import { isLessonUpcoming } from '../../lib/date-utils'
+import { ChevronRight, MapPin } from 'lucide-react'
 import { RichText } from '../ui/RichText'
 
 export function LessonCard({
@@ -14,11 +13,6 @@ export function LessonCard({
   dimmed?: boolean
 }) {
   const sessionLines = formatSessions(lesson.sessions)
-  const upcoming = isLessonUpcoming(lesson.calendarDate)
-  const showUpcomingNotDisplayedWarning = !dimmed && upcoming && !lesson.display
-  // old db inserts with 0000-00-00 for calendarDate
-  const showDisplayedPastWarning =
-    !dimmed && !upcoming && lesson.display && !(lesson.calendarDate === '0000-00-00')
 
   return (
     <div
@@ -35,18 +29,6 @@ export function LessonCard({
       role={onClick ? 'link' : undefined}
       tabIndex={onClick ? 0 : undefined}
     >
-      {showUpcomingNotDisplayedWarning && (
-        <div className="flex items-center gap-2 text-destructive text-sm mb-2 p-2 rounded bg-destructive/10 border border-destructive/30">
-          <AlertTriangle className="h-4 w-4 shrink-0" />
-          <span>This lesson is upcoming but is not displayed on the website</span>
-        </div>
-      )}
-      {showDisplayedPastWarning && (
-        <div className="flex items-center gap-2 text-destructive text-sm mb-2 p-2 rounded bg-destructive/10 border border-destructive/30">
-          <AlertTriangle className="h-4 w-4 shrink-0" />
-          <span>This lesson has passed but is still displayed on the website</span>
-        </div>
-      )}
       <div className="flex items-start justify-between">
         <div>
           <h4 className="font-semibold">{lesson.subtype || lesson.type || 'Untitled Lesson'}</h4>
