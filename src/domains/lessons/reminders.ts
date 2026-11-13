@@ -13,7 +13,7 @@ import { pacificDatePlusDays } from '@/lib/date-utils'
 import { sendEmailBatch, type BatchMessage } from '@/lib/email'
 import { lessonReminderEmail, lessonReminderSubject } from '@/lib/emails/lessons'
 import { isDevEnvironment } from '@/lib/env'
-import { and, asc, eq, inArray, sql } from 'drizzle-orm'
+import { asc, eq, inArray, sql } from 'drizzle-orm'
 
 export const REMINDER_DAYS_AHEAD = 2
 
@@ -82,9 +82,7 @@ export async function sendLessonReminders({
   const startingIds = await lessonIdsStartingOn(targetDate)
   if (startingIds.length === 0) return empty
 
-  const lessonRows = await baseLessonQuery().where(
-    and(inArray(lessons.index, startingIds), eq(lessons.display, 1)),
-  )
+  const lessonRows = await baseLessonQuery().where(inArray(lessons.index, startingIds))
   if (lessonRows.length === 0) return empty
 
   const lessonIds = lessonRows.map((r) => r.index)

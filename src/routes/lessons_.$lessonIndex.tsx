@@ -1,3 +1,6 @@
+import { useCurrentUser } from '@/lib/auth/auth-query-options'
+import { canManageLesson } from '@/lib/resource-permissions'
+import { getLessonInstructorOptionsQueryOptions } from '@/domains/members/query-options'
 import { LessonLocationField, typeLocationDefault } from '@/components/lessons/LessonLocationField'
 import { LessonSessionsField } from '@/components/lessons/LessonSessionsField'
 import {
@@ -25,7 +28,6 @@ import type { LessonInsert, LessonStudent, RichLesson } from '@/domains/lessons/
 import { lessonInsertSchemaForQuarters, toSessionInput } from '@/domains/lessons/schema'
 import { getQuartersQueryOptions } from '@/domains/quarters/query-options'
 import { useAppForm } from '@/hooks/form'
-import { useCurrentUser } from '@/lib/auth/auth-query-options'
 import { useQuery, useSuspenseQuery } from '@tanstack/react-query'
 import { createFileRoute, redirect, useNavigate } from '@tanstack/react-router'
 import { useMemo, useState } from 'react'
@@ -40,10 +42,7 @@ import {
   AlertDialogTitle,
 } from '../components/ui/alert-dialog'
 import { Button } from '../components/ui/button'
-import { Checkbox } from '../components/ui/checkbox'
-import { Label } from '../components/ui/label'
 import { MemberCombobox } from '../components/ui/MemberCombobox'
-import { hasPrivilege } from '../lib/permissions'
 
 export const Route = createFileRoute('/lessons_/$lessonIndex')({
   beforeLoad: ({ context }) => {
@@ -106,7 +105,6 @@ function lessonToDefaults(lesson: RichLesson): LessonInsert {
     locationUrl: lesson.locationUrl,
     size: lesson.size,
     expire: lesson.expire,
-    display: lesson.display,
   }
 }
 
@@ -122,17 +120,8 @@ function LessonDetailPage({ lessonIndex }: { lessonIndex: number }) {
   }
 
   const navigate = useNavigate()
-  const { user, privileges } = useCurrentUser()
-  const canManageLessons = hasPrivilege(privileges, ['db', 'rtgs'])
   const { lesson, enrolledStudents, waitlistedStudents } = lessonDetails
-  const canManageAnnouncements =
-    hasPrivilege(privileges, ['db']) ||
-    user?.wycNumber === lesson.instructor1 ||
-    user?.wycNumber === lesson.instructor2
-  const { data: announcements = [] } = useQuery({
-    ...getLessonAnnouncementsQueryOptions(lesson.index),
-    enabled: canManageAnnouncements,
-  })
+  const { data: announcements = [] } = useQuery(getLessonAnnouncementsQueryOptions(lesson.index))
   const [studentToRemove, setStudentToRemove] = useState<{
     wycNumber: number
     name: string
@@ -154,20 +143,18 @@ function LessonDetailPage({ lessonIndex }: { lessonIndex: number }) {
         {lesson.type} — {lesson.subtype}
       </h1>
 
-      {canManageAnnouncements && (
-        <>
-          <AnnouncementComposer
-            lessonId={lesson.index}
-            enrolledCount={enrolledStudents.length}
-            waitlistedCount={waitlistedStudents.length}
-          />
-          <section className="space-y-3">
-            <h2 className="text-lg font-semibold">Announcements</h2>
-            <AnnouncementFeed lessonId={lesson.index} announcements={announcements} canDelete />
-          </section>
-        </>
-      )}
+      <AnnouncementComposer
+        lessonId={lesson.index}
+        enrolledCount={enrolledStudents.length}
+        waitlistedCount={waitlistedStudents.length}
+      />
+      <section className="space-y-3">
+        <h2 className="text-lg font-semibold">Announcements</h2>
+        <AnnouncementFeed lessonId={lesson.index} announcements={announcements} canDelete />
+      </section>
 
+      <ErrorAlert error={removeMutation.error?.message} action="Removing student" />
+      <ErrorAlert error={deleteMutation.error?.message} action="Deleting lesson" />
       <LessonEditForm lesson={lesson} />
 
       <section>
@@ -235,43 +222,39 @@ function LessonDetailPage({ lessonIndex }: { lessonIndex: number }) {
         </AlertDialogContent>
       </AlertDialog>
 
-      {canManageLessons && (
-        <>
-          <div className="pt-4 border-t">
-            <Button variant="destructive" onClick={() => setShowDeleteDialog(true)}>
-              Delete Lesson
-            </Button>
-          </div>
+      <div className="pt-4 border-t">
+        <Button variant="destructive" onClick={() => setShowDeleteDialog(true)}>
+          Delete Lesson
+        </Button>
+      </div>
 
-          <AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
-            <AlertDialogContent>
-              <AlertDialogHeader>
-                <AlertDialogTitle>Delete Lesson</AlertDialogTitle>
-                <AlertDialogDescription>
-                  Are you sure you want to delete <strong>{lesson.subtype}</strong>? This will also
-                  remove all student signups. This action cannot be undone.
-                </AlertDialogDescription>
-              </AlertDialogHeader>
-              <AlertDialogFooter>
-                <AlertDialogCancel>Cancel</AlertDialogCancel>
-                <AlertDialogAction
-                  className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-                  onClick={() => {
-                    deleteMutation.mutate(
-                      { data: { index: lesson.index } },
-                      {
-                        onSuccess: () => navigate({ to: '/lessons', search: {} as any }),
-                      },
-                    )
-                  }}
-                >
-                  Delete
-                </AlertDialogAction>
-              </AlertDialogFooter>
-            </AlertDialogContent>
-          </AlertDialog>
-        </>
-      )}
+      <AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete Lesson</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to delete <strong>{lesson.subtype}</strong>? This will also
+              remove all student signups. This action cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              onClick={() => {
+                deleteMutation.mutate(
+                  { data: { index: lesson.index } },
+                  {
+                    onSuccess: () => navigate({ to: '/my-lessons' }),
+                  },
+                )
+              }}
+            >
+              Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   )
 }
@@ -303,6 +286,7 @@ function StudentList({
               variant="ghost"
               size="sm"
               className="h-6 w-6 p-0 text-muted-foreground hover:text-destructive"
+              aria-label={`Remove ${student.first} ${student.last}`}
               onClick={() => onRemove(student)}
             >
               <svg
@@ -350,12 +334,23 @@ function ContactDetails({ title, students }: { title: string; students: LessonSt
 }
 
 function LessonEditForm({ lesson }: { lesson: RichLesson }) {
+  const { user, privileges } = useCurrentUser()
+  const navigate = useNavigate()
+  const { data: instructorOptions = [] } = useQuery(
+    getLessonInstructorOptionsQueryOptions(lesson.index),
+  )
   const { data: quarters = [] } = useQuery(getQuartersQueryOptions())
   const { data: classTypes = [] } = useQuery(getLessonTypesQueryOptions())
   const [saveMessage, setSaveMessage] = useState('')
 
   const updateMutation = useUpdateLessonMutation({
-    onSuccess: () => setSaveMessage('Lesson saved.'),
+    onSuccess: () => {
+      if (!canManageLesson({ userId: user?.wycNumber, privileges }, form.state.values)) {
+        navigate({ to: '/my-lessons' })
+        return
+      }
+      setSaveMessage('Lesson saved.')
+    },
     onClose: () => {},
   })
 
@@ -437,6 +432,7 @@ function LessonEditForm({ lesson }: { lesson: RichLesson }) {
           children={(field) => (
             <div>
               <MemberCombobox
+                members={instructorOptions}
                 label="Instructor 1"
                 value={field.state.value}
                 onChange={(wycNumber) => field.handleChange(wycNumber ?? TBD_WYC_NUMBER)}
@@ -450,6 +446,7 @@ function LessonEditForm({ lesson }: { lesson: RichLesson }) {
           children={(field) => (
             <div>
               <MemberCombobox
+                members={instructorOptions}
                 label="Instructor 2"
                 value={field.state.value}
                 onChange={(wycNumber) => field.handleChange(wycNumber)}
@@ -491,20 +488,6 @@ function LessonEditForm({ lesson }: { lesson: RichLesson }) {
                 placeholder="Select quarter"
                 options={quarterOptions}
               />
-            )}
-          />
-
-          <form.AppField
-            name="display"
-            children={(field) => (
-              <div className="flex items-center gap-2 h-9">
-                <Checkbox
-                  id="display"
-                  checked={field.state.value}
-                  onCheckedChange={(checked) => field.handleChange(checked === true)}
-                />
-                <Label htmlFor="display">Display (show on website)</Label>
-              </div>
             )}
           />
         </div>

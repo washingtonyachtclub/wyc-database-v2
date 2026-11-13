@@ -115,6 +115,7 @@ function eventBody(lesson: CalendarLesson, session: CalendarSession) {
       }
   return {
     id: sessionEventId(session.index),
+    status: 'confirmed',
     summary: lesson.title,
     location: lesson.location,
     description: calendarDescriptionHtml(lesson),
@@ -135,7 +136,12 @@ export async function upsertSessionEvent(
   if (res.ok) return
   if (res.status === 404 || res.status === 410) {
     const created = await gcalFetch('', { method: 'POST', body })
-    if (!created.ok) throw new Error(`gcal insert ${created.status}: ${await created.text()}`)
+    if (created.status === 409) {
+      const updated = await gcalFetch(`/${id}`, { method: 'PUT', body })
+      if (!updated.ok) throw new Error(`gcal update ${updated.status}: ${await updated.text()}`)
+    } else if (!created.ok) {
+      throw new Error(`gcal insert ${created.status}: ${await created.text()}`)
+    }
     return
   }
   throw new Error(`gcal update ${res.status}: ${await res.text()}`)

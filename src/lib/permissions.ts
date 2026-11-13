@@ -17,14 +17,14 @@ export const routePermissions = {
   '/': [],
   '/members': ['db', 'rtgs'], // rtgs sees the roster read-only; no email export
   '/members/$wycNumber': ['db', 'rtgs'], // own-profile exception handled in route beforeLoad
-  '/lessons': ['db', 'rtgs'],
+  '/lessons': ['db'],
   '/lessons/$lessonIndex': [], // auth only; server functions enforce per-lesson instructor-or-db access
   '/my-lessons': [],
   '/my-lessons/$lessonIndex': [],
   '/door-codes': [], // auth only; the server function filters codes by ratings
   '/maintenance-tracker': [],
-  '/ratings': ['rtgs'],
-  '/ratings/$ratingIndex': ['rtgs'],
+  '/ratings': ['db', 'rtgs'],
+  '/ratings/$ratingIndex': ['db', 'rtgs'],
   '/rating-types': ['db', 'rtgs'],
   '/chiefs': [],
   '/officers': [],

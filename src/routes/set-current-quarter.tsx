@@ -104,11 +104,6 @@ function SetCurrentQuarterPage() {
             <strong>Membership status</strong> — Members are active when their expiration quarter{' '}
             &ge; the current quarter. Changing this determines who is considered active vs expired.
           </li>
-          <li>
-            <strong>Lesson visibility</strong> — The public lesson page only shows lessons in or
-            after the current quarter. Previous quarter lessons will no longer appear on the
-            website.
-          </li>
         </ul>
         <p className="pt-1 font-medium">
           Only change this when a new quarter is starting and other officers are aware.
@@ -166,10 +161,6 @@ function SetCurrentQuarterPage() {
                     {impact.membersAffected} member{impact.membersAffected !== 1 ? 's' : ''} will
                     become expired.
                   </p>
-                  <p>
-                    {impact.lessonsAffected} lesson{impact.lessonsAffected !== 1 ? 's' : ''} will be
-                    hidden from the public page.
-                  </p>
                 </>
               ) : (
                 <>
@@ -177,10 +168,6 @@ function SetCurrentQuarterPage() {
                   <p>
                     {impact.membersAffected} member{impact.membersAffected !== 1 ? 's' : ''} will
                     become re-activated.
-                  </p>
-                  <p>
-                    {impact.lessonsAffected} lesson{impact.lessonsAffected !== 1 ? 's' : ''} will
-                    become visible again.
                   </p>
                 </>
               )}
@@ -235,10 +222,6 @@ function SetCurrentQuarterPage() {
                   {impact.membersAffected} member{impact.membersAffected !== 1 ? 's' : ''} will
                   become expired.
                 </li>
-                <li>
-                  {impact.lessonsAffected} lesson{impact.lessonsAffected !== 1 ? 's' : ''} will be
-                  hidden from the public page.
-                </li>
               </ul>
             )}
             {impact && impact.direction === 'backward' && (
@@ -246,10 +229,6 @@ function SetCurrentQuarterPage() {
                 <li>
                   {impact.membersAffected} member{impact.membersAffected !== 1 ? 's' : ''} will
                   become re-activated.
-                </li>
-                <li>
-                  {impact.lessonsAffected} lesson{impact.lessonsAffected !== 1 ? 's' : ''} will
-                  become visible again.
                 </li>
               </ul>
             )}

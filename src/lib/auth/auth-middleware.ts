@@ -1,5 +1,6 @@
+import { canManageLesson, canManageRating } from '../resource-permissions'
 import { eq } from 'drizzle-orm'
-import { lessons } from '@/db/schema'
+import { lessons, wycRatings } from '@/db/schema'
 import db from '@/db/index'
 import { hasPrivilege, hasRouteAccess } from '../permissions'
 import type { Privilege, ProtectedRoute } from '../permissions'
@@ -101,44 +102,35 @@ export async function sessionHasPrivilege(...required: Privilege[]): Promise<boo
   return hasPrivilege(userPrivs, required)
 }
 
-/**
- * Allows access if the authenticated user is instructor1 or instructor2 of the given lesson,
- * OR if the user has any of the required privileges.
- * Returns the authenticated user ID.
- */
-export async function requireInstructorOrPrivilege(
-  lessonIndex: number,
-  ...required: Privilege[]
-): Promise<number> {
+export async function requireLessonManagement(lessonIndex: number): Promise<number> {
   const session = await useRefreshedAppSession()
-  const sessionData = session.data
+  if (!session.data.userId) throw new Error('Unauthorized: No session found')
 
-  if (!sessionData.userId) {
-    throw new Error('Unauthorized: No session found')
-  }
-
-  // Fast path: check privilege
-  const userPrivs = sessionData.privileges ?? []
-  if (required.length > 0 && hasPrivilege(userPrivs, required)) {
-    return sessionData.userId
-  }
-
-  // Slow path: check instructor status
   const [lesson] = await db
     .select({ instructor1: lessons.instructor1, instructor2: lessons.instructor2 })
     .from(lessons)
     .where(eq(lessons.index, lessonIndex))
     .limit(1)
 
-  if (!lesson) {
-    throw new Error('Not found: Lesson does not exist')
-  }
+  if (!lesson) throw new Error('Not found: Lesson does not exist')
+  if (!canManageLesson(session.data, lesson)) throw new Error('Forbidden: Insufficient privileges')
+  return session.data.userId
+}
 
-  if (lesson.instructor1 === sessionData.userId || lesson.instructor2 === sessionData.userId) {
-    return sessionData.userId
-  }
+export async function requireRatingManagement(ratingIndex: number): Promise<number> {
+  const session = await useRefreshedAppSession()
+  if (!session.data.userId) throw new Error('Unauthorized: No session found')
 
-  throw new Error('Forbidden: Insufficient privileges')
+  const [rating] = await db
+    .select({ examiner: wycRatings.examiner, enteredBy: wycRatings.enteredBy })
+    .from(wycRatings)
+    .where(eq(wycRatings.index, ratingIndex))
+    .limit(1)
+
+  if (!rating || !canManageRating(session.data, rating)) {
+    throw new Error('Forbidden: Insufficient privileges')
+  }
+  return session.data.userId
 }
 
 /**

@@ -1,3 +1,5 @@
+import { useCurrentUser } from '@/lib/auth/auth-query-options'
+import { hasPrivilege } from '@/lib/permissions'
 import { AddRatingTypeModal } from '@/components/rating-types/AddRatingTypeModal'
 import { ConfirmDialog } from '@/components/ui/ConfirmDialog'
 import { Button } from '@/components/ui/button'
@@ -39,22 +41,28 @@ type DeleteTarget = {
 }
 
 function DeleteCell({ item, onDelete }: { item: RatingType; onDelete: () => void }) {
+  const { privileges } = useCurrentUser()
   return (
     <TableCell className="py-1.5 px-2 text-sm">
-      {item.usageCount === 0 && (
-        <button
+      {hasPrivilege(privileges, ['db']) && item.usageCount === 0 && (
+        <Button
+          variant="ghost"
+          size="icon"
+          aria-label={`Delete ${item.text}`}
           className="text-muted-foreground hover:text-destructive"
           title="Delete"
           onClick={onDelete}
         >
           <X className="h-4 w-4" />
-        </button>
+        </Button>
       )}
     </TableCell>
   )
 }
 
 function RatingTypesPage() {
+  const { privileges } = useCurrentUser()
+  const hasDb = hasPrivilege(privileges, ['db'])
   const { data: ratingTypes } = useSuspenseQuery(getRatingTypesAllQueryOptions())
   const [isAddModalOpen, setIsAddModalOpen] = useState(false)
   const [deleteTarget, setDeleteTarget] = useState<DeleteTarget | null>(null)
@@ -74,10 +82,12 @@ function RatingTypesPage() {
     <div className="p-4">
       <h2 className="text-2xl font-bold mb-4">Rating Types</h2>
 
-      <Button onClick={() => setIsAddModalOpen(true)} className="mb-4">
-        <Plus className="h-4 w-4" />
-        New Rating Type
-      </Button>
+      {hasDb && (
+        <Button onClick={() => setIsAddModalOpen(true)} className="mb-4">
+          <Plus className="h-4 w-4" />
+          New Rating Type
+        </Button>
+      )}
 
       <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
         {Array.from(grouped.entries()).map(([type, items]) => (
@@ -130,7 +140,7 @@ function RatingTypesPage() {
         ))}
       </div>
 
-      {isAddModalOpen && (
+      {hasDb && isAddModalOpen && (
         <AddRatingTypeModal onClose={() => setIsAddModalOpen(false)} onSuccess={() => {}} />
       )}
 

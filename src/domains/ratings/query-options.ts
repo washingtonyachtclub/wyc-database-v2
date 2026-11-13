@@ -38,6 +38,8 @@ export function useCreateRatingMutation(opts: { onSuccess: () => void; onClose: 
     mutationFn: createRating,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['ratings'] })
+      queryClient.invalidateQueries({ queryKey: ['members', 'ratingsGiven'] })
+      queryClient.invalidateQueries({ queryKey: ['members', 'ratings'] })
       opts.onSuccess()
       opts.onClose()
     },
@@ -50,6 +52,8 @@ export function useUpdateRatingMutation(opts: { onSuccess: () => void }) {
     mutationFn: updateRatingComments,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['ratings'] })
+      queryClient.invalidateQueries({ queryKey: ['members', 'ratingsGiven'] })
+      queryClient.invalidateQueries({ queryKey: ['members', 'ratings'] })
       opts.onSuccess()
     },
   })
@@ -61,6 +65,8 @@ export function useDeleteRatingMutation() {
     mutationFn: deleteRating,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['ratings'] })
+      queryClient.invalidateQueries({ queryKey: ['members', 'ratingsGiven'] })
+      queryClient.invalidateQueries({ queryKey: ['members', 'ratings'] })
     },
   })
 }

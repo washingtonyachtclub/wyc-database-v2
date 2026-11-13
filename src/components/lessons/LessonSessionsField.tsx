@@ -17,7 +17,6 @@ const lessonSessionsDefaults: LessonInsert = {
   locationUrl: '',
   size: 0,
   expire: 0,
-  display: true,
 }
 
 export const LessonSessionsField = withForm({

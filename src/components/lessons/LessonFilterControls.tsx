@@ -24,7 +24,6 @@ export function LessonFilterControls({
   classTypeId,
   instructor,
   expireQtrFilter,
-  display,
   search,
   classTypes,
   quarters,
@@ -34,7 +33,6 @@ export function LessonFilterControls({
   classTypeId?: number
   instructor?: number
   expireQtrFilter?: ExpireQtrFilter
-  display?: boolean
   search?: string
   classTypes: Array<{ index: number; text: string | null }>
   quarters: Array<{ index: number; text: string | null; school: string | null }>
@@ -47,11 +45,7 @@ export function LessonFilterControls({
   }, [search])
 
   const hasFilters =
-    classTypeId !== undefined ||
-    instructor !== undefined ||
-    expireQtrFilter ||
-    display === true ||
-    !!search
+    classTypeId !== undefined || instructor !== undefined || expireQtrFilter || !!search
 
   const activeClass = 'bg-primary/10 border-primary'
   const inactiveClass = 'bg-background border-border'
@@ -153,19 +147,6 @@ export function LessonFilterControls({
             }}
             className={cn('border-2 w-48', search ? activeClass : inactiveClass)}
           />
-        </div>
-
-        <div className="flex items-center gap-2 pb-1">
-          <input
-            id="filter-display"
-            type="checkbox"
-            checked={display === true}
-            onChange={(e) => onFilterChange({ display: e.target.checked || undefined })}
-            className="h-4 w-4 accent-primary"
-          />
-          <Label htmlFor="filter-display" className="cursor-pointer">
-            Display?
-          </Label>
         </div>
 
         {hasFilters && (

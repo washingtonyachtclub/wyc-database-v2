@@ -1,13 +1,11 @@
+import { canManageLesson } from '@/lib/resource-permissions'
+import { useRefreshedAppSession } from '@/lib/auth/session'
 import db from '@/db/index'
 import { lessonAnnouncements, lessons, signups } from '@/db/schema'
 import { enrollmentStatus } from '@/db/signup-utils'
 import { baseLessonQuery, fetchLessonSessions } from '@/domains/lessons/queries'
 import { toRichLesson } from '@/domains/lessons/schema'
-import {
-  requireAuth,
-  requireInstructorOrPrivilege,
-  sessionHasPrivilege,
-} from '@/lib/auth/auth-middleware'
+import { requireAuth, requireLessonManagement } from '@/lib/auth/auth-middleware'
 import { createServerFn } from '@tanstack/react-start'
 import { and, asc, eq } from 'drizzle-orm'
 import { publishLessonAnnouncement } from './publish'
@@ -15,7 +13,7 @@ import { fetchLessonAnnouncements } from './queries'
 import { postLessonAnnouncementSchema, toLessonAnnouncement } from './schema'
 
 async function fetchAccessibleLesson(lessonId: number, userId: number) {
-  const [lessonRow, [signup], isDatabaseAdmin, isRatingsManager] = await Promise.all([
+  const [lessonRow, [signup], session] = await Promise.all([
     baseLessonQuery()
       .where(eq(lessons.index, lessonId))
       .then((rows) => rows[0]),
@@ -24,19 +22,18 @@ async function fetchAccessibleLesson(lessonId: number, userId: number) {
       .from(signups)
       .where(and(eq(signups.class, lessonId), eq(signups.student, userId)))
       .limit(1),
-    sessionHasPrivilege('db'),
-    sessionHasPrivilege('rtgs'),
+    useRefreshedAppSession(),
   ])
 
   if (!lessonRow) return null
 
-  const isInstructor = lessonRow.instructor1 === userId || lessonRow.instructor2 === userId
+  const canManage = canManageLesson(session.data, lessonRow)
 
   return {
     lessonRow,
     signupIndex: signup?.index ?? null,
-    canViewAnnouncements: Boolean(signup) || isInstructor || isDatabaseAdmin,
-    canManageLesson: isInstructor || isDatabaseAdmin || isRatingsManager,
+    canViewAnnouncements: Boolean(signup) || canManage,
+    canManageLesson: canManage,
   }
 }
 
@@ -94,7 +91,7 @@ export const getMemberLessonPage = createServerFn({ method: 'GET' })
 export const postLessonAnnouncement = createServerFn({ method: 'POST' })
   .validator((input) => postLessonAnnouncementSchema.parse(input))
   .handler(async ({ data }) => {
-    const authorWycNumber = await requireInstructorOrPrivilege(data.lessonId, 'db')
+    const authorWycNumber = await requireLessonManagement(data.lessonId)
 
     try {
       return await publishLessonAnnouncement({ ...data, authorWycNumber })
@@ -117,7 +114,7 @@ export const deleteLessonAnnouncement = createServerFn({ method: 'POST' })
         .limit(1)
       if (!announcement) throw new Error('Announcement not found')
 
-      await requireInstructorOrPrivilege(announcement.lessonId, 'db')
+      await requireLessonManagement(announcement.lessonId)
       await db.delete(lessonAnnouncements).where(eq(lessonAnnouncements.id, announcementId))
       return { success: true }
     } catch (error) {

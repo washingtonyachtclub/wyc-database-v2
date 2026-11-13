@@ -51,9 +51,4 @@ export const columns = [
     header: 'Expire',
     enableSorting: false,
   }),
-  columnHelper.accessor('display', {
-    header: 'Display',
-    cell: (info) => (info.getValue() ? 'Yes' : 'No'),
-    enableSorting: false,
-  }),
 ]

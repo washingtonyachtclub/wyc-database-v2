@@ -117,14 +117,19 @@ function RatingDetailPage() {
         )
       })()}
 
-      <RatingEditForm ratingIndex={rating.index} defaultComments={rating.comments} />
+      {rating.canManageRating && (
+        <RatingEditForm ratingIndex={rating.index} defaultComments={rating.comments} />
+      )}
 
-      <div className="pt-4 border-t">
-        <Button variant="destructive" onClick={() => setShowDeleteDialog(true)}>
-          Delete Rating
-        </Button>
-      </div>
+      {rating.canManageRating && (
+        <div className="pt-4 border-t">
+          <Button variant="destructive" onClick={() => setShowDeleteDialog(true)}>
+            Delete Rating
+          </Button>
+        </div>
+      )}
 
+      <ErrorAlert error={deleteMutation.error?.message} action="Deleting rating" />
       <AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
         <AlertDialogContent>
           <AlertDialogHeader>
