@@ -1,5 +1,6 @@
 import { sql } from 'drizzle-orm'
 import {
+  bigint,
   char,
   check,
   customType,
@@ -20,6 +21,27 @@ import {
   unique,
   varchar,
 } from 'drizzle-orm/mysql-core'
+
+export const auditLog = mysqlTable(
+  'audit_log',
+  {
+    id: bigint({ mode: 'number', unsigned: true }).autoincrement().primaryKey(),
+    occurredAt: datetime('occurred_at', { mode: 'string', fsp: 3 }).notNull(),
+    requestId: char('request_id', { length: 36 }).notNull(),
+    actorWycNumber: int('actor_wyc_number'),
+    effectiveWycNumber: int('effective_wyc_number'),
+    source: varchar({ length: 32 }).notNull(),
+    action: varchar({ length: 160 }).notNull(),
+    transactionId: char('transaction_id', { length: 36 }),
+    operation: varchar({ length: 24 }).notNull(),
+    tableName: varchar('table_name', { length: 64 }),
+    outcome: mysqlEnum(['succeeded', 'failed']).notNull(),
+    affectedRows: bigint('affected_rows', { mode: 'number', unsigned: true }),
+    insertId: varchar('insert_id', { length: 32 }),
+    details: json().notNull(),
+  },
+  (table) => [index('idx_audit_log_occurred_at').on(table.occurredAt)],
+)
 
 const blobAsText = customType<{ data: string; driverData: Buffer }>({
   dataType() {

@@ -125,6 +125,9 @@ Form data (validated by Zod schema)
   -> Drizzle INSERT/UPDATE
 ```
 
+The shared database client records writes in a 30-day [audit log](audit-log.md). Auditing includes
+request attribution and transaction markers, and audit failures do not prevent business writes.
+
 Zod schemas for writes (e.g. `MemberProfileUpdateSchema`) are defined in each domain's `schema.ts`. The `fromXxxInsert()` mapper handles type conversions like boolean to tinyint.
 
 ## Route data flow

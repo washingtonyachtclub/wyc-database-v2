@@ -10,6 +10,7 @@
     "test": "vitest run",
     "db:generate": "drizzle-kit generate",
     "db:check": "node scripts/check-drizzle.mjs",
+    "db:check-access": "node scripts/check-db-access.mjs",
     "db:diff": "drizzle-kit push --explain --verbose --force",
     "db:diff:dev": "dotenv -e .env.local -- npm run db:diff",
     "db:baseline": "node scripts/baseline-drizzle.mjs",
