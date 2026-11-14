@@ -205,7 +205,7 @@ function LessonCard({ entry, muted }: { entry: PublicLesson; muted?: boolean }) 
           {lessonSignupsOpen(lesson.sessions, now) ? (
             <EnrollAction lessonIndex={lesson.index} isFull={isFull} />
           ) : (
-            <span>Signups closed</span>
+            lesson.size !== 0 && <span>Signups closed</span>
           )}
         </div>
       </div>

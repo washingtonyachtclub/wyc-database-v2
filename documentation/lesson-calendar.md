@@ -9,8 +9,9 @@ A course remains listed until its final session's day ends.
 
 Member signups and waitlist joins close at the first session's start time in
 Seattle. For all-day sessions, signups close at midnight at the beginning of the
-first day. The public list and signup page show “Signups closed” afterward. The
-server enforces this deadline even for an already open signup page.
+first day. The public list and signup page show “Signups closed” afterward for
+limited-capacity lessons; unlimited lessons omit the label. The server enforces
+this deadline even for an already open signup page.
 
 The lesson's `expire` quarter controls membership eligibility and quarter-based
 administrative lists, independently of public visibility.
