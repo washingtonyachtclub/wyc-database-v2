@@ -21,7 +21,7 @@ A lesson size of `0` means unlimited enrollment. Every signup is enrolled, and
 unlimited lessons have no waitlist. Signup and reminder emails omit waitlist
 language, and roster and signup views show the enrolled count without a capacity.
 
-Create and edit forms expose an “Unlimited size” checkbox. Limited lessons require
+Create and edit forms expose an “Unlimited” checkbox beside the capacity input. Limited lessons require
 a positive whole-number size. Existing positive sizes remain capacity limits.
 
 ## Calendar sync
