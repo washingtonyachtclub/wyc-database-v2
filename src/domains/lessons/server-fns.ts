@@ -472,7 +472,7 @@ export const getLessonForSignup = createServerFn({ method: 'GET' })
       lesson,
       enrolledCount: enrolled.length,
       waitlistedCount: waitlisted.length,
-      signupsOpen: lessonSignupsOpen(lesson.sessions),
+      signupsOpen: lessonSignupsOpen(lesson.sessions, lesson.size),
       isAlreadySignedUp: lessonSignups.some((s) => s.student === userId),
       isMembershipSufficient,
       requiredQuarterName,
@@ -484,15 +484,14 @@ export const enrollInLesson = createServerFn({ method: 'POST' })
   .handler(async ({ data: { lessonIndex } }) => {
     const userId = await requireAuth()
 
-    if (!lessonSignupsOpen(await fetchLessonSessions(lessonIndex))) {
-      throw new Error('Signups are closed for this lesson')
-    }
-
     try {
       // Fetch lesson (rich query for email template)
       const [lessonRow] = await baseLessonQuery().where(eq(lessons.index, lessonIndex))
       if (!lessonRow) throw new Error('Lesson not found')
       const lesson = toRichLesson(lessonRow, await fetchLessonSessions(lessonIndex))
+      if (!lessonSignupsOpen(lesson.sessions, lesson.size)) {
+        throw new Error('Signups are closed for this lesson')
+      }
 
       // Membership must cover the lesson's own quarter, not just the current one
       const [member] = await db
@@ -526,7 +525,7 @@ export const enrollInLesson = createServerFn({ method: 'POST' })
 
       if (existing) throw new Error('You are already signed up for this lesson.')
 
-      if (!lessonSignupsOpen(await fetchLessonSessions(lessonIndex))) {
+      if (!lessonSignupsOpen(await fetchLessonSessions(lessonIndex), lesson.size)) {
         throw new Error('Signups are closed for this lesson')
       }
 
@@ -571,6 +570,7 @@ export const enrollInLesson = createServerFn({ method: 'POST' })
     } catch (error: any) {
       // Re-throw known user-facing errors
       if (
+        error.message === 'Signups are closed for this lesson' ||
         error.message === 'Lesson not found' ||
         error.message === 'Member not found' ||
         error.message === 'You are already signed up for this lesson.' ||
