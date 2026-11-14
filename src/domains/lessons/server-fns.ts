@@ -345,7 +345,7 @@ export const removeStudentFromLesson = createServerFn({ method: 'POST' })
         await sendEmail({
           to: promotedStudent.email,
           subject: "WYC - You're off the waitlist!",
-          text: lessonEnrolledEmail(
+          ...lessonEnrolledEmail(
             studentName,
             lessonEmailInfo,
             true,
@@ -547,7 +547,7 @@ export const enrollInLesson = createServerFn({ method: 'POST' })
         const studentName = `${member.first ?? ''} ${member.last ?? ''}`.trim() || 'Member'
         const lessonEmailInfo = await fetchLessonEmailInfo(lesson)
 
-        const emailText =
+        const emailContent =
           status === 'enrolled'
             ? lessonEnrolledEmail(studentName, lessonEmailInfo)
             : lessonWaitlistedEmail(studentName, lessonEmailInfo)
@@ -559,7 +559,7 @@ export const enrollInLesson = createServerFn({ method: 'POST' })
         await sendEmail({
           to: member.email ?? '',
           subject: emailSubject,
-          text: emailText,
+          ...emailContent,
           idempotencyKey: `enroll/${lessonIndex}/${userId}`,
         })
       } catch (emailError) {

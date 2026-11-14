@@ -1,3 +1,4 @@
+import { emailLink, emailTextToHtml } from './html'
 import { PUBLIC_APP_ORIGIN } from '@/lib/urls'
 
 import { formatSessions } from '@/domains/lessons/format-sessions'
@@ -17,22 +18,45 @@ export type LessonEmailInfo = {
   locationUrl: string
 }
 
-function formatLessonInfo(lesson: LessonEmailInfo): string {
+type EmailFormat = {
+  text: (value: string) => string
+  link: (url: string, label: string) => string
+}
+
+const plainTextFormat: EmailFormat = {
+  text: (value) => value,
+  link: (url, label) => `${label} (${url})`,
+}
+
+const htmlFormat: EmailFormat = {
+  text: emailTextToHtml,
+  link: emailLink,
+}
+
+function renderEmail(render: (format: EmailFormat) => string) {
+  return {
+    text: render(plainTextFormat),
+    html: `<div style="font-family:Arial,sans-serif;line-height:1.5">${render(htmlFormat).replaceAll('\n', '<br>')}</div>`,
+  }
+}
+
+function formatLessonInfo(lesson: LessonEmailInfo, format: EmailFormat): string {
   const sessionLines = formatSessions(lesson.sessions)
-  const lines = [`Class: ${lesson.subtype}`]
-  if (sessionLines.length === 1) lines.push(`When: ${sessionLines[0]}`)
-  else if (sessionLines.length > 1) lines.push('When:', ...sessionLines.map((l) => `  ${l}`))
+  const lines = [`Class: ${format.text(lesson.subtype)}`]
+  if (sessionLines.length === 1) lines.push(`When: ${format.text(sessionLines[0])}`)
+  else if (sessionLines.length > 1)
+    lines.push('When:', ...sessionLines.map((l) => `  ${format.text(l)}`))
   if (lesson.location) {
     lines.push(
-      `Location: ${lesson.location}${lesson.locationUrl ? ` (${lesson.locationUrl})` : ''}`,
+      `Location: ${lesson.locationUrl ? format.link(lesson.locationUrl, lesson.location) : format.text(lesson.location)}`,
     )
   }
   lines.push(
-    `Instructor: ${lesson.instructor1Name}${lesson.instructor1Email ? ` (${lesson.instructor1Email})` : ''}`,
+    `Instructor: ${format.text(lesson.instructor1Name)}${lesson.instructor1Email ? ` (${format.text(lesson.instructor1Email)})` : ''}`,
   )
   if (lesson.instructor2Name) {
     lines.push(
-      `Instructor: ${lesson.instructor2Name}${lesson.instructor2Email ? ` (${lesson.instructor2Email})` : ''}`,
+      `Instructor: ${format.text(lesson.instructor2Name)}${lesson.instructor2Email ? ` (${format.text(lesson.instructor2Email)})` : ''}`,
     )
   }
   return lines.join('\n')
@@ -60,22 +84,24 @@ export function lessonEnrolledEmail(
   lesson: LessonEmailInfo,
   fromWaitlist?: boolean,
   announcementsUrl?: string,
-): string {
+) {
   const intro = fromWaitlist
     ? 'A spot has opened up — you are now enrolled in the following class:'
     : 'You have been enrolled in the following class:'
 
-  return `Hello ${studentName},
+  return renderEmail(
+    (format) => `Hello ${format.text(studentName)},
 
 ${intro}
 
-${formatLessonInfo(lesson)}
+${formatLessonInfo(lesson, format)}
 
-${unenrollLine(lesson)}${
-    announcementsUrl
-      ? `\n\nThis lesson has announcements that may contain required information. Review all of them before attending:\n${announcementsUrl}`
-      : ''
-  }${guideLine(lesson)}`
+${format.text(unenrollLine(lesson))}${
+      announcementsUrl
+        ? `\n\nThis lesson has announcements that may contain required information. Review all of them before attending:\n${format.text(announcementsUrl)}`
+        : ''
+    }${format.text(guideLine(lesson))}`,
+  )
 }
 
 export const lessonReminderSubject = 'WYC - Your upcoming lesson'
@@ -84,27 +110,31 @@ export function lessonReminderEmail(
   studentName: string,
   lesson: LessonEmailInfo,
   daysAhead: number,
-): string {
+) {
   const when = daysAhead === 0 ? 'today' : daysAhead === 1 ? 'tomorrow' : `in ${daysAhead} days`
 
-  return `Hello ${studentName},
+  return renderEmail(
+    (format) => `Hello ${format.text(studentName)},
 
 This is a reminder that your WYC lesson is ${when}:
 
-${formatLessonInfo(lesson)}
+${formatLessonInfo(lesson, format)}
 
-${unenrollLine(lesson)}${guideLine(lesson)}`
+${format.text(unenrollLine(lesson))}${format.text(guideLine(lesson))}`,
+  )
 }
 
-export function lessonWaitlistedEmail(studentName: string, lesson: LessonEmailInfo): string {
-  return `Hello ${studentName},
+export function lessonWaitlistedEmail(studentName: string, lesson: LessonEmailInfo) {
+  return renderEmail(
+    (format) => `Hello ${format.text(studentName)},
 
 The class you signed up for is currently full. You have been added to the waitlist for:
 
-${formatLessonInfo(lesson)}
+${formatLessonInfo(lesson, format)}
 
 If enough students drop the class, you will automatically be enrolled.
 
-You can check your waitlist status or drop the class at ${PUBLIC_APP_ORIGIN}/my-lessons.
-`
+You can check your waitlist status or drop the class at ${format.text(`${PUBLIC_APP_ORIGIN}/my-lessons`)}.
+`,
+  )
 }
