@@ -46,7 +46,9 @@ export function LessonCard({
                 {lesson.size > 0 ? ` / ${lesson.size}` : ''}
               </div>
             )}
-            {lesson.enrolledCount === undefined && <div>Size: {lesson.size}</div>}
+            {lesson.enrolledCount === undefined && (
+              <div>Size: {lesson.size === 0 ? 'Unlimited' : lesson.size}</div>
+            )}
           </span>
           {onClick && <ChevronRight className="h-5 w-5 shrink-0" />}
         </div>

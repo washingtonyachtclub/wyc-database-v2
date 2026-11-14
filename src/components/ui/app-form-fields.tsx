@@ -1,3 +1,4 @@
+import type { ReactNode } from 'react'
 import { CircleHelp } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { useFieldContext, useFormContext } from '../../hooks/form-context'
@@ -137,10 +138,18 @@ export function TextAreaField({
 export function NumberField({
   label,
   required,
+  min,
+  disabled,
+  disabledPlaceholder,
+  trailingControl,
   className,
 }: {
   label: string
   required?: boolean
+  min?: number
+  disabled?: boolean
+  disabledPlaceholder?: string
+  trailingControl?: ReactNode
   className?: string
 }) {
   const field = useFieldContext<number>()
@@ -150,13 +159,20 @@ export function NumberField({
         {label}
         {required && ' *'}
       </Label>
-      <Input
-        id={field.name}
-        type="number"
-        value={field.state.value}
-        onBlur={field.handleBlur}
-        onChange={(e) => field.handleChange(e.target.valueAsNumber)}
-      />
+      <div className="flex items-center gap-3">
+        <Input
+          id={field.name}
+          type="number"
+          min={min}
+          disabled={disabled}
+          className={trailingControl ? 'w-24 shrink-0' : undefined}
+          value={disabled && disabledPlaceholder !== undefined ? '' : field.state.value}
+          placeholder={disabled ? disabledPlaceholder : undefined}
+          onBlur={field.handleBlur}
+          onChange={(e) => field.handleChange(e.target.valueAsNumber)}
+        />
+        {trailingControl}
+      </div>
       <FieldError errors={field.state.meta.errors} />
     </div>
   )

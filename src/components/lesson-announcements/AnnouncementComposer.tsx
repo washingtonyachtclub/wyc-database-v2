@@ -27,10 +27,12 @@ export function AnnouncementComposer({
   lessonId,
   enrolledCount,
   waitlistedCount,
+  unlimitedSize,
 }: {
   lessonId: number
   enrolledCount: number
   waitlistedCount: number
+  unlimitedSize: boolean
 }) {
   const [subject, setSubject] = useState(DEFAULT_LESSON_ANNOUNCEMENT_SUBJECT)
   const [bodyMarkdown, setBodyMarkdown] = useState('')
@@ -43,7 +45,7 @@ export function AnnouncementComposer({
   const bodyLength = bodyMarkdown.length
   const bodyIsValid = bodyMarkdown.trim().length > 0 && bodyLength <= LESSON_ANNOUNCEMENT_BODY_LIMIT
   const willEmailEnrolled = emailEnrolled && enrolledCount > 0
-  const willEmailWaitlisted = emailWaitlisted && waitlistedCount > 0
+  const willEmailWaitlisted = !unlimitedSize && emailWaitlisted && waitlistedCount > 0
 
   const reset = () => {
     setSubject(DEFAULT_LESSON_ANNOUNCEMENT_SUBJECT)
@@ -103,15 +105,17 @@ export function AnnouncementComposer({
           />
           <Label htmlFor="email-enrolled">Email enrolled members ({enrolledCount})</Label>
         </div>
-        <div className="flex items-center gap-2">
-          <Checkbox
-            id="email-waitlisted"
-            checked={emailWaitlisted}
-            disabled={waitlistedCount === 0}
-            onCheckedChange={(checked) => setEmailWaitlisted(checked === true)}
-          />
-          <Label htmlFor="email-waitlisted">Email waitlisted members ({waitlistedCount})</Label>
-        </div>
+        {!unlimitedSize && (
+          <div className="flex items-center gap-2">
+            <Checkbox
+              id="email-waitlisted"
+              checked={emailWaitlisted}
+              disabled={waitlistedCount === 0}
+              onCheckedChange={(checked) => setEmailWaitlisted(checked === true)}
+            />
+            <Label htmlFor="email-waitlisted">Email waitlisted members ({waitlistedCount})</Label>
+          </div>
+        )}
       </div>
 
       <Button type="button" disabled={!bodyIsValid} onClick={() => setShowPreview(true)}>
