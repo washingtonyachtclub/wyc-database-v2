@@ -137,10 +137,12 @@ export function TextAreaField({
 export function NumberField({
   label,
   required,
+  min,
   className,
 }: {
   label: string
   required?: boolean
+  min?: number
   className?: string
 }) {
   const field = useFieldContext<number>()
@@ -153,6 +155,7 @@ export function NumberField({
       <Input
         id={field.name}
         type="number"
+        min={min}
         value={field.state.value}
         onBlur={field.handleBlur}
         onChange={(e) => field.handleChange(e.target.valueAsNumber)}

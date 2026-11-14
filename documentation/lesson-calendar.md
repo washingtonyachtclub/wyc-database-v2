@@ -15,6 +15,15 @@ server enforces this deadline even for an already open signup page.
 The lesson's `expire` quarter controls membership eligibility and quarter-based
 administrative lists, independently of public visibility.
 
+## Capacity
+
+A lesson size of `0` means unlimited enrollment. Every signup is enrolled, and
+unlimited lessons have no waitlist. Signup and reminder emails omit waitlist
+language, and roster and signup views show the enrolled count without a capacity.
+
+Create and edit forms expose an “Unlimited size” checkbox. Limited lessons require
+a positive whole-number size. Existing positive sizes remain capacity limits.
+
 ## Calendar sync
 
 Google Calendar includes individual sessions starting on or after July 21, 2026,

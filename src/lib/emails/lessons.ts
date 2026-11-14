@@ -6,6 +6,7 @@ import type { LessonSession } from '@/domains/lessons/schema'
 export type LessonEmailInfo = {
   type: string
   typeId: number
+  size: number
   subtype: string
   sessions: LessonSession[]
   instructor1Name: string
@@ -37,7 +38,12 @@ function formatLessonInfo(lesson: LessonEmailInfo): string {
   return lines.join('\n')
 }
 
-const PLEASE_UNENROLL = `If you can no longer make it, please unenroll at ${PUBLIC_APP_ORIGIN}/my-lessons as soon as you can. Classes fill up, and dropping frees your spot for the next person on the waitlist.`
+function unenrollLine(lesson: LessonEmailInfo): string {
+  const instruction = `If you can no longer make it, please unenroll at ${PUBLIC_APP_ORIGIN}/my-lessons as soon as you can.`
+  return lesson.size === 0
+    ? instruction
+    : `${instruction} Classes fill up, and dropping frees your spot for the next person on the waitlist.`
+}
 
 // class_type indices: NOV Dinghy Weekday (1), NOV Dinghy Weekend (2), Catamaran (3), Dinghy Sailing (10)
 const GUIDE_TYPE_IDS = new Set([1, 2, 3, 10])
@@ -65,7 +71,7 @@ ${intro}
 
 ${formatLessonInfo(lesson)}
 
-${PLEASE_UNENROLL}${
+${unenrollLine(lesson)}${
     announcementsUrl
       ? `\n\nThis lesson has announcements that may contain required information. Review all of them before attending:\n${announcementsUrl}`
       : ''
@@ -87,7 +93,7 @@ This is a reminder that your WYC lesson is ${when}:
 
 ${formatLessonInfo(lesson)}
 
-${PLEASE_UNENROLL}${guideLine(lesson)}`
+${unenrollLine(lesson)}${guideLine(lesson)}`
 }
 
 export function lessonWaitlistedEmail(studentName: string, lesson: LessonEmailInfo): string {

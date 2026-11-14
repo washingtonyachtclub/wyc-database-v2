@@ -32,7 +32,8 @@ const locationFieldDefaults: LessonInsert = {
   requirements: '',
   location: '',
   locationUrl: '',
-  size: 0,
+  size: 1,
+  unlimitedSize: false,
   expire: 0,
 }
 

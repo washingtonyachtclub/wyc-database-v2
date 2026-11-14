@@ -213,7 +213,8 @@ function SignedUpLessonCard({ lesson }: { lesson: SignedUpLesson }) {
             <AlertDialogTitle>Unenroll from Lesson</AlertDialogTitle>
             <AlertDialogDescription>
               Are you sure you want to unenroll from <strong>{lesson.subtype}</strong>? This will
-              remove you from the lesson. If anyone is on the waitlist, they will take your spot.
+              remove you from the lesson.
+              {lesson.size > 0 && ' If anyone is on the waitlist, they will take your spot.'}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>

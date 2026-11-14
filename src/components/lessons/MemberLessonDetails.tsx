@@ -144,8 +144,8 @@ export function MemberLessonDetails({
           <AlertDialogHeader>
             <AlertDialogTitle>Unenroll from lesson?</AlertDialogTitle>
             <AlertDialogDescription>
-              This removes you from {lesson.subtype}. If someone is waitlisted, they may take your
-              spot.
+              This removes you from {lesson.subtype}.
+              {lesson.size > 0 && ' If someone is waitlisted, they may take your spot.'}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>

@@ -53,7 +53,7 @@ function SignupPage() {
     requiredQuarterName,
     signupsOpen,
   } = signupData
-  const isFull = enrolledCount >= lesson.size
+  const isFull = lesson.size > 0 && enrolledCount >= lesson.size
   const sessionLines = formatSessions(lesson.sessions)
 
   const handleSignup = () => {
@@ -107,14 +107,17 @@ function SignupPage() {
         <div className="flex gap-4">
           <div className="rounded-md border p-3 flex-1 text-center">
             <div className="text-lg font-bold">
-              {enrolledCount} / {lesson.size}
+              {enrolledCount}
+              {lesson.size > 0 && ` / ${lesson.size}`}
             </div>
             <div className="text-sm text-muted-foreground">Enrolled</div>
           </div>
-          <div className="rounded-md border p-3 flex-1 text-center">
-            <div className="text-lg font-bold">{waitlistedCount}</div>
-            <div className="text-sm text-muted-foreground">Waitlisted</div>
-          </div>
+          {lesson.size > 0 && (
+            <div className="rounded-md border p-3 flex-1 text-center">
+              <div className="text-lg font-bold">{waitlistedCount}</div>
+              <div className="text-sm text-muted-foreground">Waitlisted</div>
+            </div>
+          )}
         </div>
 
         {/* Waitlist warning */}

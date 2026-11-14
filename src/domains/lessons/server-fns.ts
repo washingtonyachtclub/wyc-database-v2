@@ -30,6 +30,7 @@ import {
   fromLessonInsert,
   fromSessionInput,
   lastSessionDate,
+  lessonInsertSchema,
   toRichLesson,
 } from '@/domains/lessons/schema'
 import { requireAuth, requireLessonManagement, requirePrivilege } from '@/lib/auth/auth-middleware'
@@ -247,7 +248,7 @@ export const resyncLessonCalendar = createServerFn({ method: 'POST' })
   })
 
 export const createLesson = createServerFn({ method: 'POST' })
-  .validator((data: LessonInsert) => data)
+  .validator((data: LessonInsert) => lessonInsertSchema.parse(data))
   .handler(async ({ data }) => {
     await requirePrivilege('db')
     const mismatch = quarterMismatchError(
@@ -265,7 +266,7 @@ export const createLesson = createServerFn({ method: 'POST' })
 
 export const updateLesson = createServerFn({ method: 'POST' })
   .validator((input: { index: number } & LessonInsert) => ({
-    ...input,
+    ...lessonInsertSchema.parse(input),
     index: Number(input.index),
   }))
   .handler(async ({ data }) => {

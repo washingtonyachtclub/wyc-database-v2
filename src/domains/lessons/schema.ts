@@ -70,7 +70,11 @@ export const lessonInsertSchema = z.object({
   requirements: z.string(),
   location: z.string(),
   locationUrl: z.string(),
-  size: z.number({ error: 'Size is required' }).int(),
+  size: z
+    .number({ error: 'Size is required' })
+    .int()
+    .positive('Size must be a positive whole number'),
+  unlimitedSize: z.boolean(),
   expire: z.number({ error: 'Expire quarter is required' }),
 })
 
@@ -259,7 +263,7 @@ export function fromLessonInsert(data: LessonInsert) {
     requirements: data.requirements,
     location: data.location,
     locationUrl: data.locationUrl,
-    size: data.size,
+    size: data.unlimitedSize ? 0 : data.size,
     expire: data.expire,
   }
 }

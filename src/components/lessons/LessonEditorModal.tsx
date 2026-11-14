@@ -1,3 +1,4 @@
+import { LessonSizeField } from '@/components/lessons/LessonSizeField'
 import { useQuery } from '@tanstack/react-query'
 import { LESSON_CATEGORIES, LESSON_LOCATION_PRESETS, TBD_WYC_NUMBER } from '../../db/constants'
 import { LessonLocationField, typeLocationDefault } from './LessonLocationField'
@@ -26,7 +27,8 @@ const emptyDefaults = (expireDefault: number): LessonInsert => ({
   requirements: '',
   location: WAC.name,
   locationUrl: WAC.url,
-  size: 0,
+  size: 1,
+  unlimitedSize: false,
   expire: expireDefault,
 })
 
@@ -151,10 +153,7 @@ export function LessonFormModal({ onClose, currentQuarter, onSuccess }: LessonFo
 
           <LessonLocationField form={form} />
 
-          <form.AppField
-            name="size"
-            children={(field) => <field.NumberField label="Size" required />}
-          />
+          <LessonSizeField form={form} />
 
           <form.AppField
             name="requirements"
