@@ -29,6 +29,7 @@ export const LessonSizeField = withForm({
                 label="Capacity"
                 min={1}
                 disabled={unlimited}
+                disabledPlaceholder="—"
                 trailingControl={
                   <form.AppField
                     name="unlimitedSize"

@@ -140,6 +140,7 @@ export function NumberField({
   required,
   min,
   disabled,
+  disabledPlaceholder,
   trailingControl,
   className,
 }: {
@@ -147,6 +148,7 @@ export function NumberField({
   required?: boolean
   min?: number
   disabled?: boolean
+  disabledPlaceholder?: string
   trailingControl?: ReactNode
   className?: string
 }) {
@@ -164,7 +166,8 @@ export function NumberField({
           min={min}
           disabled={disabled}
           className={trailingControl ? 'w-24 shrink-0' : undefined}
-          value={field.state.value}
+          value={disabled && disabledPlaceholder !== undefined ? '' : field.state.value}
+          placeholder={disabled ? disabledPlaceholder : undefined}
           onBlur={field.handleBlur}
           onChange={(e) => field.handleChange(e.target.valueAsNumber)}
         />
