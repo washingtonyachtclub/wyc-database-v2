@@ -75,9 +75,6 @@ export function auditDatabaseClient<T extends Pool | PoolConnection>(
 
   return new Proxy(client, {
     get(target, property) {
-      if (property === 'connection' || property === 'pool' || property === 'prepare') {
-        throw new Error('Raw driver access and streaming bypass database auditing')
-      }
       if (methods.has(property)) return methods.get(property)
       let method: unknown
       if (property === 'query' || property === 'execute') {

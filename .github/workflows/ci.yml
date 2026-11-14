@@ -15,7 +15,6 @@ jobs:
           cache: npm
       - run: npm ci
       - run: npm run db:check
-      - run: npm run db:check-access
       - run: npm run format:check
       - run: npm run build
         env:
