@@ -1,3 +1,5 @@
+import { submitWrittenTest, validateTestExaminer } from '@/domains/written-tests/server-fns'
+import type { SavedTestResult } from '@/domains/written-tests/schema'
 import { useEffect, useMemo, useRef, useState } from 'react'
 import {
   ArrowLeft,
@@ -33,9 +35,7 @@ import {
   getAnswerText,
   getCorrectAnswerText,
   isQuestionAnswered,
-  isQuestionCorrect,
   PASSING_PERCENTAGE,
-  scoreTest,
   type TestAnswer,
   type TestAnswers,
 } from './dinghy-test-utils'
@@ -45,6 +45,7 @@ const STORAGE_KEY = 'wyc-dinghy-novice-test-draft-v2'
 type TestMode = 'practice' | 'final'
 type TestStage = 'catalog' | 'mode' | 'taking' | 'review' | 'results'
 type TestAttempt = {
+  attemptId: string
   testId: string
   mode: TestMode
   memberWycNumber: number
@@ -59,6 +60,10 @@ export function DinghyTest({ memberWycNumber }: { memberWycNumber: number }) {
   const [stage, setStage] = useState<TestStage>('catalog')
   const [returnToReview, setReturnToReview] = useState(false)
   const [draftLoaded, setDraftLoaded] = useState(false)
+  const [saving, setSaving] = useState(false)
+  const savingRef = useRef(false)
+  const [saveError, setSaveError] = useState('')
+  const [savedResult, setSavedResult] = useState<SavedTestResult | null>(null)
 
   useEffect(() => {
     try {
@@ -71,7 +76,10 @@ export function DinghyTest({ memberWycNumber }: { memberWycNumber: number }) {
         }
         if (parsed.attempt?.memberWycNumber === memberWycNumber) {
           setAnswers(parsed.answers ?? {})
-          setAttempt(parsed.attempt)
+          setAttempt({
+            ...parsed.attempt,
+            attemptId: parsed.attempt.attemptId ?? crypto.randomUUID(),
+          })
           setCurrentIndex(Math.min(Math.max(parsed.currentIndex ?? 0, 0), questions.length - 1))
           setStage('taking')
         }
@@ -96,7 +104,10 @@ export function DinghyTest({ memberWycNumber }: { memberWycNumber: number }) {
 
   const startTest = (mode: TestMode, examinerWycNumber: number | null) => {
     setAnswers({})
+    setSaveError('')
+    setSavedResult(null)
     setAttempt({
+      attemptId: crypto.randomUUID(),
       testId: dinghyNoviceTest.id,
       mode,
       memberWycNumber,
@@ -117,10 +128,32 @@ export function DinghyTest({ memberWycNumber }: { memberWycNumber: number }) {
     setStage('taking')
   }
 
-  const submitTest = () => {
-    setStage('results')
-    setReturnToReview(false)
-    window.localStorage.removeItem(STORAGE_KEY)
+  const submitTest = async () => {
+    if (!attempt || savingRef.current) return
+    savingRef.current = true
+    setSaving(true)
+    setSaveError('')
+    try {
+      const response = await submitWrittenTest({ data: { ...attempt, answers } })
+      if (!response.result) {
+        setSaveError(response.error)
+        return
+      }
+      setSavedResult(response.result)
+      setAnswers(response.result.answers)
+      setStage('results')
+      setReturnToReview(false)
+      try {
+        window.localStorage.removeItem(STORAGE_KEY)
+      } catch (error) {
+        console.warn('Unable to clear the saved test draft', error)
+      }
+    } catch {
+      setSaveError('Unable to save test. Your answers are retained. Please try again.')
+    } finally {
+      savingRef.current = false
+      setSaving(false)
+    }
   }
 
   const resetAttempt = (nextStage: TestStage) => {
@@ -155,8 +188,12 @@ export function DinghyTest({ memberWycNumber }: { memberWycNumber: number }) {
       <TestHeader
         answeredCount={answeredCount}
         attempt={attempt}
-        onExit={stage === 'taking' || stage === 'review' ? () => resetAttempt('mode') : undefined}
-        onFill={fillWithDevAnswer}
+        onExit={
+          !saving && (stage === 'taking' || stage === 'review')
+            ? () => resetAttempt('mode')
+            : undefined
+        }
+        onFill={saving ? undefined : fillWithDevAnswer}
       />
 
       {stage === 'taking' && (
@@ -192,12 +229,15 @@ export function DinghyTest({ memberWycNumber }: { memberWycNumber: number }) {
           answers={answers}
           onSelectQuestion={(index) => goToQuestion(index, true)}
           onSubmit={submitTest}
+          saving={saving}
+          saveError={saveError}
           questions={questions}
         />
       )}
 
-      {stage === 'results' && (
+      {stage === 'results' && savedResult && (
         <ResultsScreen
+          result={savedResult}
           answers={answers}
           attempt={attempt}
           onChooseTest={() => resetAttempt('catalog')}
@@ -256,19 +296,37 @@ function ModeSelection({
 }) {
   const [examinerInput, setExaminerInput] = useState('')
   const [examinerError, setExaminerError] = useState('')
+  const [checking, setChecking] = useState(false)
+  const checkingRef = useRef(false)
 
-  const startFinal = () => {
+  const startFinal = async () => {
+    if (checkingRef.current) return
     const examinerWycNumber = Number(examinerInput)
     if (!Number.isInteger(examinerWycNumber) || examinerWycNumber <= 0) {
       setExaminerError('Enter the WYC ID of the examiner who is present.')
       return
     }
-    onStart('final', examinerWycNumber)
+    checkingRef.current = true
+    setChecking(true)
+    setExaminerError('')
+    try {
+      const { valid } = await validateTestExaminer({ data: examinerWycNumber })
+      if (!valid) {
+        setExaminerError('No member exists with that WYC ID.')
+        return
+      }
+      onStart('final', examinerWycNumber)
+    } catch {
+      setExaminerError('Unable to check examiner. Please try again.')
+    } finally {
+      checkingRef.current = false
+      setChecking(false)
+    }
   }
 
   return (
     <main className="mx-auto max-w-5xl px-4 py-8 sm:px-6 lg:px-8">
-      <Button onClick={onBack} type="button" variant="ghost">
+      <Button disabled={checking} onClick={onBack} type="button" variant="ghost">
         <ArrowLeft aria-hidden="true" />
         All tests
       </Button>
@@ -284,7 +342,12 @@ function ModeSelection({
           <p className="mt-2 flex-1 text-muted-foreground">
             Take the complete test and review the correct answers after submitting.
           </p>
-          <Button className="mt-6 min-h-11" onClick={() => onStart('practice', null)} type="button">
+          <Button
+            className="mt-6 min-h-11"
+            disabled={checking}
+            onClick={() => onStart('practice', null)}
+            type="button"
+          >
             Start practice
           </Button>
         </section>
@@ -301,6 +364,7 @@ function ModeSelection({
               aria-invalid={Boolean(examinerError)}
               className="mt-2"
               id="examiner-wyc-number"
+              disabled={checking}
               inputMode="numeric"
               onChange={(event) => {
                 setExaminerInput(event.target.value)
@@ -317,8 +381,8 @@ function ModeSelection({
               </p>
             )}
           </div>
-          <Button className="mt-6 min-h-11" onClick={startFinal} type="button">
-            Start final test
+          <Button className="mt-6 min-h-11" disabled={checking} onClick={startFinal} type="button">
+            {checking ? 'Checking…' : 'Start final test'}
           </Button>
         </section>
       </div>
@@ -335,7 +399,7 @@ function TestHeader({
   answeredCount: number
   attempt: TestAttempt
   onExit?: () => void
-  onFill: () => void
+  onFill?: () => void
 }) {
   return (
     <>
@@ -348,7 +412,7 @@ function TestHeader({
           {onExit && <ExitAttemptButton onExit={onExit} />}
         </div>
         <h1 className="text-3xl font-bold tracking-tight">{dinghyNoviceTest.title}</h1>
-        {isDevEnvironment() && (
+        {isDevEnvironment() && onFill && (
           <Button className="mt-4" onClick={onFill} size="sm" type="button" variant="outline">
             Fill with devtest
           </Button>
@@ -738,11 +802,15 @@ function ReviewScreen({
   answers,
   onSelectQuestion,
   onSubmit,
+  saving,
+  saveError,
   questions,
 }: {
   answers: TestAnswers
   onSelectQuestion: (index: number) => void
   onSubmit: () => void
+  saving: boolean
+  saveError: string
   questions: readonly TestQuestion[]
 }) {
   const unansweredCount = questions.filter(
@@ -762,12 +830,21 @@ function ReviewScreen({
               : `${unansweredCount} question${unansweredCount === 1 ? ' is' : 's are'} unanswered. Unanswered questions score as incorrect.`}
           </p>
         </div>
-        <Button className="min-h-11" onClick={onSubmit} type="button">
+        <Button className="min-h-11" disabled={saving} onClick={onSubmit} type="button">
           <Flag aria-hidden="true" />
-          {unansweredCount > 0 ? `Submit with ${unansweredCount} unanswered` : 'Submit test'}
+          {saving
+            ? 'Saving…'
+            : unansweredCount > 0
+              ? `Submit with ${unansweredCount} unanswered`
+              : 'Submit test'}
         </Button>
       </div>
 
+      {saveError && (
+        <p role="alert" className="mt-4 text-destructive">
+          {saveError}
+        </p>
+      )}
       <div className="mt-8 space-y-8">
         {categories.map(([category, indices]) => (
           <section key={category}>
@@ -779,6 +856,7 @@ function ReviewScreen({
                   <Button
                     className="h-auto min-h-16 justify-start whitespace-normal px-4 py-3 text-left shadow-none"
                     key={index}
+                    disabled={saving}
                     onClick={() => onSelectQuestion(index)}
                     type="button"
                     variant="outline"
@@ -813,6 +891,7 @@ function ReviewScreen({
 }
 
 function ResultsScreen({
+  result,
   answers,
   attempt,
   onChooseTest,
@@ -821,13 +900,14 @@ function ResultsScreen({
 }: {
   answers: TestAnswers
   attempt: TestAttempt
+  result: SavedTestResult
   onChooseTest: () => void
   onRetake: () => void
   questions: readonly TestQuestion[]
 }) {
-  const score = scoreTest(questions, answers)
-  const scoredQuestionIndices = questions.map((question, index) => ({
-    correct: isQuestionCorrect(question, answers[index]),
+  const score = result.score
+  const scoredQuestionIndices = questions.map((_, index) => ({
+    correct: result.correctAnswers[index],
     index,
   }))
   const answerSections = [

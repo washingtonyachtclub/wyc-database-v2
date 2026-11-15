@@ -17,3 +17,5 @@ jobs:
       - run: npm run db:check
       - run: npm run format:check
       - run: npm run build
+        env:
+          NODE_OPTIONS: --max-old-space-size=4096

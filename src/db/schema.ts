@@ -1,5 +1,7 @@
+import type { TestSnapshot } from '@/domains/written-tests/schema'
 import { sql } from 'drizzle-orm'
 import {
+  bigint,
   char,
   check,
   customType,
@@ -957,4 +959,26 @@ export const wycWind = mysqlTable(
     windDirection: varchar('wind_direction', { length: 2 }).notNull(),
   },
   (table) => [primaryKey({ columns: [table.index] })],
+)
+
+export const writtenTestAttempts = mysqlTable(
+  'written_test_attempts',
+  {
+    id: bigint({ mode: 'number', unsigned: true }).autoincrement().primaryKey(),
+    attemptId: char('attempt_id', { length: 36 }).notNull(),
+    memberWycNumber: int('member_wyc_number').notNull(),
+    examinerWycNumber: int('examiner_wyc_number'),
+    testId: varchar('test_id', { length: 64 }).notNull(),
+    mode: mysqlEnum(['practice', 'final']).notNull(),
+    submittedAt: timestamp('submitted_at', { mode: 'string' }).defaultNow().notNull(),
+    correctCount: int('correct_count').notNull(),
+    questionCount: int('question_count').notNull(),
+    percentage: int().notNull(),
+    passed: tinyint().notNull(),
+    snapshot: json().$type<TestSnapshot>().notNull(),
+  },
+  (table) => [
+    unique('written_test_attempt_member_unique').on(table.memberWycNumber, table.attemptId),
+    index('written_test_attempt_submitted_at').on(table.submittedAt),
+  ],
 )
