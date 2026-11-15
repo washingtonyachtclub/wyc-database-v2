@@ -7,6 +7,7 @@ const SCROLL_EVENT = 'wyc-join-embed-scroll-to-top'
 const WYC_WEBSITE_ORIGINS = new Set([
   'https://washingtonyachtclub.org',
   'https://www.washingtonyachtclub.org',
+  'https://wyc-emdash-review.wyc-emdash-website.workers.dev',
 ])
 
 function parentOrigin() {
@@ -25,11 +26,11 @@ function parentOrigin() {
   return null
 }
 
-function postToParent(type: 'resize' | 'scroll-to-top', height?: number) {
+function postToParent(type: 'resize' | 'scroll-to-top', height?: number, source = MESSAGE_SOURCE) {
   if (window.parent === window) return
   const origin = parentOrigin()
   if (!origin) return
-  window.parent.postMessage({ source: MESSAGE_SOURCE, type, height }, origin)
+  window.parent.postMessage({ source, type, height }, origin)
 }
 
 export function requestEmbeddedJoinScrollToTop() {
@@ -39,9 +40,11 @@ export function requestEmbeddedJoinScrollToTop() {
 export function EmbeddedJoinPage({
   children,
   enabled,
+  messageSource = MESSAGE_SOURCE,
 }: {
   children: React.ReactNode
   enabled: boolean
+  messageSource?: 'wyc-join-embed' | 'wyc-lessons-embed'
 }) {
   const containerRef = useRef<HTMLDivElement>(null)
   const location = useLocation()
@@ -52,9 +55,9 @@ export function EmbeddedJoinPage({
 
     const sendHeight = () => {
       const height = Math.ceil(containerRef.current?.getBoundingClientRect().height ?? 0)
-      if (height > 0) postToParent('resize', height)
+      if (height > 0) postToParent('resize', height, messageSource)
     }
-    const sendScrollToTop = () => postToParent('scroll-to-top')
+    const sendScrollToTop = () => postToParent('scroll-to-top', undefined, messageSource)
     const observer = new ResizeObserver(sendHeight)
     observer.observe(containerRef.current)
     const frame = requestAnimationFrame(sendHeight)
@@ -70,15 +73,15 @@ export function EmbeddedJoinPage({
       window.removeEventListener('resize', sendHeight)
       window.removeEventListener(SCROLL_EVENT, sendScrollToTop)
     }
-  }, [enabled])
+  }, [enabled, messageSource])
 
   useEffect(() => {
     if (!enabled) return
     if (previousPath.current !== location.pathname) {
       previousPath.current = location.pathname
-      postToParent('scroll-to-top')
+      postToParent('scroll-to-top', undefined, messageSource)
     }
-  }, [enabled, location.pathname])
+  }, [enabled, location.pathname, messageSource])
 
   if (!enabled) return children
   return <div ref={containerRef}>{children}</div>
