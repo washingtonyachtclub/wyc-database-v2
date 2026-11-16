@@ -34,6 +34,7 @@ interface MyRouterContext {
 }
 
 const PUBLIC_PATHS = new Set([
+  '/keelboat-calendar',
   '/checkout',
   '/db.cgi',
   '/forgot-password',

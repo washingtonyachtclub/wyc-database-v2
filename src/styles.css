@@ -2,6 +2,11 @@
 @import 'tailwindcss';
 
 @theme {
+  --color-keelboat-charlotte: #c4c4ff;
+  --color-keelboat-almond: #ffc4c4;
+  --color-keelboat-deception: #c4ffc4;
+  --color-keelboat-nightshade: #bceeee;
+  --color-keelboat-talaria: #efbd95;
   --color-background: oklch(100% 0 0);
   --color-foreground: oklch(9.8% 0.005 285.88);
   --color-card: oklch(100% 0 0);
