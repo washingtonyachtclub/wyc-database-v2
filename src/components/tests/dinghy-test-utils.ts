@@ -1,9 +1,10 @@
 import { isDevEnvironment } from '@/lib/env'
-import type { TestQuestion } from './dinghy-test-data'
+import type { TestQuestion } from '@/domains/written-tests/types'
 
 export const PASSING_PERCENTAGE = 90
 
-export type TestAnswer = string | number | number[]
+export type StatementAnswers = Record<number, boolean>
+export type TestAnswer = string | number | number[] | StatementAnswers
 export type TestAnswers = Partial<Record<number, TestAnswer>>
 
 export function normalizeTextAnswer(value: string) {
@@ -81,6 +82,12 @@ export function isDevelopmentAnswer(answer: TestAnswer | undefined) {
 
 export function isQuestionAnswered(question: TestQuestion, answer: TestAnswer | undefined) {
   if (isDevelopmentAnswer(answer)) return true
+  if (question.type === 'statements') {
+    return (
+      isStatementAnswers(answer) &&
+      question.statements.every((_, index) => typeof answer[index] === 'boolean')
+    )
+  }
   if (question.type === 'text') return typeof answer === 'string' && answer.trim().length > 0
   if (question.type === 'multiple') return Array.isArray(answer) && answer.length > 0
   return typeof answer === 'number'
@@ -88,6 +95,12 @@ export function isQuestionAnswered(question: TestQuestion, answer: TestAnswer | 
 
 export function isQuestionCorrect(question: TestQuestion, answer: TestAnswer | undefined) {
   if (isDevelopmentAnswer(answer)) return true
+  if (question.type === 'statements') {
+    return (
+      isStatementAnswers(answer) &&
+      question.statements.every((statement, index) => answer[index] === statement.correct)
+    )
+  }
   if (!isQuestionAnswered(question, answer)) return false
 
   if (question.type === 'text') {
@@ -111,22 +124,71 @@ export function isQuestionCorrect(question: TestQuestion, answer: TestAnswer | u
   )
 }
 
-export function scoreTest(questions: readonly TestQuestion[], answers: TestAnswers) {
+export function isStatementAnswers(answer: TestAnswer | undefined): answer is StatementAnswers {
+  return typeof answer === 'object' && answer !== null && !Array.isArray(answer)
+}
+
+export function getQuestionPoints(question: TestQuestion) {
+  return question.type === 'statements'
+    ? question.statements.reduce((total, statement) => total + statement.points, 0)
+    : question.points
+}
+
+export function getQuestionEarnedPoints(question: TestQuestion, answer: TestAnswer | undefined) {
+  if (isDevelopmentAnswer(answer)) return getQuestionPoints(question)
+  if (question.type === 'statements') {
+    return question.statements.reduce(
+      (total, statement, index) =>
+        total +
+        (isStatementAnswers(answer) && answer[index] === statement.correct ? statement.points : 0),
+      0,
+    )
+  }
+  return isQuestionCorrect(question, answer) ? getQuestionPoints(question) : 0
+}
+
+export function getPossiblePoints(questions: readonly TestQuestion[]) {
+  return questions.reduce((total, question) => total + getQuestionPoints(question), 0)
+}
+
+export function getScorePercentage(earnedPoints: number, possiblePoints: number) {
+  return possiblePoints > 0 ? Math.round((earnedPoints / possiblePoints) * 1000) / 10 : 0
+}
+
+export function scoreTest(
+  questions: readonly TestQuestion[],
+  answers: TestAnswers,
+  passingPercentage = PASSING_PERCENTAGE,
+) {
   const correct = questions.filter((question, index) =>
     isQuestionCorrect(question, answers[index]),
   ).length
-  const percentage = Math.round((correct / questions.length) * 100)
-
+  const earnedPoints = questions.reduce(
+    (total, question, index) => total + getQuestionEarnedPoints(question, answers[index]),
+    0,
+  )
+  const possiblePoints = getPossiblePoints(questions)
   return {
     correct,
     total: questions.length,
-    percentage,
-    passed: (correct / questions.length) * 100 >= PASSING_PERCENTAGE,
+    earnedPoints,
+    possiblePoints,
+    percentage: getScorePercentage(earnedPoints, possiblePoints),
+    passingPercentage,
+    passed: possiblePoints > 0 && earnedPoints * 100 >= possiblePoints * passingPercentage,
   }
 }
 
 export function getAnswerText(question: TestQuestion, answer: TestAnswer | undefined) {
   if (isDevelopmentAnswer(answer)) return 'devtest'
+  if (question.type === 'statements') {
+    return question.statements
+      .map(
+        (_, index) =>
+          `${index + 1}: ${isStatementAnswers(answer) && typeof answer[index] === 'boolean' ? (answer[index] ? 'True' : 'False') : 'Not answered'}`,
+      )
+      .join('; ')
+  }
   if (!isQuestionAnswered(question, answer)) return 'Not answered'
   if (question.type === 'text') return answer as string
 
@@ -138,6 +200,10 @@ export function getAnswerText(question: TestQuestion, answer: TestAnswer | undef
 }
 
 export function getCorrectAnswerText(question: TestQuestion) {
+  if (question.type === 'statements')
+    return question.statements
+      .map((statement, index) => `${index + 1}: ${statement.correct ? 'True' : 'False'}`)
+      .join('; ')
   if (question.type === 'text') return question.acceptedAnswers.join(' / ')
   return question.options
     .filter((option) => option.correct)

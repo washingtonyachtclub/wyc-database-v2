@@ -1,10 +1,12 @@
 import { and, eq } from 'drizzle-orm'
 import db from '@/db'
 import { writtenTestAttempts, wycDatabase } from '@/db/schema'
-import { dinghyNoviceTest } from '@/components/tests/dinghy-test-data'
+import { getWrittenTest, getTestFingerprint } from './registry'
+import { validateTestAnswers } from './schema'
 import {
   isQuestionCorrect,
-  PASSING_PERCENTAGE,
+  getQuestionEarnedPoints,
+  getScorePercentage,
   scoreTest,
 } from '@/components/tests/dinghy-test-utils'
 import type { SavedTestResult, TestSubmission } from './schema'
@@ -33,11 +35,22 @@ async function getAttempt(memberWycNumber: number, attemptId: string) {
 }
 
 function toSavedResult(attempt: typeof writtenTestAttempts.$inferSelect): SavedTestResult {
+  const questions = attempt.snapshot.questions.map((question) =>
+    question.type === 'statements' ? question : { ...question, points: question.points ?? 1 },
+  )
   return {
+    title: attempt.snapshot.title,
+    questions,
+    earnedPoints: attempt.snapshot.questions.map(
+      (question) => question.earnedPoints ?? (question.correct ? 1 : 0),
+    ),
     score: {
       correct: attempt.correctCount,
       total: attempt.questionCount,
-      percentage: attempt.percentage,
+      earnedPoints: attempt.earnedPoints,
+      possiblePoints: attempt.possiblePoints,
+      percentage: getScorePercentage(attempt.earnedPoints, attempt.possiblePoints),
+      passingPercentage: attempt.snapshot.passingPercentage,
       passed: attempt.passed !== 0,
     },
     answers: Object.fromEntries(
@@ -51,11 +64,29 @@ function toSavedResult(attempt: typeof writtenTestAttempts.$inferSelect): SavedT
 
 export async function saveTestAttempt(memberWycNumber: number, data: TestSubmission) {
   const existing = await getAttempt(memberWycNumber, data.attemptId)
-  if (existing) return { result: toSavedResult(existing) }
+  if (existing) {
+    if (
+      existing.testId !== data.testId ||
+      existing.mode !== data.mode ||
+      existing.examinerWycNumber !== (data.mode === 'final' ? data.examinerWycNumber : null)
+    ) {
+      return { error: 'This attempt has already been submitted for a different test or mode.' }
+    }
+    return { result: toSavedResult(existing) }
+  }
+  const test = getWrittenTest(data.testId)
+  if (!test || getTestFingerprint(test) !== data.fingerprint) {
+    return {
+      error:
+        'This test has changed. Exit this attempt and reload the page to start the updated test.',
+    }
+  }
+  if (!validateTestAnswers(test.questions, data.answers))
+    return { error: 'Some answers are invalid. Please review your answers.' }
   if (data.mode === 'final' && !(await examinerExists(data.examinerWycNumber!))) {
     return { error: 'No member exists with that examiner WYC ID.' }
   }
-  const score = scoreTest(dinghyNoviceTest.questions, data.answers)
+  const score = scoreTest(test.questions, data.answers, test.passingPercentage)
   await db
     .insert(writtenTestAttempts)
     .values({
@@ -66,20 +97,29 @@ export async function saveTestAttempt(memberWycNumber: number, data: TestSubmiss
       mode: data.mode,
       correctCount: score.correct,
       questionCount: score.total,
-      percentage: score.percentage,
+      earnedPoints: score.earnedPoints,
+      possiblePoints: score.possiblePoints,
       passed: score.passed ? 1 : 0,
       snapshot: {
-        title: dinghyNoviceTest.title,
-        passingPercentage: PASSING_PERCENTAGE,
-        questions: dinghyNoviceTest.questions.map((question, index) => ({
+        title: test.title,
+        passingPercentage: test.passingPercentage,
+        questions: test.questions.map((question, index) => ({
           ...question,
           answer: data.answers[index] ?? null,
           correct: isQuestionCorrect(question, data.answers[index]),
+          earnedPoints: getQuestionEarnedPoints(question, data.answers[index]),
         })),
       },
     })
     .onDuplicateKeyUpdate({ set: { attemptId: data.attemptId } })
   const saved = await getAttempt(memberWycNumber, data.attemptId)
   if (!saved) throw new Error('Saved test attempt was not found')
+  if (
+    saved.testId !== data.testId ||
+    saved.mode !== data.mode ||
+    saved.examinerWycNumber !== (data.mode === 'final' ? data.examinerWycNumber : null)
+  ) {
+    return { error: 'This attempt has already been submitted for a different test or mode.' }
+  }
   return { result: toSavedResult(saved) }
 }

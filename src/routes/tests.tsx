@@ -1,6 +1,6 @@
 import { requirePrivilegeForRoute } from '@/lib/route-guards'
 import { createFileRoute } from '@tanstack/react-router'
-import { DinghyTest } from '@/components/tests/DinghyTest'
+import { WrittenTests } from '@/components/tests/WrittenTests'
 
 export const Route = createFileRoute('/tests')({
   beforeLoad: ({ context }) => {
@@ -13,5 +13,5 @@ function TestsPage() {
   const { user } = Route.useRouteContext()
   if (!user) return null
 
-  return <DinghyTest memberWycNumber={user.wycNumber} />
+  return <WrittenTests memberWycNumber={user.wycNumber} />
 }

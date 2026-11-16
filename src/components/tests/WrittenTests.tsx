@@ -27,37 +27,62 @@ import {
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
 import { isDevEnvironment } from '@/lib/env'
 import { cn } from '@/lib/utils'
-import { dinghyNoviceTest, type TestQuestion } from './dinghy-test-data'
+import type { TestDefinition, TestQuestion } from '@/domains/written-tests/types'
+import { writtenTests, getTestFingerprint } from '@/domains/written-tests/registry'
 import {
   getAnswerText,
   getCorrectAnswerText,
   isQuestionAnswered,
-  PASSING_PERCENTAGE,
+  getQuestionPoints,
+  getPossiblePoints,
+  isStatementAnswers,
+  isDevelopmentAnswer,
   type TestAnswer,
   type TestAnswers,
 } from './dinghy-test-utils'
-
-const STORAGE_KEY = 'wyc-dinghy-novice-test-draft-v2'
 
 type TestMode = 'practice' | 'final'
 type TestStage = 'catalog' | 'mode' | 'taking' | 'review' | 'results'
 type TestAttempt = {
   attemptId: string
   testId: string
+  fingerprint: string
   mode: TestMode
   memberWycNumber: number
   examinerWycNumber: number | null
 }
 
-export function DinghyTest({ memberWycNumber }: { memberWycNumber: number }) {
-  const questions = dinghyNoviceTest.questions
+export function WrittenTests({ memberWycNumber }: { memberWycNumber: number }) {
+  const [test, setTest] = useState<TestDefinition | null>(null)
+  if (!test) return <TestCatalog onSelect={setTest} />
+  return (
+    <WrittenTestAttempt
+      key={test.id}
+      memberWycNumber={memberWycNumber}
+      test={test}
+      onChooseTest={() => setTest(null)}
+    />
+  )
+}
+
+function WrittenTestAttempt({
+  memberWycNumber,
+  test,
+  onChooseTest,
+}: {
+  memberWycNumber: number
+  test: TestDefinition
+  onChooseTest: () => void
+}) {
+  const questions = test.questions
+  const fingerprint = getTestFingerprint(test)
+  const storageKey = `wyc-written-test-${memberWycNumber}-${test.id}`
   const [answers, setAnswers] = useState<TestAnswers>({})
   const [attempt, setAttempt] = useState<TestAttempt | null>(null)
   const [currentIndex, setCurrentIndex] = useState(0)
-  const [stage, setStage] = useState<TestStage>('catalog')
+  const [stage, setStage] = useState<TestStage>('mode')
   const [returnToReview, setReturnToReview] = useState(false)
   const [draftLoaded, setDraftLoaded] = useState(false)
   const [saving, setSaving] = useState(false)
@@ -67,14 +92,18 @@ export function DinghyTest({ memberWycNumber }: { memberWycNumber: number }) {
 
   useEffect(() => {
     try {
-      const savedDraft = window.localStorage.getItem(STORAGE_KEY)
+      const savedDraft = window.localStorage.getItem(storageKey)
       if (savedDraft) {
         const parsed = JSON.parse(savedDraft) as {
           answers?: TestAnswers
           attempt?: TestAttempt
           currentIndex?: number
         }
-        if (parsed.attempt?.memberWycNumber === memberWycNumber) {
+        if (
+          parsed.attempt?.memberWycNumber === memberWycNumber &&
+          parsed.attempt.testId === test.id &&
+          parsed.attempt.fingerprint === fingerprint
+        ) {
           setAnswers(parsed.answers ?? {})
           setAttempt({
             ...parsed.attempt,
@@ -85,16 +114,16 @@ export function DinghyTest({ memberWycNumber }: { memberWycNumber: number }) {
         }
       }
     } catch (error) {
-      console.warn('Unable to restore the saved Dinghy test draft', error)
+      console.warn('Unable to restore the saved test draft', error)
     } finally {
       setDraftLoaded(true)
     }
-  }, [memberWycNumber, questions.length])
+  }, [memberWycNumber, questions.length, fingerprint, storageKey, test.id])
 
   useEffect(() => {
     if (!draftLoaded || !attempt || (stage !== 'taking' && stage !== 'review')) return
-    window.localStorage.setItem(STORAGE_KEY, JSON.stringify({ answers, attempt, currentIndex }))
-  }, [answers, attempt, currentIndex, draftLoaded, stage])
+    window.localStorage.setItem(storageKey, JSON.stringify({ answers, attempt, currentIndex }))
+  }, [answers, attempt, currentIndex, draftLoaded, stage, storageKey])
 
   const answeredCount = useMemo(
     () =>
@@ -108,7 +137,8 @@ export function DinghyTest({ memberWycNumber }: { memberWycNumber: number }) {
     setSavedResult(null)
     setAttempt({
       attemptId: crypto.randomUUID(),
-      testId: dinghyNoviceTest.id,
+      testId: test.id,
+      fingerprint,
       mode,
       memberWycNumber,
       examinerWycNumber,
@@ -144,7 +174,7 @@ export function DinghyTest({ memberWycNumber }: { memberWycNumber: number }) {
       setStage('results')
       setReturnToReview(false)
       try {
-        window.localStorage.removeItem(STORAGE_KEY)
+        window.localStorage.removeItem(storageKey)
       } catch (error) {
         console.warn('Unable to clear the saved test draft', error)
       }
@@ -162,18 +192,16 @@ export function DinghyTest({ memberWycNumber }: { memberWycNumber: number }) {
     setCurrentIndex(0)
     setReturnToReview(false)
     setStage(nextStage)
-    window.localStorage.removeItem(STORAGE_KEY)
-  }
-
-  if (stage === 'catalog') {
-    return <TestCatalog onSelect={() => setStage('mode')} />
+    window.localStorage.removeItem(storageKey)
+    if (nextStage === 'catalog') onChooseTest()
   }
 
   if (stage === 'mode') {
     return (
       <ModeSelection
+        test={test}
         memberWycNumber={memberWycNumber}
-        onBack={() => setStage('catalog')}
+        onBack={onChooseTest}
         onStart={startTest}
       />
     )
@@ -186,6 +214,11 @@ export function DinghyTest({ memberWycNumber }: { memberWycNumber: number }) {
   return (
     <div className="mx-auto max-w-7xl px-4 py-5 sm:px-6 sm:py-8 lg:px-8">
       <TestHeader
+        test={
+          savedResult
+            ? { ...test, title: savedResult.title, questions: savedResult.questions }
+            : test
+        }
         answeredCount={answeredCount}
         attempt={attempt}
         onExit={
@@ -242,54 +275,49 @@ export function DinghyTest({ memberWycNumber }: { memberWycNumber: number }) {
           attempt={attempt}
           onChooseTest={() => resetAttempt('catalog')}
           onRetake={() => resetAttempt('mode')}
-          questions={questions}
+          questions={savedResult.questions}
         />
       )}
     </div>
   )
 }
 
-function TestCatalog({ onSelect }: { onSelect: () => void }) {
+function TestCatalog({ onSelect }: { onSelect: (test: TestDefinition) => void }) {
   return (
     <main className="mx-auto max-w-5xl px-4 py-8 sm:px-6 lg:px-8">
       <div className="mb-8">
         <h1 className="text-3xl font-bold tracking-tight">Written Tests</h1>
       </div>
 
-      <section className="rounded-xl border bg-card p-6 shadow-sm sm:p-8">
-        <div className="flex flex-col gap-6 sm:flex-row sm:items-center sm:justify-between">
-          <div>
-            <h2 className="text-2xl font-bold">{dinghyNoviceTest.title}</h2>
-            <p className="mt-2 max-w-2xl text-muted-foreground">{dinghyNoviceTest.description}</p>
-            <p className="mt-4 text-sm font-medium">
-              {dinghyNoviceTest.questions.length} questions
-            </p>
-          </div>
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <Button
-                aria-label={`Choose ${dinghyNoviceTest.title}`}
-                className="min-h-11 min-w-11 shrink-0"
-                onClick={onSelect}
-                size="icon"
-                type="button"
-              >
-                <ArrowRight aria-hidden="true" />
-              </Button>
-            </TooltipTrigger>
-            <TooltipContent>Choose test</TooltipContent>
-          </Tooltip>
-        </div>
-      </section>
+      <div className="space-y-4">
+        {writtenTests.map((test) => (
+          <Button
+            key={test.id}
+            aria-label={`Choose ${test.title}`}
+            className="h-auto w-full cursor-pointer flex-col items-start gap-0 whitespace-normal rounded-xl bg-card p-6 text-left text-base font-normal text-card-foreground shadow-sm transition-[background-color,border-color,box-shadow,transform] hover:border-primary/40 hover:shadow-inner active:scale-[0.99] active:shadow-inner motion-reduce:transform-none motion-reduce:transition-none sm:p-8"
+            onClick={() => onSelect(test)}
+            type="button"
+            variant="outline"
+          >
+            <span className="text-2xl font-bold">{test.title}</span>
+            <span className="mt-2 max-w-2xl text-muted-foreground">{test.description}</span>
+            <span className="mt-4 text-sm font-medium">
+              {test.questions.length} questions · {getPossiblePoints(test.questions)} points
+            </span>
+          </Button>
+        ))}
+      </div>
     </main>
   )
 }
 
 function ModeSelection({
+  test,
   memberWycNumber,
   onBack,
   onStart,
 }: {
+  test: TestDefinition
   memberWycNumber: number
   onBack: () => void
   onStart: (mode: TestMode, examinerWycNumber: number | null) => void
@@ -331,7 +359,7 @@ function ModeSelection({
         All tests
       </Button>
       <div className="mt-6">
-        <p className="text-sm font-medium text-primary">{dinghyNoviceTest.title}</p>
+        <p className="text-sm font-medium text-primary">{test.title}</p>
         <h1 className="mt-1 text-3xl font-bold tracking-tight">Choose a mode</h1>
         <p className="mt-2 text-muted-foreground">Taking as WYC #{memberWycNumber}</p>
       </div>
@@ -391,11 +419,13 @@ function ModeSelection({
 }
 
 function TestHeader({
+  test,
   answeredCount,
   attempt,
   onExit,
   onFill,
 }: {
+  test: TestDefinition
   answeredCount: number
   attempt: TestAttempt
   onExit?: () => void
@@ -411,7 +441,7 @@ function TestHeader({
           </div>
           {onExit && <ExitAttemptButton onExit={onExit} />}
         </div>
-        <h1 className="text-3xl font-bold tracking-tight">{dinghyNoviceTest.title}</h1>
+        <h1 className="text-3xl font-bold tracking-tight">{test.title}</h1>
         {isDevEnvironment() && onFill && (
           <Button className="mt-4" onClick={onFill} size="sm" type="button" variant="outline">
             Fill with devtest
@@ -422,13 +452,13 @@ function TestHeader({
       <div className="mb-6 grid gap-3 sm:grid-cols-2">
         <TestDetail
           icon={<ListChecks aria-hidden="true" />}
-          label="Questions"
-          value={String(dinghyNoviceTest.questions.length)}
+          label="Total"
+          value={`${test.questions.length} questions · ${getPossiblePoints(test.questions)} points`}
         />
         <TestDetail
           icon={<Check aria-hidden="true" />}
           label="Answered"
-          value={`${answeredCount} of ${dinghyNoviceTest.questions.length}`}
+          value={`${answeredCount} of ${test.questions.length}`}
         />
       </div>
     </>
@@ -485,7 +515,7 @@ function QuestionCard({
   const isAnswered = isQuestionAnswered(question, answer)
 
   const selectOption = (optionIndex: number) => {
-    if (question.type === 'text') return
+    if (question.type === 'text' || question.type === 'statements') return
     if (question.type === 'multiple') {
       const selected = new Set(Array.isArray(answer) ? answer : [])
       if (selected.has(optionIndex)) selected.delete(optionIndex)
@@ -510,6 +540,7 @@ function QuestionCard({
 
       if (
         question.type === 'text' ||
+        question.type === 'statements' ||
         isTextInput ||
         event.altKey ||
         event.ctrlKey ||
@@ -610,7 +641,8 @@ function QuestionHeading({
     <div className="border-b bg-muted/40 px-5 py-4 sm:px-8">
       <div className="mb-3 flex flex-col gap-1 text-sm sm:flex-row sm:items-center sm:justify-between sm:gap-4">
         <span className="font-semibold">
-          Question {currentIndex + 1} of {total}
+          Question {currentIndex + 1} of {total} · {getQuestionPoints(question)}{' '}
+          {getQuestionPoints(question) === 1 ? 'point' : 'points'}
         </span>
         <span className="text-right text-muted-foreground">{question.category}</span>
       </div>
@@ -671,6 +703,57 @@ function AnswerField({
   question: TestQuestion
   questionIndex: number
 }) {
+  if (question.type === 'statements') {
+    return (
+      <div className="mt-7 space-y-5">
+        {question.statements.map((statement, index) => {
+          const selected = isStatementAnswers(answer) ? answer[index] : undefined
+          return (
+            <fieldset key={index} className="rounded-lg border p-4">
+              <legend className="px-1 text-sm font-medium">
+                {index + 1} · {statement.points} {statement.points === 1 ? 'point' : 'points'}
+              </legend>
+              <p id={`statement-${questionIndex}-${index}`} className="mb-3">
+                {statement.prompt}
+              </p>
+              <div
+                role="radiogroup"
+                aria-labelledby={`statement-${questionIndex}-${index}`}
+                className="flex gap-3"
+              >
+                {[true, false].map((value) => (
+                  <Button
+                    key={String(value)}
+                    type="button"
+                    role="radio"
+                    aria-checked={selected === value}
+                    variant={selected === value ? 'default' : 'outline'}
+                    className="min-h-11 min-w-20"
+                    tabIndex={
+                      selected === undefined ? (value ? 0 : -1) : selected === value ? 0 : -1
+                    }
+                    onKeyDown={(event) => {
+                      if (!['ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown'].includes(event.key))
+                        return
+                      event.preventDefault()
+                      onAnswer({ ...(isStatementAnswers(answer) ? answer : {}), [index]: !value })
+                      const buttons = event.currentTarget.parentElement?.querySelectorAll('button')
+                      buttons?.[value ? 1 : 0]?.focus()
+                    }}
+                    onClick={() =>
+                      onAnswer({ ...(isStatementAnswers(answer) ? answer : {}), [index]: value })
+                    }
+                  >
+                    {value ? 'True' : 'False'}
+                  </Button>
+                ))}
+              </div>
+            </fieldset>
+          )
+        })}
+      </div>
+    )
+  }
   if (question.type === 'text') {
     return (
       <div className="mt-7">
@@ -944,7 +1027,8 @@ function ResultsScreen({
         </h2>
         <p className="mt-3 text-2xl font-semibold">{score.percentage}%</p>
         <p className="mt-1 text-muted-foreground">
-          {score.correct} of {score.total} correct · {PASSING_PERCENTAGE}% required to pass
+          {score.earnedPoints} / {score.possiblePoints} points · {score.passingPercentage}% required
+          to pass
         </p>
         <div className="mt-6 flex flex-col justify-center gap-3 sm:flex-row">
           <Button onClick={onRetake} type="button" variant="outline">
@@ -970,6 +1054,7 @@ function ResultsScreen({
                       <ReadOnlyQuestionCard
                         answer={answers[index]}
                         correct={correct}
+                        earnedPoints={result.earnedPoints[index]}
                         key={index}
                         question={questions[index]}
                         questionIndex={index}
@@ -993,6 +1078,7 @@ function ReadOnlyQuestionCard({
   question,
   questionIndex,
   revealCorrectAnswer,
+  earnedPoints,
   total,
 }: {
   answer: TestAnswer | undefined
@@ -1000,6 +1086,7 @@ function ReadOnlyQuestionCard({
   question: TestQuestion
   questionIndex: number
   revealCorrectAnswer: boolean
+  earnedPoints: number
   total: number
 }) {
   return (
@@ -1013,20 +1100,54 @@ function ReadOnlyQuestionCard({
             ) : (
               <CircleX aria-hidden="true" className="h-5 w-5 text-destructive" />
             )}
-            {correct ? 'Correct' : 'Incorrect'}
+            {correct ? 'Correct' : earnedPoints > 0 ? 'Partially correct' : 'Incorrect'}
+            <span className="ml-auto text-sm font-medium">
+              {earnedPoints} / {getQuestionPoints(question)} points
+            </span>
           </div>
-          <dl className="mt-4 grid gap-3 text-sm">
-            <div>
-              <dt className="font-medium text-muted-foreground">Your answer</dt>
-              <dd className="mt-1">{getAnswerText(question, answer)}</dd>
+          {question.type === 'statements' ? (
+            <div className="mt-4 space-y-4">
+              {question.statements.map((statement, index) => {
+                const selected = isStatementAnswers(answer) ? answer[index] : undefined
+                const statementCorrect =
+                  isDevelopmentAnswer(answer) || selected === statement.correct
+                return (
+                  <div key={index} className="border-t pt-4 text-sm">
+                    <p className="font-medium">{statement.prompt}</p>
+                    <p className="mt-1">
+                      Your answer:{' '}
+                      {isDevelopmentAnswer(answer)
+                        ? 'devtest'
+                        : selected === undefined
+                          ? 'Not answered'
+                          : selected
+                            ? 'True'
+                            : 'False'}{' '}
+                      · {statementCorrect ? statement.points : 0} / {statement.points} points
+                    </p>
+                    {revealCorrectAnswer && !statementCorrect && (
+                      <p className="mt-1 text-muted-foreground">
+                        Correct answer: {statement.correct ? 'True' : 'False'}
+                      </p>
+                    )}
+                  </div>
+                )
+              })}
             </div>
-            {revealCorrectAnswer && !correct && (
+          ) : (
+            <dl className="mt-4 grid gap-3 text-sm">
               <div>
-                <dt className="font-medium text-muted-foreground">Correct answer</dt>
-                <dd className="mt-1">{getCorrectAnswerText(question)}</dd>
+                <dt className="font-medium text-muted-foreground">Your answer</dt>
+                <dd className="mt-1">{getAnswerText(question, answer)}</dd>
               </div>
-            )}
-          </dl>
+              {revealCorrectAnswer && !correct && (
+                <div>
+                  <dt className="font-medium text-muted-foreground">Correct answer</dt>
+                  <dd className="mt-1">{getCorrectAnswerText(question)}</dd>
+                </div>
+              )}
+            </dl>
+          )}
         </div>
       </QuestionContent>
     </article>
