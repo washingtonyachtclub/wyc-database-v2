@@ -2,7 +2,7 @@
 
 ## Legacy system
 
-These queries target the retired MySQL schema. PostgreSQL requires double quotes around mixed-case identifiers and PostgreSQL date functions. Use the application query modules for current queries.
+These queries use MySQL syntax. Current PostgreSQL queries live in `src/domains/*/queries.ts`.
 
 SQL reference for common database queries and operations. Useful for direct database maintenance, debugging, and AI-assisted work.
 

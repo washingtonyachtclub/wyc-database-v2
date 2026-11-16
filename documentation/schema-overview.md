@@ -182,5 +182,7 @@ These are defined in `schema.ts` but not imported or queried in v2 code. They ex
 - **Foreign keys** on legacy tables are generally plain `int` columns. New workflow tables use database constraints where both sides of the relationship are application-owned.
 - **Lookup tables** (`memcat`, `class_type`, `noyes`, `pos_type`, `ratings`, `privs`) follow a common pattern: `_index` PK + `text` display column.
 - **Dates** use `{ mode: 'string' }` in Drizzle, stored as `YYYY-MM-DD` strings (not `Date` objects) to survive JSON serialization across the TanStack Start boundary.
-- **Booleans** are `tinyint(1)` — `0`/`1` in the database, converted to `boolean` in TypeScript mappers.
+- **Booleans** are PostgreSQL `smallint` — `0`/`1` in the database, converted to `boolean` in TypeScript mappers.
 - **Long text columns** (e.g., `lessons.comments`) use PostgreSQL `text` and UTF-8 strings.
+
+- **Unknown dates** are NULL in storage and display as `Unknown`. Undated ratings remain active, with unknown expiry.

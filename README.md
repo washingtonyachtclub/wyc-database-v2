@@ -97,5 +97,3 @@ Configured in `prettier.config.js`:
 - Single quotes
 - Trailing commas
 - 100 character line width
-
-See [Postgres migration](documentation/postgres-migration.md) for local rehearsal and the coordinated production cutover.
