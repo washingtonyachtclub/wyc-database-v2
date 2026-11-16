@@ -15,19 +15,22 @@ export async function insertExemptMembershipPayment(
     wycNumber: number | null
   },
 ) {
-  const result = await tx.insert(membershipPayments).values({
-    applicationId: input.applicationId ?? null,
-    renewalId: input.renewalId ?? null,
-    wycNumber: input.wycNumber,
-    squarePaymentId: null,
-    squareOrderId: null,
-    amountCents: 0,
-    currency: 'USD',
-    tier: 'exempt',
-    duration: 'quarterly',
-    prevExpireQtr: input.prevExpireQtr,
-    newExpireQtr: input.newExpireQtr,
-    status: 'EXEMPT',
-  })
-  return result[0].insertId
+  const result = await tx
+    .insert(membershipPayments)
+    .values({
+      applicationId: input.applicationId ?? null,
+      renewalId: input.renewalId ?? null,
+      wycNumber: input.wycNumber,
+      squarePaymentId: null,
+      squareOrderId: null,
+      amountCents: 0,
+      currency: 'USD',
+      tier: 'exempt',
+      duration: 'quarterly',
+      prevExpireQtr: input.prevExpireQtr,
+      newExpireQtr: input.newExpireQtr,
+      status: 'EXEMPT',
+    })
+    .returning({ id: membershipPayments.index })
+  return result[0].id
 }

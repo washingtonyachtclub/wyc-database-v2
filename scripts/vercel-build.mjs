@@ -8,9 +8,4 @@ function run(script) {
   if (result.status !== 0) process.exit(result.status ?? 1)
 }
 
-if (process.env.VERCEL_ENV === 'production') {
-  run('db:baseline:ensure')
-  run('db:migrate')
-}
-
 run('build')

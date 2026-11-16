@@ -1,4 +1,4 @@
-import { alias } from 'drizzle-orm/mysql-core'
+import { alias } from 'drizzle-orm/pg-core'
 import { and, asc, eq, gt, gte, inArray, lte } from 'drizzle-orm'
 import db from '@/db/index'
 import {

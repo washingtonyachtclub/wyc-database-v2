@@ -98,3 +98,7 @@ export function daysUntil(calendarDate: string): number {
     Date.parse(`${calendarDate}T00:00:00Z`) - Date.parse(`${getTodayPacificDateString()}T00:00:00Z`)
   return Math.round(ms / 86_400_000)
 }
+
+export function formatRecordedDate(value: string): string {
+  return value || 'Unknown'
+}

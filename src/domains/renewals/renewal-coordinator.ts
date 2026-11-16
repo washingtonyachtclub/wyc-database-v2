@@ -28,6 +28,13 @@ export async function reconcileRenewal(
   tx: RenewalTransaction,
   renewalId: string,
 ): Promise<RenewalCompletion | null> {
+  await tx
+    .select({ id: membershipRenewals.id })
+    .from(membershipRenewals)
+    .innerJoin(wycDatabase, eq(wycDatabase.wycNumber, membershipRenewals.wycNumber))
+    .where(eq(membershipRenewals.id, renewalId))
+    .for('update', { of: [membershipRenewals, wycDatabase] })
+
   const [row] = await tx
     .select({
       closedAt: membershipRenewals.closedAt,
@@ -51,7 +58,6 @@ export async function reconcileRenewal(
     .leftJoin(duesExemptionRequests, eq(duesExemptionRequests.renewalId, membershipRenewals.id))
     .leftJoin(renewalQuestionnaire, eq(renewalQuestionnaire.renewalId, membershipRenewals.id))
     .where(eq(membershipRenewals.id, renewalId))
-    .for('update')
 
   if (!row || row.completedAt || row.closedAt || !row.waiverId) return null
 

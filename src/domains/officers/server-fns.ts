@@ -82,7 +82,7 @@ export const createOfficer = createServerFn({ method: 'POST' })
       await db.update(officers).set({ active: 1 }).where(eq(officers.index, existing.index))
       return { success: true, id: existing.index, reactivated: true }
     }
-    const id = await db.insert(officers).values(data).$returningId()
+    const id = await db.insert(officers).values(data).returning({ index: officers.index })
     return { success: true, id }
   })
 

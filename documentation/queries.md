@@ -1,5 +1,9 @@
 # Database Query Reference
 
+## Legacy system
+
+These queries target the retired MySQL schema. PostgreSQL requires double quotes around mixed-case identifiers and PostgreSQL date functions. Use the application query modules for current queries.
+
 SQL reference for common database queries and operations. Useful for direct database maintenance, debugging, and AI-assisted work.
 
 All queries below use the read-only database user. Connect using the credentials from your environment configuration.

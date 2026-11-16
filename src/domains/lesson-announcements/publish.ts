@@ -27,14 +27,17 @@ export async function publishLessonAnnouncement(
   const [lessonRow] = await baseLessonQuery().where(eq(lessons.index, data.lessonId))
   if (!lessonRow) throw new Error('Lesson not found')
 
-  const [result] = await db.insert(lessonAnnouncements).values({
-    lessonId: data.lessonId,
-    authorWycNumber: data.authorWycNumber,
-    subject,
-    bodyMarkdown: data.bodyMarkdown,
-  })
+  const [result] = await db
+    .insert(lessonAnnouncements)
+    .values({
+      lessonId: data.lessonId,
+      authorWycNumber: data.authorWycNumber,
+      subject,
+      bodyMarkdown: data.bodyMarkdown,
+    })
+    .returning({ id: lessonAnnouncements.id })
   const [announcementRow] = await baseLessonAnnouncementQuery().where(
-    eq(lessonAnnouncements.id, result.insertId),
+    eq(lessonAnnouncements.id, result.id),
   )
   if (!announcementRow) throw new Error('Failed to load announcement')
 
@@ -105,7 +108,7 @@ export async function publishLessonAnnouncement(
       bcc: [...recipientEmails.values()],
       subject,
       ...content,
-      idempotencyKey: `lesson-announcement/${result.insertId}`,
+      idempotencyKey: `lesson-announcement/${result.id}`,
     })
     return {
       announcement,
@@ -118,7 +121,7 @@ export async function publishLessonAnnouncement(
       instructorCopyCount,
     }
   } catch (error) {
-    console.error('Failed to email lesson announcement', result.insertId, error)
+    console.error('Failed to email lesson announcement', result.id, error)
     return {
       announcement,
       emailRequested: true,

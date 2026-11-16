@@ -121,12 +121,15 @@ export const requestDuesExemption = createServerFn({ method: 'POST' })
           previousExpireQtr: expireQtr,
           targetExpireQtr: requestedExpireQtr,
         })
-        const [request] = await tx.insert(duesExemptionRequests).values({
-          renewalId,
-          wycNumber,
-          requestedExpireQtr,
-          status: 'pending',
-        })
+        const [request] = await tx
+          .insert(duesExemptionRequests)
+          .values({
+            renewalId,
+            wycNumber,
+            requestedExpireQtr,
+            status: 'pending',
+          })
+          .returning({ id: duesExemptionRequests.index })
 
         await tx.insert(renewalQuestionnaire).values({
           renewalId,
@@ -136,7 +139,7 @@ export const requestDuesExemption = createServerFn({ method: 'POST' })
           plusOneResponse: data.answers.plusOneResponse,
           status: 'pending',
           source: 'exempt',
-          requestId: request.insertId,
+          requestId: request.id,
         })
       })
     } catch (error) {
@@ -177,7 +180,7 @@ export const cancelDuesExemption = createServerFn({ method: 'POST' }).handler(as
         .select({ status: duesExemptionRequests.status })
         .from(duesExemptionRequests)
         .where(eq(duesExemptionRequests.index, existing.index))
-        .for('update')
+        .for('update', { of: duesExemptionRequests })
       if (!locked || locked.status !== 'pending') return
 
       await tx
@@ -296,7 +299,7 @@ export const approveExemptionRequest = createServerFn({ method: 'POST' })
           })
           .from(duesExemptionRequests)
           .where(eq(duesExemptionRequests.index, data.requestId))
-          .for('update')
+          .for('update', { of: duesExemptionRequests })
         if (
           !lockedRequest ||
           lockedRequest.status !== 'pending' ||
@@ -309,7 +312,7 @@ export const approveExemptionRequest = createServerFn({ method: 'POST' })
           .select({ id: memberWaivers.id })
           .from(memberWaivers)
           .where(eq(memberWaivers.renewalId, renewalId))
-          .for('update')
+          .for('update', { of: memberWaivers })
         if (!lockedWaiver) throw new Error('The member waiver is not complete.')
 
         const paymentId = await insertExemptMembershipPayment(tx, {
@@ -367,7 +370,7 @@ export const denyExemptionRequest = createServerFn({ method: 'POST' })
           })
           .from(duesExemptionRequests)
           .where(eq(duesExemptionRequests.index, data.requestId))
-          .for('update')
+          .for('update', { of: duesExemptionRequests })
         if (!lockedRequest || lockedRequest.status !== 'pending') {
           throw new Error('The request is no longer pending.')
         }

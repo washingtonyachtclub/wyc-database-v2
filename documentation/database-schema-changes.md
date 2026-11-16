@@ -1,89 +1,31 @@
 # Database Schema Changes
 
-## The basic idea
+## Overview
 
-`src/db/schema.ts` describes the database structure we want.
+`src/db/schema.ts` defines the PostgreSQL schema. `drizzle-postgres/` contains the generated SQL and snapshots. Each database records applied migrations in its own Drizzle journal.
 
-The folders in `drizzle/` contain the SQL needed to make that structure real. Drizzle records which
-migrations each database has already run.
+`DATABASE_URL` selects the destination. Vercel builds only compile the application; migrations run explicitly before deployment. A build does not modify either database.
 
-`DATABASE_URL` selects the database a command uses. Editing `schema.ts` or merging a pull request
-does not run SQL.
+## Schema workflow
 
-## Commands
+1. Edit `src/db/schema.ts` and generate the migration with `npm run db:generate -- --name=description`.
+2. Review the generated SQL, particularly destructive statements, defaults, and constraints.
+3. Apply to local development with `npm run db:migrate:dev` (reads `.env.local`).
+4. Run `npm run db:check`, `npm run typecheck`, and the existing checks. Commit the schema and generated migration together.
+5. Apply reviewed migrations to the intended database with `npm run db:migrate`, then deploy compatible application code.
 
-| Command                                     | What it does                                                    |
-| ------------------------------------------- | --------------------------------------------------------------- |
-| `npm run db:generate -- --name=description` | Creates a SQL migration from changes in `schema.ts`             |
-| `npm run db:migrate:dev`                    | Runs new migrations on development                              |
-| `npm run db:migrate`                        | Runs new migrations on the database in `DATABASE_URL`           |
-| `npm run db:check`                          | Checks that `schema.ts` and the migration files agree           |
-| `npm run db:diff:dev`                       | Compares development with `schema.ts` without changing anything |
+When another schema change lands first, rebase and regenerate only unapplied migrations. Never rewrite an applied migration. Back up before destructive changes. The MySQL-to-Postgres transition requires the coordinated [migration workflow](postgres-migration.md).
 
-`db:baseline` is a one-time setup command for a database that existed before this migration system.
-It is not part of normal schema changes.
+## Legacy system
 
-## Making a schema change
+`drizzle/` preserves the MySQL migration history. It is not used by the PostgreSQL configuration. An existing MySQL journal cannot serve as the PostgreSQL baseline.
 
-1. Update your branch from `main`.
-2. Edit `src/db/schema.ts`.
-3. Generate the migration:
+## Key Files
 
-   ```bash
-   npm run db:generate -- --name=add_example_column
-   ```
-
-4. Read the generated `migration.sql`. Pay special attention to `DROP`, `RENAME`, type changes, and
-   `NOT NULL`.
-5. Apply it to development:
-
-   ```bash
-   npm run db:migrate:dev
-   ```
-
-6. Confirm development matches:
-
-   ```bash
-   npm run db:diff:dev
-   ```
-
-   The expected result is `No changes detected`.
-
-7. Test the app and commit both `schema.ts` and the new `drizzle/` folder.
-8. Open and merge the pull request. CI runs `db:check`.
-9. Vercel runs new migrations and then builds the application.
-
-Vercel runs migrations only for production deployments. Preview deployments only build the
-application. Both Vercel projects use this process, so each project migrates the database in its own
-`DATABASE_URL`.
-
-If a migration or build fails, Vercel does not make that deployment live. A successful migration is
-still recorded even if the later application build fails.
-
-## Collaboration
-
-Every schema pull request includes its generated migration.
-
-When another schema change lands first, rebase onto `main`, run `db:check`, and regenerate only your
-unmerged migration if Drizzle reports a conflict.
-
-Do not edit a migration that has already run in production. Make another migration to correct it.
-
-## Safety
-
-Make a database backup before a migration that removes data, renames columns, narrows a type, or
-adds a strict constraint.
-
-MySQL can keep earlier schema statements when a later statement fails. Inspect the database before
-retrying a failed migration.
-
-## Key files
-
-| File                       | Purpose                               |
-| -------------------------- | ------------------------------------- |
-| `src/db/schema.ts`         | Intended database structure           |
-| `drizzle/`                 | Generated SQL migrations              |
-| `drizzle.config.ts`        | Drizzle paths and database connection |
-| `.github/workflows/ci.yml` | Pull request checks                   |
-| `vercel.json`              | Vercel build command                  |
-| `scripts/vercel-build.mjs` | Production migration and app build    |
+| File                        | Purpose                                |
+| --------------------------- | -------------------------------------- |
+| `src/db/schema.ts`          | PostgreSQL tables and constraints      |
+| `drizzle-postgres/`         | PostgreSQL migrations and snapshots    |
+| `drizzle.config.ts`         | Dialect, paths, and destination URL    |
+| `scripts/check-drizzle.mjs` | Schema and migration consistency check |
+| `scripts/vercel-build.mjs`  | Build without database writes          |

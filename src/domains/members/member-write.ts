@@ -1,7 +1,7 @@
 import { wycDatabase } from '@/db/schema'
 import { hashPasswordArgon2, hashPasswordLegacy } from '@/lib/auth/auth'
 import { generatePassphrase } from '@/lib/generate-passphrase'
-import { and, desc, gte, lte } from 'drizzle-orm'
+import { and, desc, gte, lte, sql } from 'drizzle-orm'
 
 type Transaction = Parameters<Parameters<typeof import('@/db').default.transaction>[0]>[0]
 
@@ -15,12 +15,12 @@ export async function createMemberCredentials() {
 }
 
 export async function allocateWycNumber(tx: Transaction): Promise<number> {
+  await tx.execute(sql`select pg_advisory_xact_lock(17788, 1)`)
   const [mostRecentMember] = await tx
     .select({ wycNumber: wycDatabase.wycNumber })
     .from(wycDatabase)
     .orderBy(desc(wycDatabase.joinDate), desc(wycDatabase.wycNumber))
     .limit(1)
-    .for('update')
 
   const firstCandidate = (mostRecentMember?.wycNumber ?? 0) + 1
   let setSize = 100

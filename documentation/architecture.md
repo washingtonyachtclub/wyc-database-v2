@@ -82,7 +82,7 @@ Each domain's `queries.ts` defines:
 
 - **`selectFields`** is the `.select({...})` shape for joined queries. Selects raw columns with no SQL transforms.
 - **`baseQuery()`** builds the SELECT + JOINs. Returns the nullable joined shape that mappers consume.
-- **`sortColumns`** is a `Record<string, MySqlColumn>` mapping TanStack Table column IDs to Drizzle columns for `withSorting()`.
+- **`sortColumns`** is a `Record<string, PgColumn>` mapping TanStack Table column IDs to Drizzle columns for `withSorting()`.
 - **`withXxxFilters(qb, filters)`** is the domain-specific WHERE clause builder.
 
 ### Generic query helpers (`src/db/query-helpers.ts`)

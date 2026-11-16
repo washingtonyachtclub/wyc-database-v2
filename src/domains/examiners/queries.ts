@@ -1,5 +1,5 @@
 import { and, eq, gte, inArray } from 'drizzle-orm'
-import type { MySqlSelect } from 'drizzle-orm/mysql-core'
+import type { PgSelect } from 'drizzle-orm/pg-core'
 import db from '@/db/index'
 import { officers, positions, ratings, wycDatabase, wycRatings } from '@/db/schema'
 
@@ -25,7 +25,7 @@ export type ExaminerFilters = {
   showInactive?: boolean
 }
 
-export function withExaminerFilters<T extends MySqlSelect>(
+export function withExaminerFilters<T extends PgSelect>(
   qb: T,
   filters: ExaminerFilters | undefined,
 ) {

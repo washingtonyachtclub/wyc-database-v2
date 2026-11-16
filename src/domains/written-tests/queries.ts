@@ -111,7 +111,7 @@ export async function saveTestAttempt(memberWycNumber: number, data: TestSubmiss
         })),
       },
     })
-    .onDuplicateKeyUpdate({ set: { attemptId: data.attemptId } })
+    .onConflictDoNothing({ target: writtenTestAttempts.attemptId })
   const saved = await getAttempt(memberWycNumber, data.attemptId)
   if (!saved) throw new Error('Saved test attempt was not found')
   if (

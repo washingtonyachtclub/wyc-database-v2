@@ -1,3 +1,4 @@
+import { formatRecordedDate } from '@/lib/date-utils'
 import { Link } from '@tanstack/react-router'
 import { createColumnHelper } from '@tanstack/react-table'
 import { AlertTriangle } from 'lucide-react'
@@ -27,6 +28,7 @@ export const columns = [
   columnHelper.accessor('date', {
     header: 'Date',
     enableSorting: true,
+    cell: (info) => formatRecordedDate(info.getValue()),
   }),
   columnHelper.accessor('memberName', {
     header: 'Member',

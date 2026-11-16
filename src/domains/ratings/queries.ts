@@ -1,9 +1,9 @@
 import db from '@/db/index'
 import { ratings, wycDatabase, wycRatings } from '@/db/schema'
 import { isRatingActive } from '@/lib/rating-expiry'
-import { and, count, desc, eq, gte, lte } from 'drizzle-orm'
-import type { MySqlColumn, MySqlSelect } from 'drizzle-orm/mysql-core'
-import { alias } from 'drizzle-orm/mysql-core'
+import { sql, and, count, eq, gte, lte } from 'drizzle-orm'
+import type { PgColumn, PgSelect } from 'drizzle-orm/pg-core'
+import { alias } from 'drizzle-orm/pg-core'
 import type { RatingFilters } from './filter-types'
 
 const memberTable = alias(wycDatabase, 'member')
@@ -41,7 +41,7 @@ export function baseMemberRatingsQuery(wycNumber: number) {
     .leftJoin(examinerTable, eq(wycRatings.examiner, examinerTable.wycNumber))
     .leftJoin(enteredByTable, eq(wycRatings.enteredBy, enteredByTable.wycNumber))
     .where(eq(wycRatings.member, wycNumber))
-    .orderBy(desc(wycRatings.date))
+    .orderBy(sql`${wycRatings.date} desc nulls last`)
 }
 
 export function baseAllRatingsQuery() {
@@ -64,17 +64,14 @@ export function baseAllRatingsCountQuery() {
     .leftJoin(enteredByTable, eq(wycRatings.enteredBy, enteredByTable.wycNumber))
 }
 
-export const ratingSortColumns: Record<string, MySqlColumn> = {
+export const ratingSortColumns: Record<string, PgColumn> = {
   date: wycRatings.date,
   ratingText: ratings.text,
   memberName: memberTable.last,
   examinerName: examinerTable.last,
 }
 
-export function withRatingFilters<T extends MySqlSelect>(
-  qb: T,
-  filters: RatingFilters | undefined,
-) {
+export function withRatingFilters<T extends PgSelect>(qb: T, filters: RatingFilters | undefined) {
   const conditions = []
 
   if (filters?.ratingIndex !== undefined) {
@@ -149,5 +146,5 @@ export function baseRatingsGivenQuery(wycNumber: number, since?: string) {
     .leftJoin(examinerTable, eq(wycRatings.examiner, examinerTable.wycNumber))
     .leftJoin(enteredByTable, eq(wycRatings.enteredBy, enteredByTable.wycNumber))
     .where(and(...conditions))
-    .orderBy(desc(wycRatings.date))
+    .orderBy(sql`${wycRatings.date} desc nulls last`)
 }

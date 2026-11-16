@@ -1,72 +1,58 @@
 import type { TestSnapshot } from '@/domains/written-tests/schema'
 import { sql } from 'drizzle-orm'
 import {
-  char,
   check,
-  customType,
   date,
-  datetime,
-  decimal,
-  double,
-  float,
+  doublePrecision,
   foreignKey,
   index,
-  int,
+  integer,
   json,
-  mysqlEnum,
-  mysqlTable,
+  numeric,
+  pgEnum,
+  pgTable,
   primaryKey,
+  real,
+  smallint,
   text,
   timestamp,
-  tinyint,
   unique,
   varchar,
-} from 'drizzle-orm/mysql-core'
+} from 'drizzle-orm/pg-core'
 
-const blobAsText = customType<{ data: string; driverData: Buffer }>({
-  dataType() {
-    return 'blob'
-  },
-  fromDriver(value: Buffer): string {
-    return value.toString('utf-8')
-  },
-  toDriver(value: string): Buffer {
-    return Buffer.from(value, 'utf-8')
-  },
-})
+export const reservationType = pgEnum('reservation_type', ['personal', 'admin'])
+export const otpChannel = pgEnum('otp_channel', ['email', 'sms'])
+export const qrLoginStatus = pgEnum('qr_login_status', [
+  'pending',
+  'approved',
+  'consumed',
+  'expired',
+  'canceled',
+])
+export const writtenTestMode = pgEnum('written_test_mode', ['practice', 'final'])
 
-const tinyint1 = customType<{ data: number; driverData: number }>({
-  dataType() {
-    return 'tinyint(1)'
-  },
-})
-
-export const wycDatabase = mysqlTable(
+export const wycDatabase = pgTable(
   'WYCDatabase',
   {
-    last: char('Last', { length: 50 }).charSet('latin1').collate('latin1_swedish_ci'),
-    first: char('First', { length: 50 }).charSet('latin1').collate('latin1_swedish_ci'),
-    streetAddress: char('StreetAddress', { length: 100 })
-      .charSet('latin1')
-      .collate('latin1_swedish_ci'),
-    city: char('City', { length: 50 }).charSet('latin1').collate('latin1_swedish_ci'),
-    state: char('State', { length: 20 }).charSet('latin1').collate('latin1_swedish_ci'),
-    zipCode: char('ZipCode', { length: 10 }).charSet('latin1').collate('latin1_swedish_ci'),
-    phone1: char('Phone1', { length: 50 }).charSet('latin1').collate('latin1_swedish_ci'),
-    phone2: char('Phone2', { length: 50 }).charSet('latin1').collate('latin1_swedish_ci'),
-    email: varchar('Email', { length: 254 }).charSet('latin1').collate('latin1_swedish_ci'),
-    uwEmail: varchar('uw_email', { length: 254 }).charSet('latin1').collate('latin1_swedish_ci'),
-    categoryId: int('Category'),
-    wycNumber: int('WYCNumber').default(0).notNull(),
-    expireQtrIndex: int('ExpireQtr').default(0).notNull(),
-    studentId: int('StudentID'),
-    password: char({ length: 50 }).charSet('latin1').collate('latin1_swedish_ci'),
-    passwordArgon2: varchar('password_argon2', { length: 255 })
-      .charSet('latin1')
-      .collate('latin1_swedish_ci'),
-    outToSea: tinyint1('out_to_sea').default(sql`false`),
+    last: varchar('Last', { length: 50 }),
+    first: varchar('First', { length: 50 }),
+    streetAddress: varchar('StreetAddress', { length: 100 }),
+    city: varchar('City', { length: 50 }),
+    state: varchar('State', { length: 20 }),
+    zipCode: varchar('ZipCode', { length: 10 }),
+    phone1: varchar('Phone1', { length: 50 }),
+    phone2: varchar('Phone2', { length: 50 }),
+    email: varchar('Email', { length: 254 }),
+    uwEmail: varchar('uw_email', { length: 254 }),
+    categoryId: integer('Category'),
+    wycNumber: integer('WYCNumber').default(0).notNull(),
+    expireQtrIndex: integer('ExpireQtr').default(0).notNull(),
+    studentId: integer('StudentID'),
+    password: varchar({ length: 50 }),
+    passwordArgon2: varchar('password_argon2', { length: 255 }),
+    outToSea: smallint('out_to_sea').default(0),
     joinDate: timestamp('JoinDate', { mode: 'string' }).defaultNow().notNull(),
-    imageName: char('image_name', { length: 50 }).charSet('latin1').collate('latin1_swedish_ci'),
+    imageName: varchar('image_name', { length: 50 }),
   },
   (table) => [
     primaryKey({ columns: [table.wycNumber] }),
@@ -74,117 +60,107 @@ export const wycDatabase = mysqlTable(
   ],
 )
 
-export const boatTypes = mysqlTable(
+export const boatTypes = pgTable(
   'boat_types',
   {
-    index: int('_index').autoincrement().notNull(),
-    type: varchar({ length: 80 }).charSet('latin1').collate('latin1_swedish_ci'),
-    description: varchar({ length: 500 }).charSet('latin1').collate('latin1_swedish_ci').notNull(),
-    usefulLink: varchar({ length: 100 }).charSet('latin1').collate('latin1_swedish_ci').notNull(),
-    fleet: varchar({ length: 80 }).charSet('latin1').collate('latin1_swedish_ci').notNull(),
-    numberInFleet: int().notNull(),
-    active: tinyint1()
-      .default(sql`true`)
-      .notNull(),
+    index: integer('_index').generatedByDefaultAsIdentity().notNull(),
+    type: varchar({ length: 80 }),
+    description: varchar({ length: 500 }).notNull(),
+    usefulLink: varchar({ length: 100 }).notNull(),
+    fleet: varchar({ length: 80 }).notNull(),
+    numberInFleet: integer().notNull(),
+    active: smallint().default(1).notNull(),
   },
   (table) => [primaryKey({ columns: [table.index] })],
 )
 
-export const calendaradmin = mysqlTable('calendaradmin', {
-  wycnum: int().notNull(),
-  description: varchar({ length: 50 }).charSet('latin1').collate('latin1_swedish_ci').notNull(),
+export const calendaradmin = pgTable('calendaradmin', {
+  wycnum: integer().notNull(),
+  description: varchar({ length: 50 }).notNull(),
 })
 
-export const calendarboats = mysqlTable(
+export const calendarboats = pgTable(
   'calendarboats',
   {
-    cBoatId: int().autoincrement().notNull(),
-    active: tinyint('active').default(1).notNull(),
-    name: varchar({ length: 50 }).charSet('latin1').collate('latin1_swedish_ci').notNull(),
-    description: varchar('Description', { length: 500 })
-      .charSet('latin1')
-      .collate('latin1_swedish_ci')
-      .notNull(),
+    cBoatId: integer().generatedByDefaultAsIdentity().notNull(),
+    active: smallint('active').default(1).notNull(),
+    name: varchar({ length: 50 }).notNull(),
+    description: varchar('Description', { length: 500 }).notNull(),
   },
   (table) => [primaryKey({ columns: [table.cBoatId] })],
 )
 
-export const calendarcomment = mysqlTable('calendarcomment', {
-  id: int().notNull(),
-  userwyc: int().notNull(),
-  date: datetime({ mode: 'string' }).notNull(),
-  comment: text().charSet('latin1').collate('latin1_swedish_ci').notNull(),
+export const calendarcomment = pgTable('calendarcomment', {
+  id: integer().notNull(),
+  userwyc: integer().notNull(),
+  date: timestamp({ mode: 'string' }).notNull(),
+  comment: text().notNull(),
 })
 
-export const calendarconfig = mysqlTable(
+export const calendarconfig = pgTable(
   'calendarconfig',
   {
-    wacip: varchar({ length: 15 }).charSet('latin1').collate('latin1_swedish_ci').notNull(),
-    ipdescription: varchar({ length: 255 })
-      .charSet('latin1')
-      .collate('latin1_swedish_ci')
-      .notNull(),
+    wacip: varchar({ length: 15 }).notNull(),
+    ipdescription: varchar({ length: 255 }).notNull(),
   },
   (table) => [primaryKey({ columns: [table.wacip] })],
 )
 
-export const calendartable = mysqlTable(
+export const calendartable = pgTable(
   'calendartable',
   {
-    id: int().autoincrement().notNull(),
-    cBoatId: int().notNull(),
-    memberWycNumber: int('memberWYCNumber'),
-    reservationType: mysqlEnum('reservationType', ['personal', 'admin'])
-      .default('personal')
-      .notNull(),
-    createdByWycNumber: int('createdByWYCNumber'),
-    title: varchar({ length: 120 }).charSet('latin1').collate('latin1_swedish_ci'),
-    reserveFrom: datetime({ mode: 'string' }).notNull(),
-    reserveTo: datetime({ mode: 'string' }).notNull(),
-    destination: varchar({ length: 255 }).charSet('latin1').collate('latin1_swedish_ci').notNull(),
-    numberOfCrew: int().notNull(),
-    comments: varchar({ length: 255 }).charSet('latin1').collate('latin1_swedish_ci'),
-    phone: varchar({ length: 45 }).charSet('latin1').collate('latin1_swedish_ci').notNull(),
-    numFullWd: int('numFullWD').notNull(),
-    numHalfWd: int('numHalfWD').notNull(),
-    numFullWe: int('numFullWE').notNull(),
-    numHalfWe: int('numHalfWE').notNull(),
+    id: integer().generatedByDefaultAsIdentity().notNull(),
+    cBoatId: integer().notNull(),
+    memberWycNumber: integer('memberWYCNumber'),
+    reservationType: reservationType('reservationType').default('personal').notNull(),
+    createdByWycNumber: integer('createdByWYCNumber'),
+    title: varchar({ length: 120 }),
+    reserveFrom: timestamp({ mode: 'string' }).notNull(),
+    reserveTo: timestamp({ mode: 'string' }).notNull(),
+    destination: varchar({ length: 255 }).notNull(),
+    numberOfCrew: integer().notNull(),
+    comments: varchar({ length: 255 }),
+    phone: varchar({ length: 45 }).notNull(),
+    numFullWd: integer('numFullWD').notNull(),
+    numHalfWd: integer('numHalfWD').notNull(),
+    numFullWe: integer('numFullWE').notNull(),
+    numHalfWe: integer('numHalfWE').notNull(),
   },
   (table) => [primaryKey({ columns: [table.id] })],
 )
 
-export const checkouts = mysqlTable(
+export const checkouts = pgTable(
   'checkouts',
   {
-    index: int('_index').autoincrement().notNull(),
-    wycNumber: int('WYCNumber').notNull(),
-    timeDeparture: datetime('TimeDeparture', { mode: 'string' }).notNull(),
+    index: integer('_index').generatedByDefaultAsIdentity().notNull(),
+    wycNumber: integer('WYCNumber').notNull(),
+    timeDeparture: timestamp('TimeDeparture', { mode: 'string' }).notNull(),
     crew: text('Crew'),
     boat: varchar('Boat', { length: 50 }).notNull(),
     destination: varchar('Destination', { length: 100 }).notNull(),
-    timeReturn: datetime('TimeReturn', { mode: 'string' }),
-    expectedReturn: datetime('ExpectedReturn', { mode: 'string' }).notNull(),
-    relevantRating: int('RelevantRating'),
-    chiefId: int('ChiefID'),
+    timeReturn: timestamp('TimeReturn', { mode: 'string' }),
+    expectedReturn: timestamp('ExpectedReturn', { mode: 'string' }),
+    relevantRating: integer('RelevantRating'),
+    chiefId: integer('ChiefID'),
   },
   (table) => [primaryKey({ columns: [table.index] })],
 )
 
-export const classType = mysqlTable(
+export const classType = pgTable(
   'class_type',
   {
-    index: int('_index').autoincrement().notNull(),
-    text: varchar({ length: 80 }).charSet('latin1').collate('latin1_swedish_ci'),
+    index: integer('_index').generatedByDefaultAsIdentity().notNull(),
+    text: varchar({ length: 80 }),
   },
   (table) => [primaryKey({ columns: [table.index] })],
 )
 
-export const crew = mysqlTable(
+export const crew = pgTable(
   'crew',
   {
-    index: int('_index').autoincrement().notNull(),
-    checkoutId: int('checkout_ID').notNull(),
-    crewId: int('crew_ID').notNull(),
+    index: integer('_index').generatedByDefaultAsIdentity().notNull(),
+    checkoutId: integer('checkout_ID').notNull(),
+    crewId: integer('crew_ID').notNull(),
   },
   (table) => [
     primaryKey({ columns: [table.index] }),
@@ -197,13 +173,13 @@ export const crew = mysqlTable(
   ],
 )
 
-export const guests = mysqlTable(
+export const guests = pgTable(
   'guests',
   {
-    index: int('_index').autoincrement().notNull(),
-    checkoutId: int('checkout_ID').notNull(),
+    index: integer('_index').generatedByDefaultAsIdentity().notNull(),
+    checkoutId: integer('checkout_ID').notNull(),
     name: varchar({ length: 100 }),
-    status: int().notNull(),
+    status: integer().notNull(),
     email: varchar({ length: 255 }),
     phone: varchar({ length: 15 }),
   },
@@ -217,251 +193,229 @@ export const guests = mysqlTable(
   ],
 )
 
-export const keelboatPricing = mysqlTable('keelboat_pricing', {
-  price: float().notNull(),
-  weekday: int().notNull(),
-  fullday: int().notNull(),
-  student: int().notNull(),
+export const keelboatPricing = pgTable('keelboat_pricing', {
+  price: real().notNull(),
+  weekday: integer().notNull(),
+  fullday: integer().notNull(),
+  student: integer().notNull(),
 })
 
-export const lessonQuarter = mysqlTable(
+export const lessonQuarter = pgTable(
   'lesson_quarter',
   {
-    index: int('_index', { unsigned: true }).autoincrement().notNull(),
-    quarter: int({ unsigned: true }).default(0).notNull(),
+    index: integer('_index').generatedByDefaultAsIdentity().notNull(),
+    quarter: integer().default(0).notNull(),
   },
   (table) => [primaryKey({ columns: [table.index] })],
 )
 
-export const lessons = mysqlTable(
+export const lessons = pgTable(
   'lessons',
   {
-    index: int('_index').autoincrement().notNull(),
-    type: int(),
-    subtype: varchar({ length: 80 }).charSet('latin1').collate('latin1_swedish_ci'),
+    index: integer('_index').generatedByDefaultAsIdentity().notNull(),
+    type: integer(),
+    subtype: varchar({ length: 80 }),
     // `lesson_sessions` is the source of truth; these are kept only
     // because they are the last record of the dates for the old lessons.
-    day: varchar({ length: 80 }).charSet('latin1').collate('latin1_swedish_ci'),
-    time: varchar({ length: 80 }).charSet('latin1').collate('latin1_swedish_ci'),
-    dates: text().charSet('latin1').collate('latin1_swedish_ci'),
-    calendarDate: date('CalendarDate', { mode: 'string' }).notNull(),
-    instructor1: int(),
-    instructor2: int(),
+    day: varchar({ length: 80 }),
+    time: varchar({ length: 80 }),
+    dates: text(),
+    calendarDate: date('CalendarDate', { mode: 'string' }),
+    instructor1: integer(),
+    instructor2: integer(),
     // The legacy schema stores the lesson description in the comments column.
-    description: blobAsText('comments'),
-    requirements: text().charSet('latin1').collate('latin1_swedish_ci'),
+    description: text('comments'),
+    requirements: text(),
     legacyDescription: text('Description')
-      .charSet('latin1')
-      .collate('latin1_swedish_ci')
       .notNull()
       .$default(() => ''),
-    location: varchar({ length: 80 }).charSet('latin1').collate('latin1_swedish_ci'),
-    locationUrl: varchar('location_url', { length: 255 })
-      .charSet('latin1')
-      .collate('latin1_swedish_ci'),
-    size: int(),
-    expire: int(),
-    display: tinyint1()
-      .default(sql`false`)
-      .notNull(),
+    location: varchar({ length: 80 }),
+    locationUrl: varchar('location_url', { length: 255 }),
+    size: integer(),
+    expire: integer(),
+    display: smallint().default(0).notNull(),
   },
   (table) => [primaryKey({ columns: [table.index] })],
 )
 
-export const lessonAnnouncements = mysqlTable(
+export const lessonAnnouncements = pgTable(
   'lesson_announcements',
   {
-    id: int().autoincrement().notNull(),
-    lessonId: int('lesson_id').notNull(),
-    authorWycNumber: int('author_wyc_number'),
-    subject: text().charSet('utf8mb4').collate('utf8mb4_unicode_ci').notNull(),
-    bodyMarkdown: text('body_markdown').charSet('utf8mb4').collate('utf8mb4_unicode_ci').notNull(),
+    id: integer().generatedByDefaultAsIdentity().notNull(),
+    lessonId: integer('lesson_id').notNull(),
+    authorWycNumber: integer('author_wyc_number'),
+    subject: text().notNull(),
+    bodyMarkdown: text('body_markdown').notNull(),
     createdAt: timestamp('created_at', { mode: 'string' }).defaultNow().notNull(),
   },
   (table) => [
     primaryKey({ columns: [table.id] }),
     index('idx_lesson_announcements_lesson_created').on(table.lessonId, table.createdAt),
-    // The legacy lessons table is MyISAM, so deleteLesson enforces this relationship.
   ],
 )
 
-export const lessonSessions = mysqlTable(
+export const lessonSessions = pgTable(
   'lesson_sessions',
   {
-    index: int('_index').autoincrement().notNull(),
-    lessonId: int('lesson_id').notNull(),
-    startsAt: datetime('starts_at', { mode: 'string' }).notNull(),
+    index: integer('_index').generatedByDefaultAsIdentity().notNull(),
+    lessonId: integer('lesson_id').notNull(),
+    startsAt: timestamp('starts_at', { mode: 'string' }).notNull(),
     // Inclusive: a Fri–Mon trip ends Mon.
-    endsAt: datetime('ends_at', { mode: 'string' }).notNull(),
+    endsAt: timestamp('ends_at', { mode: 'string' }).notNull(),
     // When set, the time components are filler
-    allDay: tinyint('all_day').default(0).notNull(),
+    allDay: smallint('all_day').default(0).notNull(),
   },
   (table) => [index('lesson_id_idx').on(table.lessonId), primaryKey({ columns: [table.index] })],
 )
 
-export const memcat = mysqlTable(
+export const memcat = pgTable(
   'memcat',
   {
-    index: int('_index').autoincrement().notNull(),
-    text: varchar({ length: 50 }).charSet('latin1').collate('latin1_swedish_ci'),
+    index: integer('_index').generatedByDefaultAsIdentity().notNull(),
+    text: varchar({ length: 50 }),
   },
   (table) => [primaryKey({ columns: [table.index] })],
 )
 
-export const noyes = mysqlTable(
+export const noyes = pgTable(
   'noyes',
   {
-    index: tinyint1('_index')
-      .default(sql`false`)
-      .notNull(),
-    text: char({ length: 10 }).charSet('latin1').collate('latin1_swedish_ci'),
+    index: smallint('_index').default(0).notNull(),
+    text: varchar({ length: 10 }),
   },
   (table) => [primaryKey({ columns: [table.index] })],
 )
 
-export const officers = mysqlTable(
+export const officers = pgTable(
   'officers',
   {
-    index: int('_index').autoincrement().notNull(),
-    member: int(),
-    position: int(),
-    active: tinyint1()
-      .default(sql`true`)
-      .notNull(),
+    index: integer('_index').generatedByDefaultAsIdentity().notNull(),
+    member: integer(),
+    position: integer(),
+    active: smallint().default(1).notNull(),
   },
   (table) => [
     primaryKey({ columns: [table.index] }),
-    unique('_index').on(table.index),
     unique('member').on(table.position, table.member),
   ],
 )
 
-export const options = mysqlTable(
+export const options = pgTable(
   'options',
   {
-    index: int('_index').autoincrement().notNull(),
-    name: varchar({ length: 80 }).charSet('latin1').collate('latin1_swedish_ci'),
-    value: varchar({ length: 250 }).charSet('latin1').collate('latin1_swedish_ci'),
+    index: integer('_index').generatedByDefaultAsIdentity().notNull(),
+    name: varchar({ length: 80 }),
+    value: varchar({ length: 250 }),
   },
   (table) => [primaryKey({ columns: [table.index] })],
 )
 
-export const posPrivMap = mysqlTable(
+export const posPrivMap = pgTable(
   'pos_priv_map',
   {
-    index: int('_index').autoincrement().notNull(),
-    position: int(),
-    priv: int(),
+    index: integer('_index').generatedByDefaultAsIdentity().notNull(),
+    position: integer(),
+    priv: integer(),
   },
   (table) => [primaryKey({ columns: [table.index] })],
 )
 
-export const posType = mysqlTable(
+export const posType = pgTable(
   'pos_type',
   {
-    index: int('_index').autoincrement().notNull(),
-    text: char({ length: 50 }).charSet('latin1').collate('latin1_swedish_ci'),
+    index: integer('_index').generatedByDefaultAsIdentity().notNull(),
+    text: varchar({ length: 50 }),
   },
   (table) => [primaryKey({ columns: [table.index] })],
 )
 
-export const positions = mysqlTable(
+export const positions = pgTable(
   'positions',
   {
-    index: int('_index').autoincrement().notNull(),
-    name: varchar({ length: 50 })
-      .default('')
-      .charSet('latin1')
-      .collate('latin1_swedish_ci')
-      .notNull(),
-    sortorder: int(),
-    type: int(),
-    bookmark: varchar({ length: 50 }).charSet('latin1').collate('latin1_swedish_ci'),
-    jobDesc: varchar('job_desc', { length: 50 }).charSet('latin1').collate('latin1_swedish_ci'),
-    active: tinyint().default(0).notNull(),
+    index: integer('_index').generatedByDefaultAsIdentity().notNull(),
+    name: varchar({ length: 50 }).default('').notNull(),
+    sortorder: integer(),
+    type: integer(),
+    bookmark: varchar({ length: 50 }),
+    jobDesc: varchar('job_desc', { length: 50 }),
+    active: smallint().default(0).notNull(),
   },
   (table) => [primaryKey({ columns: [table.index] })],
 )
 
-export const priorityTypes = mysqlTable(
+export const priorityTypes = pgTable(
   'priority_types',
   {
-    index: int('_index').autoincrement().notNull(),
-    priority: varchar({ length: 25 })
-      .default('')
-      .charSet('latin1')
-      .collate('latin1_swedish_ci')
-      .notNull(),
+    index: integer('_index').generatedByDefaultAsIdentity().notNull(),
+    priority: varchar({ length: 25 }).default('').notNull(),
   },
   (table) => [primaryKey({ columns: [table.index] })],
 )
 
-export const privs = mysqlTable(
+export const privs = pgTable(
   'privs',
   {
-    index: int('_index').autoincrement().notNull(),
-    name: char({ length: 10 }).charSet('latin1').collate('latin1_swedish_ci'),
+    index: integer('_index').generatedByDefaultAsIdentity().notNull(),
+    name: varchar({ length: 10 }),
   },
   (table) => [primaryKey({ columns: [table.index] })],
 )
 
-export const quarters = mysqlTable(
+export const quarters = pgTable(
   'quarters',
   {
-    index: int('_index').autoincrement().notNull(),
-    text: char({ length: 50 }).charSet('latin1').collate('latin1_swedish_ci'),
-    school: char({ length: 50 }).charSet('latin1').collate('latin1_swedish_ci'),
+    index: integer('_index').generatedByDefaultAsIdentity().notNull(),
+    text: varchar({ length: 50 }),
+    school: varchar({ length: 50 }),
     // you can use { mode: 'date' }, if you want to have Date as type for this column
     endDate: date({ mode: 'string' }),
   },
   (table) => [primaryKey({ columns: [table.index] })],
 )
 
-export const ratings = mysqlTable(
+export const ratings = pgTable(
   'ratings',
   {
-    index: int('_index').autoincrement().notNull(),
-    text: char({ length: 50 }).charSet('latin1').collate('latin1_swedish_ci'),
-    type: varchar({ length: 10 }).charSet('latin1').collate('latin1_swedish_ci').notNull(),
-    degree: int().notNull(),
-    expires: tinyint('expires').default(0).notNull(),
+    index: integer('_index').generatedByDefaultAsIdentity().notNull(),
+    text: varchar({ length: 50 }),
+    type: varchar({ length: 10 }).notNull(),
+    degree: integer().notNull(),
+    expires: smallint('expires').default(0).notNull(),
   },
   (table) => [primaryKey({ columns: [table.index] })],
 )
 
-export const recip = mysqlTable('recip', {
-  clubName: varchar('club_name', { length: 50 }).charSet('latin1').collate('latin1_swedish_ci'),
-  website: varchar({ length: 50 }).charSet('latin1').collate('latin1_swedish_ci'),
-  recipUrl: varchar('recip_url', { length: 75 }).charSet('latin1').collate('latin1_swedish_ci'),
-  location: varchar({ length: 2000 }).charSet('latin1').collate('latin1_swedish_ci'),
-  latLong: varchar('lat_long', { length: 100 }).charSet('latin1').collate('latin1_swedish_ci'),
-  lengthStay: varchar('length_stay', { length: 2000 })
-    .charSet('latin1')
-    .collate('latin1_swedish_ci'),
-  procedures: varchar({ length: 2000 }).charSet('latin1').collate('latin1_swedish_ci'),
-  amenities: varchar({ length: 2000 }).charSet('latin1').collate('latin1_swedish_ci'),
-  image: varchar({ length: 100 }).charSet('latin1').collate('latin1_swedish_ci'),
-  imageNext: varchar('image_next', { length: 100 }).charSet('latin1').collate('latin1_swedish_ci'),
-  clubId: varchar('club_id', { length: 2 }).charSet('latin1').collate('latin1_swedish_ci'),
+export const recip = pgTable('recip', {
+  clubName: varchar('club_name', { length: 50 }),
+  website: varchar({ length: 50 }),
+  recipUrl: varchar('recip_url', { length: 75 }),
+  location: varchar({ length: 2000 }),
+  latLong: varchar('lat_long', { length: 100 }),
+  lengthStay: varchar('length_stay', { length: 2000 }),
+  procedures: varchar({ length: 2000 }),
+  amenities: varchar({ length: 2000 }),
+  image: varchar({ length: 100 }),
+  imageNext: varchar('image_next', { length: 100 }),
+  clubId: varchar('club_id', { length: 2 }),
 })
 
-export const sessions = mysqlTable(
+export const sessions = pgTable(
   'sessions',
   {
-    index: int('_index').autoincrement().notNull(),
-    session: varchar({ length: 80 }).charSet('latin1').collate('latin1_swedish_ci'),
-    userid: int(),
-    time: varchar({ length: 80 }).charSet('latin1').collate('latin1_swedish_ci'),
+    index: integer('_index').generatedByDefaultAsIdentity().notNull(),
+    session: varchar({ length: 80 }),
+    userid: integer(),
+    time: varchar({ length: 80 }),
   },
   (table) => [primaryKey({ columns: [table.index] })],
 )
 
-export const signups = mysqlTable(
+export const signups = pgTable(
   'signups',
   {
-    index: int('_index').autoincrement().notNull(),
-    class: int().default(0).notNull(),
-    student: int().default(0).notNull(),
+    index: integer('_index').generatedByDefaultAsIdentity().notNull(),
+    class: integer().default(0).notNull(),
+    student: integer().default(0).notNull(),
   },
   (table) => [
     index('class').on(table.class),
@@ -470,95 +424,95 @@ export const signups = mysqlTable(
   ],
 )
 
-export const snc = mysqlTable(
+export const snc = pgTable(
   'snc',
   {
-    index: int('_index').autoincrement().notNull(),
-    quarter: int(),
-    member: int(),
-    memberDinner: int('member_dinner'),
-    memberLunch1: int('member_lunch1'),
-    memberLunch2: int('member_lunch2'),
-    guest1Name: char('guest1_name', { length: 100 }).charSet('latin1').collate('latin1_swedish_ci'),
-    guest1Dinner: int('guest1_dinner'),
-    guest1Lunch1: int('guest1_lunch1'),
-    guest1Lunch2: int('guest1_lunch2'),
-    guest2Name: char('guest2_name', { length: 100 }).charSet('latin1').collate('latin1_swedish_ci'),
-    guest2Dinner: int('guest2_dinner'),
-    guest2Lunch1: int('guest2_lunch1'),
-    guest2Lunch2: int('guest2_lunch2'),
-    boat1Pref: char('boat1pref', { length: 100 }).charSet('latin1').collate('latin1_swedish_ci'),
-    boat2Pref: char('boat2pref', { length: 100 }).charSet('latin1').collate('latin1_swedish_ci'),
-    ratingSh: int('rating_sh'),
-    ratingDh: int('rating_dh'),
-    ratingKb: int('rating_kb'),
-    isLockVeteran: tinyint1('is_lock_veteran'),
-    friends: char({ length: 100 }).charSet('latin1').collate('latin1_swedish_ci'),
-    duties: int(),
-    guest1Child: tinyint1('guest1_child'),
-    guest2Child: tinyint1('guest2_child'),
-    transpt: tinyint1().default(sql`false`),
-    paymentConfirm: int('payment_confirm').notNull(),
+    index: integer('_index').generatedByDefaultAsIdentity().notNull(),
+    quarter: integer(),
+    member: integer(),
+    memberDinner: integer('member_dinner'),
+    memberLunch1: integer('member_lunch1'),
+    memberLunch2: integer('member_lunch2'),
+    guest1Name: varchar('guest1_name', { length: 100 }),
+    guest1Dinner: integer('guest1_dinner'),
+    guest1Lunch1: integer('guest1_lunch1'),
+    guest1Lunch2: integer('guest1_lunch2'),
+    guest2Name: varchar('guest2_name', { length: 100 }),
+    guest2Dinner: integer('guest2_dinner'),
+    guest2Lunch1: integer('guest2_lunch1'),
+    guest2Lunch2: integer('guest2_lunch2'),
+    boat1Pref: varchar('boat1pref', { length: 100 }),
+    boat2Pref: varchar('boat2pref', { length: 100 }),
+    ratingSh: integer('rating_sh'),
+    ratingDh: integer('rating_dh'),
+    ratingKb: integer('rating_kb'),
+    isLockVeteran: smallint('is_lock_veteran'),
+    friends: varchar({ length: 100 }),
+    duties: integer(),
+    guest1Child: smallint('guest1_child'),
+    guest2Child: smallint('guest2_child'),
+    transpt: smallint().default(0),
+    paymentConfirm: integer('payment_confirm').notNull(),
   },
   (table) => [primaryKey({ columns: [table.index] })],
 )
 
-export const sncFood = mysqlTable(
+export const sncFood = pgTable(
   'snc_food',
   {
-    index: int('_index').autoincrement().notNull(),
-    text: char({ length: 50 }).charSet('latin1').collate('latin1_swedish_ci'),
-    isAllowed: tinyint1('is_allowed'),
-    isDinner: tinyint1('is_dinner'),
-    cost: int().default(0).notNull(),
+    index: integer('_index').generatedByDefaultAsIdentity().notNull(),
+    text: varchar({ length: 50 }),
+    isAllowed: smallint('is_allowed'),
+    isDinner: smallint('is_dinner'),
+    cost: integer().default(0).notNull(),
   },
   (table) => [primaryKey({ columns: [table.index] })],
 )
 
-export const sncWork = mysqlTable(
+export const sncWork = pgTable(
   'snc_work',
   {
-    index: int('_index').autoincrement().notNull(),
-    text: char({ length: 50 }).charSet('latin1').collate('latin1_swedish_ci'),
-    isAllowed: tinyint1('is_allowed'),
+    index: integer('_index').generatedByDefaultAsIdentity().notNull(),
+    text: varchar({ length: 50 }),
+    isAllowed: smallint('is_allowed'),
   },
   (table) => [primaryKey({ columns: [table.index] })],
 )
 
-export const wycRatings = mysqlTable(
+export const wycRatings = pgTable(
   'wyc_ratings',
   {
-    index: int('_index').autoincrement().notNull(),
-    member: int(),
-    rating: int(),
+    index: integer('_index').generatedByDefaultAsIdentity().notNull(),
+    member: integer(),
+    rating: integer(),
     // you can use { mode: 'date' }, if you want to have Date as type for this column
     date: date({ mode: 'string' }),
-    examiner: int(),
-    enteredBy: int('entered_by'),
+    examiner: integer(),
+    enteredBy: integer('entered_by'),
     enteredAt: timestamp('entered_at', { mode: 'string' }).defaultNow(),
-    comments: varchar({ length: 255 }).charSet('latin1').collate('latin1_swedish_ci'),
+    comments: varchar({ length: 255 }),
   },
   (table) => [primaryKey({ columns: [table.index] })],
 )
 
-export const processedFormEntries = mysqlTable('processed_form_entries', {
-  entryId: int('entry_id').primaryKey(),
-  wycNumber: int('wyc_number'),
+export const processedFormEntries = pgTable('processed_form_entries', {
+  entryId: integer('entry_id').primaryKey(),
+  wycNumber: integer('wyc_number'),
   processedAt: timestamp('processed_at').defaultNow().notNull(),
 })
 
-export const otpCodes = mysqlTable(
+export const otpCodes = pgTable(
   'otp_codes',
   {
-    id: int('id').autoincrement().notNull(),
-    wycNumber: int('wyc_number').notNull(),
-    channel: mysqlEnum('channel', ['email', 'sms']).notNull(),
+    id: integer('id').generatedByDefaultAsIdentity().notNull(),
+    wycNumber: integer('wyc_number').notNull(),
+    channel: otpChannel('channel').notNull(),
     purpose: varchar('purpose', { length: 32 }).notNull(),
     destination: varchar('destination', { length: 255 }).notNull(),
     codeHash: varchar('code_hash', { length: 255 }).notNull(),
     expiresAt: timestamp('expires_at').notNull(),
-    attempts: int('attempts').default(0).notNull(),
-    maxAttempts: int('max_attempts').default(5).notNull(),
+    attempts: integer('attempts').default(0).notNull(),
+    maxAttempts: integer('max_attempts').default(5).notNull(),
     consumedAt: timestamp('consumed_at'),
     createdAt: timestamp('created_at').defaultNow().notNull(),
   },
@@ -569,17 +523,15 @@ export const otpCodes = mysqlTable(
   ],
 )
 
-export const qrLoginRequests = mysqlTable(
+export const qrLoginRequests = pgTable(
   'qr_login_requests',
   {
-    id: int('id').autoincrement().notNull(),
-    approvalSecretHash: char('approval_secret_hash', { length: 64 }).notNull(),
-    pollingSecretHash: char('polling_secret_hash', { length: 64 }).notNull(),
-    status: mysqlEnum('status', ['pending', 'approved', 'consumed', 'expired', 'canceled'])
-      .default('pending')
-      .notNull(),
-    approvedBy: int('approved_by'),
-    createdIpHash: char('created_ip_hash', { length: 64 }).notNull(),
+    id: integer('id').generatedByDefaultAsIdentity().notNull(),
+    approvalSecretHash: varchar('approval_secret_hash', { length: 64 }).notNull(),
+    pollingSecretHash: varchar('polling_secret_hash', { length: 64 }).notNull(),
+    status: qrLoginStatus('status').default('pending').notNull(),
+    approvedBy: integer('approved_by'),
+    createdIpHash: varchar('created_ip_hash', { length: 64 }).notNull(),
     expiresAt: timestamp('expires_at').notNull(),
     approvedAt: timestamp('approved_at'),
     consumedAt: timestamp('consumed_at'),
@@ -595,48 +547,36 @@ export const qrLoginRequests = mysqlTable(
   ],
 )
 
-export const doorCodes = mysqlTable(
+export const doorCodes = pgTable(
   'door_codes',
   {
-    index: int('_index').autoincrement().notNull(),
+    index: integer('_index').generatedByDefaultAsIdentity().notNull(),
     // Joins the row to its eligibility rule in door-codes/rules.ts.
-    slug: varchar('slug', { length: 32 })
-      .charSet('utf8mb4')
-      .collate('utf8mb4_0900_ai_ci')
-      .notNull(),
-    name: varchar('name', { length: 64 })
-      .charSet('utf8mb4')
-      .collate('utf8mb4_0900_ai_ci')
-      .notNull(),
-    code: varchar('code', { length: 32 })
-      .default('')
-      .charSet('utf8mb4')
-      .collate('utf8mb4_0900_ai_ci')
-      .notNull(),
-    updatedAt: datetime('updated_at', { mode: 'string' }),
-    updatedBy: int('updated_by'),
+    slug: varchar('slug', { length: 32 }).notNull(),
+    name: varchar('name', { length: 64 }).notNull(),
+    code: varchar('code', { length: 32 }).default('').notNull(),
+    updatedAt: timestamp('updated_at', { mode: 'string' }),
+    updatedBy: integer('updated_by'),
   },
   (table) => [primaryKey({ columns: [table.index] }), unique('uq_door_codes_slug').on(table.slug)],
 )
 
-export const membershipDiscountCodes = mysqlTable(
+export const membershipDiscountCodes = pgTable(
   'membership_discount_codes',
   {
-    index: int('_index').autoincrement().notNull(),
+    index: integer('_index').generatedByDefaultAsIdentity().notNull(),
     name: varchar({ length: 100 }).notNull(),
-    code: varchar({ length: 50 }).charSet('utf8mb4').collate('utf8mb4_0900_ai_ci').notNull(),
+    code: varchar({ length: 50 }).notNull(),
     audience: varchar({ length: 20 }).notNull(),
-    percentageOff: int('percentage_off'),
-    amountOffCents: int('amount_off_cents'),
+    percentageOff: integer('percentage_off'),
+    amountOffCents: integer('amount_off_cents'),
     startsOn: date('starts_on', { mode: 'string' }).notNull(),
     endsOn: date('ends_on', { mode: 'string' }).notNull(),
-    maxRedemptions: int('max_redemptions'),
-    active: tinyint1('active')
-      .default(sql`true`)
-      .notNull(),
-    revision: int('revision').default(1).notNull(),
-    createdBy: int('created_by').notNull(),
-    updatedBy: int('updated_by'),
+    maxRedemptions: integer('max_redemptions'),
+    active: smallint('active').default(1).notNull(),
+    revision: integer('revision').default(1).notNull(),
+    createdBy: integer('created_by').notNull(),
+    updatedBy: integer('updated_by'),
     createdAt: timestamp('created_at').defaultNow().notNull(),
     updatedAt: timestamp('updated_at'),
   },
@@ -655,23 +595,23 @@ export const membershipDiscountCodes = mysqlTable(
   ],
 )
 
-export const membershipApplications = mysqlTable(
+export const membershipApplications = pgTable(
   'membership_applications',
   {
-    id: char({ length: 36 }).notNull(),
+    id: varchar({ length: 36 }).notNull(),
     firstName: varchar('first_name', { length: 60 }).notNull(),
     lastName: varchar('last_name', { length: 60 }).notNull(),
     submittedPrimaryEmail: varchar('submitted_primary_email', { length: 254 }).notNull(),
     primaryEmail: varchar('primary_email', { length: 254 }).notNull(),
     submittedUwEmail: varchar('submitted_uw_email', { length: 254 }),
     uwEmail: varchar('uw_email', { length: 254 }),
-    emailEditedBy: int('email_edited_by'),
+    emailEditedBy: integer('email_edited_by'),
     emailEditedAt: timestamp('email_edited_at'),
     uwStatus: varchar('uw_status', { length: 20 }).notNull(),
     plusOneResponse: varchar('plus_one_response', { length: 30 }).notNull(),
     tier: varchar({ length: 20 }).notNull(),
     duration: varchar({ length: 20 }).notNull(),
-    targetExpireQtr: int('target_expire_qtr').notNull(),
+    targetExpireQtr: integer('target_expire_qtr').notNull(),
     paymentStatus: varchar('payment_status', { length: 30 }).default('pending').notNull(),
     squareOrderId: varchar('square_order_id', { length: 255 }),
     paymentIdempotencyKey: varchar('payment_idempotency_key', { length: 45 }),
@@ -690,15 +630,15 @@ export const membershipApplications = mysqlTable(
     questionnaireResponses: json('questionnaire_responses'),
     requirementsCompletedAt: timestamp('requirements_completed_at'),
     reviewStatus: varchar('review_status', { length: 30 }).default('not_ready').notNull(),
-    resolvedWycNumber: int('resolved_wyc_number'),
-    reviewedBy: int('reviewed_by'),
+    resolvedWycNumber: integer('resolved_wyc_number'),
+    reviewedBy: integer('reviewed_by'),
     reviewedAt: timestamp('reviewed_at'),
     reviewNote: text('review_note'),
     closedAt: timestamp('closed_at'),
     recoveryEmailSentAt: timestamp('recovery_email_sent_at'),
     completionReminderSentAt: timestamp('completion_reminder_sent_at'),
     welcomeEmailSentAt: timestamp('welcome_email_sent_at'),
-    createdIpHash: char('created_ip_hash', { length: 64 }).notNull(),
+    createdIpHash: varchar('created_ip_hash', { length: 64 }).notNull(),
     createdAt: timestamp('created_at').defaultNow().notNull(),
   },
   (table) => [
@@ -716,20 +656,20 @@ export const membershipApplications = mysqlTable(
   ],
 )
 
-export const memberEmailPreferences = mysqlTable(
+export const memberEmailPreferences = pgTable(
   'member_email_preferences',
   {
-    wycNumber: int('wyc_number').notNull(),
-    sailingOpportunities: tinyint1('sailing_opportunities').default(1).notNull(),
+    wycNumber: integer('wyc_number').notNull(),
+    sailingOpportunities: smallint('sailing_opportunities').default(1).notNull(),
     updatedAt: timestamp('updated_at', { mode: 'string' }).defaultNow().notNull(),
   },
   (table) => [primaryKey({ columns: [table.wycNumber] })],
 )
 
-export const memberEmergencyContacts = mysqlTable(
+export const memberEmergencyContacts = pgTable(
   'member_emergency_contacts',
   {
-    wycNumber: int('wyc_number').notNull(),
+    wycNumber: integer('wyc_number').notNull(),
     firstName: varchar('first_name', { length: 60 }).notNull(),
     lastName: varchar('last_name', { length: 60 }).notNull(),
     phone: varchar({ length: 50 }).notNull(),
@@ -739,16 +679,16 @@ export const memberEmergencyContacts = mysqlTable(
   (table) => [primaryKey({ columns: [table.wycNumber] })],
 )
 
-export const membershipRenewals = mysqlTable(
+export const membershipRenewals = pgTable(
   'membership_renewals',
   {
-    id: char({ length: 36 }).notNull(),
-    wycNumber: int('wyc_number').notNull(),
+    id: varchar({ length: 36 }).notNull(),
+    wycNumber: integer('wyc_number').notNull(),
     source: varchar({ length: 20 }).notNull(),
     tier: varchar({ length: 20 }).notNull(),
     duration: varchar({ length: 20 }).notNull(),
-    previousExpireQtr: int('previous_expire_qtr').notNull(),
-    targetExpireQtr: int('target_expire_qtr').notNull(),
+    previousExpireQtr: integer('previous_expire_qtr').notNull(),
+    targetExpireQtr: integer('target_expire_qtr').notNull(),
     completedAt: timestamp('completed_at'),
     closedAt: timestamp('closed_at'),
     createdAt: timestamp('created_at').defaultNow().notNull(),
@@ -760,22 +700,22 @@ export const membershipRenewals = mysqlTable(
   ],
 )
 
-export const membershipPayments = mysqlTable(
+export const membershipPayments = pgTable(
   'membership_payments',
   {
-    index: int('_index').autoincrement().notNull(),
-    wycNumber: int('wyc_number'),
-    renewalId: char('renewal_id', { length: 36 }),
-    applicationId: char('application_id', { length: 36 }),
+    index: integer('_index').generatedByDefaultAsIdentity().notNull(),
+    wycNumber: integer('wyc_number'),
+    renewalId: varchar('renewal_id', { length: 36 }),
+    applicationId: varchar('application_id', { length: 36 }),
     // null for non-payment renewals (e.g. dues-exempt).
     squarePaymentId: varchar('square_payment_id', { length: 255 }),
     squareOrderId: varchar('square_order_id', { length: 255 }),
-    amountCents: int('amount_cents').notNull(), // from the Square order total (audit only)
-    currency: char('currency', { length: 3 }).default('USD').notNull(),
+    amountCents: integer('amount_cents').notNull(), // from the Square order total (audit only)
+    currency: varchar('currency', { length: 3 }).default('USD').notNull(),
     tier: varchar('tier', { length: 20 }).notNull(), // 'student' | 'nonstudent'
     duration: varchar('duration', { length: 20 }).notNull(), // 'quarterly' | 'annual'
-    prevExpireQtr: int('prev_expire_qtr').notNull(),
-    newExpireQtr: int('new_expire_qtr').notNull(),
+    prevExpireQtr: integer('prev_expire_qtr').notNull(),
+    newExpireQtr: integer('new_expire_qtr').notNull(),
     status: varchar('status', { length: 20 }).notNull(), // 'COMPLETED' (later 'EXEMPT')
     createdAt: timestamp('created_at').defaultNow().notNull(),
   },
@@ -798,19 +738,19 @@ export const membershipPayments = mysqlTable(
   ],
 )
 
-export const membershipDiscountCodeRedemptions = mysqlTable(
+export const membershipDiscountCodeRedemptions = pgTable(
   'membership_discount_code_redemptions',
   {
-    index: int('_index').autoincrement().notNull(),
-    discountCodeId: int('discount_code_id').notNull(),
-    paymentId: int('payment_id').notNull(),
+    index: integer('_index').generatedByDefaultAsIdentity().notNull(),
+    discountCodeId: integer('discount_code_id').notNull(),
+    paymentId: integer('payment_id').notNull(),
     code: varchar({ length: 50 }).notNull(),
-    revision: int('revision').notNull(),
-    percentageOff: int('percentage_off'),
-    amountOffCents: int('amount_off_cents'),
-    subtotalCents: int('subtotal_cents').notNull(),
-    discountCents: int('discount_cents').notNull(),
-    finalCents: int('final_cents').notNull(),
+    revision: integer('revision').notNull(),
+    percentageOff: integer('percentage_off'),
+    amountOffCents: integer('amount_off_cents'),
+    subtotalCents: integer('subtotal_cents').notNull(),
+    discountCents: integer('discount_cents').notNull(),
+    finalCents: integer('final_cents').notNull(),
     createdAt: timestamp('created_at').defaultNow().notNull(),
   },
   (table) => [
@@ -830,18 +770,18 @@ export const membershipDiscountCodeRedemptions = mysqlTable(
   ],
 )
 
-export const duesExemptionRequests = mysqlTable(
+export const duesExemptionRequests = pgTable(
   'dues_exemption_requests',
   {
-    index: int('_index').autoincrement().notNull(),
-    wycNumber: int('wyc_number').notNull(),
-    renewalId: char('renewal_id', { length: 36 }),
+    index: integer('_index').generatedByDefaultAsIdentity().notNull(),
+    wycNumber: integer('wyc_number').notNull(),
+    renewalId: varchar('renewal_id', { length: 36 }),
     // Target quarter frozen at request time; the grant is a no-op if already covered by approval.
-    requestedExpireQtr: int('requested_expire_qtr').notNull(),
+    requestedExpireQtr: integer('requested_expire_qtr').notNull(),
     status: varchar('status', { length: 20 }).notNull(), // 'pending' | 'approved' | 'denied' | 'cancelled'
     // EXEMPT membership_payments row written on approval (null when the grant no-ops or still pending).
-    paymentId: int('payment_id'),
-    decidedBy: int('decided_by'),
+    paymentId: integer('payment_id'),
+    decidedBy: integer('decided_by'),
     decidedAt: timestamp('decided_at'),
     createdAt: timestamp('created_at').defaultNow().notNull(),
   },
@@ -858,14 +798,14 @@ export const duesExemptionRequests = mysqlTable(
   ],
 )
 
-export const renewalQuestionnaire = mysqlTable(
+export const renewalQuestionnaire = pgTable(
   'renewal_questionnaire',
   {
-    index: int('_index').autoincrement().notNull(),
-    wycNumber: int('wyc_number').notNull(),
-    renewalId: char('renewal_id', { length: 36 }),
+    index: integer('_index').generatedByDefaultAsIdentity().notNull(),
+    wycNumber: integer('wyc_number').notNull(),
+    renewalId: varchar('renewal_id', { length: 36 }),
     // Renewal quarter these answers were captured for.
-    quarter: int('quarter').notNull(),
+    quarter: integer('quarter').notNull(),
     uwStatus: varchar('uw_status', { length: 20 }).notNull(),
     // Self-describing code (sponsor_* / sponsee_*) so a row is interpretable without UW status.
     plusOneResponse: varchar('plus_one_response', { length: 30 }).notNull(),
@@ -873,7 +813,7 @@ export const renewalQuestionnaire = mysqlTable(
     status: varchar('status', { length: 20 }).notNull(),
     source: varchar('source', { length: 20 }).notNull(), // 'paid' | 'exempt'
     // Links an exempt-path row to its request so approval/denial can flip the status.
-    requestId: int('request_id'),
+    requestId: integer('request_id'),
     createdAt: timestamp('created_at').defaultNow().notNull(),
   },
   (table) => [
@@ -889,12 +829,12 @@ export const renewalQuestionnaire = mysqlTable(
   ],
 )
 
-export const memberWaivers = mysqlTable(
+export const memberWaivers = pgTable(
   'member_waivers',
   {
-    id: char({ length: 36 }).notNull(),
-    renewalId: char('renewal_id', { length: 36 }),
-    applicationId: char('application_id', { length: 36 }),
+    id: varchar({ length: 36 }).notNull(),
+    renewalId: varchar('renewal_id', { length: 36 }),
+    applicationId: varchar('application_id', { length: 36 }),
     waiverVersion: varchar('waiver_version', { length: 50 }).notNull(),
     firstName: varchar('first_name', { length: 60 }).notNull(),
     lastName: varchar('last_name', { length: 60 }).notNull(),
@@ -902,8 +842,8 @@ export const memberWaivers = mysqlTable(
     submittedValues: json('submitted_values').notNull(),
     signedAt: timestamp('signed_at').notNull(),
     objectKey: varchar('object_key', { length: 512 }).notNull(),
-    pdfSha256: char('pdf_sha256', { length: 64 }).notNull(),
-    pdfSize: int('pdf_size').notNull(),
+    pdfSha256: varchar('pdf_sha256', { length: 64 }).notNull(),
+    pdfSize: integer('pdf_size').notNull(),
     pdfContentType: varchar('pdf_content_type', { length: 100 }).notNull(),
   },
   (table) => [
@@ -931,10 +871,10 @@ export const memberWaivers = mysqlTable(
   ],
 )
 
-export const guestWaivers = mysqlTable(
+export const guestWaivers = pgTable(
   'guest_waivers',
   {
-    id: char({ length: 36 }).notNull(),
+    id: varchar({ length: 36 }).notNull(),
     waiverVersion: varchar('waiver_version', { length: 50 }).notNull(),
     firstName: varchar('first_name', { length: 60 }).notNull(),
     lastName: varchar('last_name', { length: 60 }).notNull(),
@@ -942,8 +882,8 @@ export const guestWaivers = mysqlTable(
     submittedValues: json('submitted_values').notNull(),
     signedAt: timestamp('signed_at').notNull(),
     objectKey: varchar('object_key', { length: 512 }).notNull(),
-    pdfSha256: char('pdf_sha256', { length: 64 }).notNull(),
-    pdfSize: int('pdf_size').notNull(),
+    pdfSha256: varchar('pdf_sha256', { length: 64 }).notNull(),
+    pdfSize: integer('pdf_size').notNull(),
     pdfContentType: varchar('pdf_content_type', { length: 100 }).notNull(),
   },
   (table) => [
@@ -955,36 +895,36 @@ export const guestWaivers = mysqlTable(
   ],
 )
 
-export const wycWind = mysqlTable(
+export const wycWind = pgTable(
   'wyc_wind',
   {
-    index: int().notNull(),
-    dateTime: datetime('DateTime', { mode: 'string' }).notNull(),
-    windSpeed: double('wind_speed').notNull(),
-    windGust: double('wind_gust').notNull(),
+    index: integer().notNull(),
+    dateTime: timestamp('DateTime', { mode: 'string' }).notNull(),
+    windSpeed: doublePrecision('wind_speed').notNull(),
+    windGust: doublePrecision('wind_gust').notNull(),
     windDirection: varchar('wind_direction', { length: 2 }).notNull(),
   },
   (table) => [primaryKey({ columns: [table.index] })],
 )
 
-export const writtenTestAttempts = mysqlTable(
+export const writtenTestAttempts = pgTable(
   'written_test_attempts',
   {
-    attemptId: char('attempt_id', { length: 36 }).primaryKey(),
-    memberWycNumber: int('member_wyc_number').notNull(),
-    examinerWycNumber: int('examiner_wyc_number'),
+    attemptId: varchar('attempt_id', { length: 36 }).primaryKey(),
+    memberWycNumber: integer('member_wyc_number').notNull(),
+    examinerWycNumber: integer('examiner_wyc_number'),
     testId: varchar('test_id', { length: 64 }).notNull(),
-    mode: mysqlEnum(['practice', 'final']).notNull(),
+    mode: writtenTestMode().notNull(),
     submittedAt: timestamp('submitted_at', { mode: 'string' }).defaultNow().notNull(),
-    correctCount: int('correct_count').notNull(),
-    questionCount: int('question_count').notNull(),
-    earnedPoints: decimal('earned_points', { precision: 10, scale: 2, mode: 'number' }).notNull(),
-    possiblePoints: decimal('possible_points', {
+    correctCount: integer('correct_count').notNull(),
+    questionCount: integer('question_count').notNull(),
+    earnedPoints: numeric('earned_points', { precision: 10, scale: 2, mode: 'number' }).notNull(),
+    possiblePoints: numeric('possible_points', {
       precision: 10,
       scale: 2,
       mode: 'number',
     }).notNull(),
-    passed: tinyint().notNull(),
+    passed: smallint().notNull(),
     snapshot: json().$type<TestSnapshot>().notNull(),
   },
   (table) => [index('written_test_attempt_submitted_at').on(table.submittedAt)],

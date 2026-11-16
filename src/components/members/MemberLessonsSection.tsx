@@ -1,3 +1,4 @@
+import { formatRecordedDate } from '@/lib/date-utils'
 import type { ReactNode } from 'react'
 import {
   getMemberLessonsSignedUpQueryOptions,
@@ -40,7 +41,7 @@ export function MemberLessonsSection({
             {lessons.map((lesson) => (
               <tr key={lesson.index} className="border-b">
                 <td className="py-2">{lesson.subtype || lesson.type}</td>
-                <td className="py-2">{lesson.calendarDate}</td>
+                <td className="py-2">{formatRecordedDate(lesson.calendarDate)}</td>
               </tr>
             ))}
           </tbody>

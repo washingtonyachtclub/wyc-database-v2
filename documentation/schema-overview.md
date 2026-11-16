@@ -183,4 +183,4 @@ These are defined in `schema.ts` but not imported or queried in v2 code. They ex
 - **Lookup tables** (`memcat`, `class_type`, `noyes`, `pos_type`, `ratings`, `privs`) follow a common pattern: `_index` PK + `text` display column.
 - **Dates** use `{ mode: 'string' }` in Drizzle, stored as `YYYY-MM-DD` strings (not `Date` objects) to survive JSON serialization across the TanStack Start boundary.
 - **Booleans** are `tinyint(1)` — `0`/`1` in the database, converted to `boolean` in TypeScript mappers.
-- **Blob columns** (e.g., `lessons.comments`) use a custom Drizzle type that reads as UTF-8 strings.
+- **Long text columns** (e.g., `lessons.comments`) use PostgreSQL `text` and UTF-8 strings.

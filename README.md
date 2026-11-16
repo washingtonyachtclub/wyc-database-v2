@@ -2,7 +2,7 @@
 
 Database interface tool for The [Washington Yacht Club](https://washingtonyachtclub.org), a student-run recreational sailing club at the University of Washington in Seattle. Manages member records, lesson scheduling, ratings, and various club operations.
 
-This is a ground-up rewrite replacing the legacy Perl/PHP system that was in use from approximately 2007 to 2025. The new stack is React, TypeScript, and Drizzle ORM on the TanStack ecosystem (Start, Router, Query, Table). It runs against the same MySQL database and schema as the original system.
+This is a ground-up rewrite replacing the legacy Perl/PHP system that was in use from approximately 2007 to 2025. The new stack is React, TypeScript, and Drizzle ORM on the TanStack ecosystem (Start, Router, Query, Table). It uses PostgreSQL and preserves the legacy record identifiers.
 
 ## Tech Stack
 
@@ -11,7 +11,7 @@ This is a ground-up rewrite replacing the legacy Perl/PHP system that was in use
 - **Data fetching**: [TanStack Query](https://tanstack.com/query) (server state management)
 - **Tables**: [TanStack Table](https://tanstack.com/table) (headless table logic)
 - **Forms**: [TanStack Form](https://tanstack.com/form) + [Zod](https://zod.dev) validation
-- **ORM**: [Drizzle](https://orm.drizzle.team) (MySQL)
+- **ORM**: [Drizzle](https://orm.drizzle.team) (PostgreSQL)
 - **UI**: [shadcn/ui](https://ui.shadcn.com) (Radix + Tailwind CSS)
 - **Email**: [Resend](https://resend.com)
 - **Hosting**: [Vercel](https://vercel.com)
@@ -61,7 +61,7 @@ Copy `.env.example` to `.env.local` and fill in your values:
 cp .env.example .env.local
 ```
 
-- `DATABASE_URL` — MySQL connection string
+- `DATABASE_URL` — PostgreSQL connection string
 - `SESSION_SECRET` — Secret for session cookies
 - `RESEND_API_KEY` — [Resend](https://resend.com) API key for sending emails
 - `VITE_APP_ENV` — Set to `"dev"` for development (omit in production)
@@ -97,3 +97,5 @@ Configured in `prettier.config.js`:
 - Single quotes
 - Trailing commas
 - 100 character line width
+
+See [Postgres migration](documentation/postgres-migration.md) for local rehearsal and the coordinated production cutover.

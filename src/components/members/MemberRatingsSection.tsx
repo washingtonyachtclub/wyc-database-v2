@@ -1,3 +1,4 @@
+import { formatRecordedDate } from '@/lib/date-utils'
 import { getExpiryInfo } from '@/lib/rating-expiry'
 import { getMemberRatingsQueryOptions } from '@/domains/members/query-options'
 import { useSuspenseQuery } from '@tanstack/react-query'
@@ -27,7 +28,7 @@ export function MemberRatingsSection({ wycNumber }: { wycNumber: number }) {
               return (
                 <tr key={rating.index} className="border-b">
                   <td className="py-2">{rating.ratingText}</td>
-                  <td className="py-2">{rating.date}</td>
+                  <td className="py-2">{formatRecordedDate(rating.date)}</td>
                   <td className="py-2">
                     {expiryInfo && (
                       <span
