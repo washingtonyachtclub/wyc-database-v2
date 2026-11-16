@@ -2,9 +2,7 @@
   "version": "6",
   "dialect": "mysql",
   "id": "45707389-1425-4d51-9cca-157790ca0be1",
-  "prevIds": [
-    "f37b21c4-a579-41d4-9d47-b9e85fea6be0"
-  ],
+  "prevIds": ["f37b21c4-a579-41d4-9d47-b9e85fea6be0"],
   "ddl": [
     {
       "name": "boat_types",
@@ -5713,377 +5711,283 @@
       "table": "wyc_wind"
     },
     {
-      "columns": [
-        "_index"
-      ],
+      "columns": ["_index"],
       "name": "PRIMARY",
       "table": "boat_types",
       "entityType": "pks"
     },
     {
-      "columns": [
-        "cBoatId"
-      ],
+      "columns": ["cBoatId"],
       "name": "PRIMARY",
       "table": "calendarboats",
       "entityType": "pks"
     },
     {
-      "columns": [
-        "wacip"
-      ],
+      "columns": ["wacip"],
       "name": "PRIMARY",
       "table": "calendarconfig",
       "entityType": "pks"
     },
     {
-      "columns": [
-        "id"
-      ],
+      "columns": ["id"],
       "name": "PRIMARY",
       "table": "calendartable",
       "entityType": "pks"
     },
     {
-      "columns": [
-        "_index"
-      ],
+      "columns": ["_index"],
       "name": "PRIMARY",
       "table": "checkouts",
       "entityType": "pks"
     },
     {
-      "columns": [
-        "_index"
-      ],
+      "columns": ["_index"],
       "name": "PRIMARY",
       "table": "class_type",
       "entityType": "pks"
     },
     {
-      "columns": [
-        "_index"
-      ],
+      "columns": ["_index"],
       "name": "PRIMARY",
       "table": "crew",
       "entityType": "pks"
     },
     {
-      "columns": [
-        "_index"
-      ],
+      "columns": ["_index"],
       "name": "PRIMARY",
       "table": "door_codes",
       "entityType": "pks"
     },
     {
-      "columns": [
-        "_index"
-      ],
+      "columns": ["_index"],
       "name": "PRIMARY",
       "table": "dues_exemption_requests",
       "entityType": "pks"
     },
     {
-      "columns": [
-        "id"
-      ],
+      "columns": ["id"],
       "name": "PRIMARY",
       "table": "guest_waivers",
       "entityType": "pks"
     },
     {
-      "columns": [
-        "_index"
-      ],
+      "columns": ["_index"],
       "name": "PRIMARY",
       "table": "guests",
       "entityType": "pks"
     },
     {
-      "columns": [
-        "id"
-      ],
+      "columns": ["id"],
       "name": "PRIMARY",
       "table": "lesson_announcements",
       "entityType": "pks"
     },
     {
-      "columns": [
-        "_index"
-      ],
+      "columns": ["_index"],
       "name": "PRIMARY",
       "table": "lesson_quarter",
       "entityType": "pks"
     },
     {
-      "columns": [
-        "_index"
-      ],
+      "columns": ["_index"],
       "name": "PRIMARY",
       "table": "lesson_sessions",
       "entityType": "pks"
     },
     {
-      "columns": [
-        "_index"
-      ],
+      "columns": ["_index"],
       "name": "PRIMARY",
       "table": "lessons",
       "entityType": "pks"
     },
     {
-      "columns": [
-        "wyc_number"
-      ],
+      "columns": ["wyc_number"],
       "name": "PRIMARY",
       "table": "member_email_preferences",
       "entityType": "pks"
     },
     {
-      "columns": [
-        "wyc_number"
-      ],
+      "columns": ["wyc_number"],
       "name": "PRIMARY",
       "table": "member_emergency_contacts",
       "entityType": "pks"
     },
     {
-      "columns": [
-        "id"
-      ],
+      "columns": ["id"],
       "name": "PRIMARY",
       "table": "member_waivers",
       "entityType": "pks"
     },
     {
-      "columns": [
-        "id"
-      ],
+      "columns": ["id"],
       "name": "PRIMARY",
       "table": "membership_applications",
       "entityType": "pks"
     },
     {
-      "columns": [
-        "_index"
-      ],
+      "columns": ["_index"],
       "name": "PRIMARY",
       "table": "membership_discount_code_redemptions",
       "entityType": "pks"
     },
     {
-      "columns": [
-        "_index"
-      ],
+      "columns": ["_index"],
       "name": "PRIMARY",
       "table": "membership_discount_codes",
       "entityType": "pks"
     },
     {
-      "columns": [
-        "_index"
-      ],
+      "columns": ["_index"],
       "name": "PRIMARY",
       "table": "membership_payments",
       "entityType": "pks"
     },
     {
-      "columns": [
-        "id"
-      ],
+      "columns": ["id"],
       "name": "PRIMARY",
       "table": "membership_renewals",
       "entityType": "pks"
     },
     {
-      "columns": [
-        "_index"
-      ],
+      "columns": ["_index"],
       "name": "PRIMARY",
       "table": "memcat",
       "entityType": "pks"
     },
     {
-      "columns": [
-        "_index"
-      ],
+      "columns": ["_index"],
       "name": "PRIMARY",
       "table": "noyes",
       "entityType": "pks"
     },
     {
-      "columns": [
-        "_index"
-      ],
+      "columns": ["_index"],
       "name": "PRIMARY",
       "table": "officers",
       "entityType": "pks"
     },
     {
-      "columns": [
-        "_index"
-      ],
+      "columns": ["_index"],
       "name": "PRIMARY",
       "table": "options",
       "entityType": "pks"
     },
     {
-      "columns": [
-        "id"
-      ],
+      "columns": ["id"],
       "name": "PRIMARY",
       "table": "otp_codes",
       "entityType": "pks"
     },
     {
-      "columns": [
-        "_index"
-      ],
+      "columns": ["_index"],
       "name": "PRIMARY",
       "table": "pos_priv_map",
       "entityType": "pks"
     },
     {
-      "columns": [
-        "_index"
-      ],
+      "columns": ["_index"],
       "name": "PRIMARY",
       "table": "pos_type",
       "entityType": "pks"
     },
     {
-      "columns": [
-        "_index"
-      ],
+      "columns": ["_index"],
       "name": "PRIMARY",
       "table": "positions",
       "entityType": "pks"
     },
     {
-      "columns": [
-        "_index"
-      ],
+      "columns": ["_index"],
       "name": "PRIMARY",
       "table": "priority_types",
       "entityType": "pks"
     },
     {
-      "columns": [
-        "_index"
-      ],
+      "columns": ["_index"],
       "name": "PRIMARY",
       "table": "privs",
       "entityType": "pks"
     },
     {
-      "columns": [
-        "id"
-      ],
+      "columns": ["id"],
       "name": "PRIMARY",
       "table": "qr_login_requests",
       "entityType": "pks"
     },
     {
-      "columns": [
-        "_index"
-      ],
+      "columns": ["_index"],
       "name": "PRIMARY",
       "table": "quarters",
       "entityType": "pks"
     },
     {
-      "columns": [
-        "_index"
-      ],
+      "columns": ["_index"],
       "name": "PRIMARY",
       "table": "ratings",
       "entityType": "pks"
     },
     {
-      "columns": [
-        "_index"
-      ],
+      "columns": ["_index"],
       "name": "PRIMARY",
       "table": "renewal_questionnaire",
       "entityType": "pks"
     },
     {
-      "columns": [
-        "_index"
-      ],
+      "columns": ["_index"],
       "name": "PRIMARY",
       "table": "sessions",
       "entityType": "pks"
     },
     {
-      "columns": [
-        "_index"
-      ],
+      "columns": ["_index"],
       "name": "PRIMARY",
       "table": "signups",
       "entityType": "pks"
     },
     {
-      "columns": [
-        "_index"
-      ],
+      "columns": ["_index"],
       "name": "PRIMARY",
       "table": "snc",
       "entityType": "pks"
     },
     {
-      "columns": [
-        "_index"
-      ],
+      "columns": ["_index"],
       "name": "PRIMARY",
       "table": "snc_food",
       "entityType": "pks"
     },
     {
-      "columns": [
-        "_index"
-      ],
+      "columns": ["_index"],
       "name": "PRIMARY",
       "table": "snc_work",
       "entityType": "pks"
     },
     {
-      "columns": [
-        "WYCNumber"
-      ],
+      "columns": ["WYCNumber"],
       "name": "PRIMARY",
       "table": "WYCDatabase",
       "entityType": "pks"
     },
     {
-      "columns": [
-        "_index"
-      ],
+      "columns": ["_index"],
       "name": "PRIMARY",
       "table": "wyc_ratings",
       "entityType": "pks"
     },
     {
-      "columns": [
-        "index"
-      ],
+      "columns": ["index"],
       "name": "PRIMARY",
       "table": "wyc_wind",
       "entityType": "pks"
     },
     {
-      "columns": [
-        "entry_id"
-      ],
+      "columns": ["entry_id"],
       "name": "PRIMARY",
       "table": "processed_form_entries",
       "entityType": "pks"
     },
     {
-      "columns": [
-        "attempt_id"
-      ],
+      "columns": ["attempt_id"],
       "name": "PRIMARY",
       "table": "written_test_attempts",
       "entityType": "pks"
@@ -6933,13 +6837,9 @@
       "table": "WYCDatabase"
     },
     {
-      "columns": [
-        "checkout_ID"
-      ],
+      "columns": ["checkout_ID"],
       "tableTo": "checkouts",
-      "columnsTo": [
-        "_index"
-      ],
+      "columnsTo": ["_index"],
       "onUpdate": "NO ACTION",
       "onDelete": "CASCADE",
       "nameExplicit": true,
@@ -6948,13 +6848,9 @@
       "table": "crew"
     },
     {
-      "columns": [
-        "renewal_id"
-      ],
+      "columns": ["renewal_id"],
       "tableTo": "membership_renewals",
-      "columnsTo": [
-        "id"
-      ],
+      "columnsTo": ["id"],
       "onUpdate": "NO ACTION",
       "onDelete": "NO ACTION",
       "nameExplicit": true,
@@ -6963,13 +6859,9 @@
       "table": "dues_exemption_requests"
     },
     {
-      "columns": [
-        "checkout_ID"
-      ],
+      "columns": ["checkout_ID"],
       "tableTo": "checkouts",
-      "columnsTo": [
-        "_index"
-      ],
+      "columnsTo": ["_index"],
       "onUpdate": "NO ACTION",
       "onDelete": "CASCADE",
       "nameExplicit": true,
@@ -6978,13 +6870,9 @@
       "table": "guests"
     },
     {
-      "columns": [
-        "renewal_id"
-      ],
+      "columns": ["renewal_id"],
       "tableTo": "membership_renewals",
-      "columnsTo": [
-        "id"
-      ],
+      "columnsTo": ["id"],
       "onUpdate": "NO ACTION",
       "onDelete": "NO ACTION",
       "nameExplicit": true,
@@ -6993,13 +6881,9 @@
       "table": "member_waivers"
     },
     {
-      "columns": [
-        "application_id"
-      ],
+      "columns": ["application_id"],
       "tableTo": "membership_applications",
-      "columnsTo": [
-        "id"
-      ],
+      "columnsTo": ["id"],
       "onUpdate": "NO ACTION",
       "onDelete": "NO ACTION",
       "nameExplicit": true,
@@ -7008,13 +6892,9 @@
       "table": "member_waivers"
     },
     {
-      "columns": [
-        "discount_code_id"
-      ],
+      "columns": ["discount_code_id"],
       "tableTo": "membership_discount_codes",
-      "columnsTo": [
-        "_index"
-      ],
+      "columnsTo": ["_index"],
       "onUpdate": "NO ACTION",
       "onDelete": "NO ACTION",
       "nameExplicit": true,
@@ -7023,13 +6903,9 @@
       "table": "membership_discount_code_redemptions"
     },
     {
-      "columns": [
-        "payment_id"
-      ],
+      "columns": ["payment_id"],
       "tableTo": "membership_payments",
-      "columnsTo": [
-        "_index"
-      ],
+      "columnsTo": ["_index"],
       "onUpdate": "NO ACTION",
       "onDelete": "NO ACTION",
       "nameExplicit": true,
@@ -7038,13 +6914,9 @@
       "table": "membership_discount_code_redemptions"
     },
     {
-      "columns": [
-        "renewal_id"
-      ],
+      "columns": ["renewal_id"],
       "tableTo": "membership_renewals",
-      "columnsTo": [
-        "id"
-      ],
+      "columnsTo": ["id"],
       "onUpdate": "NO ACTION",
       "onDelete": "NO ACTION",
       "nameExplicit": true,
@@ -7053,13 +6925,9 @@
       "table": "membership_payments"
     },
     {
-      "columns": [
-        "application_id"
-      ],
+      "columns": ["application_id"],
       "tableTo": "membership_applications",
-      "columnsTo": [
-        "id"
-      ],
+      "columnsTo": ["id"],
       "onUpdate": "NO ACTION",
       "onDelete": "NO ACTION",
       "nameExplicit": true,
@@ -7068,13 +6936,9 @@
       "table": "membership_payments"
     },
     {
-      "columns": [
-        "renewal_id"
-      ],
+      "columns": ["renewal_id"],
       "tableTo": "membership_renewals",
-      "columnsTo": [
-        "id"
-      ],
+      "columnsTo": ["id"],
       "onUpdate": "NO ACTION",
       "onDelete": "NO ACTION",
       "nameExplicit": true,
