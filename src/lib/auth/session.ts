@@ -1,5 +1,6 @@
 import { useSession } from '@tanstack/react-start/server'
 import type { Privilege } from '../permissions'
+import { isDevEnvironment } from '../env'
 import { isSailLockerMode } from './device-mode'
 import { loadAuthUser, loadUserPrivileges, type AuthUser } from './identity'
 import { getSessionMaxAgeSeconds, shouldRefreshIdentity } from './session-policy'
@@ -64,8 +65,7 @@ export async function useRefreshedAppSession() {
 
   if (
     !sessionData.userId ||
-    sessionData.realIdentity ||
-    !shouldRefreshIdentity(sessionData.privilegesRefreshedAt)
+    (!sessionData.realIdentity && !shouldRefreshIdentity(sessionData.privilegesRefreshedAt))
   ) {
     return session
   }
@@ -75,8 +75,8 @@ export async function useRefreshedAppSession() {
 
   try {
     const refreshedIdentity = await Promise.all([
-      loadAuthUser(sessionData.userId),
-      loadUserPrivileges(sessionData.userId),
+      loadAuthUser(sessionData.realIdentity?.userId ?? sessionData.userId),
+      loadUserPrivileges(sessionData.realIdentity?.userId ?? sessionData.userId),
     ])
     user = refreshedIdentity[0]
     privileges = refreshedIdentity[1]
@@ -91,9 +91,19 @@ export async function useRefreshedAppSession() {
   }
 
   const now = Date.now()
+  if (sessionData.realIdentity && isDevEnvironment() && privileges.includes('db')) {
+    await session.update({
+      realIdentity: { userId: user.wycNumber, user, privileges },
+      privilegesRefreshedAt: now,
+    })
+    return session
+  }
+
   await session.update({
+    userId: user.wycNumber,
     user,
     privileges,
+    realIdentity: undefined,
     privilegesRefreshedAt: now,
     expiresAt: sessionData.expiresAt ?? now + getSessionMaxAgeSeconds(isSailLockerMode()) * 1000,
   })
