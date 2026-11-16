@@ -1,7 +1,5 @@
 import mysql from 'mysql2'
 import { drizzle } from 'drizzle-orm/mysql2'
-import { auditDatabaseClient } from './audit-client'
-import { createAuditStore } from './audit-store'
 
 function createDatabase() {
   if (!process.env.DATABASE_URL) {
@@ -18,15 +16,12 @@ function createDatabase() {
       connection.destroy()
     })
   })
-  const audit = createAuditStore(process.env.DATABASE_URL)
-  return { db: drizzle({ client: auditDatabaseClient(pool.promise(), audit.write) }), audit }
+  return drizzle({ client: pool })
 }
 
 const globalForDb = global as unknown as {
-  auditedDatabase: ReturnType<typeof createDatabase> | undefined
+  db: ReturnType<typeof createDatabase> | undefined
 }
 
-const database = (globalForDb.auditedDatabase ??= createDatabase())
-export const db = database.db
-export const pruneAuditLog = database.audit.prune
+export const db = (globalForDb.db ??= createDatabase())
 export default db

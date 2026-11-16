@@ -1,8 +1,6 @@
 import { sendLessonReminders, REMINDER_DAYS_AHEAD } from '@/domains/lessons/reminders'
 import { sendIncompleteApplicationReminders } from '@/domains/membership-applications/reminders'
 import { createFileRoute } from '@tanstack/react-router'
-import { pruneAuditLog } from '@/db'
-import { withAuditContext } from '@/db/audit-context'
 
 export const Route = createFileRoute('/api/cron/daily-tasks')({
   server: {
@@ -26,21 +24,11 @@ export const Route = createFileRoute('/api/cron/daily-tasks')({
         const dryRun = url.searchParams.get('dryRun') === '1'
 
         try {
-          const [lessonReminders, applicationReminders, auditLog] = await withAuditContext(
-            {
-              source: 'system',
-              action: 'daily-tasks',
-              actorWycNumber: null,
-              effectiveWycNumber: null,
-            },
-            () =>
-              Promise.all([
-                sendLessonReminders({ daysAhead, dryRun }),
-                sendIncompleteApplicationReminders({ dryRun }),
-                pruneAuditLog(dryRun),
-              ]),
-          )
-          const report = { applicationReminders, auditLog, dryRun, lessonReminders }
+          const [lessonReminders, applicationReminders] = await Promise.all([
+            sendLessonReminders({ daysAhead, dryRun }),
+            sendIncompleteApplicationReminders({ dryRun }),
+          ])
+          const report = { applicationReminders, dryRun, lessonReminders }
           console.log('Daily tasks:', report)
           return Response.json(report)
         } catch (error) {

@@ -1,6 +1,5 @@
 import { REMINDER_DAYS_AHEAD, sendLessonReminders } from '@/domains/lessons/reminders'
 import { createFileRoute } from '@tanstack/react-router'
-import { withAuditContext } from '@/db/audit-context'
 
 // Vercel Cron sends CRON_SECRET as a bearer token; a missing secret fails closed.
 export const Route = createFileRoute('/api/cron/lesson-reminders')({
@@ -24,15 +23,10 @@ export const Route = createFileRoute('/api/cron/lesson-reminders')({
         }
 
         try {
-          const plan = await withAuditContext(
-            {
-              source: 'system',
-              action: 'lesson-reminders',
-              actorWycNumber: null,
-              effectiveWycNumber: null,
-            },
-            () => sendLessonReminders({ daysAhead, dryRun: params.get('dryRun') === '1' }),
-          )
+          const plan = await sendLessonReminders({
+            daysAhead,
+            dryRun: params.get('dryRun') === '1',
+          })
           console.log('Lesson reminders:', {
             targetDate: plan.targetDate,
             lessons: plan.lessons.length,

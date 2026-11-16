@@ -1,13 +1,11 @@
 {
   "version": "6",
   "dialect": "mysql",
-  "id": "4f67a625-84a5-474e-b3d6-03bc05b41017",
-  "prevIds": ["f9ed5a7d-6856-4664-9fc4-f3e5bc0babfe"],
+  "id": "f37b21c4-a579-41d4-9d47-b9e85fea6be0",
+  "prevIds": [
+    "b9054fda-354a-49ef-8236-64ca4561319b"
+  ],
   "ddl": [
-    {
-      "name": "audit_log",
-      "entityType": "tables"
-    },
     {
       "name": "boat_types",
       "entityType": "tables"
@@ -197,6 +195,10 @@
       "entityType": "tables"
     },
     {
+      "name": "written_test_attempts",
+      "entityType": "tables"
+    },
+    {
       "name": "WYCDatabase",
       "entityType": "tables"
     },
@@ -207,202 +209,6 @@
     {
       "name": "wyc_wind",
       "entityType": "tables"
-    },
-    {
-      "type": "bigint unsigned",
-      "notNull": true,
-      "autoIncrement": true,
-      "default": null,
-      "onUpdateNow": false,
-      "onUpdateNowFsp": null,
-      "charSet": null,
-      "collation": null,
-      "generated": null,
-      "name": "id",
-      "entityType": "columns",
-      "table": "audit_log"
-    },
-    {
-      "type": "datetime(3)",
-      "notNull": true,
-      "autoIncrement": false,
-      "default": null,
-      "onUpdateNow": false,
-      "onUpdateNowFsp": null,
-      "charSet": null,
-      "collation": null,
-      "generated": null,
-      "name": "occurred_at",
-      "entityType": "columns",
-      "table": "audit_log"
-    },
-    {
-      "type": "char(36)",
-      "notNull": true,
-      "autoIncrement": false,
-      "default": null,
-      "onUpdateNow": false,
-      "onUpdateNowFsp": null,
-      "charSet": null,
-      "collation": null,
-      "generated": null,
-      "name": "request_id",
-      "entityType": "columns",
-      "table": "audit_log"
-    },
-    {
-      "type": "int",
-      "notNull": false,
-      "autoIncrement": false,
-      "default": null,
-      "onUpdateNow": false,
-      "onUpdateNowFsp": null,
-      "charSet": null,
-      "collation": null,
-      "generated": null,
-      "name": "actor_wyc_number",
-      "entityType": "columns",
-      "table": "audit_log"
-    },
-    {
-      "type": "int",
-      "notNull": false,
-      "autoIncrement": false,
-      "default": null,
-      "onUpdateNow": false,
-      "onUpdateNowFsp": null,
-      "charSet": null,
-      "collation": null,
-      "generated": null,
-      "name": "effective_wyc_number",
-      "entityType": "columns",
-      "table": "audit_log"
-    },
-    {
-      "type": "varchar(32)",
-      "notNull": true,
-      "autoIncrement": false,
-      "default": null,
-      "onUpdateNow": false,
-      "onUpdateNowFsp": null,
-      "charSet": null,
-      "collation": null,
-      "generated": null,
-      "name": "source",
-      "entityType": "columns",
-      "table": "audit_log"
-    },
-    {
-      "type": "varchar(160)",
-      "notNull": true,
-      "autoIncrement": false,
-      "default": null,
-      "onUpdateNow": false,
-      "onUpdateNowFsp": null,
-      "charSet": null,
-      "collation": null,
-      "generated": null,
-      "name": "action",
-      "entityType": "columns",
-      "table": "audit_log"
-    },
-    {
-      "type": "char(36)",
-      "notNull": false,
-      "autoIncrement": false,
-      "default": null,
-      "onUpdateNow": false,
-      "onUpdateNowFsp": null,
-      "charSet": null,
-      "collation": null,
-      "generated": null,
-      "name": "transaction_id",
-      "entityType": "columns",
-      "table": "audit_log"
-    },
-    {
-      "type": "varchar(24)",
-      "notNull": true,
-      "autoIncrement": false,
-      "default": null,
-      "onUpdateNow": false,
-      "onUpdateNowFsp": null,
-      "charSet": null,
-      "collation": null,
-      "generated": null,
-      "name": "operation",
-      "entityType": "columns",
-      "table": "audit_log"
-    },
-    {
-      "type": "varchar(64)",
-      "notNull": false,
-      "autoIncrement": false,
-      "default": null,
-      "onUpdateNow": false,
-      "onUpdateNowFsp": null,
-      "charSet": null,
-      "collation": null,
-      "generated": null,
-      "name": "table_name",
-      "entityType": "columns",
-      "table": "audit_log"
-    },
-    {
-      "type": "enum('succeeded','failed')",
-      "notNull": true,
-      "autoIncrement": false,
-      "default": null,
-      "onUpdateNow": false,
-      "onUpdateNowFsp": null,
-      "charSet": null,
-      "collation": null,
-      "generated": null,
-      "name": "outcome",
-      "entityType": "columns",
-      "table": "audit_log"
-    },
-    {
-      "type": "bigint unsigned",
-      "notNull": false,
-      "autoIncrement": false,
-      "default": null,
-      "onUpdateNow": false,
-      "onUpdateNowFsp": null,
-      "charSet": null,
-      "collation": null,
-      "generated": null,
-      "name": "affected_rows",
-      "entityType": "columns",
-      "table": "audit_log"
-    },
-    {
-      "type": "varchar(32)",
-      "notNull": false,
-      "autoIncrement": false,
-      "default": null,
-      "onUpdateNow": false,
-      "onUpdateNowFsp": null,
-      "charSet": null,
-      "collation": null,
-      "generated": null,
-      "name": "insert_id",
-      "entityType": "columns",
-      "table": "audit_log"
-    },
-    {
-      "type": "json",
-      "notNull": true,
-      "autoIncrement": false,
-      "default": null,
-      "onUpdateNow": false,
-      "onUpdateNowFsp": null,
-      "charSet": null,
-      "collation": null,
-      "generated": null,
-      "name": "details",
-      "entityType": "columns",
-      "table": "audit_log"
     },
     {
       "type": "int",
@@ -5291,6 +5097,188 @@
       "table": "snc_work"
     },
     {
+      "type": "bigint unsigned",
+      "notNull": true,
+      "autoIncrement": true,
+      "default": null,
+      "onUpdateNow": false,
+      "onUpdateNowFsp": null,
+      "charSet": null,
+      "collation": null,
+      "generated": null,
+      "name": "id",
+      "entityType": "columns",
+      "table": "written_test_attempts"
+    },
+    {
+      "type": "char(36)",
+      "notNull": true,
+      "autoIncrement": false,
+      "default": null,
+      "onUpdateNow": false,
+      "onUpdateNowFsp": null,
+      "charSet": null,
+      "collation": null,
+      "generated": null,
+      "name": "attempt_id",
+      "entityType": "columns",
+      "table": "written_test_attempts"
+    },
+    {
+      "type": "int",
+      "notNull": true,
+      "autoIncrement": false,
+      "default": null,
+      "onUpdateNow": false,
+      "onUpdateNowFsp": null,
+      "charSet": null,
+      "collation": null,
+      "generated": null,
+      "name": "member_wyc_number",
+      "entityType": "columns",
+      "table": "written_test_attempts"
+    },
+    {
+      "type": "int",
+      "notNull": false,
+      "autoIncrement": false,
+      "default": null,
+      "onUpdateNow": false,
+      "onUpdateNowFsp": null,
+      "charSet": null,
+      "collation": null,
+      "generated": null,
+      "name": "examiner_wyc_number",
+      "entityType": "columns",
+      "table": "written_test_attempts"
+    },
+    {
+      "type": "varchar(64)",
+      "notNull": true,
+      "autoIncrement": false,
+      "default": null,
+      "onUpdateNow": false,
+      "onUpdateNowFsp": null,
+      "charSet": null,
+      "collation": null,
+      "generated": null,
+      "name": "test_id",
+      "entityType": "columns",
+      "table": "written_test_attempts"
+    },
+    {
+      "type": "enum('practice','final')",
+      "notNull": true,
+      "autoIncrement": false,
+      "default": null,
+      "onUpdateNow": false,
+      "onUpdateNowFsp": null,
+      "charSet": null,
+      "collation": null,
+      "generated": null,
+      "name": "mode",
+      "entityType": "columns",
+      "table": "written_test_attempts"
+    },
+    {
+      "type": "timestamp",
+      "notNull": true,
+      "autoIncrement": false,
+      "default": "(now())",
+      "onUpdateNow": false,
+      "onUpdateNowFsp": null,
+      "charSet": null,
+      "collation": null,
+      "generated": null,
+      "name": "submitted_at",
+      "entityType": "columns",
+      "table": "written_test_attempts"
+    },
+    {
+      "type": "int",
+      "notNull": true,
+      "autoIncrement": false,
+      "default": null,
+      "onUpdateNow": false,
+      "onUpdateNowFsp": null,
+      "charSet": null,
+      "collation": null,
+      "generated": null,
+      "name": "correct_count",
+      "entityType": "columns",
+      "table": "written_test_attempts"
+    },
+    {
+      "type": "int",
+      "notNull": true,
+      "autoIncrement": false,
+      "default": null,
+      "onUpdateNow": false,
+      "onUpdateNowFsp": null,
+      "charSet": null,
+      "collation": null,
+      "generated": null,
+      "name": "question_count",
+      "entityType": "columns",
+      "table": "written_test_attempts"
+    },
+    {
+      "type": "decimal(10,2)",
+      "notNull": true,
+      "autoIncrement": false,
+      "default": null,
+      "onUpdateNow": false,
+      "onUpdateNowFsp": null,
+      "charSet": null,
+      "collation": null,
+      "generated": null,
+      "name": "earned_points",
+      "entityType": "columns",
+      "table": "written_test_attempts"
+    },
+    {
+      "type": "decimal(10,2)",
+      "notNull": true,
+      "autoIncrement": false,
+      "default": null,
+      "onUpdateNow": false,
+      "onUpdateNowFsp": null,
+      "charSet": null,
+      "collation": null,
+      "generated": null,
+      "name": "possible_points",
+      "entityType": "columns",
+      "table": "written_test_attempts"
+    },
+    {
+      "type": "tinyint",
+      "notNull": true,
+      "autoIncrement": false,
+      "default": null,
+      "onUpdateNow": false,
+      "onUpdateNowFsp": null,
+      "charSet": null,
+      "collation": null,
+      "generated": null,
+      "name": "passed",
+      "entityType": "columns",
+      "table": "written_test_attempts"
+    },
+    {
+      "type": "json",
+      "notNull": true,
+      "autoIncrement": false,
+      "default": null,
+      "onUpdateNow": false,
+      "onUpdateNowFsp": null,
+      "charSet": null,
+      "collation": null,
+      "generated": null,
+      "name": "snapshot",
+      "entityType": "columns",
+      "table": "written_test_attempts"
+    },
+    {
       "type": "char(50)",
       "notNull": false,
       "autoIncrement": false,
@@ -5739,302 +5727,380 @@
       "table": "wyc_wind"
     },
     {
-      "columns": ["_index"],
+      "columns": [
+        "_index"
+      ],
       "name": "PRIMARY",
       "table": "boat_types",
       "entityType": "pks"
     },
     {
-      "columns": ["cBoatId"],
+      "columns": [
+        "cBoatId"
+      ],
       "name": "PRIMARY",
       "table": "calendarboats",
       "entityType": "pks"
     },
     {
-      "columns": ["wacip"],
+      "columns": [
+        "wacip"
+      ],
       "name": "PRIMARY",
       "table": "calendarconfig",
       "entityType": "pks"
     },
     {
-      "columns": ["id"],
+      "columns": [
+        "id"
+      ],
       "name": "PRIMARY",
       "table": "calendartable",
       "entityType": "pks"
     },
     {
-      "columns": ["_index"],
+      "columns": [
+        "_index"
+      ],
       "name": "PRIMARY",
       "table": "checkouts",
       "entityType": "pks"
     },
     {
-      "columns": ["_index"],
+      "columns": [
+        "_index"
+      ],
       "name": "PRIMARY",
       "table": "class_type",
       "entityType": "pks"
     },
     {
-      "columns": ["_index"],
+      "columns": [
+        "_index"
+      ],
       "name": "PRIMARY",
       "table": "crew",
       "entityType": "pks"
     },
     {
-      "columns": ["_index"],
+      "columns": [
+        "_index"
+      ],
       "name": "PRIMARY",
       "table": "door_codes",
       "entityType": "pks"
     },
     {
-      "columns": ["_index"],
+      "columns": [
+        "_index"
+      ],
       "name": "PRIMARY",
       "table": "dues_exemption_requests",
       "entityType": "pks"
     },
     {
-      "columns": ["id"],
+      "columns": [
+        "id"
+      ],
       "name": "PRIMARY",
       "table": "guest_waivers",
       "entityType": "pks"
     },
     {
-      "columns": ["_index"],
+      "columns": [
+        "_index"
+      ],
       "name": "PRIMARY",
       "table": "guests",
       "entityType": "pks"
     },
     {
-      "columns": ["id"],
+      "columns": [
+        "id"
+      ],
       "name": "PRIMARY",
       "table": "lesson_announcements",
       "entityType": "pks"
     },
     {
-      "columns": ["_index"],
+      "columns": [
+        "_index"
+      ],
       "name": "PRIMARY",
       "table": "lesson_quarter",
       "entityType": "pks"
     },
     {
-      "columns": ["_index"],
+      "columns": [
+        "_index"
+      ],
       "name": "PRIMARY",
       "table": "lesson_sessions",
       "entityType": "pks"
     },
     {
-      "columns": ["_index"],
+      "columns": [
+        "_index"
+      ],
       "name": "PRIMARY",
       "table": "lessons",
       "entityType": "pks"
     },
     {
-      "columns": ["wyc_number"],
+      "columns": [
+        "wyc_number"
+      ],
       "name": "PRIMARY",
       "table": "member_email_preferences",
       "entityType": "pks"
     },
     {
-      "columns": ["wyc_number"],
+      "columns": [
+        "wyc_number"
+      ],
       "name": "PRIMARY",
       "table": "member_emergency_contacts",
       "entityType": "pks"
     },
     {
-      "columns": ["id"],
+      "columns": [
+        "id"
+      ],
       "name": "PRIMARY",
       "table": "member_waivers",
       "entityType": "pks"
     },
     {
-      "columns": ["id"],
+      "columns": [
+        "id"
+      ],
       "name": "PRIMARY",
       "table": "membership_applications",
       "entityType": "pks"
     },
     {
-      "columns": ["_index"],
+      "columns": [
+        "_index"
+      ],
       "name": "PRIMARY",
       "table": "membership_discount_code_redemptions",
       "entityType": "pks"
     },
     {
-      "columns": ["_index"],
+      "columns": [
+        "_index"
+      ],
       "name": "PRIMARY",
       "table": "membership_discount_codes",
       "entityType": "pks"
     },
     {
-      "columns": ["_index"],
+      "columns": [
+        "_index"
+      ],
       "name": "PRIMARY",
       "table": "membership_payments",
       "entityType": "pks"
     },
     {
-      "columns": ["id"],
+      "columns": [
+        "id"
+      ],
       "name": "PRIMARY",
       "table": "membership_renewals",
       "entityType": "pks"
     },
     {
-      "columns": ["_index"],
+      "columns": [
+        "_index"
+      ],
       "name": "PRIMARY",
       "table": "memcat",
       "entityType": "pks"
     },
     {
-      "columns": ["_index"],
+      "columns": [
+        "_index"
+      ],
       "name": "PRIMARY",
       "table": "noyes",
       "entityType": "pks"
     },
     {
-      "columns": ["_index"],
+      "columns": [
+        "_index"
+      ],
       "name": "PRIMARY",
       "table": "officers",
       "entityType": "pks"
     },
     {
-      "columns": ["_index"],
+      "columns": [
+        "_index"
+      ],
       "name": "PRIMARY",
       "table": "options",
       "entityType": "pks"
     },
     {
-      "columns": ["id"],
+      "columns": [
+        "id"
+      ],
       "name": "PRIMARY",
       "table": "otp_codes",
       "entityType": "pks"
     },
     {
-      "columns": ["_index"],
+      "columns": [
+        "_index"
+      ],
       "name": "PRIMARY",
       "table": "pos_priv_map",
       "entityType": "pks"
     },
     {
-      "columns": ["_index"],
+      "columns": [
+        "_index"
+      ],
       "name": "PRIMARY",
       "table": "pos_type",
       "entityType": "pks"
     },
     {
-      "columns": ["_index"],
+      "columns": [
+        "_index"
+      ],
       "name": "PRIMARY",
       "table": "positions",
       "entityType": "pks"
     },
     {
-      "columns": ["_index"],
+      "columns": [
+        "_index"
+      ],
       "name": "PRIMARY",
       "table": "priority_types",
       "entityType": "pks"
     },
     {
-      "columns": ["_index"],
+      "columns": [
+        "_index"
+      ],
       "name": "PRIMARY",
       "table": "privs",
       "entityType": "pks"
     },
     {
-      "columns": ["id"],
+      "columns": [
+        "id"
+      ],
       "name": "PRIMARY",
       "table": "qr_login_requests",
       "entityType": "pks"
     },
     {
-      "columns": ["_index"],
+      "columns": [
+        "_index"
+      ],
       "name": "PRIMARY",
       "table": "quarters",
       "entityType": "pks"
     },
     {
-      "columns": ["_index"],
+      "columns": [
+        "_index"
+      ],
       "name": "PRIMARY",
       "table": "ratings",
       "entityType": "pks"
     },
     {
-      "columns": ["_index"],
+      "columns": [
+        "_index"
+      ],
       "name": "PRIMARY",
       "table": "renewal_questionnaire",
       "entityType": "pks"
     },
     {
-      "columns": ["_index"],
+      "columns": [
+        "_index"
+      ],
       "name": "PRIMARY",
       "table": "sessions",
       "entityType": "pks"
     },
     {
-      "columns": ["_index"],
+      "columns": [
+        "_index"
+      ],
       "name": "PRIMARY",
       "table": "signups",
       "entityType": "pks"
     },
     {
-      "columns": ["_index"],
+      "columns": [
+        "_index"
+      ],
       "name": "PRIMARY",
       "table": "snc",
       "entityType": "pks"
     },
     {
-      "columns": ["_index"],
+      "columns": [
+        "_index"
+      ],
       "name": "PRIMARY",
       "table": "snc_food",
       "entityType": "pks"
     },
     {
-      "columns": ["_index"],
+      "columns": [
+        "_index"
+      ],
       "name": "PRIMARY",
       "table": "snc_work",
       "entityType": "pks"
     },
     {
-      "columns": ["WYCNumber"],
+      "columns": [
+        "WYCNumber"
+      ],
       "name": "PRIMARY",
       "table": "WYCDatabase",
       "entityType": "pks"
     },
     {
-      "columns": ["_index"],
+      "columns": [
+        "_index"
+      ],
       "name": "PRIMARY",
       "table": "wyc_ratings",
       "entityType": "pks"
     },
     {
-      "columns": ["index"],
+      "columns": [
+        "index"
+      ],
       "name": "PRIMARY",
       "table": "wyc_wind",
       "entityType": "pks"
     },
     {
-      "columns": ["id"],
-      "name": "PRIMARY",
-      "table": "audit_log",
-      "entityType": "pks"
-    },
-    {
-      "columns": ["entry_id"],
+      "columns": [
+        "entry_id"
+      ],
       "name": "PRIMARY",
       "table": "processed_form_entries",
       "entityType": "pks"
     },
     {
       "columns": [
-        {
-          "value": "occurred_at",
-          "isExpression": false
-        }
+        "id"
       ],
-      "isUnique": false,
-      "using": null,
-      "algorithm": null,
-      "lock": null,
-      "nameExplicit": true,
-      "name": "idx_audit_log_occurred_at",
-      "entityType": "indexes",
-      "table": "audit_log"
+      "name": "PRIMARY",
+      "table": "written_test_attempts",
+      "entityType": "pks"
     },
     {
       "columns": [
@@ -6851,6 +6917,42 @@
     {
       "columns": [
         {
+          "value": "member_wyc_number",
+          "isExpression": false
+        },
+        {
+          "value": "attempt_id",
+          "isExpression": false
+        }
+      ],
+      "isUnique": true,
+      "using": null,
+      "algorithm": null,
+      "lock": null,
+      "nameExplicit": true,
+      "name": "written_test_attempt_member_unique",
+      "entityType": "indexes",
+      "table": "written_test_attempts"
+    },
+    {
+      "columns": [
+        {
+          "value": "submitted_at",
+          "isExpression": false
+        }
+      ],
+      "isUnique": false,
+      "using": null,
+      "algorithm": null,
+      "lock": null,
+      "nameExplicit": true,
+      "name": "written_test_attempt_submitted_at",
+      "entityType": "indexes",
+      "table": "written_test_attempts"
+    },
+    {
+      "columns": [
+        {
           "value": "WYCNumber",
           "isExpression": false
         }
@@ -6865,9 +6967,13 @@
       "table": "WYCDatabase"
     },
     {
-      "columns": ["checkout_ID"],
+      "columns": [
+        "checkout_ID"
+      ],
       "tableTo": "checkouts",
-      "columnsTo": ["_index"],
+      "columnsTo": [
+        "_index"
+      ],
       "onUpdate": "NO ACTION",
       "onDelete": "CASCADE",
       "nameExplicit": true,
@@ -6876,9 +6982,13 @@
       "table": "crew"
     },
     {
-      "columns": ["renewal_id"],
+      "columns": [
+        "renewal_id"
+      ],
       "tableTo": "membership_renewals",
-      "columnsTo": ["id"],
+      "columnsTo": [
+        "id"
+      ],
       "onUpdate": "NO ACTION",
       "onDelete": "NO ACTION",
       "nameExplicit": true,
@@ -6887,9 +6997,13 @@
       "table": "dues_exemption_requests"
     },
     {
-      "columns": ["checkout_ID"],
+      "columns": [
+        "checkout_ID"
+      ],
       "tableTo": "checkouts",
-      "columnsTo": ["_index"],
+      "columnsTo": [
+        "_index"
+      ],
       "onUpdate": "NO ACTION",
       "onDelete": "CASCADE",
       "nameExplicit": true,
@@ -6898,9 +7012,13 @@
       "table": "guests"
     },
     {
-      "columns": ["renewal_id"],
+      "columns": [
+        "renewal_id"
+      ],
       "tableTo": "membership_renewals",
-      "columnsTo": ["id"],
+      "columnsTo": [
+        "id"
+      ],
       "onUpdate": "NO ACTION",
       "onDelete": "NO ACTION",
       "nameExplicit": true,
@@ -6909,9 +7027,13 @@
       "table": "member_waivers"
     },
     {
-      "columns": ["application_id"],
+      "columns": [
+        "application_id"
+      ],
       "tableTo": "membership_applications",
-      "columnsTo": ["id"],
+      "columnsTo": [
+        "id"
+      ],
       "onUpdate": "NO ACTION",
       "onDelete": "NO ACTION",
       "nameExplicit": true,
@@ -6920,9 +7042,13 @@
       "table": "member_waivers"
     },
     {
-      "columns": ["discount_code_id"],
+      "columns": [
+        "discount_code_id"
+      ],
       "tableTo": "membership_discount_codes",
-      "columnsTo": ["_index"],
+      "columnsTo": [
+        "_index"
+      ],
       "onUpdate": "NO ACTION",
       "onDelete": "NO ACTION",
       "nameExplicit": true,
@@ -6931,9 +7057,13 @@
       "table": "membership_discount_code_redemptions"
     },
     {
-      "columns": ["payment_id"],
+      "columns": [
+        "payment_id"
+      ],
       "tableTo": "membership_payments",
-      "columnsTo": ["_index"],
+      "columnsTo": [
+        "_index"
+      ],
       "onUpdate": "NO ACTION",
       "onDelete": "NO ACTION",
       "nameExplicit": true,
@@ -6942,9 +7072,13 @@
       "table": "membership_discount_code_redemptions"
     },
     {
-      "columns": ["renewal_id"],
+      "columns": [
+        "renewal_id"
+      ],
       "tableTo": "membership_renewals",
-      "columnsTo": ["id"],
+      "columnsTo": [
+        "id"
+      ],
       "onUpdate": "NO ACTION",
       "onDelete": "NO ACTION",
       "nameExplicit": true,
@@ -6953,9 +7087,13 @@
       "table": "membership_payments"
     },
     {
-      "columns": ["application_id"],
+      "columns": [
+        "application_id"
+      ],
       "tableTo": "membership_applications",
-      "columnsTo": ["id"],
+      "columnsTo": [
+        "id"
+      ],
       "onUpdate": "NO ACTION",
       "onDelete": "NO ACTION",
       "nameExplicit": true,
@@ -6964,9 +7102,13 @@
       "table": "membership_payments"
     },
     {
-      "columns": ["renewal_id"],
+      "columns": [
+        "renewal_id"
+      ],
       "tableTo": "membership_renewals",
-      "columnsTo": ["id"],
+      "columnsTo": [
+        "id"
+      ],
       "onUpdate": "NO ACTION",
       "onDelete": "NO ACTION",
       "nameExplicit": true,

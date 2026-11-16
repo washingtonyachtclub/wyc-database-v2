@@ -1,12 +1,12 @@
 import type { TestSnapshot } from '@/domains/written-tests/schema'
 import { sql } from 'drizzle-orm'
 import {
-  bigint,
   char,
   check,
   customType,
   date,
   datetime,
+  decimal,
   double,
   float,
   foreignKey,
@@ -22,27 +22,6 @@ import {
   unique,
   varchar,
 } from 'drizzle-orm/mysql-core'
-
-export const auditLog = mysqlTable(
-  'audit_log',
-  {
-    id: bigint({ mode: 'number', unsigned: true }).autoincrement().primaryKey(),
-    occurredAt: datetime('occurred_at', { mode: 'string', fsp: 3 }).notNull(),
-    requestId: char('request_id', { length: 36 }).notNull(),
-    actorWycNumber: int('actor_wyc_number'),
-    effectiveWycNumber: int('effective_wyc_number'),
-    source: varchar({ length: 32 }).notNull(),
-    action: varchar({ length: 160 }).notNull(),
-    transactionId: char('transaction_id', { length: 36 }),
-    operation: varchar({ length: 24 }).notNull(),
-    tableName: varchar('table_name', { length: 64 }),
-    outcome: mysqlEnum(['succeeded', 'failed']).notNull(),
-    affectedRows: bigint('affected_rows', { mode: 'number', unsigned: true }),
-    insertId: varchar('insert_id', { length: 32 }),
-    details: json().notNull(),
-  },
-  (table) => [index('idx_audit_log_occurred_at').on(table.occurredAt)],
-)
 
 const blobAsText = customType<{ data: string; driverData: Buffer }>({
   dataType() {
@@ -985,8 +964,7 @@ export const wycWind = mysqlTable(
 export const writtenTestAttempts = mysqlTable(
   'written_test_attempts',
   {
-    id: bigint({ mode: 'number', unsigned: true }).autoincrement().primaryKey(),
-    attemptId: char('attempt_id', { length: 36 }).notNull(),
+    attemptId: char('attempt_id', { length: 36 }).primaryKey(),
     memberWycNumber: int('member_wyc_number').notNull(),
     examinerWycNumber: int('examiner_wyc_number'),
     testId: varchar('test_id', { length: 64 }).notNull(),
@@ -994,12 +972,14 @@ export const writtenTestAttempts = mysqlTable(
     submittedAt: timestamp('submitted_at', { mode: 'string' }).defaultNow().notNull(),
     correctCount: int('correct_count').notNull(),
     questionCount: int('question_count').notNull(),
-    percentage: int().notNull(),
+    earnedPoints: decimal('earned_points', { precision: 10, scale: 2, mode: 'number' }).notNull(),
+    possiblePoints: decimal('possible_points', {
+      precision: 10,
+      scale: 2,
+      mode: 'number',
+    }).notNull(),
     passed: tinyint().notNull(),
     snapshot: json().$type<TestSnapshot>().notNull(),
   },
-  (table) => [
-    unique('written_test_attempt_member_unique').on(table.memberWycNumber, table.attemptId),
-    index('written_test_attempt_submitted_at').on(table.submittedAt),
-  ],
+  (table) => [index('written_test_attempt_submitted_at').on(table.submittedAt)],
 )
