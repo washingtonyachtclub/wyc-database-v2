@@ -1,5 +1,5 @@
 import { alias } from 'drizzle-orm/mysql-core'
-import { and, asc, eq, gt, gte, lte } from 'drizzle-orm'
+import { and, asc, eq, gt, gte, inArray, lte } from 'drizzle-orm'
 import db from '@/db/index'
 import {
   calendarboats,
@@ -13,13 +13,13 @@ import {
 } from '@/db/schema'
 import { fullName, str } from '@/db/mapper-utils'
 import { useRefreshedAppSession } from '@/lib/auth/session'
-import { BOAT_ORDER, KEELBOAT_INSTRUCTION_POSITION } from './calendar'
+import { BOAT_ORDER, KEELBOAT_INSTRUCTION_POSITION, SNC_CHAIR_POSITION } from './calendar'
 import { toBoat, toReservation } from './schema'
 
 export async function getCalendarAccess() {
   const session = await useRefreshedAppSession()
   const memberId = session.data.userId
-  if (!memberId) return { memberId: 0, canBook: false, canManage: false, phone: '' }
+  if (!memberId) return { memberId: 0, canBook: false, isCalendarAdmin: false, phone: '' }
   const [rating, position, member] = await Promise.all([
     db
       .select({ id: wycRatings.index })
@@ -28,29 +28,28 @@ export async function getCalendarAccess() {
       .where(and(eq(wycRatings.member, memberId), eq(ratings.type, 'KB'), gt(ratings.degree, 0)))
       .limit(1),
     db
-      .select({ id: officers.index })
+      .select({ position: officers.position })
       .from(officers)
       .innerJoin(positions, eq(officers.position, positions.index))
       .where(
         and(
           eq(officers.member, memberId),
-          eq(officers.position, KEELBOAT_INSTRUCTION_POSITION),
+          inArray(officers.position, [KEELBOAT_INSTRUCTION_POSITION, SNC_CHAIR_POSITION]),
           eq(officers.active, 1),
           eq(positions.active, 1),
         ),
-      )
-      .limit(1),
+      ),
     db
       .select({ phone: wycDatabase.phone1 })
       .from(wycDatabase)
       .where(eq(wycDatabase.wycNumber, memberId))
       .limit(1),
   ])
-  const canManage = (session.data.privileges ?? []).includes('db') || position.length > 0
+  const isCalendarAdmin = (session.data.privileges ?? []).includes('db') || position.length > 0
   return {
     memberId,
-    canBook: canManage || rating.length > 0,
-    canManage,
+    canBook: isCalendarAdmin || rating.length > 0,
+    isCalendarAdmin,
     phone: str(member[0]?.phone),
   }
 }

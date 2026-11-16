@@ -12,7 +12,7 @@ The calendar uses `calendarboats`, `calendartable`, and `calendarcomment`. Boat 
 
 ## Reservations
 
-Members with a recorded `KB` rating of degree greater than zero can make personal reservations from any location. Membership expiration and rating expiration do not restrict reservations. A database `db` privilege or an active appointment to the active Keelboat Instruction Chair position (4033) permits booking without a rating, admin reservations, and deletion. `calendaradmin` is not consulted.
+Members with a recorded `KB` rating of degree greater than zero can make personal reservations from any location. Membership expiration and rating expiration do not restrict reservations. A database `db` privilege or an active appointment to the active Keelboat Instruction Chair (4033) or SnC Chair (2190) position grants calendar-admin access. The central `isCalendarAdmin` permission allows booking without a rating, creating admin reservations, editing any reservation’s details, and deletion. `calendaradmin` is not consulted.
 
 Managers see separate personal and admin reservation buttons. Personal reservations have a `memberWYCNumber` owner and use the normal booking limits, including when made by a manager. Admin reservations have no owner, accept an optional public title. Destination is optional for both reservation types. Their forms omit crew count and phone. An empty title displays as “Admin.” Notes and creator identity require login.
 
@@ -22,7 +22,7 @@ The first and last slots are inclusive. Stored `03:00:00` and `15:00:00` values 
 
 Personal reservations cannot start before today, have a limit of three outstanding reservations, and can cover up to 14 inclusive calendar dates. A single half-day opens on the preceding calendar day at the slot's start time. Admin reservations bypass these restrictions and can start in the past; personal reservations never bypass them. Both types must end within one calendar year ahead and are subject to overlap checks. Outstanding reservations follow the stored end marker, consistent with existing records.
 
-Reservation forms include a review step. All signed-in members can comment. Managers can permanently delete a reservation and its comments after confirmation. Writes use the shared database client. Expected booking-rule failures return structured validation results and appear inline with an edit action; they do not use the technical error-report panel.
+Reservation forms include a review step. Personal reservations display a payment obligation, no-refund policy, and a reminder to arrange any transfer outside the system. All signed-in members can comment. Managers can permanently delete a reservation and its comments after confirmation. Writes use the shared database client. Expected booking-rule failures return structured validation results and appear inline with an edit action; they do not use the technical error-report panel.
 
 ## Pricing
 
@@ -34,7 +34,7 @@ The shared calendar tables use MyISAM. Writes acquire table locks on a dedicated
 
 ### Migration
 
-At cutover, disable reservation writes in the PHP application. Its separate check and insert operations can race with v2 even though v2 serializes its own writes. The `keelboat_calendar` migration adds boat activity, reservation type, title, and creator fields and makes the owner nullable. Existing rows retain their IDs and owners and default to personal reservations. Their creator remains unknown; it is not inferred from the owner. Historical administrative entries require explicit classification. Legacy readers that inner-join the owner to the member table cannot display ownerless admin reservations.
+The DreamHost calendar webroot redirects all requests except ACME certificate validation to `https://database.washingtonyachtclub.org/keelboat-calendar` using `.htaccess`. The 302 redirect discards old paths and query strings and bypasses PHP booking handlers. Legacy files remain on disk. Concurrent legacy writes must stay disabled because their separate check and insert operations can race with v2. The `keelboat_calendar` migration adds boat activity, reservation type, title, and creator fields and makes the owner nullable. Existing rows retain their IDs and owners and default to personal reservations. Their creator remains unknown; it is not inferred from the owner. Historical administrative entries require explicit classification. Legacy readers that inner-join the owner to the member table cannot display ownerless admin reservations.
 
 ## Key files
 
@@ -48,3 +48,9 @@ At cutover, disable reservation writes in the PHP application. Its separate chec
 | `src/domains/keelboat-calendar/server-fns.ts` | Validated and authorized endpoints                    |
 
 See [architecture](architecture.md).
+
+## Detail edits and shared accounts
+
+Personal reservation owners and admin-event creators can edit their own details. Calendar managers can edit any reservation's details and delete reservations. Editable fields are destination, crew count, and phone for personal reservations, or destination and public title for admin reservations. Boat, slots, owner, creator, and reservation type remain fixed. Each edit appends a comment identifying the editor; existing comments are retained.
+
+The shared KBCalendar Admin (#3) and WYC SnC Admin (#4) records remain for historical references. The `retire_shared_calendar_accounts` migration clears both stored password hashes. Email login, password recovery, and existing v2 sessions are unchanged.

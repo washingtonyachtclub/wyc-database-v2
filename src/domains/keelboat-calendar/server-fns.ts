@@ -1,7 +1,13 @@
 import { createServerFn } from '@tanstack/react-start'
 import { requireAuth } from '@/lib/auth/auth-middleware'
 import { CalendarRuleError, monthDays } from './calendar'
-import { commentSchema, monthSchema, reservationIdSchema, reservationSchema } from './schema'
+import {
+  commentSchema,
+  monthSchema,
+  reservationIdSchema,
+  reservationSchema,
+  reservationDetailsSchema,
+} from './schema'
 import {
   getCalendarAccess,
   readAvailability,
@@ -9,7 +15,12 @@ import {
   readReservation,
   readReservationNames,
 } from './queries'
-import { removeReservation, writeComment, writeReservation } from './write'
+import {
+  removeReservation,
+  writeComment,
+  writeReservation,
+  updateReservationDetails,
+} from './write'
 
 async function calendarOperation<T>(run: () => Promise<T>): Promise<T> {
   try {
@@ -77,14 +88,14 @@ export const createReservation = createServerFn({ method: 'POST' })
     await requireAuth()
     return calendarAction(async () => {
       const access = await getCalendarAccess()
-      if (data.kind === 'admin' && !access.canManage)
+      if (data.kind === 'admin' && !access.isCalendarAdmin)
         throw new CalendarRuleError('Only calendar managers can make admin reservations.')
       if (!access.canBook)
         throw new CalendarRuleError('A keelboat rating is required to reserve a boat.')
       const boats = await readBoats()
       if (!boats.some((boat) => boat.id === data.boatId && boat.active))
         throw new CalendarRuleError('Choose an available boat.')
-      return writeReservation(data, access.memberId, access.canManage)
+      return writeReservation(data, access.memberId, access.isCalendarAdmin)
     })
   })
 
@@ -101,8 +112,18 @@ export const deleteReservation = createServerFn({ method: 'POST' })
     await requireAuth()
     return calendarAction(async () => {
       const access = await getCalendarAccess()
-      if (!access.canManage)
+      if (!access.isCalendarAdmin)
         throw new CalendarRuleError('You do not have permission to delete reservations.')
       return removeReservation(data.id)
+    })
+  })
+
+export const editReservation = createServerFn({ method: 'POST' })
+  .validator((input) => reservationDetailsSchema.parse(input))
+  .handler(async ({ data }) => {
+    await requireAuth()
+    return calendarAction(async () => {
+      const access = await getCalendarAccess()
+      return updateReservationDetails(data, access.memberId, access.isCalendarAdmin)
     })
   })

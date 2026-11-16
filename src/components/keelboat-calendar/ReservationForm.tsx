@@ -111,6 +111,13 @@ export function ReservationForm({
             )}
           </dl>
           {review.comment && <p className="whitespace-pre-wrap text-sm">{review.comment}</p>}
+          {!isAdmin && (
+            <p className="rounded-md border bg-muted/50 p-3 text-sm">
+              By reserving, you agree to pay the reservation fee. Reservations are non-refundable.
+              If you can’t use yours, arrange for someone else to take your spot outside this
+              system.
+            </p>
+          )}
           <div className="flex justify-end gap-2">
             <Button variant="outline" disabled={mutation.isPending} onClick={() => setReview(null)}>
               Back

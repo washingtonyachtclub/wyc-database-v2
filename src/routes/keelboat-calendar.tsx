@@ -1,7 +1,7 @@
 import { startTransition, useState } from 'react'
 import { createFileRoute, Link, redirect } from '@tanstack/react-router'
 import { useQuery, useSuspenseQuery } from '@tanstack/react-query'
-import { ChevronLeft, ChevronRight } from 'lucide-react'
+import { ChevronLeft, ChevronRight, Plus } from 'lucide-react'
 import {
   calendarNamesQueryOptions,
   calendarPermissionsQueryOptions,
@@ -105,12 +105,7 @@ function KeelboatCalendar() {
     <div className="space-y-4 p-4 md:p-6">
       <div className="flex flex-wrap items-center justify-between gap-4">
         <div className="space-y-3">
-          <div className="flex flex-wrap items-center gap-3">
-            <h1 className="text-2xl font-bold">Keelboat Calendar</h1>
-            <Button variant="ghost" size="sm" onClick={() => setShowLimits(true)}>
-              Booking limits
-            </Button>
-          </div>
+          <h1 className="text-2xl font-bold">Keelboat Calendar</h1>
           <div className="flex items-center gap-2">
             <Button
               variant="outline"
@@ -198,7 +193,7 @@ function KeelboatCalendar() {
             >
               <ChevronRight className="size-4" />
             </Button>
-            <Button variant="ghost" onClick={() => setMonth(today.slice(0, 7))}>
+            <Button variant="outline" onClick={() => setMonth(today.slice(0, 7))}>
               Today
             </Button>
           </div>
@@ -222,30 +217,37 @@ function KeelboatCalendar() {
             )),
           )}
         </div>
-        {!memberId ? (
-          <Button asChild>
-            <Link to="/login" search={{ redirect: loginRedirect }}>
-              Log in to reserve
-            </Link>
-          </Button>
-        ) : access.data?.canBook ? (
-          <div className="flex flex-wrap gap-2">
-            <Button onClick={() => startBooking()} disabled={!activeBoats.length}>
-              {access.data.canManage ? 'New personal reservation' : 'New reservation'}
+        <div className="flex flex-col items-end gap-2">
+          {!memberId ? (
+            <Button asChild>
+              <Link to="/login" search={{ redirect: loginRedirect }}>
+                Log in to reserve
+              </Link>
             </Button>
-            {access.data.canManage && (
-              <Button onClick={() => startBooking(today, 'admin')} disabled={!activeBoats.length}>
-                New admin reservation
+          ) : access.data?.canBook ? (
+            <div className="flex flex-wrap gap-2">
+              <Button onClick={() => startBooking()} disabled={!activeBoats.length}>
+                <Plus aria-hidden="true" />
+                {access.data.isCalendarAdmin ? 'New personal reservation' : 'New reservation'}
               </Button>
-            )}
-          </div>
-        ) : (
-          access.data && (
-            <span className="text-sm text-muted-foreground">
-              A keelboat rating is required to reserve.
-            </span>
-          )
-        )}
+              {access.data.isCalendarAdmin && (
+                <Button onClick={() => startBooking(today, 'admin')} disabled={!activeBoats.length}>
+                  <Plus aria-hidden="true" />
+                  New admin reservation
+                </Button>
+              )}
+            </div>
+          ) : (
+            access.data && (
+              <span className="text-sm text-muted-foreground">
+                A keelboat rating is required to reserve.
+              </span>
+            )
+          )}
+          <Button variant="outline" size="sm" onClick={() => setShowLimits(true)}>
+            Booking limits
+          </Button>
+        </div>
       </div>
       <ErrorAlert error={access.error?.message} action="Loading calendar permissions" />
       <div
@@ -361,23 +363,13 @@ function KeelboatCalendar() {
         <Modal title="Booking limits" onClose={() => setShowLimits(false)}>
           <ul className="list-disc space-y-3 pl-5 text-sm">
             <li>
-              A keelboat rating is required to book, except for database admins and the Keelboat
-              Instruction Chair.
+              To reserve, you need a keelboat rating, database admin access, or to be the Keelboat
+              Instruction Chair or SnC Chair.
             </li>
-            <li>You can have up to three outstanding reservations.</li>
-            <li>
-              Each reservation can cover up to 14 calendar dates, including the first and last
-              dates.
-            </li>
-            <li>Personal reservations must start today or later.</li>
-            <li>All reservations must end within one year.</li>
-            <li>A single half-day becomes bookable one day before its start time.</li>
-            <li>
-              Personal reservations follow these limits, including those made by admins. Admin
-              reservations can start in the past and bypass the three-reservation, two-week, and
-              short-notice half-day limits.
-            </li>
-            <li>Reservations for the same boat cannot overlap.</li>
+            <li>Up to three outstanding reservations.</li>
+            <li>Maximum 14 days per reservation.</li>
+            <li>Half-days are bookable starting one day before the start time.</li>
+            <li>Reservations must start today or later and end within one year.</li>
           </ul>
         </Modal>
       )}
@@ -397,7 +389,7 @@ function KeelboatCalendar() {
           key={reservation}
           id={reservation}
           memberId={memberId}
-          canManage={access.data?.canManage ?? false}
+          isCalendarAdmin={access.data?.isCalendarAdmin ?? false}
           onClose={() => setReservation(undefined)}
         />
       )}

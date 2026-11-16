@@ -1,6 +1,7 @@
 import { getNowPacificDateTimeString } from '@/lib/date-utils'
 
 export const KEELBOAT_INSTRUCTION_POSITION = 4033
+export const SNC_CHAIR_POSITION = 2190
 export const BOAT_ORDER = [3, 8, 5, 6, 7]
 
 export function addDays(date: string, days: number): string {
@@ -51,22 +52,22 @@ export function validateBookingWindow(
   const nextYear = new Date(`${today}T12:00:00Z`)
   nextYear.setUTCFullYear(nextYear.getUTCFullYear() + 1)
   const latest = nextYear.toISOString().slice(0, 10)
-  if (through < from) throw new CalendarRuleError('The last slot must follow the first slot.')
+  if (through < from) throw new CalendarRuleError('Your booking ends before it begins.')
   if (!isAdminReservation && from.slice(0, 10) < today) {
-    throw new CalendarRuleError('Choose today or a future date.')
+    throw new CalendarRuleError('Your booking starts in the past.')
   }
   if (through.slice(0, 10) > latest) {
     throw new CalendarRuleError('Reservations must end within one year.')
   }
   if (isAdminReservation) return
   if (through.slice(0, 10) >= addDays(from.slice(0, 10), 14)) {
-    throw new CalendarRuleError('Reservations can cover at most 14 calendar days.')
+    throw new CalendarRuleError('Maximum 14 days per reservation.')
   }
   if (outstanding >= 3)
     throw new CalendarRuleError('You already have three outstanding reservations.')
   // Identical markers mean one included half-day, not a zero-length reservation.
   if (from === through && `${addDays(from.slice(0, 10), -1)}${from.slice(10)}` > now) {
-    throw new CalendarRuleError('Half-day reservations open one day before the slot begins.')
+    throw new CalendarRuleError('Half-days are bookable starting one day before the start time.')
   }
 }
 

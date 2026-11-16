@@ -4,7 +4,7 @@ import db from '@/db/index'
 import { calendarcomment, calendartable } from '@/db/schema'
 import { getNowPacificDateTimeString } from '@/lib/date-utils'
 import { CalendarRuleError, dayCounts, slotMarker, validateBookingWindow } from './calendar'
-import type { ReservationInput } from './schema'
+import type { ReservationDetailsInput, ReservationInput } from './schema'
 
 async function withCalendarLock<T>(run: (connectionDb: MySql2Database) => Promise<T>): Promise<T> {
   const connection = await db.$client.promise().getConnection()
@@ -28,9 +28,13 @@ async function withCalendarLock<T>(run: (connectionDb: MySql2Database) => Promis
   }
 }
 
-export function writeReservation(input: ReservationInput, memberId: number, canManage: boolean) {
+export function writeReservation(
+  input: ReservationInput,
+  memberId: number,
+  isCalendarAdmin: boolean,
+) {
   const isAdmin = input.kind === 'admin'
-  if (isAdmin && !canManage)
+  if (isAdmin && !isCalendarAdmin)
     throw new CalendarRuleError('Only calendar managers can make admin reservations.')
   return withCalendarLock(async (locked) => {
     const from = slotMarker(input.fromDate, input.fromSlot)
@@ -111,5 +115,54 @@ export function removeReservation(id: number) {
     await locked.delete(calendartable).where(eq(calendartable.id, id))
     await locked.delete(calendarcomment).where(eq(calendarcomment.id, id))
     return { success: true }
+  })
+}
+
+export function updateReservationDetails(
+  input: ReservationDetailsInput,
+  memberId: number,
+  isCalendarAdmin: boolean,
+) {
+  return withCalendarLock(async (locked) => {
+    const [reservation] = await locked
+      .select()
+      .from(calendartable)
+      .where(eq(calendartable.id, input.id))
+      .limit(1)
+    if (!reservation) throw new CalendarRuleError('Reservation not found.')
+    const isAdmin = reservation.reservationType === 'admin'
+    const owner = isAdmin ? reservation.createdByWycNumber : reservation.memberWycNumber
+    if (!isCalendarAdmin && owner !== memberId)
+      throw new CalendarRuleError('You can only edit your own reservations.')
+    if (!isAdmin && !input.phone) throw new CalendarRuleError('Enter a contact phone number.')
+    await locked
+      .update(calendartable)
+      .set({
+        destination: input.destination,
+        title: isAdmin ? input.title || null : reservation.title,
+        numberOfCrew: isAdmin ? reservation.numberOfCrew : input.numberOfCrew,
+        phone: isAdmin ? reservation.phone : input.phone,
+      })
+      .where(eq(calendartable.id, input.id))
+    try {
+      await locked.insert(calendarcomment).values({
+        id: input.id,
+        userwyc: memberId,
+        date: getNowPacificDateTimeString(),
+        comment: 'Reservation details updated',
+      })
+    } catch (error) {
+      await locked
+        .update(calendartable)
+        .set({
+          destination: reservation.destination,
+          title: reservation.title,
+          numberOfCrew: reservation.numberOfCrew,
+          phone: reservation.phone,
+        })
+        .where(eq(calendartable.id, input.id))
+      throw error
+    }
+    return { id: input.id }
   })
 }

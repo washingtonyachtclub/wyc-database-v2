@@ -1,3 +1,4 @@
+import { EditReservationForm } from './EditReservationForm'
 import { useState } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { Modal } from '@/components/ui/Modal'
@@ -12,16 +13,17 @@ import { slotLabel } from '@/domains/keelboat-calendar/calendar'
 export function ReservationDetails({
   id,
   memberId,
-  canManage,
+  isCalendarAdmin,
   onClose,
 }: {
   id: number
   memberId: number
-  canManage: boolean
+  isCalendarAdmin: boolean
   onClose: () => void
 }) {
   const queryClient = useQueryClient()
   const { data, error, isPending } = useQuery(reservationQueryOptions(id, memberId))
+  const [editing, setEditing] = useState(false)
   const [confirmDelete, setConfirmDelete] = useState(false)
   const comment = useMutation({
     mutationFn: addReservationComment,
@@ -113,6 +115,15 @@ export function ReservationDetails({
               </>
             )}
           </dl>
+          {(isCalendarAdmin ||
+            (data.kind === 'admin' ? data.creatorId : data.memberId) === memberId) &&
+            (editing ? (
+              <EditReservationForm reservation={data} onClose={() => setEditing(false)} />
+            ) : (
+              <Button variant="outline" onClick={() => setEditing(true)}>
+                Edit details
+              </Button>
+            ))}
           {data.comment && <p className="whitespace-pre-wrap text-sm">{data.comment}</p>}
           <section className="space-y-3">
             <h2 className="text-sm font-semibold">Comments</h2>
@@ -141,7 +152,7 @@ export function ReservationDetails({
               </form.AppForm>
             </form>
           </section>
-          {canManage && (
+          {isCalendarAdmin && (
             <div className="border-t pt-4">
               {confirmDelete ? (
                 <div className="space-y-3">

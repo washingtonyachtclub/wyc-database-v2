@@ -9,7 +9,7 @@ const legacyText = (max: number) =>
   z
     .string()
     .trim()
-    .max(max)
+    .max(max, `Use ${max.toLocaleString('en-US')} characters or fewer.`)
     .regex(
       /^[\u0000-\u00ff\u20ac\u2018-\u201f\u2013\u2014]*$/,
       'Please use plain text without emoji.',
@@ -19,13 +19,17 @@ export const reservationSchema = z
   .object({
     kind: z.enum(['personal', 'admin']),
     title: legacyText(120),
-    boatId: z.number().int().positive(),
-    fromDate: z.iso.date(),
+    boatId: z.number().int().positive('Choose a boat.'),
+    fromDate: z.iso.date('Enter a valid date.'),
     fromSlot: slotSchema,
-    throughDate: z.iso.date(),
+    throughDate: z.iso.date('Enter a valid date.'),
     throughSlot: slotSchema,
     destination: legacyText(255),
-    numberOfCrew: z.number().int().min(0).max(1000),
+    numberOfCrew: z
+      .number()
+      .int('Enter a whole number for crew.')
+      .min(0, 'Crew count cannot be negative.')
+      .max(1000, 'Crew count must be 1,000 or fewer.'),
     phone: legacyText(45),
     comment: legacyText(16000),
   })
@@ -33,7 +37,18 @@ export const reservationSchema = z
     message: 'Enter a contact phone number.',
     path: ['phone'],
   })
-export const commentSchema = reservationIdSchema.extend({ comment: legacyText(16000).min(1) })
+export const reservationDetailsSchema = z.object({
+  id: z.number().int().positive(),
+  title: reservationSchema.shape.title,
+  destination: reservationSchema.shape.destination,
+  numberOfCrew: reservationSchema.shape.numberOfCrew,
+  phone: reservationSchema.shape.phone,
+})
+export type ReservationDetailsInput = z.infer<typeof reservationDetailsSchema>
+
+export const commentSchema = reservationIdSchema.extend({
+  comment: legacyText(16000).min(1, 'Enter a comment.'),
+})
 export type ReservationInput = z.infer<typeof reservationSchema>
 export type CalendarBoat = { id: number; name: string; active: boolean }
 export type Availability = {
