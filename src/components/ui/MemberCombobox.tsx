@@ -144,7 +144,7 @@ export function MemberCombobox({
         )}
       >
         <Check className={cn('h-4 w-4 shrink-0', isSelected ? 'opacity-100' : 'opacity-0')} />
-        <span>
+        <span className={cn(!desktopControl && 'min-w-0 [overflow-wrap:anywhere]')}>
           {displayName}
           {displayWycNumber && <span className="text-muted-foreground"> ({member.wycNumber})</span>}
         </span>
@@ -266,7 +266,7 @@ export function MemberCombobox({
           {mobileSearchOpen && (
             <Modal
               title="Search members"
-              contentClassName="h-[min(32rem,calc(100dvh-2rem))] max-w-[calc(100%-2rem)] grid-rows-[auto_minmax(0,1fr)] overflow-hidden p-5 duration-0 data-[state=open]:animate-none data-[state=closed]:animate-none sm:max-w-md"
+              contentClassName="left-[50dvw] h-[min(32rem,calc(100dvh-2rem))] w-[calc(100dvw-2rem)] max-w-md grid-cols-1 grid-rows-[auto_minmax(0,1fr)] overflow-hidden p-5 duration-0 data-[state=open]:animate-none data-[state=closed]:animate-none"
               overlayClassName="duration-0 data-[state=open]:animate-none data-[state=closed]:animate-none"
               onOpenAutoFocus={(event) => {
                 event.preventDefault()
@@ -279,16 +279,16 @@ export function MemberCombobox({
                 setSearchingAllMembers(false)
               }}
             >
-              <div className="flex min-h-0 flex-col gap-3">
+              <div className="flex min-h-0 min-w-0 flex-col gap-3">
                 <Input
                   ref={mobileSearchInputRef}
                   type="search"
                   value={search}
                   onChange={(event) => setSearch(event.target.value)}
                   placeholder="Name or WYC number"
-                  className="h-11 shrink-0 text-base"
+                  className="h-11 min-w-0 shrink-0 text-base"
                 />
-                <Command shouldFilter={false} className="min-h-0 flex-1 border">
+                <Command shouldFilter={false} className="min-h-0 min-w-0 flex-1 border">
                   <CommandList className="max-h-none flex-1 touch-pan-y space-y-2 overscroll-contain overflow-y-auto p-2">
                     {!canSearchMembers(trimmedSearch) ? (
                       <div className="py-8 text-center text-base text-muted-foreground">

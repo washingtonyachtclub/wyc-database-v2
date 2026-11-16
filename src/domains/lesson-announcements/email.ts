@@ -1,16 +1,8 @@
+import { escapeHtml } from '@/lib/emails/html'
 import { PUBLIC_APP_ORIGIN } from '@/lib/urls'
 import { formatSessions } from '@/domains/lessons/format-sessions'
 import type { RichLesson } from '@/domains/lessons/schema'
 import { lessonAnnouncementMarkdownToHtml } from './markdown'
-
-function escapeHtml(value: string): string {
-  return value
-    .replaceAll('&', '&amp;')
-    .replaceAll('<', '&lt;')
-    .replaceAll('>', '&gt;')
-    .replaceAll('"', '&quot;')
-    .replaceAll("'", '&#039;')
-}
 
 export function lessonPageUrl(lessonId: number): string {
   return `${PUBLIC_APP_ORIGIN}/lessons/${lessonId}`

@@ -114,7 +114,7 @@ export async function sendLessonReminders({
       messages.push({
         to: student.email,
         subject: lessonReminderSubject,
-        text: lessonReminderEmail(name, info, daysAhead),
+        ...lessonReminderEmail(name, info, daysAhead),
       })
     }
 

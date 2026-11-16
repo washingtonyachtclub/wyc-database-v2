@@ -1,4 +1,5 @@
 import { Resend } from 'resend'
+import { plainTextEmailHtml } from './emails/html'
 import { isDevEnvironment } from './env'
 
 if (!process.env.RESEND_API_KEY) {
@@ -57,7 +58,7 @@ async function sendOneBatch(messages: BatchMessage[], key: string, simulated: bo
       to: simulated ? DEV_RECIPIENT : m.to,
       subject: m.subject,
       text: m.text,
-      html: m.html,
+      html: m.html ?? plainTextEmailHtml(m.text),
     })),
     { idempotencyKey: key },
   )
@@ -96,6 +97,7 @@ export async function sendEmail({
   html,
   idempotencyKey,
 }: SendEmailParams): Promise<SendEmailResult> {
+  html ??= plainTextEmailHtml(text)
   const simulated = isDevEnvironment()
   const actualTo = simulated ? DEV_RECIPIENT : to
   const actualBcc = simulated ? undefined : bcc

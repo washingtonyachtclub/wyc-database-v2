@@ -3,6 +3,7 @@
  * Signups must already be ordered by signup index (ASC).
  */
 export function splitEnrollment<T>(signups: T[], lessonSize: number) {
+  if (lessonSize === 0) return { enrolled: signups, waitlisted: [] as T[] }
   return {
     enrolled: signups.slice(0, lessonSize),
     waitlisted: signups.slice(lessonSize),
@@ -14,5 +15,5 @@ export function splitEnrollment<T>(signups: T[], lessonSize: number) {
  * 0-based position in the ordered signup list.
  */
 export function enrollmentStatus(position: number, lessonSize: number): 'enrolled' | 'waitlisted' {
-  return position < lessonSize ? 'enrolled' : 'waitlisted'
+  return lessonSize === 0 || position < lessonSize ? 'enrolled' : 'waitlisted'
 }

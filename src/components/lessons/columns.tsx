@@ -45,6 +45,7 @@ export const columns = [
   }),
   columnHelper.accessor('size', {
     header: 'Size',
+    cell: (info) => (info.getValue() === 0 ? 'Unlimited' : info.getValue()),
     enableSorting: false,
   }),
   columnHelper.accessor('expire', {

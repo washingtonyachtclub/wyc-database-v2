@@ -5,8 +5,10 @@ export const CALENDAR_SYNC_START_DATE = '2026-07-21'
 
 export function lessonSignupsOpen(
   sessions: LessonSession[],
+  size: number,
   now = getNowPacificDateTimeString(),
 ): boolean {
+  if (size === 0) return true
   return (
     sessions.length > 0 &&
     sessions.every((session) => {

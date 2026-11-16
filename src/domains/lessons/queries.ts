@@ -116,6 +116,7 @@ export function toLessonEmailInfo(
   return {
     type: lesson.type,
     typeId: lesson.classTypeId,
+    size: lesson.size,
     subtype: lesson.subtype,
     sessions: lesson.sessions,
     instructor1Name: lesson.instructor1Name,

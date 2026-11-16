@@ -1,3 +1,4 @@
+import { EmbeddedJoinPage } from '@/components/EmbeddedJoinPage'
 import { lessonSignupsOpen } from '@/domains/lessons/visibility'
 import { createFileRoute } from '@tanstack/react-router'
 import { MapPin } from 'lucide-react'
@@ -65,35 +66,37 @@ function LessonListPage() {
   ]
 
   return (
-    <div className="mx-auto max-w-[900px] px-4 py-2.5 font-[Verdana,Geneva,sans-serif] text-sm text-[#444]">
-      {sections.map((section, i) => {
-        const openLessons = section.lessons.filter((e) => !isLessonFull(e))
-        const fullLessons = section.lessons.filter(isLessonFull)
+    <EmbeddedJoinPage enabled messageSource="wyc-lessons-embed">
+      <div className="mx-auto max-w-[900px] px-4 py-2.5 font-[Verdana,Geneva,sans-serif] text-sm text-[#444]">
+        {sections.map((section, i) => {
+          const openLessons = section.lessons.filter((e) => !isLessonFull(e))
+          const fullLessons = section.lessons.filter(isLessonFull)
 
-        return (
-          <div key={section.label}>
-            {i > 0 && <hr className="my-6 border-t border-[#b0c4d8]" />}
-            <div className="mb-2">
-              <h2 className="mb-2 font-[Verdana,Geneva,sans-serif] text-2xl font-bold text-[#3c0f53]">
-                {section.label}
-              </h2>
-              {SECTION_DESCRIPTIONS[section.label] && (
-                <p className="mb-4 text-sm leading-relaxed text-[#444]">
-                  {SECTION_DESCRIPTIONS[section.label]}
-                </p>
-              )}
+          return (
+            <div key={section.label}>
+              {i > 0 && <hr className="my-6 border-t border-[#b0c4d8]" />}
+              <div className="mb-2">
+                <h2 className="mb-2 font-[Verdana,Geneva,sans-serif] text-2xl font-bold text-[#3c0f53]">
+                  {section.label}
+                </h2>
+                {SECTION_DESCRIPTIONS[section.label] && (
+                  <p className="mb-4 text-sm leading-relaxed text-[#444]">
+                    {SECTION_DESCRIPTIONS[section.label]}
+                  </p>
+                )}
 
-              {openLessons.map((entry) => (
-                <LessonCard key={entry.lesson.index} entry={entry} />
-              ))}
-              {fullLessons.map((entry) => (
-                <LessonCard key={entry.lesson.index} entry={entry} muted />
-              ))}
+                {openLessons.map((entry) => (
+                  <LessonCard key={entry.lesson.index} entry={entry} />
+                ))}
+                {fullLessons.map((entry) => (
+                  <LessonCard key={entry.lesson.index} entry={entry} muted />
+                ))}
+              </div>
             </div>
-          </div>
-        )
-      })}
-    </div>
+          )
+        })}
+      </div>
+    </EmbeddedJoinPage>
   )
 }
 
@@ -202,10 +205,10 @@ function LessonCard({ entry, muted }: { entry: PublicLesson; muted?: boolean }) 
 
         {/* Enroll button */}
         <div className="px-3 pt-1 pb-2.5 md:flex md:w-[25%] md:items-center md:justify-center md:py-2.5">
-          {lessonSignupsOpen(lesson.sessions, now) ? (
+          {lessonSignupsOpen(lesson.sessions, lesson.size, now) ? (
             <EnrollAction lessonIndex={lesson.index} isFull={isFull} />
           ) : (
-            <span>Signups closed</span>
+            lesson.size !== 0 && <span>Signups closed</span>
           )}
         </div>
       </div>

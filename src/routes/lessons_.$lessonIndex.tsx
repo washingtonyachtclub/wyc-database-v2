@@ -1,3 +1,4 @@
+import { LessonSizeField } from '@/components/lessons/LessonSizeField'
 import { useCurrentUser } from '@/lib/auth/auth-query-options'
 import { canManageLesson } from '@/lib/resource-permissions'
 import { getLessonInstructorOptionsQueryOptions } from '@/domains/members/query-options'
@@ -103,7 +104,8 @@ function lessonToDefaults(lesson: RichLesson): LessonInsert {
     requirements: lesson.requirements,
     location: lesson.location,
     locationUrl: lesson.locationUrl,
-    size: lesson.size,
+    size: lesson.size === 0 ? 1 : lesson.size,
+    unlimitedSize: lesson.size === 0,
     expire: lesson.expire,
   }
 }
@@ -147,6 +149,7 @@ function LessonDetailPage({ lessonIndex }: { lessonIndex: number }) {
         lessonId={lesson.index}
         enrolledCount={enrolledStudents.length}
         waitlistedCount={waitlistedStudents.length}
+        unlimitedSize={lesson.size === 0}
       />
       <section className="space-y-3">
         <h2 className="text-lg font-semibold">Announcements</h2>
@@ -159,7 +162,8 @@ function LessonDetailPage({ lessonIndex }: { lessonIndex: number }) {
 
       <section>
         <h2 className="text-lg font-semibold mb-2">
-          Enrolled ({enrolledStudents.length}/{lesson.size})
+          Enrolled ({enrolledStudents.length}
+          {lesson.size > 0 && `/${lesson.size}`})
         </h2>
         <StudentList
           students={enrolledStudents}
@@ -168,14 +172,16 @@ function LessonDetailPage({ lessonIndex }: { lessonIndex: number }) {
         />
       </section>
 
-      <section>
-        <h2 className="text-lg font-semibold mb-2">Waitlist ({waitlistedStudents.length})</h2>
-        <StudentList
-          students={waitlistedStudents}
-          onRemove={handleRemove}
-          emptyMessage="No students on waitlist."
-        />
-      </section>
+      {lesson.size > 0 && (
+        <section>
+          <h2 className="text-lg font-semibold mb-2">Waitlist ({waitlistedStudents.length})</h2>
+          <StudentList
+            students={waitlistedStudents}
+            onRemove={handleRemove}
+            emptyMessage="No students on waitlist."
+          />
+        </section>
+      )}
 
       <section className="space-y-3">
         <Button
@@ -188,7 +194,7 @@ function LessonDetailPage({ lessonIndex }: { lessonIndex: number }) {
         {showContactDetails && (
           <div className="grid gap-4 md:grid-cols-2">
             <ContactDetails title="Enrolled" students={enrolledStudents} />
-            <ContactDetails title="Waitlist" students={waitlistedStudents} />
+            {lesson.size > 0 && <ContactDetails title="Waitlist" students={waitlistedStudents} />}
           </div>
         )}
       </section>
@@ -474,10 +480,7 @@ function LessonEditForm({ lesson }: { lesson: RichLesson }) {
         />
 
         <div className="md:col-span-2 grid grid-cols-1 md:grid-cols-3 gap-4 items-end">
-          <form.AppField
-            name="size"
-            children={(field) => <field.NumberField label="Size" required />}
-          />
+          <LessonSizeField form={form} />
 
           <form.AppField
             name="expire"

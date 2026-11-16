@@ -7,13 +7,26 @@ any session ends on today's date in Seattle or later. Timed sessions that ended
 earlier today stay listed until midnight. All-day sessions include their end date.
 A course remains listed until its final session's day ends.
 
-Member signups and waitlist joins close at the first session's start time in
-Seattle. For all-day sessions, signups close at midnight at the beginning of the
-first day. The public list and signup page show “Signups closed” afterward. The
-server enforces this deadline even for an already open signup page.
+For limited-capacity lessons, member signups and waitlist joins close at the first
+session's start time in Seattle. For all-day sessions, signups close at midnight
+at the beginning of the first day. The public list and signup page show “Signups
+closed” afterward. The server enforces this deadline even for an already open
+signup page.
+
+Unlimited lessons accept signups after their start date and time and never show
+“Signups closed”. Membership eligibility and duplicate-signup checks still apply.
 
 The lesson's `expire` quarter controls membership eligibility and quarter-based
 administrative lists, independently of public visibility.
+
+## Capacity
+
+A lesson size of `0` means unlimited enrollment. Every signup is enrolled, and
+unlimited lessons have no waitlist. Signup and reminder emails omit waitlist
+language, and roster and signup views show the enrolled count without a capacity.
+
+Create and edit forms expose an “Unlimited” checkbox beside the capacity input. Limited lessons require
+a positive whole-number size. Existing positive sizes remain capacity limits.
 
 ## Calendar sync
 
