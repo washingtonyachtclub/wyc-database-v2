@@ -14,6 +14,7 @@ export type Privilege = 'db' | 'rtgs'
  * Routes NOT in this map are denied by default (fail-closed).
  */
 export const routePermissions = {
+  '/keelboat-calendar': [],
   '/': [],
   '/members': ['db', 'rtgs'], // rtgs sees the roster read-only; no email export
   '/members/$wycNumber': ['db', 'rtgs'], // own-profile exception handled in route beforeLoad

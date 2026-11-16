@@ -23,6 +23,7 @@ import { Route as ForgotPasswordRouteImport } from './routes/forgot-password'
 import { Route as GuestWaiverRouteImport } from './routes/guest-waiver'
 import { Route as HonoraryRouteImport } from './routes/honorary'
 import { Route as JoinRouteImport } from './routes/join'
+import { Route as KeelboatCalendarRouteImport } from './routes/keelboat-calendar'
 import { Route as LessonListRouteImport } from './routes/lesson-list'
 import { Route as LessonTypesRouteImport } from './routes/lesson-types'
 import { Route as LessonsRouteImport } from './routes/lessons'
@@ -127,6 +128,11 @@ const HonoraryRoute = HonoraryRouteImport.update({
 const JoinRoute = JoinRouteImport.update({
   id: '/join',
   path: '/join',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const KeelboatCalendarRoute = KeelboatCalendarRouteImport.update({
+  id: '/keelboat-calendar',
+  path: '/keelboat-calendar',
   getParentRoute: () => rootRouteImport,
 } as any)
 const LessonListRoute = LessonListRouteImport.update({
@@ -320,6 +326,7 @@ export interface FileRoutesByFullPath {
   '/guest-waiver': typeof GuestWaiverRoute
   '/honorary': typeof HonoraryRoute
   '/join': typeof JoinRoute
+  '/keelboat-calendar': typeof KeelboatCalendarRoute
   '/lesson-list': typeof LessonListRoute
   '/lesson-types': typeof LessonTypesRoute
   '/lessons': typeof LessonsRoute
@@ -371,6 +378,7 @@ export interface FileRoutesByTo {
   '/guest-waiver': typeof GuestWaiverRoute
   '/honorary': typeof HonoraryRoute
   '/join': typeof JoinRoute
+  '/keelboat-calendar': typeof KeelboatCalendarRoute
   '/lesson-list': typeof LessonListRoute
   '/lesson-types': typeof LessonTypesRoute
   '/lessons': typeof LessonsRoute
@@ -423,6 +431,7 @@ export interface FileRoutesById {
   '/guest-waiver': typeof GuestWaiverRoute
   '/honorary': typeof HonoraryRoute
   '/join': typeof JoinRoute
+  '/keelboat-calendar': typeof KeelboatCalendarRoute
   '/lesson-list': typeof LessonListRoute
   '/lesson-types': typeof LessonTypesRoute
   '/lessons': typeof LessonsRoute
@@ -476,6 +485,7 @@ export interface FileRouteTypes {
     | '/guest-waiver'
     | '/honorary'
     | '/join'
+    | '/keelboat-calendar'
     | '/lesson-list'
     | '/lesson-types'
     | '/lessons'
@@ -527,6 +537,7 @@ export interface FileRouteTypes {
     | '/guest-waiver'
     | '/honorary'
     | '/join'
+    | '/keelboat-calendar'
     | '/lesson-list'
     | '/lesson-types'
     | '/lessons'
@@ -578,6 +589,7 @@ export interface FileRouteTypes {
     | '/guest-waiver'
     | '/honorary'
     | '/join'
+    | '/keelboat-calendar'
     | '/lesson-list'
     | '/lesson-types'
     | '/lessons'
@@ -630,6 +642,7 @@ export interface RootRouteChildren {
   GuestWaiverRoute: typeof GuestWaiverRoute
   HonoraryRoute: typeof HonoraryRoute
   JoinRoute: typeof JoinRoute
+  KeelboatCalendarRoute: typeof KeelboatCalendarRoute
   LessonListRoute: typeof LessonListRoute
   LessonTypesRoute: typeof LessonTypesRoute
   LessonsRoute: typeof LessonsRoute
@@ -764,6 +777,13 @@ declare module '@tanstack/react-router' {
       path: '/join'
       fullPath: '/join'
       preLoaderRoute: typeof JoinRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/keelboat-calendar': {
+      id: '/keelboat-calendar'
+      path: '/keelboat-calendar'
+      fullPath: '/keelboat-calendar'
+      preLoaderRoute: typeof KeelboatCalendarRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/lesson-list': {
@@ -1041,6 +1061,7 @@ const rootRouteChildren: RootRouteChildren = {
   GuestWaiverRoute: GuestWaiverRoute,
   HonoraryRoute: HonoraryRoute,
   JoinRoute: JoinRoute,
+  KeelboatCalendarRoute: KeelboatCalendarRoute,
   LessonListRoute: LessonListRoute,
   LessonTypesRoute: LessonTypesRoute,
   LessonsRoute: LessonsRoute,

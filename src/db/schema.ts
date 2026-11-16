@@ -99,6 +99,7 @@ export const calendarboats = mysqlTable(
   'calendarboats',
   {
     cBoatId: int().autoincrement().notNull(),
+    active: tinyint('active').default(1).notNull(),
     name: varchar({ length: 50 }).charSet('latin1').collate('latin1_swedish_ci').notNull(),
     description: varchar('Description', { length: 500 })
       .charSet('latin1')
@@ -132,7 +133,12 @@ export const calendartable = mysqlTable(
   {
     id: int().autoincrement().notNull(),
     cBoatId: int().notNull(),
-    memberWycNumber: int('memberWYCNumber').notNull(),
+    memberWycNumber: int('memberWYCNumber'),
+    reservationType: mysqlEnum('reservationType', ['personal', 'admin'])
+      .default('personal')
+      .notNull(),
+    createdByWycNumber: int('createdByWYCNumber'),
+    title: varchar({ length: 120 }).charSet('latin1').collate('latin1_swedish_ci'),
     reserveFrom: datetime({ mode: 'string' }).notNull(),
     reserveTo: datetime({ mode: 'string' }).notNull(),
     destination: varchar({ length: 255 }).charSet('latin1').collate('latin1_swedish_ci').notNull(),

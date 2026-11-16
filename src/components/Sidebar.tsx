@@ -29,6 +29,7 @@ export const supportTableItems = [
 ]
 
 export const toolsItems = [
+  { path: '/keelboat-calendar' as const, label: 'Keelboat Calendar' },
   { path: '/maintenance-tracker' as const, label: 'Maintenance Tracker' },
   { path: '/membership-stats' as const, label: 'Membership Stats' },
   { path: '/set-current-quarter' as const, label: 'Set Current Quarter' },
