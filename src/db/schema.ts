@@ -100,6 +100,7 @@ export const calendarboats = mysqlTable(
   {
     cBoatId: int().autoincrement().notNull(),
     active: tinyint('active').default(1).notNull(),
+    engineType: mysqlEnum('engineType', ['outboard', 'inboard', 'both']),
     name: varchar({ length: 50 }).charSet('latin1').collate('latin1_swedish_ci').notNull(),
     description: varchar('Description', { length: 500 })
       .charSet('latin1')
@@ -133,6 +134,15 @@ export const calendartable = mysqlTable(
   {
     id: int().autoincrement().notNull(),
     cBoatId: int().notNull(),
+    paymentCheckoutId: char('paymentCheckoutId', { length: 36 }),
+    squareOrderId: varchar('squareOrderId', { length: 255 }),
+    squarePaymentId: varchar('squarePaymentId', { length: 255 }),
+    paidAmountCents: int('paidAmountCents'),
+    paidCurrency: char('paidCurrency', { length: 3 }),
+    pricingTier: mysqlEnum('pricingTier', ['student', 'nonstudent']),
+    rentalEngine: mysqlEnum('rentalEngine', ['outboard', 'inboard']),
+    deletedAt: datetime('deletedAt', { mode: 'string' }),
+    deletedByWycNumber: int('deletedByWYCNumber'),
     memberWycNumber: int('memberWYCNumber'),
     reservationType: mysqlEnum('reservationType', ['personal', 'admin'])
       .default('personal')
@@ -150,7 +160,40 @@ export const calendartable = mysqlTable(
     numFullWe: int('numFullWE').notNull(),
     numHalfWe: int('numHalfWE').notNull(),
   },
-  (table) => [primaryKey({ columns: [table.id] })],
+  (table) => [
+    primaryKey({ columns: [table.id] }),
+    unique('uq_calendar_payment_checkout').on(table.paymentCheckoutId),
+    unique('uq_calendar_square_payment').on(table.squarePaymentId),
+  ],
+)
+
+export const keelboatPayments = mysqlTable(
+  'keelboat_payments',
+  {
+    id: char('id', { length: 36 }).primaryKey(),
+    memberId: int('member_id').notNull(),
+    activeMemberId: int('active_member_id'),
+    reservationId: int('reservation_id'),
+    reservationInput: json('reservation_input').notNull(),
+    priceSnapshot: json('price_snapshot').notNull(),
+    status: mysqlEnum('status', [
+      'processing',
+      'paid',
+      'completed',
+      'failed',
+      'reconciliation_required',
+    ]).notNull(),
+    squareOrderId: varchar('square_order_id', { length: 255 }),
+    squarePaymentId: varchar('square_payment_id', { length: 255 }),
+    amountCents: int('amount_cents').notNull(),
+    currency: char('currency', { length: 3 }).notNull(),
+    createdAt: timestamp('created_at').defaultNow().notNull(),
+  },
+  (table) => [
+    unique('uq_keelboat_active_payment').on(table.activeMemberId),
+    unique('uq_keelboat_payment_id').on(table.squarePaymentId),
+    index('idx_keelboat_payments_member').on(table.memberId),
+  ],
 )
 
 export const checkouts = mysqlTable(

@@ -188,10 +188,10 @@ export function SelectField({
   label: string
   required?: boolean
   placeholder?: string
-  options: { value: number; label: string }[]
+  options: { value: number | string; label: string }[]
   className?: string
 }) {
-  const field = useFieldContext<number | null>()
+  const field = useFieldContext<number | string | null>()
   return (
     <div className={className}>
       <Label className="mb-1">
@@ -199,8 +199,12 @@ export function SelectField({
         {required && ' *'}
       </Label>
       <SearchableSelect
+        ariaLabel={label}
         value={field.state.value != null ? String(field.state.value) : null}
-        onValueChange={(value) => field.handleChange(Number(value))}
+        onValueChange={(value) => {
+          const option = options.find((option) => String(option.value) === value)
+          if (option) field.handleChange(option.value)
+        }}
         onBlur={field.handleBlur}
         placeholder={placeholder}
         options={options.map((option) => ({

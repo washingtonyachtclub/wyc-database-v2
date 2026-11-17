@@ -1,5 +1,7 @@
+import { CATEGORY_IDS } from '@/domains/renewals/questionnaire'
+import type { PricingTier } from './pricing'
 import { alias } from 'drizzle-orm/mysql-core'
-import { and, asc, eq, gt, gte, inArray, lte } from 'drizzle-orm'
+import { and, asc, eq, gt, gte, inArray, isNull, lte } from 'drizzle-orm'
 import db from '@/db/index'
 import {
   calendarboats,
@@ -19,7 +21,14 @@ import { toBoat, toReservation } from './schema'
 export async function getCalendarAccess() {
   const session = await useRefreshedAppSession()
   const memberId = session.data.userId
-  if (!memberId) return { memberId: 0, canBook: false, isCalendarAdmin: false, phone: '' }
+  if (!memberId)
+    return {
+      memberId: 0,
+      canBook: false,
+      isCalendarAdmin: false,
+      phone: '',
+      pricingTier: 'nonstudent' as PricingTier,
+    }
   const [rating, position, member] = await Promise.all([
     db
       .select({ id: wycRatings.index })
@@ -40,7 +49,7 @@ export async function getCalendarAccess() {
         ),
       ),
     db
-      .select({ phone: wycDatabase.phone1 })
+      .select({ phone: wycDatabase.phone1, categoryId: wycDatabase.categoryId })
       .from(wycDatabase)
       .where(eq(wycDatabase.wycNumber, memberId))
       .limit(1),
@@ -51,6 +60,9 @@ export async function getCalendarAccess() {
     canBook: isCalendarAdmin || rating.length > 0,
     isCalendarAdmin,
     phone: str(member[0]?.phone),
+    pricingTier: (member[0]?.categoryId === CATEGORY_IDS.student
+      ? 'student'
+      : 'nonstudent') as PricingTier,
   }
 }
 
@@ -76,6 +88,7 @@ export async function readAvailability(start: string, end: string) {
     .from(calendartable)
     .where(
       and(
+        isNull(calendartable.deletedAt),
         lte(calendartable.reserveFrom, `${end} 23:59:59`),
         gte(calendartable.reserveTo, `${start} 00:00:00`),
       ),
@@ -99,7 +112,7 @@ export async function readReservation(id: number) {
     .leftJoin(calendarboats, eq(calendartable.cBoatId, calendarboats.cBoatId))
     .leftJoin(wycDatabase, eq(calendartable.memberWycNumber, wycDatabase.wycNumber))
     .leftJoin(creator, eq(calendartable.createdByWycNumber, creator.wycNumber))
-    .where(eq(calendartable.id, id))
+    .where(and(eq(calendartable.id, id), isNull(calendartable.deletedAt)))
     .limit(1)
   if (!row) return null
   const comments = await db
@@ -136,6 +149,7 @@ export async function readReservationNames(start: string, end: string) {
     .leftJoin(wycDatabase, eq(calendartable.memberWycNumber, wycDatabase.wycNumber))
     .where(
       and(
+        isNull(calendartable.deletedAt),
         lte(calendartable.reserveFrom, `${end} 23:59:59`),
         gte(calendartable.reserveTo, `${start} 00:00:00`),
       ),

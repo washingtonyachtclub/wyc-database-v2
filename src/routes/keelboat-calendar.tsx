@@ -1,3 +1,4 @@
+import { RatesModal } from '@/components/keelboat-calendar/RatesModal'
 import { startTransition, useState } from 'react'
 import { createFileRoute, Link, redirect } from '@tanstack/react-router'
 import { useQuery, useSuspenseQuery } from '@tanstack/react-query'
@@ -73,10 +74,20 @@ function KeelboatCalendar() {
     ...calendarPermissionsQueryOptions(memberId, privileges),
     enabled: memberId > 0,
   })
+  const [showRates, setShowRates] = useState(false)
   const [showLimits, setShowLimits] = useState(false)
   const [initial, setInitial] = useState<ReservationInput | null>(null)
   const today = getTodayPacificDateString()
   const days = monthDays(month)
+  const agendaDays = days.filter(
+    (date) =>
+      date.startsWith(month) &&
+      data.reservations.some(
+        (booking) =>
+          occupiesSlot(booking.from, booking.through, date, 0) ||
+          occupiesSlot(booking.from, booking.through, date, 1),
+      ),
+  )
   const title = new Intl.DateTimeFormat('en-US', {
     month: 'long',
     year: 'numeric',
@@ -89,8 +100,10 @@ function KeelboatCalendar() {
   const startBooking = (date = today, kind: ReservationInput['kind'] = 'personal') => {
     setInitial({
       kind,
+      pricingTier: access.data?.pricingTier ?? 'nonstudent',
+      rentalEngine: '',
       title: '',
-      boatId: activeBoats[0]?.id ?? 0,
+      boatId: 0,
       fromDate: date,
       fromSlot: 0,
       throughDate: date,
@@ -199,7 +212,7 @@ function KeelboatCalendar() {
           </div>
         </div>
         <div
-          className="grid w-fit grid-cols-2 gap-0.5 text-xs"
+          className="hidden w-fit grid-cols-2 gap-0.5 text-xs lg:grid"
           role="group"
           aria-label="Boat and reservation slot legend"
         >
@@ -244,14 +257,106 @@ function KeelboatCalendar() {
               </span>
             )
           )}
-          <Button variant="outline" size="sm" onClick={() => setShowLimits(true)}>
-            Booking limits
-          </Button>
+          <div className="flex gap-2">
+            <Button variant="outline" size="sm" onClick={() => setShowLimits(true)}>
+              Booking limits
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setShowRates(true)}
+              disabled={memberId > 0 && access.isPending}
+            >
+              Rates
+            </Button>
+          </div>
         </div>
       </div>
       <ErrorAlert error={access.error?.message} action="Loading calendar permissions" />
+      <section aria-label={`${title} reservations`} className="space-y-4 lg:hidden">
+        {agendaDays.length === 0 && (
+          <p className="rounded-lg border p-4 text-sm">No reservations in {title}.</p>
+        )}
+        {agendaDays.map((date) => (
+          <section
+            key={date}
+            aria-labelledby={`agenda-${date}`}
+            className="overflow-hidden rounded-lg border"
+          >
+            <h2
+              id={`agenda-${date}`}
+              className={cn(
+                'border-b px-4 py-3 text-sm font-semibold',
+                date === today ? 'bg-primary text-primary-foreground' : 'bg-muted',
+              )}
+            >
+              {new Intl.DateTimeFormat('en-US', {
+                weekday: 'long',
+                month: 'short',
+                day: 'numeric',
+                timeZone: 'UTC',
+              }).format(new Date(`${date}T12:00:00Z`))}
+            </h2>
+            <div className="divide-y">
+              {data.reservations
+                .filter(
+                  (booking) =>
+                    occupiesSlot(booking.from, booking.through, date, 0) ||
+                    occupiesSlot(booking.from, booking.through, date, 1),
+                )
+                .map((booking) => {
+                  const boat = data.boats.find((boat) => boat.id === booking.boatId)
+                  const morning = occupiesSlot(booking.from, booking.through, date, 0)
+                  const afternoon = occupiesSlot(booking.from, booking.through, date, 1)
+                  const slot = morning && afternoon ? 'Full day' : morning ? 'Morning' : 'Afternoon'
+                  const name =
+                    booking.kind === 'admin'
+                      ? booking.title || 'Admin'
+                      : memberId
+                        ? reservationNames.get(booking.id) || 'Reserved'
+                        : 'Reserved'
+                  const content = (
+                    <>
+                      <span className="flex min-w-0 items-center gap-2 font-medium">
+                        <span
+                          aria-hidden="true"
+                          className={cn(
+                            'size-3 shrink-0 rounded-full',
+                            boatColors[booking.boatId] ?? 'bg-secondary',
+                          )}
+                        />
+                        {boat?.name}
+                      </span>
+                      <span className="text-right text-sm">{slot}</span>
+                      <span className="col-span-2 whitespace-normal break-words text-sm font-normal">
+                        {name}
+                      </span>
+                    </>
+                  )
+                  return memberId ? (
+                    <Button
+                      key={booking.id}
+                      variant="ghost"
+                      className="grid h-auto w-full grid-cols-[1fr_auto] gap-x-3 gap-y-1 rounded-none px-4 py-3 text-left"
+                      onClick={() => setReservation(booking.id)}
+                    >
+                      {content}
+                    </Button>
+                  ) : (
+                    <div
+                      key={booking.id}
+                      className="grid grid-cols-[1fr_auto] gap-x-3 gap-y-1 px-4 py-3"
+                    >
+                      {content}
+                    </div>
+                  )
+                })}
+            </div>
+          </section>
+        ))}
+      </section>
       <div
-        className="overflow-x-auto rounded-lg border"
+        className="hidden overflow-x-auto rounded-lg border lg:block"
         tabIndex={0}
         role="region"
         aria-label={`${title} keelboat availability`}
@@ -290,25 +395,27 @@ function KeelboatCalendar() {
                 <div
                   key={date}
                   className={cn(
-                    'min-h-32 min-w-0 border-b border-r p-1.5 [&:nth-child(7n)]:border-r-0',
+                    'relative isolate min-h-32 min-w-0 border-b border-r p-1.5 [&:nth-child(7n)]:border-r-0',
                     outsideMonth ? 'bg-muted text-muted-foreground' : 'bg-background',
                   )}
                 >
-                  <div className="mb-1 flex items-center justify-between">
-                    {access.data?.canBook && date >= today ? (
-                      <Button
-                        variant="ghost"
-                        className={dateClasses}
-                        aria-label={`Reserve on ${date}`}
-                        onClick={() => startBooking(date)}
-                      >
-                        {dateLabel}
-                      </Button>
-                    ) : (
-                      <span className={dateClasses}>{dateLabel}</span>
-                    )}
+                  {access.data?.canBook && date >= today && (
+                    <Button
+                      variant="ghost"
+                      className="absolute inset-0 h-full w-full rounded-none focus-visible:ring-inset"
+                      aria-label={`Reserve on ${date}`}
+                      onClick={() => startBooking(date)}
+                    />
+                  )}
+                  <div className="pointer-events-none relative mb-1 flex items-center justify-between">
+                    <span className={dateClasses}>{dateLabel}</span>
                   </div>
-                  <div className={cn('space-y-1', outsideMonth && 'opacity-60')}>
+                  <div
+                    className={cn(
+                      'pointer-events-none relative space-y-1',
+                      outsideMonth && 'opacity-60',
+                    )}
+                  >
                     {reservedBoats.map((boat) => (
                       <div key={boat.id} className="grid grid-cols-2 gap-0.5">
                         {[0, 1].map((slot) => {
@@ -332,7 +439,7 @@ function KeelboatCalendar() {
                             <Button
                               key={slot}
                               variant="ghost"
-                              className={cn(classes, 'w-full font-normal')}
+                              className={cn(classes, 'pointer-events-auto w-full font-normal')}
                               aria-label={label}
                               title={label}
                               onClick={() => setReservation(booking.id)}
@@ -359,6 +466,12 @@ function KeelboatCalendar() {
           </div>
         </div>
       </div>
+      {showRates && (
+        <RatesModal
+          defaultTier={access.data?.pricingTier ?? 'nonstudent'}
+          onClose={() => setShowRates(false)}
+        />
+      )}
       {showLimits && (
         <Modal title="Booking limits" onClose={() => setShowLimits(false)}>
           <ul className="list-disc space-y-3 pl-5 text-sm">

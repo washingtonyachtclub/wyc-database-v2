@@ -1,3 +1,7 @@
+import { ChoiceGroup } from '@/components/renewals/MembershipQuestionnaireFields'
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
+import { Info } from 'lucide-react'
+import { RentalPayment } from './RentalPayment'
 import { useState } from 'react'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { useAppForm } from '@/hooks/form'
@@ -10,6 +14,7 @@ import {
   type ReservationInput,
 } from '@/domains/keelboat-calendar/schema'
 import { createReservation } from '@/domains/keelboat-calendar/server-fns'
+import { pricingTierLabels } from '@/domains/keelboat-calendar/pricing'
 import { slotLabel, slotMarker } from '@/domains/keelboat-calendar/calendar'
 
 const slots = [
@@ -30,6 +35,7 @@ export function ReservationForm({
 }) {
   const isAdmin = initial.kind === 'admin'
   const queryClient = useQueryClient()
+  const [paymentBusy, setPaymentBusy] = useState(false)
   const [review, setReview] = useState<ReservationInput | null>(null)
   const mutation = useMutation({
     mutationFn: createReservation,
@@ -41,10 +47,19 @@ export function ReservationForm({
   })
   const form = useAppForm({
     defaultValues: initial,
-    validators: { onSubmit: reservationSchema },
+    validators: {
+      onSubmit: reservationSchema,
+    },
     onSubmit: ({ value }) => {
       mutation.reset()
-      setReview(value)
+      const boat = boats.find((boat) => boat.id === value.boatId)
+      setReview({
+        ...value,
+        rentalEngine:
+          boat?.engineType === 'inboard' || boat?.engineType === 'outboard'
+            ? boat.engineType
+            : value.rentalEngine,
+      })
     },
   })
   return (
@@ -53,13 +68,13 @@ export function ReservationForm({
         review
           ? isAdmin
             ? 'Confirm admin reservation'
-            : 'Confirm reservation'
+            : 'Review and pay'
           : isAdmin
             ? 'New admin reservation'
             : 'New personal reservation'
       }
       onClose={() => {
-        if (!mutation.isPending) onClose()
+        if (!mutation.isPending && !paymentBusy) onClose()
       }}
       contentClassName="max-h-[90dvh] overflow-y-auto"
     >
@@ -112,19 +127,73 @@ export function ReservationForm({
           </dl>
           {review.comment && <p className="whitespace-pre-wrap text-sm">{review.comment}</p>}
           {!isAdmin && (
-            <p className="rounded-md border bg-muted/50 p-3 text-sm">
-              By reserving, you agree to pay the reservation fee. Reservations are non-refundable.
-              If you can’t use yours, arrange for someone else to take your spot outside this
-              system.
-            </p>
+            <div className="space-y-3 rounded-lg border p-4">
+              <div className="flex items-center justify-between text-sm">
+                <div className="flex items-center gap-1">
+                  <span className="text-muted-foreground">Rate category</span>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="icon"
+                        aria-label="How to change your rate category"
+                      >
+                        <Info className="h-4 w-4" />
+                      </Button>
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      To change your student status, edit Category on your profile.
+                    </TooltipContent>
+                  </Tooltip>
+                </div>
+                <span>{pricingTierLabels[review.pricingTier]}</span>
+              </div>
+              {boats.find((boat) => boat.id === review.boatId)?.engineType === 'both' ? (
+                <ChoiceGroup
+                  label="Engine"
+                  value={review.rentalEngine || null}
+                  disabled={paymentBusy}
+                  options={[
+                    { value: 'inboard', label: 'Inboard' },
+                    { value: 'outboard', label: 'Outboard' },
+                  ]}
+                  onChange={(engine) => {
+                    form.setFieldValue('rentalEngine', engine)
+                    setReview({ ...review, rentalEngine: engine })
+                  }}
+                />
+              ) : (
+                <div className="flex justify-between text-sm">
+                  <span className="text-muted-foreground">Engine</span>
+                  <span>{review.rentalEngine === 'inboard' ? 'Inboard' : 'Outboard'}</span>
+                </div>
+              )}
+              {review.rentalEngine && (
+                <RentalPayment
+                  reservation={review}
+                  onCreated={onCreated}
+                  onBusyChange={setPaymentBusy}
+                />
+              )}
+            </div>
           )}
           <div className="flex justify-end gap-2">
-            <Button variant="outline" disabled={mutation.isPending} onClick={() => setReview(null)}>
+            <Button
+              variant="outline"
+              disabled={mutation.isPending || paymentBusy}
+              onClick={() => setReview(null)}
+            >
               Back
             </Button>
-            <Button disabled={mutation.isPending} onClick={() => mutation.mutate({ data: review })}>
-              {mutation.isPending ? 'Reserving…' : 'Reserve'}
-            </Button>
+            {isAdmin && (
+              <Button
+                disabled={mutation.isPending}
+                onClick={() => mutation.mutate({ data: review })}
+              >
+                {mutation.isPending ? 'Reserving…' : 'Reserve'}
+              </Button>
+            )}
           </div>
         </div>
       ) : (
@@ -146,6 +215,7 @@ export function ReservationForm({
             children={(field) => (
               <field.SelectField
                 label="Boat"
+                placeholder=""
                 required
                 options={boats.map((b) => ({ value: b.id, label: b.name }))}
               />

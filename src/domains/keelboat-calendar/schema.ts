@@ -18,6 +18,8 @@ const legacyText = (max: number) =>
 export const reservationSchema = z
   .object({
     kind: z.enum(['personal', 'admin']),
+    pricingTier: z.enum(['student', 'nonstudent']),
+    rentalEngine: z.enum(['', 'outboard', 'inboard']),
     title: legacyText(120),
     boatId: z.number().int().positive('Choose a boat.'),
     fromDate: z.iso.date('Enter a valid date.'),
@@ -50,7 +52,12 @@ export const commentSchema = reservationIdSchema.extend({
   comment: legacyText(16000).min(1, 'Enter a comment.'),
 })
 export type ReservationInput = z.infer<typeof reservationSchema>
-export type CalendarBoat = { id: number; name: string; active: boolean }
+export type CalendarBoat = {
+  id: number
+  name: string
+  active: boolean
+  engineType: 'outboard' | 'inboard' | 'both' | ''
+}
 export type Availability = {
   id: number
   boatId: number
@@ -72,7 +79,12 @@ export type Reservation = Availability & {
 }
 
 export function toBoat(row: typeof calendarboats.$inferSelect): CalendarBoat {
-  return { id: row.cBoatId, name: row.name, active: row.active !== 0 }
+  return {
+    id: row.cBoatId,
+    name: row.name,
+    active: row.active !== 0,
+    engineType: row.engineType ?? '',
+  }
 }
 
 export function toReservation(row: {

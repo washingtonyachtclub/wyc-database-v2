@@ -70,16 +70,3 @@ export function validateBookingWindow(
     throw new CalendarRuleError('Half-days are bookable starting one day before the start time.')
   }
 }
-
-export function dayCounts(from: string, through: string) {
-  const counts = { numFullWd: 0, numHalfWd: 0, numFullWe: 0, numHalfWe: 0 }
-  for (let date = from.slice(0, 10); date <= through.slice(0, 10); date = addDays(date, 1)) {
-    const slots =
-      Number(occupiesSlot(from, through, date, 0)) + Number(occupiesSlot(from, through, date, 1))
-    const weekday = new Date(`${date}T12:00:00Z`).getUTCDay()
-    const weekend = weekday === 0 || weekday === 6
-    if (slots === 2) counts[weekend ? 'numFullWe' : 'numFullWd']++
-    else if (slots === 1) counts[weekend ? 'numHalfWe' : 'numHalfWd']++
-  }
-  return counts
-}
