@@ -317,19 +317,19 @@ function MemberEditForm({
           children={(field) => <field.NumberField label="Student ID" />}
         />
 
+        <form.AppField
+          name="categoryId"
+          children={(field) => (
+            <field.SelectField
+              label="Category"
+              placeholder="Select category"
+              options={categoryOptions}
+            />
+          )}
+        />
+
         {hasDb && (
           <>
-            <form.AppField
-              name="categoryId"
-              children={(field) => (
-                <field.SelectField
-                  label="Category"
-                  placeholder="Select category"
-                  options={categoryOptions}
-                />
-              )}
-            />
-
             <form.AppField
               name="expireQtrIndex"
               children={(field) => (

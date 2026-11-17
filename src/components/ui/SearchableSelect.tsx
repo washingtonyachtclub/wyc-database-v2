@@ -31,6 +31,7 @@ export function SearchableSelect({
   options,
   groups,
   placeholder = 'Select an option',
+  ariaLabel,
   searchPlaceholder = 'Search options...',
   emptyMessage = 'No options found.',
   className,
@@ -41,6 +42,7 @@ export function SearchableSelect({
   onValueChange: (value: string) => void
   options?: SearchableSelectOption[]
   groups?: SearchableSelectGroup[]
+  ariaLabel?: string
   placeholder?: string
   searchPlaceholder?: string
   emptyMessage?: string
@@ -86,6 +88,7 @@ export function SearchableSelect({
           variant="outline"
           role="combobox"
           aria-expanded={open}
+          aria-label={ariaLabel}
           disabled={disabled}
           onBlur={onBlur}
           className={cn(
@@ -133,7 +136,7 @@ export function SearchableSelect({
       onBlur={onBlur}
       disabled={disabled}
       className={className}
-      aria-label={placeholder}
+      aria-label={ariaLabel ?? placeholder}
     >
       <option value="" disabled>
         {placeholder}
