@@ -185,27 +185,6 @@ export const sailboardNoviceTest = {
       ],
     },
     {
-      title: 'Sailboard Storage: Cunningham',
-      category: 'Parts & Equipment',
-      prompt: 'The downhaul (cunningham) should always be ______.',
-      points: 3.0,
-      type: 'single',
-      options: [
-        {
-          label: 'Removed before going sailing.',
-          correct: false,
-        },
-        {
-          label: 'Loosened when putting the sail away.',
-          correct: true,
-        },
-        {
-          label: 'Tightened when putting the sail away.',
-          correct: false,
-        },
-      ],
-    },
-    {
       title: 'Sailboard Starting Technique',
       category: 'Points of Sail & Maneuvers',
       prompt:
