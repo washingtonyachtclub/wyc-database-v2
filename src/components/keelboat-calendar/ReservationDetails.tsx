@@ -156,7 +156,10 @@ export function ReservationDetails({
             <div className="border-t pt-4">
               {confirmDelete ? (
                 <div className="space-y-3">
-                  <p className="text-sm">Permanently delete this reservation and its comments?</p>
+                  <p className="text-sm">
+                    Delete this reservation? Its history will be retained. Deleting does not issue a
+                    refund.
+                  </p>
                   <div className="flex gap-2">
                     <Button
                       variant="outline"

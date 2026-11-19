@@ -3,7 +3,7 @@ import type { RenewalTier } from './compute-renewal'
 export const UW_STATUSES = ['student', 'alumni', 'employee_retiree', 'public'] as const
 export type UwStatus = (typeof UW_STATUSES)[number]
 
-const CATEGORY_IDS = {
+export const CATEGORY_IDS = {
   student: 1,
   facultyStaff: 2,
   alumni: 3,

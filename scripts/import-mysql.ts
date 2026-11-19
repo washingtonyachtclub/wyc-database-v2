@@ -4,7 +4,7 @@ import { Client } from 'pg'
 
 type Column = { name: string; type: string }
 type Row = Record<string, string | null>
-type Table = { columns: Column[]; rows: Row[]; count?: number }
+type Table = { columns: Column[]; rows: Row[]; count?: number; nextIdentity: string | null }
 const quote = (name: string) => '"' + name.replaceAll('"', '""') + '"'
 const url = new URL(process.env.DATABASE_URL ?? '')
 if (!['postgres:', 'postgresql:'].includes(url.protocol)) throw new Error('Postgres URL required')
@@ -20,7 +20,7 @@ const records = readFileSync(file, 'utf8')
 const manifest = records.shift()
 if (
   manifest?.kind !== 'manifest' ||
-  manifest.version !== 1 ||
+  manifest.version !== 2 ||
   typeof manifest.rehearsal !== 'boolean' ||
   records.pop()?.kind !== 'complete'
 ) {
@@ -33,7 +33,16 @@ const tables = new Map<string, Table>()
 for (const record of records) {
   if (record.kind === 'table') {
     if (tables.has(record.name)) throw new Error('Duplicate table')
-    tables.set(record.name, { columns: record.columns, rows: [] })
+    if (
+      record.nextIdentity !== null &&
+      (typeof record.nextIdentity !== 'string' || !/^[1-9][0-9]*$/.test(record.nextIdentity))
+    )
+      throw new Error('Invalid source identity: ' + record.name)
+    tables.set(record.name, {
+      columns: record.columns,
+      rows: [],
+      nextIdentity: record.nextIdentity,
+    })
   } else if (record.kind === 'row') {
     const table = tables.get(record.table)
     if (!table || table.count !== undefined) throw new Error('Unexpected row')
@@ -176,12 +185,24 @@ try {
                 : '1'
               : null
       }
-      const values = targetNames.map((column) => row[column])
+      imported.push(row)
+    }
+    const batchSize = Math.min(500, Math.floor(60_000 / targetNames.length))
+    for (let offset = 0; offset < imported.length; offset += batchSize) {
+      const batch = imported.slice(offset, offset + batchSize)
+      const values = batch.flatMap((row) => targetNames.map((column) => row[column]))
+      const placeholders = batch.map(
+        (_, rowIndex) =>
+          '(' +
+          targetNames
+            .map((_, colIndex) => '$' + (rowIndex * targetNames.length + colIndex + 1))
+            .join(',') +
+          ')',
+      )
       await client.query(
-        `INSERT INTO ${quote(name)} (${targetNames.map(quote).join(',')}) VALUES (${values.map((_, index) => '$' + (index + 1)).join(',')})`,
+        `INSERT INTO ${quote(name)} (${targetNames.map(quote).join(',')}) VALUES ${placeholders.join(',')}`,
         values,
       )
-      imported.push(row)
     }
     const { rows: actual } = await client.query(
       `SELECT ${targetNames.map((column) => `${quote(column)}::text AS ${quote(column)}`).join(',')} FROM ${quote(name)}`,
@@ -202,7 +223,10 @@ try {
       } = await client.query(
         `SELECT COALESCE(MAX(${quote(column.column_name)}),0)::text AS value FROM ${quote(name)}`,
       )
-      const next = BigInt(maximum.value) + 1n
+      const rowNext = BigInt(maximum.value) + 1n
+      if (table.nextIdentity === null) throw new Error('Missing source identity: ' + name)
+      const sourceNext = BigInt(table.nextIdentity)
+      const next = sourceNext > rowNext ? sourceNext : rowNext
       await client.query(`ALTER SEQUENCE ${sequence.name} RESTART WITH ${next > 0n ? next : 1n}`)
     }
     reports.push({ table: name, rows: imported.length, sha256: hash })

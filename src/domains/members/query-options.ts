@@ -102,6 +102,7 @@ export function useUpdateMemberProfileMutation() {
     mutationFn: updateMemberProfile,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['members'] })
+      queryClient.invalidateQueries({ queryKey: ['keelboat-calendar'] })
     },
   })
 }

@@ -35,7 +35,8 @@ const SPONSOR_HELPER =
 const SPONSEE_HELPER =
   'We will pair you with a WYC member via email so you can coordinate a time to visit the IMA together.'
 
-function ChoiceGroup<T extends string>({
+export function ChoiceGroup<T extends string>({
+  disabled = false,
   error,
   helper,
   id,
@@ -44,6 +45,7 @@ function ChoiceGroup<T extends string>({
   options,
   value,
 }: {
+  disabled?: boolean
   error?: string
   helper?: string
   id?: string
@@ -60,6 +62,8 @@ function ChoiceGroup<T extends string>({
           <Button
             key={option.value}
             type="button"
+            disabled={disabled}
+            aria-pressed={value === option.value}
             variant={value === option.value ? 'default' : 'outline'}
             onClick={() => onChange(option.value)}
             className="h-auto justify-start whitespace-normal border-2 px-4 py-3 text-left text-base font-normal"

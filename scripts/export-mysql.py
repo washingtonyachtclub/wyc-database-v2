@@ -37,12 +37,13 @@ def emit(value):
 
 try:
     tables = query("SELECT TABLE_NAME FROM information_schema.TABLES WHERE TABLE_SCHEMA=DATABASE() AND TABLE_TYPE='BASE TABLE' AND TABLE_NAME!='__drizzle_migrations' ORDER BY TABLE_NAME;")
-    emit({'kind': 'manifest', 'version': 1, 'rehearsal': args.rehearsal, 'tables': tables})
+    emit({'kind': 'manifest', 'version': 2, 'rehearsal': args.rehearsal, 'tables': tables})
     for table in tables:
         columns = [json.loads(line) for line in query(
             "SELECT JSON_OBJECT('name',COLUMN_NAME,'type',DATA_TYPE) FROM information_schema.COLUMNS WHERE TABLE_SCHEMA=DATABASE() AND TABLE_NAME=" + literal(table) + " ORDER BY ORDINAL_POSITION;"
         )]
-        emit({'kind': 'table', 'name': table, 'columns': columns})
+        next_id = query("SELECT COALESCE(CAST(AUTO_INCREMENT AS CHAR),'null') FROM information_schema.TABLES WHERE TABLE_SCHEMA=DATABASE() AND TABLE_NAME=" + literal(table) + ";")[0]
+        emit({'kind': 'table', 'name': table, 'columns': columns, 'nextIdentity': None if next_id == 'null' else next_id})
         fields = []
         for column in columns:
             name, kind = column['name'], column['type']

@@ -31,6 +31,17 @@ export const qrLoginStatus = pgEnum('qr_login_status', [
 ])
 export const writtenTestMode = pgEnum('written_test_mode', ['practice', 'final'])
 
+export const calendarEngineType = pgEnum('calendar_engine_type', ['outboard', 'inboard', 'both'])
+export const calendarPricingTier = pgEnum('calendar_pricing_tier', ['student', 'nonstudent'])
+export const calendarRentalEngine = pgEnum('calendar_rental_engine', ['outboard', 'inboard'])
+export const keelboatPaymentStatus = pgEnum('keelboat_payment_status', [
+  'processing',
+  'paid',
+  'completed',
+  'failed',
+  'reconciliation_required',
+])
+
 export const wycDatabase = pgTable(
   'WYCDatabase',
   {
@@ -84,6 +95,7 @@ export const calendarboats = pgTable(
   {
     cBoatId: integer().generatedByDefaultAsIdentity().notNull(),
     active: smallint('active').default(1).notNull(),
+    engineType: calendarEngineType('engineType'),
     name: varchar({ length: 50 }).notNull(),
     description: varchar('Description', { length: 500 }).notNull(),
   },
@@ -111,6 +123,15 @@ export const calendartable = pgTable(
   {
     id: integer().generatedByDefaultAsIdentity().notNull(),
     cBoatId: integer().notNull(),
+    paymentCheckoutId: varchar('paymentCheckoutId', { length: 36 }),
+    squareOrderId: varchar('squareOrderId', { length: 255 }),
+    squarePaymentId: varchar('squarePaymentId', { length: 255 }),
+    paidAmountCents: integer('paidAmountCents'),
+    paidCurrency: varchar('paidCurrency', { length: 3 }),
+    pricingTier: calendarPricingTier('pricingTier'),
+    rentalEngine: calendarRentalEngine('rentalEngine'),
+    deletedAt: timestamp('deletedAt', { mode: 'string' }),
+    deletedByWycNumber: integer('deletedByWYCNumber'),
     memberWycNumber: integer('memberWYCNumber'),
     reservationType: reservationType('reservationType').default('personal').notNull(),
     createdByWycNumber: integer('createdByWYCNumber'),
@@ -126,7 +147,34 @@ export const calendartable = pgTable(
     numFullWe: integer('numFullWE').notNull(),
     numHalfWe: integer('numHalfWE').notNull(),
   },
-  (table) => [primaryKey({ columns: [table.id] })],
+  (table) => [
+    primaryKey({ columns: [table.id] }),
+    unique('uq_calendar_payment_checkout').on(table.paymentCheckoutId),
+    unique('uq_calendar_square_payment').on(table.squarePaymentId),
+  ],
+)
+
+export const keelboatPayments = pgTable(
+  'keelboat_payments',
+  {
+    id: varchar('id', { length: 36 }).primaryKey(),
+    memberId: integer('member_id').notNull(),
+    activeMemberId: integer('active_member_id'),
+    reservationId: integer('reservation_id'),
+    reservationInput: json('reservation_input').notNull(),
+    priceSnapshot: json('price_snapshot').notNull(),
+    status: keelboatPaymentStatus('status').notNull(),
+    squareOrderId: varchar('square_order_id', { length: 255 }),
+    squarePaymentId: varchar('square_payment_id', { length: 255 }),
+    amountCents: integer('amount_cents').notNull(),
+    currency: varchar('currency', { length: 3 }).notNull(),
+    createdAt: timestamp('created_at').defaultNow().notNull(),
+  },
+  (table) => [
+    unique('uq_keelboat_active_payment').on(table.activeMemberId),
+    unique('uq_keelboat_payment_id').on(table.squarePaymentId),
+    index('idx_keelboat_payments_member').on(table.memberId),
+  ],
 )
 
 export const checkouts = pgTable(

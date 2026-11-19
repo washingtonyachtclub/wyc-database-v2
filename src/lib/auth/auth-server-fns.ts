@@ -362,15 +362,16 @@ export const setDevPrivilegesServerFn = createServerFn({ method: 'POST' })
       throw new Error('Dev privilege override is only available in development')
     }
 
-    const session = await useAppSession()
+    const session = await useRefreshedAppSession()
     const sessionData = session.data
 
     if (!sessionData.userId || !sessionData.user) {
       throw new Error('Not authenticated')
     }
 
-    // Check real privileges (not emulated) to prevent self-lockout
-    const realPrivs = sessionData.realIdentity?.privileges ?? sessionData.privileges ?? []
+    const realPrivs = await loadUserPrivileges(
+      sessionData.realIdentity?.userId ?? sessionData.userId,
+    )
     if (!hasPrivilege(realPrivs, ['db'])) {
       throw new Error('Unauthorized: requires db privilege')
     }
@@ -383,7 +384,7 @@ export const setDevPrivilegesServerFn = createServerFn({ method: 'POST' })
         ...sessionData,
         privileges: restoredPrivileges,
         privilegesRefreshedAt: Date.now(),
-        realIdentity: undefined,
+        realIdentity: sessionData.realIdentity,
       } satisfies SessionData)
       return { privileges: restoredPrivileges }
     }
@@ -395,7 +396,7 @@ export const setDevPrivilegesServerFn = createServerFn({ method: 'POST' })
       realIdentity: sessionData.realIdentity ?? {
         userId: sessionData.userId,
         user: sessionData.user,
-        privileges: sessionData.privileges ?? [],
+        privileges: realPrivs,
       },
     } satisfies SessionData)
     return { privileges: data.privileges }
@@ -413,15 +414,16 @@ export const setDevMemberServerFn = createServerFn({ method: 'POST' })
       throw new Error('Dev member emulation is only available in development')
     }
 
-    const session = await useAppSession()
+    const session = await useRefreshedAppSession()
     const sessionData = session.data
 
     if (!sessionData.userId || !sessionData.user) {
       throw new Error('Not authenticated')
     }
 
-    // Check real privileges (not emulated) to prevent self-lockout
-    const realPrivs = sessionData.realIdentity?.privileges ?? sessionData.privileges ?? []
+    const realPrivs = await loadUserPrivileges(
+      sessionData.realIdentity?.userId ?? sessionData.userId,
+    )
     if (!hasPrivilege(realPrivs, ['db'])) {
       throw new Error('Unauthorized: requires db privilege')
     }
@@ -470,7 +472,7 @@ export const setDevMemberServerFn = createServerFn({ method: 'POST' })
     const realIdentity = sessionData.realIdentity ?? {
       userId: sessionData.userId,
       user: sessionData.user,
-      privileges: sessionData.privileges ?? [],
+      privileges: realPrivs,
     }
 
     await session.update({

@@ -159,10 +159,18 @@ export const updateMemberProfile = createServerFn({ method: 'POST' })
       phone2: data.phone2,
       studentId: data.studentId,
     }
+    if (data.categoryId !== null) {
+      const [category] = await db
+        .select({ id: memcat.index })
+        .from(memcat)
+        .where(eq(memcat.index, data.categoryId))
+        .limit(1)
+      if (!category) throw new Error('Choose a valid category.')
+    }
+    updateData.categoryId = data.categoryId
     // Admin-only fields — only applied if user has db privilege
     if (hasDb) {
       updateData.outToSea = data.outToSea ? 1 : 0
-      updateData.categoryId = data.categoryId
       updateData.expireQtrIndex = data.expireQtrIndex
     }
 
