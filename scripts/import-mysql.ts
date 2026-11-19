@@ -26,8 +26,15 @@ if (
 ) {
   throw new Error('Incomplete or unsupported export')
 }
-if (manifest.rehearsal && !['localhost', '127.0.0.1', '[::1]'].includes(url.hostname)) {
-  throw new Error('Rehearsal exports may only be imported locally')
+if (
+  manifest.rehearsal &&
+  !['localhost', '127.0.0.1', '[::1]'].includes(url.hostname) &&
+  process.env.CONFIRM_REHEARSAL_TARGET !==
+    `${decodeURIComponent(url.username)}@${url.host}${url.pathname}`
+) {
+  throw new Error(
+    'Hosted rehearsal imports require CONFIRM_REHEARSAL_TARGET=user@host:port/database',
+  )
 }
 const tables = new Map<string, Table>()
 for (const record of records) {
