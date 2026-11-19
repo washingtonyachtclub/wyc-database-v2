@@ -152,7 +152,7 @@ export function NumberField({
   trailingControl?: ReactNode
   className?: string
 }) {
-  const field = useFieldContext<number>()
+  const field = useFieldContext<number | null>()
   return (
     <div className={className}>
       <Label htmlFor={field.name} className="mb-1">
@@ -166,10 +166,12 @@ export function NumberField({
           min={min}
           disabled={disabled}
           className={trailingControl ? 'w-24 shrink-0' : undefined}
-          value={disabled && disabledPlaceholder !== undefined ? '' : field.state.value}
+          value={disabled && disabledPlaceholder !== undefined ? '' : (field.state.value ?? '')}
           placeholder={disabled ? disabledPlaceholder : undefined}
           onBlur={field.handleBlur}
-          onChange={(e) => field.handleChange(e.target.valueAsNumber)}
+          onChange={(e) =>
+            field.handleChange(e.target.value === '' ? null : e.target.valueAsNumber)
+          }
         />
         {trailingControl}
       </div>

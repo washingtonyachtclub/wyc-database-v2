@@ -68,10 +68,12 @@ export const Route = createFileRoute('/lessons')({
     return { pageIndex, pageSize, filters, sorting }
   },
   loader: ({ context, deps: { pageIndex, pageSize, filters, sorting } }) => {
-    context.queryClient.ensureQueryData(getQuarterLessonsQueryOptions())
-    return context.queryClient.ensureQueryData(
-      getAllLessonsQueryOptions(pageIndex, pageSize, filters, sorting),
-    )
+    return Promise.all([
+      context.queryClient.ensureQueryData(
+        getAllLessonsQueryOptions(pageIndex, pageSize, filters, sorting),
+      ),
+      context.queryClient.ensureQueryData(getQuarterLessonsQueryOptions()),
+    ]).then(([allLessons]) => allLessons)
   },
   component: LessonsPage,
 })
@@ -122,7 +124,7 @@ function LessonsPage() {
 
   const { data: classTypes = [] } = useQuery(getLessonTypesQueryOptions())
   const { data: quarters = [] } = useQuery(getQuartersQueryOptions())
-  const { data: quarterData } = useQuery(getQuarterLessonsQueryOptions())
+  const { data: quarterData } = useSuspenseQuery(getQuarterLessonsQueryOptions())
   const { data: allLessonsResponse } = useSuspenseQuery(
     getAllLessonsQueryOptions(pageIndex, pageSize, filters, sorting),
   )
