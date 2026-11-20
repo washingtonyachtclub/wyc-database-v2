@@ -57,6 +57,7 @@ function RatingActions({
           variant="ghost"
           size="icon"
           aria-label={`Edit ${item.text}`}
+          className="text-muted-foreground [@media(hover:hover)]:opacity-0 group-hover:opacity-100 group-focus-within:opacity-100"
           title="Edit rating type"
           onClick={onEdit}
         >
@@ -133,7 +134,7 @@ function RatingTypesPage() {
                     <TooltipProvider key={item.index} delayDuration={200}>
                       <Tooltip>
                         <TooltipTrigger asChild>
-                          <TableRow className="bg-yellow-50 dark:bg-yellow-950/30">
+                          <TableRow className="group bg-yellow-50 dark:bg-yellow-950/30">
                             <TableCell className="py-1.5 px-2 text-sm">{item.text}</TableCell>
                             <TableCell className="py-1.5 px-2 text-sm">{item.degree}</TableCell>
                             {hasDb && (
@@ -149,7 +150,7 @@ function RatingTypesPage() {
                       </Tooltip>
                     </TooltipProvider>
                   ) : (
-                    <TableRow key={item.index}>
+                    <TableRow key={item.index} className="group">
                       <TableCell className="py-1.5 px-2 text-sm">{item.text}</TableCell>
                       <TableCell className="py-1.5 px-2 text-sm">{item.degree}</TableCell>
                       {hasDb && (
