@@ -11,6 +11,17 @@ export const ratingTypeInsertSchema = z.object({
   expires: z.boolean(),
 })
 
+export const ratingTypeEditSchema = z.object({
+  text: z
+    .string()
+    .trim()
+    .min(1, 'Title is required')
+    .max(50, 'Title must be 50 characters or fewer'),
+  degree: ratingTypeInsertSchema.shape.degree.int().max(2147483647),
+})
+
+export const ratingTypeUpdateSchema = ratingTypeEditSchema.extend({ index: z.number().int() })
+
 export type RatingTypeInsertData = z.infer<typeof ratingTypeInsertSchema>
 
 // --- Core types ---
