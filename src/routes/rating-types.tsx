@@ -1,6 +1,7 @@
 import { useCurrentUser } from '@/lib/auth/auth-query-options'
 import { hasPrivilege } from '@/lib/permissions'
 import { AddRatingTypeModal } from '@/components/rating-types/AddRatingTypeModal'
+import { EditRatingTypeModal } from '@/components/rating-types/EditRatingTypeModal'
 import { ConfirmDialog } from '@/components/ui/ConfirmDialog'
 import { Button } from '@/components/ui/button'
 import {
@@ -21,7 +22,7 @@ import type { RatingType } from '@/domains/rating-types/schema'
 import { useSuspenseQuery } from '@tanstack/react-query'
 import { createFileRoute } from '@tanstack/react-router'
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip'
-import { Plus, X } from 'lucide-react'
+import { Pencil, Plus, X } from 'lucide-react'
 import { useMemo, useState } from 'react'
 
 export const Route = createFileRoute('/rating-types')({
@@ -40,22 +41,41 @@ type DeleteTarget = {
   text: string
 }
 
-function DeleteCell({ item, onDelete }: { item: RatingType; onDelete: () => void }) {
-  const { privileges } = useCurrentUser()
+function RatingActions({
+  item,
+  onEdit,
+  onDelete,
+}: {
+  item: RatingType
+  onEdit: () => void
+  onDelete: () => void
+}) {
   return (
     <TableCell className="py-1.5 px-2 text-sm">
-      {hasPrivilege(privileges, ['db']) && item.usageCount === 0 && (
+      <div className="flex justify-end">
         <Button
           variant="ghost"
           size="icon"
-          aria-label={`Delete ${item.text}`}
-          className="text-muted-foreground hover:text-destructive"
-          title="Delete"
-          onClick={onDelete}
+          aria-label={`Edit ${item.text}`}
+          className="text-muted-foreground [@media(hover:hover)]:opacity-0 group-hover:opacity-100 group-focus-within:opacity-100"
+          title="Edit rating type"
+          onClick={onEdit}
         >
-          <X className="h-4 w-4" />
+          <Pencil className="h-4 w-4" />
         </Button>
-      )}
+        {item.usageCount === 0 && (
+          <Button
+            variant="ghost"
+            size="icon"
+            aria-label={`Delete ${item.text}`}
+            className="text-muted-foreground hover:text-destructive"
+            title="Delete"
+            onClick={onDelete}
+          >
+            <X className="h-4 w-4" />
+          </Button>
+        )}
+      </div>
     </TableCell>
   )
 }
@@ -65,6 +85,7 @@ function RatingTypesPage() {
   const hasDb = hasPrivilege(privileges, ['db'])
   const { data: ratingTypes } = useSuspenseQuery(getRatingTypesAllQueryOptions())
   const [isAddModalOpen, setIsAddModalOpen] = useState(false)
+  const [editTarget, setEditTarget] = useState<RatingType | null>(null)
   const [deleteTarget, setDeleteTarget] = useState<DeleteTarget | null>(null)
   const deleteMutation = useDeleteRatingTypeMutation()
 
@@ -100,7 +121,11 @@ function RatingTypesPage() {
                 <TableRow>
                   <TableHead className="h-8 px-2 text-xs">Rating</TableHead>
                   <TableHead className="h-8 px-2 text-xs w-16">Degree</TableHead>
-                  <TableHead className="h-8 px-2 text-xs w-8" />
+                  {hasDb && (
+                    <TableHead className="h-8 px-2 text-xs w-8">
+                      <span className="sr-only">Actions</span>
+                    </TableHead>
+                  )}
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -109,28 +134,32 @@ function RatingTypesPage() {
                     <TooltipProvider key={item.index} delayDuration={200}>
                       <Tooltip>
                         <TooltipTrigger asChild>
-                          <TableRow className="bg-yellow-50 dark:bg-yellow-950/30">
+                          <TableRow className="group bg-yellow-50 dark:bg-yellow-950/30">
                             <TableCell className="py-1.5 px-2 text-sm">{item.text}</TableCell>
                             <TableCell className="py-1.5 px-2 text-sm">{item.degree}</TableCell>
-                            <DeleteCell
-                              item={item}
-                              onDelete={() =>
-                                setDeleteTarget({ index: item.index, text: item.text })
-                              }
-                            />
+                            {hasDb && (
+                              <RatingActions
+                                item={item}
+                                onEdit={() => setEditTarget(item)}
+                                onDelete={() => setDeleteTarget(item)}
+                              />
+                            )}
                           </TableRow>
                         </TooltipTrigger>
                         <TooltipContent>Expires</TooltipContent>
                       </Tooltip>
                     </TooltipProvider>
                   ) : (
-                    <TableRow key={item.index}>
+                    <TableRow key={item.index} className="group">
                       <TableCell className="py-1.5 px-2 text-sm">{item.text}</TableCell>
                       <TableCell className="py-1.5 px-2 text-sm">{item.degree}</TableCell>
-                      <DeleteCell
-                        item={item}
-                        onDelete={() => setDeleteTarget({ index: item.index, text: item.text })}
-                      />
+                      {hasDb && (
+                        <RatingActions
+                          item={item}
+                          onEdit={() => setEditTarget(item)}
+                          onDelete={() => setDeleteTarget(item)}
+                        />
+                      )}
                     </TableRow>
                   ),
                 )}
@@ -142,6 +171,10 @@ function RatingTypesPage() {
 
       {hasDb && isAddModalOpen && (
         <AddRatingTypeModal onClose={() => setIsAddModalOpen(false)} onSuccess={() => {}} />
+      )}
+
+      {hasDb && editTarget && (
+        <EditRatingTypeModal item={editTarget} onClose={() => setEditTarget(null)} />
       )}
 
       <ConfirmDialog

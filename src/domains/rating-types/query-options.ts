@@ -1,6 +1,7 @@
 import { queryOptions, useMutation, useQueryClient } from '@tanstack/react-query'
 import {
   createRatingType,
+  updateRatingType,
   deleteRatingType,
   getAllRatingTypes,
   getDistinctRatingTypeNames,
@@ -39,5 +40,13 @@ export function useCreateRatingTypeMutation(opts: { onSuccess: () => void; onClo
       opts.onSuccess()
       opts.onClose()
     },
+  })
+}
+
+export function useUpdateRatingTypeMutation() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: updateRatingType,
+    onSuccess: () => queryClient.invalidateQueries(),
   })
 }
