@@ -1,6 +1,6 @@
 import { createServerFn } from '@tanstack/react-start'
 import { count, eq } from 'drizzle-orm'
-import { toRatingType } from '@/domains/rating-types/schema'
+import { ratingTypeUpdateSchema, toRatingType } from '@/domains/rating-types/schema'
 import type { RatingTypeInsertData } from '@/domains/rating-types/schema'
 import { ratings, wycRatings } from '@/db/schema'
 import db from '@/db/index'
@@ -64,5 +64,21 @@ export const createRatingType = createServerFn({ method: 'POST' })
     } catch (error) {
       console.error('Failed to create rating type:', error)
       throw new Error('Failed to create rating type')
+    }
+  })
+
+export const updateRatingType = createServerFn({ method: 'POST' })
+  .validator(ratingTypeUpdateSchema)
+  .handler(async ({ data: { index, text, degree } }) => {
+    await requirePrivilege('db')
+    try {
+      const [result] = await db
+        .update(ratings)
+        .set({ text, degree })
+        .where(eq(ratings.index, index))
+      if (!result.affectedRows) throw new Error('Rating type no longer exists')
+    } catch (error) {
+      console.error('Failed to update rating type:', error)
+      throw new Error('Failed to update rating type')
     }
   })
