@@ -258,10 +258,10 @@ export const createLesson = createServerFn({ method: 'POST' })
     )
     if (mismatch) throw new Error(mismatch)
     const row = fromLessonInsert(data)
-    const [result] = await db.insert(lessons).values(row)
-    await syncLessonSessions(result.insertId, data.sessions)
-    await reconcileCalendar(result.insertId)
-    return { success: true, id: result.insertId }
+    const [result] = await db.insert(lessons).values(row).returning({ id: lessons.index })
+    await syncLessonSessions(result.id, data.sessions)
+    await reconcileCalendar(result.id)
+    return { success: true, id: result.id }
   })
 
 export const updateLesson = createServerFn({ method: 'POST' })

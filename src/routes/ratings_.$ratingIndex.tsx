@@ -1,3 +1,4 @@
+import { formatRecordedDate } from '@/lib/date-utils'
 import { ErrorAlert } from '@/components/ui/ErrorAlert'
 import { ratingUpdateSchema } from '@/domains/ratings/schema'
 import { useAppForm } from '@/hooks/form'
@@ -58,7 +59,7 @@ function RatingDetailPage() {
         <InfoField label="Index" value={String(rating.index)} />
         <InfoField label="Rating Type" value={rating.ratingText} />
         <InfoField label="Degree" value={String(rating.ratingDegree)} />
-        <InfoField label="Date" value={rating.date} />
+        <InfoField label="Date" value={formatRecordedDate(rating.date)} />
         <div>
           <dt className="text-sm font-medium text-muted-foreground">Member</dt>
           <dd className="text-sm">

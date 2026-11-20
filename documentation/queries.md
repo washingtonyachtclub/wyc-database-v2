@@ -1,5 +1,9 @@
 # Database Query Reference
 
+## Legacy system
+
+These queries use MySQL syntax. Current PostgreSQL queries live in `src/domains/*/queries.ts`.
+
 SQL reference for common database queries and operations. Useful for direct database maintenance, debugging, and AI-assisted work.
 
 All queries below use the read-only database user. Connect using the credentials from your environment configuration.

@@ -1,3 +1,4 @@
+import { formatRecordedDate } from '@/lib/date-utils'
 import { Link } from '@tanstack/react-router'
 import { createColumnHelper } from '@tanstack/react-table'
 import type { CheckoutTableRow } from '@/domains/checkouts/schema'
@@ -39,7 +40,7 @@ export const columns = [
   columnHelper.accessor('expectedReturn', {
     header: 'Expected Return',
     enableSorting: true,
-    cell: (info) => formatDatetime(info.getValue()),
+    cell: (info) => formatRecordedDate(formatDatetime(info.getValue())),
   }),
   columnHelper.accessor('timeReturn', {
     header: 'Check-in',

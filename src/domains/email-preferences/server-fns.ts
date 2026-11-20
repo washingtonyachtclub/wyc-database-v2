@@ -28,7 +28,7 @@ export const setEmailPreferences = createServerFn({ method: 'POST' })
     await db
       .insert(memberEmailPreferences)
       .values({ wycNumber, ...values })
-      .onDuplicateKeyUpdate({ set: values })
+      .onConflictDoUpdate({ target: memberEmailPreferences.wycNumber, set: values })
 
     return { sailingOpportunities: data.sailingOpportunities }
   })

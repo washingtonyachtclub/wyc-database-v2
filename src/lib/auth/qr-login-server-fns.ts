@@ -136,7 +136,7 @@ export const approveQrLoginRequestServerFn = createServerFn({ method: 'POST' })
           .from(qrLoginRequests)
           .where(eq(qrLoginRequests.approvalSecretHash, hashSecret(data.approvalSecret)))
           .limit(1)
-          .for('update')
+          .for('update', { of: qrLoginRequests })
 
         if (!request) {
           return { status: 'unavailable' }
@@ -201,7 +201,7 @@ export const pollQrLoginRequestServerFn = createServerFn({ method: 'POST' })
             .from(qrLoginRequests)
             .where(eq(qrLoginRequests.pollingSecretHash, hashSecret(data.pollingSecret)))
             .limit(1)
-            .for('update')
+            .for('update', { of: qrLoginRequests })
 
           if (!request) {
             return { status: 'unavailable' }

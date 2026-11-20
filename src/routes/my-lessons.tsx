@@ -17,7 +17,7 @@ import {
   useUnenrollFromLessonMutation,
 } from '@/domains/lessons/query-options'
 import type { SignedUpLesson } from '@/domains/lessons/schema'
-import { useQuery, useSuspenseQuery } from '@tanstack/react-query'
+import { useSuspenseQuery } from '@tanstack/react-query'
 import { createFileRoute, Link, redirect, useNavigate } from '@tanstack/react-router'
 import { useState } from 'react'
 import { ChevronRight } from 'lucide-react'
@@ -31,15 +31,17 @@ export const Route = createFileRoute('/my-lessons')({
     }
   },
   loader: ({ context }) => {
-    context.queryClient.ensureQueryData(getMySignedUpLessonsQueryOptions())
-    return context.queryClient.ensureQueryData(getMyLessonsTaughtQueryOptions())
+    return Promise.all([
+      context.queryClient.ensureQueryData(getMyLessonsTaughtQueryOptions()),
+      context.queryClient.ensureQueryData(getMySignedUpLessonsQueryOptions()),
+    ]).then(([lessonsTaught]) => lessonsTaught)
   },
   component: MyLessonsPage,
 })
 
 function MyLessonsPage() {
   const { data: lessonsTaught } = useSuspenseQuery(getMyLessonsTaughtQueryOptions())
-  const { data: signedUpLessons = [] } = useQuery(getMySignedUpLessonsQueryOptions())
+  const { data: signedUpLessons } = useSuspenseQuery(getMySignedUpLessonsQueryOptions())
   const [showPastLessons, setShowPastLessons] = useState(false)
   const [showPastTeaching, setShowPastTeaching] = useState(false)
   const navigate = useNavigate()

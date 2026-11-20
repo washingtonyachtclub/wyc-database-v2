@@ -119,7 +119,7 @@ export const updateDoorCode = createServerFn({ method: 'POST' })
         .update(doorCodes)
         .set({
           code: data.code,
-          updatedAt: sql`UTC_TIMESTAMP()`,
+          updatedAt: sql`timezone('UTC', now())`,
           updatedBy: wycNumber,
         })
         .where(eq(doorCodes.index, data.index))

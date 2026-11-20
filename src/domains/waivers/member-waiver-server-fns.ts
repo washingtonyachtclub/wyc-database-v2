@@ -138,7 +138,7 @@ export const submitMemberWaiver = createServerFn({ method: 'POST' })
               isNull(membershipRenewals.closedAt),
             ),
           )
-          .for('update')
+          .for('update', { of: membershipRenewals })
         if (!openRenewal) throw new Error('Renewal is no longer open')
 
         const submittedValues = { adultAcknowledged: data.adultAcknowledged }

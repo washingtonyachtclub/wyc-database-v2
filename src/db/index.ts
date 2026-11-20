@@ -1,20 +1,18 @@
-import mysql from 'mysql2'
-import { drizzle } from 'drizzle-orm/mysql2'
+import { Pool } from 'pg'
+import { drizzle } from 'drizzle-orm/node-postgres'
 
 function createDatabase() {
-  if (!process.env.DATABASE_URL) {
-    throw new Error('❌ DATABASE_URL is missing')
+  const connectionString = process.env.DATABASE_URL
+  if (!connectionString) throw new Error('DATABASE_URL is missing')
+  if (!/^postgres(?:ql)?:\/\//.test(connectionString)) {
+    throw new Error('This application requires a PostgreSQL DATABASE_URL')
   }
-  const pool = mysql.createPool({
-    uri: process.env.DATABASE_URL,
-    timezone: 'Z',
-  })
-  pool.on('connection', (connection) => {
-    connection.query("SET time_zone = '+00:00'", (error) => {
-      if (!error) return
-      console.error('Failed to configure database timezone:', error)
-      connection.destroy()
-    })
+  const pool = new Pool({
+    connectionString,
+    options: '-c timezone=UTC',
+    max: 5,
+    connectionTimeoutMillis: 10_000,
+    idleTimeoutMillis: 30_000,
   })
   return drizzle({ client: pool })
 }

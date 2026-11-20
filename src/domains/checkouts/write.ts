@@ -89,21 +89,26 @@ export async function writeCheckout(input: CheckoutWriteInput) {
       throw new CheckoutWriteError('This checkout has already been entered')
     }
 
-    const [result] = await tx.insert(checkouts).values({
-      wycNumber: input.skipperWycNumber,
-      timeDeparture,
-      crew: '[]',
-      boat: String(input.boatId),
-      destination: input.destination,
-      expectedReturn: toDbDateTime(input.expectedReturn),
-      timeReturn: input.timeReturn ? toDbDateTime(input.timeReturn) : null,
-      relevantRating: input.qualification.supervised ? null : input.qualification.relevantRatingId,
-      chiefId:
-        input.qualification.supervised && input.qualification.supervisorWycNumber > 0
-          ? input.qualification.supervisorWycNumber
-          : null,
-    })
-    const checkoutId = result.insertId
+    const [result] = await tx
+      .insert(checkouts)
+      .values({
+        wycNumber: input.skipperWycNumber,
+        timeDeparture,
+        crew: '[]',
+        boat: String(input.boatId),
+        destination: input.destination,
+        expectedReturn: toDbDateTime(input.expectedReturn),
+        timeReturn: input.timeReturn ? toDbDateTime(input.timeReturn) : null,
+        relevantRating: input.qualification.supervised
+          ? null
+          : input.qualification.relevantRatingId,
+        chiefId:
+          input.qualification.supervised && input.qualification.supervisorWycNumber > 0
+            ? input.qualification.supervisorWycNumber
+            : null,
+      })
+      .returning({ id: checkouts.index })
+    const checkoutId = result.id
 
     if (input.crew.length > 0) {
       await tx.insert(crew).values(input.crew.map((crewId) => ({ checkoutId, crewId })))

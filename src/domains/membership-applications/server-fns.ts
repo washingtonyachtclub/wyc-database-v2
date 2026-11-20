@@ -420,29 +420,32 @@ export const startNewMemberPayment = createServerFn({ method: 'POST' })
           .select({ paymentStatus: membershipApplications.paymentStatus })
           .from(membershipApplications)
           .where(eq(membershipApplications.id, applicationId))
-          .for('update')
+          .for('update', { of: membershipApplications })
         if (!application || application.paymentStatus !== 'pending') {
           throw new Error('Application payment state changed')
         }
 
-        const result = await tx.insert(membershipPayments).values({
-          amountCents: order.amountCents,
-          applicationId,
-          currency: order.currency,
-          duration: data.duration,
-          newExpireQtr: targetExpireQtr,
-          prevExpireQtr: 0,
-          squareOrderId: order.orderId,
-          squarePaymentId,
-          status: 'COMPLETED',
-          tier,
-          wycNumber: null,
-        })
+        const result = await tx
+          .insert(membershipPayments)
+          .values({
+            amountCents: order.amountCents,
+            applicationId,
+            currency: order.currency,
+            duration: data.duration,
+            newExpireQtr: targetExpireQtr,
+            prevExpireQtr: 0,
+            squareOrderId: order.orderId,
+            squarePaymentId,
+            status: 'COMPLETED',
+            tier,
+            wycNumber: null,
+          })
+          .returning({ id: membershipPayments.index })
         if (discountCode) {
           await insertMembershipDiscountCodeRedemption(tx, {
             discountCents: order.discountCents,
             finalCents: order.amountCents,
-            paymentId: result[0].insertId,
+            paymentId: result[0].id,
             discountCode,
             subtotalCents: order.subtotalCents,
           })
@@ -659,7 +662,7 @@ export const completeNewMemberApplication = createServerFn({ method: 'POST' })
           })
           .from(membershipApplications)
           .where(eq(membershipApplications.id, data.applicationId))
-          .for('update')
+          .for('update', { of: membershipApplications })
         if (!current || !canCompleteMembershipApplication(current.paymentStatus)) {
           throw new Error('Application is not eligible for completion')
         }

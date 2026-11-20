@@ -1,35 +1,26 @@
 import { dayCounts } from './rental-days'
-import { and, count, eq, gt, gte, isNull, lte } from 'drizzle-orm'
-import { drizzle, type MySql2Database } from 'drizzle-orm/mysql2'
+import { and, count, eq, gt, gte, isNull, lte, sql } from 'drizzle-orm'
 import db from '@/db/index'
 import { calendarcomment, calendartable } from '@/db/schema'
 import { getNowPacificDateTimeString } from '@/lib/date-utils'
 import { CalendarRuleError, slotMarker, validateBookingWindow } from './calendar'
 import type { ReservationInput, ReservationDetailsInput } from './schema'
 
-async function withCalendarLock<T>(run: (connectionDb: MySql2Database) => Promise<T>): Promise<T> {
-  const connection = await db.$client.promise().getConnection()
-  let reusable = true
-  try {
-    // These shared tables use MyISAM; row locks and transaction rollback do not protect writes.
-    await connection.query('LOCK TABLES calendartable WRITE, calendarcomment WRITE')
-    try {
-      return await run(drizzle({ client: connection }))
-    } finally {
-      try {
-        await connection.query('UNLOCK TABLES')
-      } catch (error) {
-        reusable = false
-        connection.destroy()
-        throw error
-      }
-    }
-  } finally {
-    if (reusable) connection.release()
-  }
+type CalendarTransaction = Parameters<Parameters<typeof db.transaction>[0]>[0]
+
+async function withCalendarLock<T>(run: (tx: CalendarTransaction) => Promise<T>): Promise<T> {
+  return db.transaction(async (tx) => {
+    // Serialize reservation rules across boats and members, including empty time ranges.
+    await tx.execute(sql`LOCK TABLE calendartable, calendarcomment IN SHARE ROW EXCLUSIVE MODE`)
+    return run(tx)
+  })
 }
 
-async function checkReservation(locked: MySql2Database, input: ReservationInput, memberId: number) {
+async function checkReservation(
+  locked: CalendarTransaction,
+  input: ReservationInput,
+  memberId: number,
+) {
   const isAdmin = input.kind === 'admin'
   const from = slotMarker(input.fromDate, input.fromSlot)
   const through = slotMarker(input.throughDate, input.throughSlot)
@@ -101,41 +92,39 @@ export function writeReservation(
     const from = slotMarker(input.fromDate, input.fromSlot)
     const through = slotMarker(input.throughDate, input.throughSlot)
     const now = getNowPacificDateTimeString()
-    const [result] = await locked.insert(calendartable).values({
-      ...(payment && {
-        paymentCheckoutId: payment.checkoutId,
-        squareOrderId: payment.orderId,
-        squarePaymentId: payment.paymentId,
-        paidAmountCents: payment.amountCents,
-        paidCurrency: payment.currency,
-        pricingTier: payment.tier,
-        rentalEngine: payment.engine,
-      }),
-      cBoatId: input.boatId,
-      memberWycNumber: isAdmin ? null : memberId,
-      createdByWycNumber: memberId,
-      reservationType: input.kind,
-      title: isAdmin ? input.title || null : null,
-      reserveFrom: from,
-      reserveTo: through,
-      destination: input.destination,
-      numberOfCrew: isAdmin ? 0 : input.numberOfCrew,
-      phone: isAdmin ? '' : input.phone,
-      comments: null,
-      ...dayCounts(from, through),
-    })
-    try {
-      await locked.insert(calendarcomment).values({
-        id: result.insertId,
-        userwyc: memberId,
-        date: now,
-        comment: input.comment || 'Reservation placed',
+    const [result] = await locked
+      .insert(calendartable)
+      .values({
+        ...(payment && {
+          paymentCheckoutId: payment.checkoutId,
+          squareOrderId: payment.orderId,
+          squarePaymentId: payment.paymentId,
+          paidAmountCents: payment.amountCents,
+          paidCurrency: payment.currency,
+          pricingTier: payment.tier,
+          rentalEngine: payment.engine,
+        }),
+        cBoatId: input.boatId,
+        memberWycNumber: isAdmin ? null : memberId,
+        createdByWycNumber: memberId,
+        reservationType: input.kind,
+        title: isAdmin ? input.title || null : null,
+        reserveFrom: from,
+        reserveTo: through,
+        destination: input.destination,
+        numberOfCrew: isAdmin ? 0 : input.numberOfCrew,
+        phone: isAdmin ? '' : input.phone,
+        comments: null,
+        ...dayCounts(from, through),
       })
-    } catch (error) {
-      await locked.delete(calendartable).where(eq(calendartable.id, result.insertId))
-      throw error
-    }
-    return { id: result.insertId }
+      .returning({ id: calendartable.id })
+    await locked.insert(calendarcomment).values({
+      id: result.id,
+      userwyc: memberId,
+      date: now,
+      comment: input.comment || 'Reservation placed',
+    })
+    return { id: result.id }
   })
 }
 
@@ -190,25 +179,12 @@ export function updateReservationDetails(
         phone: isAdmin ? reservation.phone : input.phone,
       })
       .where(and(eq(calendartable.id, input.id), isNull(calendartable.deletedAt)))
-    try {
-      await locked.insert(calendarcomment).values({
-        id: input.id,
-        userwyc: memberId,
-        date: getNowPacificDateTimeString(),
-        comment: 'Reservation details updated',
-      })
-    } catch (error) {
-      await locked
-        .update(calendartable)
-        .set({
-          destination: reservation.destination,
-          title: reservation.title,
-          numberOfCrew: reservation.numberOfCrew,
-          phone: reservation.phone,
-        })
-        .where(and(eq(calendartable.id, input.id), isNull(calendartable.deletedAt)))
-      throw error
-    }
+    await locked.insert(calendarcomment).values({
+      id: input.id,
+      userwyc: memberId,
+      date: getNowPacificDateTimeString(),
+      comment: 'Reservation details updated',
+    })
     return { id: input.id }
   })
 }

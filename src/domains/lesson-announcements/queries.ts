@@ -1,7 +1,7 @@
 import db from '@/db/index'
 import { lessonAnnouncements, wycDatabase } from '@/db/schema'
 import { asc, eq } from 'drizzle-orm'
-import { alias } from 'drizzle-orm/mysql-core'
+import { alias } from 'drizzle-orm/pg-core'
 
 const announcementAuthor = alias(wycDatabase, 'announcement_author')
 

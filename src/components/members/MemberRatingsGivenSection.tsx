@@ -1,3 +1,4 @@
+import { formatRecordedDate } from '@/lib/date-utils'
 import type { ReactNode } from 'react'
 import { getExpiryInfo } from '@/lib/rating-expiry'
 import { getMemberRatingsGivenQueryOptions } from '@/domains/members/query-options'
@@ -42,7 +43,7 @@ export function MemberRatingsGivenSection({
                 <tr key={rating.index} className="border-b">
                   <td className="py-2">{rating.ratingText}</td>
                   <td className="py-2">{rating.memberName}</td>
-                  <td className="py-2">{rating.date}</td>
+                  <td className="py-2">{formatRecordedDate(rating.date)}</td>
                   <td className="py-2">
                     {expiryInfo && (
                       <span

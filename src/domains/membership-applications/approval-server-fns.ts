@@ -115,7 +115,7 @@ async function ensureApplicationFunding(
     .select({ index: membershipPayments.index })
     .from(membershipPayments)
     .where(eq(membershipPayments.applicationId, application.id))
-    .for('update')
+    .for('update', { of: membershipPayments })
 
   if (application.paymentStatus === 'completed') {
     if (!payment) throw new Error('Application payment is missing')
@@ -260,7 +260,7 @@ export const updateMembershipApplicationEmails = createServerFn({ method: 'POST'
           })
           .from(membershipApplications)
           .where(eq(membershipApplications.id, data.applicationId))
-          .for('update')
+          .for('update', { of: membershipApplications })
         if (!application || !['not_ready', 'pending_review'].includes(application.reviewStatus)) {
           throw new Error('Application is not editable')
         }
@@ -352,7 +352,7 @@ export const approveNewMembershipApplication = createServerFn({ method: 'POST' }
           .select()
           .from(membershipApplications)
           .where(eq(membershipApplications.id, data.applicationId))
-          .for('update')
+          .for('update', { of: membershipApplications })
         if (
           !application ||
           !canCompleteMembershipApplication(application.paymentStatus) ||
@@ -367,7 +367,7 @@ export const approveNewMembershipApplication = createServerFn({ method: 'POST' }
           .select({ id: memberWaivers.id })
           .from(memberWaivers)
           .where(eq(memberWaivers.applicationId, data.applicationId))
-          .for('update')
+          .for('update', { of: memberWaivers })
         if (!waiver) throw new Error('Application records are incomplete')
 
         const memberCandidates = await tx.select(memberMatchSelect).from(wycDatabase)
@@ -561,7 +561,7 @@ export const applyMembershipApplicationToExistingMember = createServerFn({ metho
           .select()
           .from(membershipApplications)
           .where(eq(membershipApplications.id, data.applicationId))
-          .for('update')
+          .for('update', { of: membershipApplications })
         const [existingMember] = await tx
           .select({
             expireQtrIndex: wycDatabase.expireQtrIndex,
@@ -570,7 +570,7 @@ export const applyMembershipApplicationToExistingMember = createServerFn({ metho
           })
           .from(wycDatabase)
           .where(eq(wycDatabase.wycNumber, data.wycNumber))
-          .for('update')
+          .for('update', { of: wycDatabase })
         if (
           !application ||
           !existingMember ||
@@ -584,7 +584,7 @@ export const applyMembershipApplicationToExistingMember = createServerFn({ metho
           .select({ id: memberWaivers.id })
           .from(memberWaivers)
           .where(eq(memberWaivers.applicationId, data.applicationId))
-          .for('update')
+          .for('update', { of: memberWaivers })
         if (!waiver) throw new Error('Application records are incomplete')
         if (
           !application.addressLine1 ||
@@ -636,7 +636,8 @@ export const applyMembershipApplicationToExistingMember = createServerFn({ metho
             relationship: application.emergencyRelationship,
             wycNumber: data.wycNumber,
           })
-          .onDuplicateKeyUpdate({
+          .onConflictDoUpdate({
+            target: memberEmergencyContacts.wycNumber,
             set: {
               firstName: application.emergencyFirstName,
               lastName: application.emergencyLastName,
@@ -730,7 +731,7 @@ export const closeMembershipApplication = createServerFn({ method: 'POST' })
             inArray(membershipApplications.reviewStatus, ['not_ready', 'pending_review']),
           ),
         )
-      if (result[0].affectedRows !== 1) throw new Error('Application is no longer open')
+      if (result.rowCount !== 1) throw new Error('Application is no longer open')
       return { success: true as const }
     } catch (error) {
       console.error('Failed to close membership application:', {

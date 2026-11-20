@@ -11,7 +11,7 @@ function run(command, args) {
 function drizzleStatus() {
   const result = spawnSync(
     'git',
-    ['status', '--porcelain', '--untracked-files=all', '--', 'drizzle'],
+    ['status', '--porcelain', '--untracked-files=all', '--', 'drizzle-postgres'],
     { encoding: 'utf8' },
   )
   if (result.error) throw result.error

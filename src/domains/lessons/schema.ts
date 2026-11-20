@@ -240,7 +240,7 @@ export function toRichLesson(row: LessonQueryRow, sessions: LessonSession[]): Ri
     type: row.type ?? '<Unknown>',
     subtype: str(row.subtype),
     sessions,
-    calendarDate: row.calendarDate,
+    calendarDate: str(row.calendarDate),
     instructor1Name: fullName(row.instructor1First, row.instructor1Last) || '<Unknown>',
     instructor2Name: fullName(row.instructor2First, row.instructor2Last),
     description: str(row.description),

@@ -15,13 +15,14 @@ export function isRatingActive(
   today = new Date().toISOString().slice(0, 10),
 ): boolean {
   if (!rating.expires) return true
-  if (!rating.date) return false
+  // Undated legacy ratings remain active until their award dates can be established.
+  if (!rating.date) return true
   return getExpiryDate(rating.date) >= today
 }
 
 export function getExpiryInfo(rating: MemberRating): string | null {
   if (!rating.ratingExpires) return null
-  if (!rating.date) return null
+  if (!rating.date) return 'Expiry unknown'
 
   const expiryDate = getExpiryDate(rating.date)
   const today = new Date().toISOString().slice(0, 10)

@@ -1,5 +1,5 @@
-import { and, asc, desc, eq, gte, inArray, like, or, sql } from 'drizzle-orm'
-import { alias, type MySqlColumn, type MySqlSelect } from 'drizzle-orm/mysql-core'
+import { and, asc, eq, gte, inArray, ilike, or, sql } from 'drizzle-orm'
+import { alias, type PgColumn, type PgSelect } from 'drizzle-orm/pg-core'
 import db from '@/db/index'
 import type { LessonFilters } from './filter-types'
 import { toLessonSession, type LessonSession, type LessonStudent, type RichLesson } from './schema'
@@ -9,7 +9,7 @@ import type { LessonEmailInfo } from '@/lib/emails/lessons'
 const instructor1Table = alias(wycDatabase, 'i1')
 const instructor2Table = alias(wycDatabase, 'i2')
 
-export const lessonSortColumns: Record<string, MySqlColumn> = {
+export const lessonSortColumns: Record<string, PgColumn> = {
   calendarDate: lessons.calendarDate,
   index: lessons.index,
 }
@@ -137,10 +137,7 @@ export function allInstructorIds(lessons: InstructorRefs[]) {
   return [...new Set(lessons.flatMap(instructorIdsOf))]
 }
 
-export function withLessonFilters<T extends MySqlSelect>(
-  qb: T,
-  filters: LessonFilters | undefined,
-) {
+export function withLessonFilters<T extends PgSelect>(qb: T, filters: LessonFilters | undefined) {
   const conditions = []
 
   if (filters?.classTypeId !== undefined) {
@@ -164,9 +161,7 @@ export function withLessonFilters<T extends MySqlSelect>(
 
   if (filters?.search) {
     const pattern = `%${filters.search}%`
-    conditions.push(
-      or(like(lessons.subtype, pattern), sql`CAST(${lessons.description} AS CHAR) LIKE ${pattern}`),
-    )
+    conditions.push(or(ilike(lessons.subtype, pattern), ilike(lessons.description, pattern)))
   }
 
   if (conditions.length > 0) {
@@ -189,7 +184,7 @@ export function baseLessonsTaughtQuery(wycNumber: number, since?: string) {
     .leftJoin(instructor1Table, eq(lessons.instructor1, instructor1Table.wycNumber))
     .leftJoin(instructor2Table, eq(lessons.instructor2, instructor2Table.wycNumber))
     .where(and(...conditions))
-    .orderBy(desc(lessons.calendarDate))
+    .orderBy(sql`${lessons.calendarDate} desc nulls last`)
 }
 
 const signedUpLessonSelectFields = {
@@ -212,7 +207,7 @@ export function baseSignedUpWithDetailsQuery(wycNumber: number, minExpire: numbe
     .leftJoin(instructor1Table, eq(lessons.instructor1, instructor1Table.wycNumber))
     .leftJoin(instructor2Table, eq(lessons.instructor2, instructor2Table.wycNumber))
     .where(and(eq(signups.student, wycNumber), gte(lessons.expire, minExpire)))
-    .orderBy(asc(lessons.calendarDate))
+    .orderBy(sql`${lessons.calendarDate} asc nulls last`)
 }
 
 export function baseLessonsSignedUpQuery(wycNumber: number, since?: string) {
@@ -229,7 +224,7 @@ export function baseLessonsSignedUpQuery(wycNumber: number, since?: string) {
     .leftJoin(instructor1Table, eq(lessons.instructor1, instructor1Table.wycNumber))
     .leftJoin(instructor2Table, eq(lessons.instructor2, instructor2Table.wycNumber))
     .where(and(...conditions))
-    .orderBy(desc(lessons.calendarDate))
+    .orderBy(sql`${lessons.calendarDate} desc nulls last`)
 }
 
 export function lessonIdsEndingOnOrAfter(date: string) {
