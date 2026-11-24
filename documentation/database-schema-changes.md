@@ -2,7 +2,7 @@
 
 ## Overview
 
-`src/db/schema.ts` defines the PostgreSQL schema. Production deployments for each Vercel project apply pending migrations to that project's `DATABASE_URL` before building. Preview deployments only build the app.
+`src/db/schema.ts` defines the PostgreSQL schema. Production deployments apply pending migrations before building. Each Vercel project uses `MIGRATION_DATABASE_URL` for migrations and `DATABASE_URL` for the application. The URLs target the same database branch with separate roles. Preview deployments only build the app.
 
 ## Workflow
 
