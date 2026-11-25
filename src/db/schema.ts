@@ -57,7 +57,6 @@ export const wycDatabase = pgTable(
     wycNumber: integer('WYCNumber').default(0).notNull(),
     expireQtrIndex: integer('ExpireQtr').default(0).notNull(),
     studentId: integer('StudentID'),
-    password: varchar({ length: 50 }),
     passwordArgon2: varchar('password_argon2', { length: 255 }),
     outToSea: smallint('out_to_sea').default(0),
     joinDate: timestamp('JoinDate', { mode: 'string' }).defaultNow().notNull(),

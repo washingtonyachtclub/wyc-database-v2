@@ -43,7 +43,6 @@ See `documentation/` for detailed docs:
 - [New member signup](documentation/new-member-signup.md): payment, application, and approval flow
 - [Honorary members](documentation/honorary-members.md): honorary status implementation
 - [Maintenance](documentation/maintenance.md): recurring operational tasks
-- [Password migration](documentation/password-migration-plan.md): legacy to Argon2id transition plan
 - [Email OTP login](documentation/email-otp-login.md): passwordless login via a code sent to the member's email
 - [Sail Locker mode](documentation/sail-locker-mode.md): device-specific session lifetimes for the shared computer
 

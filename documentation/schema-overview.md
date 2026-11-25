@@ -28,7 +28,6 @@ Primary table. One row per member, keyed by WYC number.
 | `StudentID`       | int          | Student ID number                                                                |
 | `JoinDate`        | timestamp    | Auto-populated on insert                                                         |
 | `out_to_sea`      | tinyint(1)   | Blocks boat checkout even if membership is active                                |
-| `password`        | char(50)     | Legacy password hash                                                             |
 | `password_argon2` | varchar(255) | Modern Argon2id password hash                                                    |
 | `image_name`      | char(50)     | Profile image filename                                                           |
 

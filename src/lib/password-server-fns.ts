@@ -2,7 +2,7 @@ import { createServerFn } from '@tanstack/react-start'
 import { eq } from 'drizzle-orm'
 import db from '@/db/index'
 import { wycDatabase } from '@/db/schema'
-import { hashPasswordArgon2, hashPasswordLegacy } from '@/lib/auth/auth'
+import { hashPasswordArgon2 } from '@/lib/auth/auth'
 import { requireAuth } from '@/lib/auth/auth-middleware'
 import { sendEmail } from './email'
 import { passwordResetEmail, wycNumberLookupEmail } from './emails/auth'
@@ -20,11 +20,10 @@ export const setPasswordServerFn = createServerFn({ method: 'POST' })
       const userId = await requireAuth()
 
       const argon2Hash = await hashPasswordArgon2(data.newPassword)
-      const legacyHash = hashPasswordLegacy(data.newPassword)
 
       await db
         .update(wycDatabase)
-        .set({ password: legacyHash, passwordArgon2: argon2Hash })
+        .set({ passwordArgon2: argon2Hash })
         .where(eq(wycDatabase.wycNumber, userId))
 
       return { success: true, message: 'Password updated successfully' }
@@ -120,11 +119,10 @@ export const resetPasswordServerFn = createServerFn({ method: 'POST' })
 
       const passphrase = generatePassphrase()
       const argon2Hash = await hashPasswordArgon2(passphrase)
-      const legacyHash = hashPasswordLegacy(passphrase)
 
       await db
         .update(wycDatabase)
-        .set({ password: legacyHash, passwordArgon2: argon2Hash })
+        .set({ passwordArgon2: argon2Hash })
         .where(eq(wycDatabase.wycNumber, user.wycNumber))
 
       const name = `${user.first ?? ''} ${user.last ?? ''}`.trim()

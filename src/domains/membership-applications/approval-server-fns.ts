@@ -409,7 +409,6 @@ export const approveNewMembershipApplication = createServerFn({ method: 'POST' }
           first: application.firstName,
           last: application.lastName,
           outToSea: 0,
-          password: credentials.legacyHash,
           passwordArgon2: credentials.passwordArgon2,
           phone1: application.phone,
           phone2: '',

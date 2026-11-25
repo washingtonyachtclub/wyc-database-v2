@@ -1,5 +1,5 @@
 import { wycDatabase } from '@/db/schema'
-import { hashPasswordArgon2, hashPasswordLegacy } from '@/lib/auth/auth'
+import { hashPasswordArgon2 } from '@/lib/auth/auth'
 import { generatePassphrase } from '@/lib/generate-passphrase'
 import { and, desc, gte, lte, sql } from 'drizzle-orm'
 
@@ -8,7 +8,6 @@ type Transaction = Parameters<Parameters<typeof import('@/db').default.transacti
 export async function createMemberCredentials() {
   const password = generatePassphrase()
   return {
-    legacyHash: hashPasswordLegacy(password),
     password,
     passwordArgon2: await hashPasswordArgon2(password),
   }

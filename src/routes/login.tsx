@@ -126,7 +126,14 @@ function PasswordForm({
     <form action="/login" method="POST" className="space-y-6" onSubmit={handleSubmit}>
       {error && (
         <div className="rounded-md bg-destructive/10 p-4">
-          <div className="text-sm text-destructive">{error}</div>
+          <div role="alert" className="space-y-1 text-sm text-destructive">
+            <p>{error}</p>
+            {loginMutation.data?.passwordResetRequired && (
+              <Link to="/forgot-password" className="underline">
+                Reset your password
+              </Link>
+            )}
+          </div>
         </div>
       )}
       <div className="space-y-4">
