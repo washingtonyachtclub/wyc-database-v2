@@ -28,7 +28,7 @@ export type SendEmailResult = {
 }
 
 // Batching is what keeps a large fan-out under Resend's 5 req/sec account limit.
-const RESEND_BATCH_LIMIT = 100
+export const RESEND_BATCH_LIMIT = 100
 
 export type BatchMessage = {
   to: string
