@@ -156,6 +156,7 @@ export const listMembershipApplicationsForApproval = createServerFn({ method: 'G
           applicationId: membershipApplications.id,
           city: membershipApplications.city,
           createdAt: membershipApplications.createdAt,
+          discordUsername: membershipApplications.discordUsername,
           duration: membershipApplications.duration,
           emergencyFirstName: membershipApplications.emergencyFirstName,
           emergencyLastName: membershipApplications.emergencyLastName,
@@ -404,6 +405,7 @@ export const approveNewMembershipApplication = createServerFn({ method: 'POST' }
         await tx.insert(wycDatabase).values({
           categoryId: categoryIdForUwStatus(application.uwStatus),
           city: application.city,
+          discordUsername: application.discordUsername,
           email: application.primaryEmail,
           expireQtrIndex: application.targetExpireQtr,
           first: application.firstName,
@@ -563,6 +565,7 @@ export const applyMembershipApplicationToExistingMember = createServerFn({ metho
           .for('update', { of: membershipApplications })
         const [existingMember] = await tx
           .select({
+            discordUsername: wycDatabase.discordUsername,
             expireQtrIndex: wycDatabase.expireQtrIndex,
             firstName: wycDatabase.first,
             lastName: wycDatabase.last,
@@ -617,6 +620,7 @@ export const applyMembershipApplicationToExistingMember = createServerFn({ metho
           .update(wycDatabase)
           .set({
             city: application.city,
+            discordUsername: existingMember.discordUsername || application.discordUsername,
             email: application.primaryEmail,
             expireQtrIndex,
             phone1: application.phone,

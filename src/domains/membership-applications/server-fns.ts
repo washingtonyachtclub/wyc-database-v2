@@ -21,6 +21,7 @@ import type { RenewalDuration, RenewalTier } from '@/domains/renewals/compute-re
 import { RENEWAL_QUARTER, computeRenewal } from '@/domains/renewals/compute-renewal'
 import { parseQuestionnaire, tierForUwStatus } from '@/domains/renewals/questionnaire'
 import { isDevEnvironment } from '@/lib/env'
+import { discordUsernameSchema, normalizeDiscordUsername } from '@/lib/discord'
 import { createMemberWaiverPdf } from '../waivers/member-waiver-pdf'
 import { memberWaiverVersion } from '../waivers/member-waiver-content'
 import { uploadWaiverPdf } from '../waivers/r2'
@@ -101,6 +102,7 @@ const completionInputSchema = z
       addressLine1: requiredText(100),
       addressLine2: z.string().trim().max(100),
       city: requiredText(50),
+      discordUsername: discordUsernameSchema.transform(normalizeDiscordUsername).optional(),
       emergencyFirstName: requiredText(60),
       emergencyLastName: requiredText(60),
       emergencyPhone: requiredText(50),
@@ -695,6 +697,7 @@ export const completeNewMemberApplication = createServerFn({ method: 'POST' })
           .update(membershipApplications)
           .set({
             ...data.contact,
+            discordUsername: data.contact.discordUsername || null,
             questionnaireResponses: responses,
             requirementsCompletedAt: new Date(),
             reviewStatus: 'pending_review',

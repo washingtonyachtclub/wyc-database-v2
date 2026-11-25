@@ -630,6 +630,7 @@ function ApplicationReview({ application }: { application: Application }) {
                 ['Square order', application.squareOrderId ?? 'Not recorded'],
                 ['Square payment', application.squarePaymentId ?? 'Not recorded'],
                 ['Phone', application.phone ?? 'Not submitted'],
+                ['Discord username', application.discordUsername ?? 'Not submitted'],
                 [
                   'Address',
                   [

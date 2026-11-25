@@ -21,6 +21,7 @@ import {
 } from '@/domains/membership-applications/questionnaire'
 import { MemberWaiverAgreementFields } from '@/domains/waivers/MemberWaiverAgreementFields'
 import { isDevEnvironment } from '@/lib/env'
+import { discordUsernameSchema } from '@/lib/discord'
 import { cn } from '@/lib/utils'
 import { useSuspenseQuery } from '@tanstack/react-query'
 import { createFileRoute, Link } from '@tanstack/react-router'
@@ -51,6 +52,7 @@ type ContactForm = {
   addressLine1: string
   addressLine2: string
   city: string
+  discordUsername: string
   emergencyFirstName: string
   emergencyLastName: string
   emergencyPhone: string
@@ -81,6 +83,7 @@ const emptyContact: ContactForm = {
   addressLine1: '',
   addressLine2: '',
   city: '',
+  discordUsername: '',
   emergencyFirstName: '',
   emergencyLastName: '',
   emergencyPhone: '',
@@ -119,6 +122,7 @@ const validationFieldIds: Record<ValidationField, string> = {
   addressLine2: 'application-address-2',
   adultAcknowledged: 'new-member-adult-acknowledgement',
   city: 'application-city',
+  discordUsername: 'application-discord-username',
   emergencyFirstName: 'emergency-first-name',
   emergencyLastName: 'emergency-last-name',
   emergencyPhone: 'emergency-phone',
@@ -336,6 +340,10 @@ function CompletionForm({
     if ([contact.addressLine1, contact.addressLine2].filter(Boolean).join(', ').length > 100) {
       errors.addressLine2 = 'The combined street address must be 100 characters or fewer.'
     }
+    const discordUsername = discordUsernameSchema.safeParse(contact.discordUsername)
+    if (!discordUsername.success) {
+      errors.discordUsername = discordUsername.error.issues[0].message
+    }
     if (
       questionnaire.gender_identity?.includes('self_describe') &&
       !questionnaire.gender_self_description?.trim()
@@ -490,6 +498,23 @@ function CompletionForm({
               maxLength={50}
               required
             />
+            <div className="space-y-1">
+              <TextInput
+                id="application-discord-username"
+                label="Discord username"
+                value={contact.discordUsername}
+                onChange={(value) => setContactField('discordUsername', value)}
+                error={validationErrors.discordUsername}
+              />
+              <a
+                href="https://discord.washingtonyachtclub.org/"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-sm text-primary underline underline-offset-4"
+              >
+                Join the WYC Discord
+              </a>
+            </div>
           </div>
         </section>
 
@@ -680,7 +705,7 @@ function TextInput({
   error?: string
   id: string
   label: string
-  maxLength: number
+  maxLength?: number
   onChange: (value: string) => void
   required?: boolean
   value: string

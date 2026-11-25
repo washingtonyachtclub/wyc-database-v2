@@ -225,6 +225,7 @@ function MemberReadOnlyInfo({ member }: { member: Member }) {
         <ReadOnlyField label="Category" value={categoryLabel} />
         <ReadOnlyField label="Out to Sea" value={member.outToSea ? 'Yes' : 'No'} />
         <ReadOnlyField label="Join Date" value={member.joinDate} />
+        <ReadOnlyField label="Discord username" value={member.discordUsername} />
       </div>
     </div>
   )
@@ -311,6 +312,11 @@ function MemberEditForm({
         <form.AppField name="phone1" children={(field) => <field.TextField label="Phone 1" />} />
 
         <form.AppField name="phone2" children={(field) => <field.TextField label="Phone 2" />} />
+
+        <form.AppField
+          name="discordUsername"
+          children={(field) => <field.TextField label="Discord username" />}
+        />
 
         <form.AppField
           name="studentId"
