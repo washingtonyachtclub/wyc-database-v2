@@ -128,13 +128,11 @@ function PasswordForm({
         <div className="rounded-md bg-destructive/10 p-4">
           <div role="alert" className="space-y-1 text-sm text-destructive">
             <p>{error}</p>
-            <p>
-              If you used a password on the old WYC site,{' '}
+            {loginMutation.data?.passwordResetRequired && (
               <Link to="/forgot-password" className="underline">
-                reset your password
-              </Link>{' '}
-              or use the email code option below.
-            </p>
+                Reset your password
+              </Link>
+            )}
           </div>
         </div>
       )}

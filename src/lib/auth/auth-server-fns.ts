@@ -27,6 +27,7 @@ import {
 export type { AuthUser } from './identity'
 
 export type LoginResponse = {
+  passwordResetRequired?: boolean
   success: boolean
   message: string
   user?: AuthUser
@@ -85,6 +86,14 @@ export const loginServerFn = createServerFn({ method: 'POST' })
         .from(wycDatabase)
         .where(eq(wycDatabase.wycNumber, data.wycNumber))
         .limit(1)
+
+      if (user && !user.passwordArgon2?.trim()) {
+        return {
+          success: false,
+          passwordResetRequired: true,
+          message: 'You need to reset your password before signing in with a password.',
+        } satisfies LoginResponse
+      }
 
       if (
         !user?.passwordArgon2 ||
