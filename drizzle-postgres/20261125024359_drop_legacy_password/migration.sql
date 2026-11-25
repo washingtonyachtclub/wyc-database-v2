@@ -1,0 +1,1 @@
+ALTER TABLE "WYCDatabase" DROP COLUMN "password";

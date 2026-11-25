@@ -162,7 +162,7 @@ Dates are `string` in YYYY-MM-DD format, not `Date` objects. `Date` does not sur
 
 ## Authentication and authorization
 
-**Authentication** is session-based, implemented in `src/lib/auth/`. The `session.ts` file handles session creation and retrieval. Passwords are dual-hashed (legacy SHA1 + Argon2id) during the migration period. See `documentation/password-migration-plan.md` for the transition plan.
+**Authentication** is session-based, implemented in `src/lib/auth/`. The `session.ts` file handles session creation and retrieval. Password sign-in verifies the member’s Argon2id hash. Members without a password can reset it using their WYC ID and email address on file, or [sign in with an email code](email-otp-login.md) and set a password in Settings.
 
 **Authorization** is privilege-based. The system is documented in `documentation/rbac.md`. Helper functions (`requireAuth`, `requirePrivilege`, `requireSelfOrPrivilege`) are in `src/lib/auth/auth-middleware.ts`. Route guards are in `src/lib/route-guards.ts`.
 

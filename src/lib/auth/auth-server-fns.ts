@@ -2,7 +2,7 @@ import { createServerFn } from '@tanstack/react-start'
 import { eq } from 'drizzle-orm'
 import db from '@/db/index'
 import { wycDatabase } from '@/db/schema'
-import { hashPasswordArgon2, verifyPasswordDual } from '@/lib/auth/auth'
+import { verifyPasswordArgon2 } from '@/lib/auth/auth'
 import { sendEmail } from '@/lib/email'
 import { loginOtpEmail } from '@/lib/emails/auth'
 import { isDevEnvironment } from '../env'
@@ -74,47 +74,26 @@ export const loginServerFn = createServerFn({ method: 'POST' })
   })
   .handler(async ({ data }) => {
     try {
-      const users = await db
+      const [user] = await db
         .select({
           wycNumber: wycDatabase.wycNumber,
           first: wycDatabase.first,
           last: wycDatabase.last,
           email: wycDatabase.email,
-          password: wycDatabase.password,
           passwordArgon2: wycDatabase.passwordArgon2,
         })
         .from(wycDatabase)
         .where(eq(wycDatabase.wycNumber, data.wycNumber))
         .limit(1)
 
-      if (users.length === 0) {
+      if (
+        !user?.passwordArgon2 ||
+        !(await verifyPasswordArgon2(data.password, user.passwordArgon2))
+      ) {
         return {
           success: false,
           message: 'Invalid WYC Number or password',
         } satisfies LoginResponse
-      }
-
-      const user = users[0]
-
-      const { valid, needsUpgrade } = await verifyPasswordDual(
-        data.password,
-        user.password,
-        user.passwordArgon2,
-      )
-
-      if (!valid) {
-        return {
-          success: false,
-          message: 'Invalid WYC Number or password',
-        } satisfies LoginResponse
-      }
-
-      if (needsUpgrade) {
-        const argon2Hash = await hashPasswordArgon2(data.password)
-        await db
-          .update(wycDatabase)
-          .set({ passwordArgon2: argon2Hash })
-          .where(eq(wycDatabase.wycNumber, user.wycNumber))
       }
 
       const session = await useAppSession()
