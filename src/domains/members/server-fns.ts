@@ -17,7 +17,8 @@ import {
 } from '@/domains/members/schema'
 import type { MemberFilters } from '@/domains/members/filter-types'
 import { baseMemberQuery, memberSortColumns, withMemberFilters } from '@/domains/members/queries'
-import { MemberProfileUpdate } from '@/domains/members/schema'
+import type { MemberProfileUpdate, MemberUpdate } from '@/domains/members/schema'
+import { discordUsernameSchema, normalizeDiscordUsername } from '@/lib/discord'
 import { withPagination, withSorting } from '@/db/query-helpers'
 import { baseMemberRatingsQuery, baseRatingsGivenQuery } from '@/domains/ratings/queries'
 import { memcat, wycDatabase } from '@/db/schema'
@@ -100,7 +101,7 @@ export const getCategories = createServerFn({ method: 'GET' }).handler(async () 
 })
 
 export const updateMember = createServerFn({ method: 'POST' })
-  .validator((input: { wycNumber: number } & MemberProfileUpdate) => ({
+  .validator((input: { wycNumber: number } & MemberUpdate) => ({
     ...input,
     wycNumber: Number(input.wycNumber),
   }))
@@ -143,6 +144,7 @@ export const updateMemberProfile = createServerFn({ method: 'POST' })
   .validator((input: { wycNumber: number } & MemberProfileUpdate) => ({
     ...input,
     wycNumber: Number(input.wycNumber),
+    discordUsername: discordUsernameSchema.optional().parse(input.discordUsername),
   }))
   .handler(async ({ data }) => {
     await requireSelfOrPrivilege(data.wycNumber, 'db')
@@ -158,6 +160,9 @@ export const updateMemberProfile = createServerFn({ method: 'POST' })
       phone1: data.phone1,
       phone2: data.phone2,
       studentId: data.studentId,
+    }
+    if (data.discordUsername !== undefined) {
+      updateData.discordUsername = normalizeDiscordUsername(data.discordUsername) || null
     }
     if (data.categoryId !== null) {
       const [category] = await db

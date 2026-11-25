@@ -4,6 +4,7 @@ import { num, str, fullName } from '@/db/mapper-utils'
 import { toPacificDateString } from '@/lib/date-utils'
 import type { RatingQueryRow } from '@/domains/ratings/queries'
 import { wycDatabase } from '@/db/schema'
+import { discordUsernameSchema } from '@/lib/discord'
 
 // --- Zod schemas ---
 
@@ -23,7 +24,10 @@ const MemberFieldsSchema = z.object({
   outToSea: z.boolean(),
 })
 
-export const MemberProfileUpdateSchema = MemberFieldsSchema
+export type MemberUpdate = z.infer<typeof MemberFieldsSchema>
+export const MemberProfileUpdateSchema = MemberFieldsSchema.extend({
+  discordUsername: discordUsernameSchema,
+})
 export type MemberProfileUpdate = z.infer<typeof MemberProfileUpdateSchema>
 
 // --- Core & display types ---
@@ -33,6 +37,7 @@ export type Member = {
   first: string
   last: string
   email: string
+  discordUsername: string
   categoryId: number | null
   expireQtrIndex: number
   streetAddress: string
@@ -80,6 +85,7 @@ export function toMember(row: typeof wycDatabase.$inferSelect): Member {
     first: str(row.first),
     last: str(row.last),
     email: str(row.email),
+    discordUsername: str(row.discordUsername),
     categoryId: row.categoryId ?? null,
     expireQtrIndex: row.expireQtrIndex,
     streetAddress: str(row.streetAddress),
@@ -99,6 +105,7 @@ export function toRedactedMember(row: typeof wycDatabase.$inferSelect): Member {
   return {
     ...toMember(row),
     email: '',
+    discordUsername: '',
     streetAddress: '',
     city: '',
     state: '',
@@ -121,7 +128,7 @@ export function toMemberTableRow(row: MemberQueryRow): MemberTableRow {
   }
 }
 
-export function fromMemberInsert(data: MemberProfileUpdate): typeof wycDatabase.$inferInsert {
+export function fromMemberInsert(data: MemberUpdate): typeof wycDatabase.$inferInsert {
   return {
     ...data,
     outToSea: data.outToSea ? 1 : 0,
