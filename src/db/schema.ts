@@ -3,7 +3,6 @@ import { sql } from 'drizzle-orm'
 import {
   check,
   date,
-  doublePrecision,
   foreignKey,
   index,
   integer,
@@ -12,7 +11,6 @@ import {
   pgEnum,
   pgTable,
   primaryKey,
-  real,
   smallint,
   text,
   timestamp,
@@ -85,11 +83,6 @@ export const boatTypes = pgTable(
   (table) => [primaryKey({ columns: [table.index] })],
 )
 
-export const calendaradmin = pgTable('calendaradmin', {
-  wycnum: integer().notNull(),
-  description: varchar({ length: 50 }).notNull(),
-})
-
 export const calendarboats = pgTable(
   'calendarboats',
   {
@@ -108,15 +101,6 @@ export const calendarcomment = pgTable('calendarcomment', {
   date: timestamp({ mode: 'string' }).notNull(),
   comment: text().notNull(),
 })
-
-export const calendarconfig = pgTable(
-  'calendarconfig',
-  {
-    wacip: varchar({ length: 15 }).notNull(),
-    ipdescription: varchar({ length: 255 }).notNull(),
-  },
-  (table) => [primaryKey({ columns: [table.wacip] })],
-)
 
 export const calendartable = pgTable(
   'calendartable',
@@ -241,13 +225,6 @@ export const guests = pgTable(
   ],
 )
 
-export const keelboatPricing = pgTable('keelboat_pricing', {
-  price: real().notNull(),
-  weekday: integer().notNull(),
-  fullday: integer().notNull(),
-  student: integer().notNull(),
-})
-
 export const lessonQuarter = pgTable(
   'lesson_quarter',
   {
@@ -325,15 +302,6 @@ export const memcat = pgTable(
   (table) => [primaryKey({ columns: [table.index] })],
 )
 
-export const noyes = pgTable(
-  'noyes',
-  {
-    index: smallint('_index').default(0).notNull(),
-    text: varchar({ length: 10 }),
-  },
-  (table) => [primaryKey({ columns: [table.index] })],
-)
-
 export const officers = pgTable(
   'officers',
   {
@@ -346,16 +314,6 @@ export const officers = pgTable(
     primaryKey({ columns: [table.index] }),
     unique('member').on(table.position, table.member),
   ],
-)
-
-export const options = pgTable(
-  'options',
-  {
-    index: integer('_index').generatedByDefaultAsIdentity().notNull(),
-    name: varchar({ length: 80 }),
-    value: varchar({ length: 250 }),
-  },
-  (table) => [primaryKey({ columns: [table.index] })],
 )
 
 export const posPrivMap = pgTable(
@@ -387,15 +345,6 @@ export const positions = pgTable(
     bookmark: varchar({ length: 50 }),
     jobDesc: varchar('job_desc', { length: 50 }),
     active: smallint().default(0).notNull(),
-  },
-  (table) => [primaryKey({ columns: [table.index] })],
-)
-
-export const priorityTypes = pgTable(
-  'priority_types',
-  {
-    index: integer('_index').generatedByDefaultAsIdentity().notNull(),
-    priority: varchar({ length: 25 }).default('').notNull(),
   },
   (table) => [primaryKey({ columns: [table.index] })],
 )
@@ -433,31 +382,6 @@ export const ratings = pgTable(
   (table) => [primaryKey({ columns: [table.index] })],
 )
 
-export const recip = pgTable('recip', {
-  clubName: varchar('club_name', { length: 50 }),
-  website: varchar({ length: 50 }),
-  recipUrl: varchar('recip_url', { length: 75 }),
-  location: varchar({ length: 2000 }),
-  latLong: varchar('lat_long', { length: 100 }),
-  lengthStay: varchar('length_stay', { length: 2000 }),
-  procedures: varchar({ length: 2000 }),
-  amenities: varchar({ length: 2000 }),
-  image: varchar({ length: 100 }),
-  imageNext: varchar('image_next', { length: 100 }),
-  clubId: varchar('club_id', { length: 2 }),
-})
-
-export const sessions = pgTable(
-  'sessions',
-  {
-    index: integer('_index').generatedByDefaultAsIdentity().notNull(),
-    session: varchar({ length: 80 }),
-    userid: integer(),
-    time: varchar({ length: 80 }),
-  },
-  (table) => [primaryKey({ columns: [table.index] })],
-)
-
 export const signups = pgTable(
   'signups',
   {
@@ -470,61 +394,6 @@ export const signups = pgTable(
     primaryKey({ columns: [table.index] }),
     unique('uq_class_student').on(table.class, table.student),
   ],
-)
-
-export const snc = pgTable(
-  'snc',
-  {
-    index: integer('_index').generatedByDefaultAsIdentity().notNull(),
-    quarter: integer(),
-    member: integer(),
-    memberDinner: integer('member_dinner'),
-    memberLunch1: integer('member_lunch1'),
-    memberLunch2: integer('member_lunch2'),
-    guest1Name: varchar('guest1_name', { length: 100 }),
-    guest1Dinner: integer('guest1_dinner'),
-    guest1Lunch1: integer('guest1_lunch1'),
-    guest1Lunch2: integer('guest1_lunch2'),
-    guest2Name: varchar('guest2_name', { length: 100 }),
-    guest2Dinner: integer('guest2_dinner'),
-    guest2Lunch1: integer('guest2_lunch1'),
-    guest2Lunch2: integer('guest2_lunch2'),
-    boat1Pref: varchar('boat1pref', { length: 100 }),
-    boat2Pref: varchar('boat2pref', { length: 100 }),
-    ratingSh: integer('rating_sh'),
-    ratingDh: integer('rating_dh'),
-    ratingKb: integer('rating_kb'),
-    isLockVeteran: smallint('is_lock_veteran'),
-    friends: varchar({ length: 100 }),
-    duties: integer(),
-    guest1Child: smallint('guest1_child'),
-    guest2Child: smallint('guest2_child'),
-    transpt: smallint().default(0),
-    paymentConfirm: integer('payment_confirm').notNull(),
-  },
-  (table) => [primaryKey({ columns: [table.index] })],
-)
-
-export const sncFood = pgTable(
-  'snc_food',
-  {
-    index: integer('_index').generatedByDefaultAsIdentity().notNull(),
-    text: varchar({ length: 50 }),
-    isAllowed: smallint('is_allowed'),
-    isDinner: smallint('is_dinner'),
-    cost: integer().default(0).notNull(),
-  },
-  (table) => [primaryKey({ columns: [table.index] })],
-)
-
-export const sncWork = pgTable(
-  'snc_work',
-  {
-    index: integer('_index').generatedByDefaultAsIdentity().notNull(),
-    text: varchar({ length: 50 }),
-    isAllowed: smallint('is_allowed'),
-  },
-  (table) => [primaryKey({ columns: [table.index] })],
 )
 
 export const wycRatings = pgTable(
@@ -542,12 +411,6 @@ export const wycRatings = pgTable(
   },
   (table) => [primaryKey({ columns: [table.index] })],
 )
-
-export const processedFormEntries = pgTable('processed_form_entries', {
-  entryId: integer('entry_id').primaryKey(),
-  wycNumber: integer('wyc_number'),
-  processedAt: timestamp('processed_at').defaultNow().notNull(),
-})
 
 export const otpCodes = pgTable(
   'otp_codes',
@@ -941,18 +804,6 @@ export const guestWaivers = pgTable(
     index('idx_guest_waivers_name').on(table.lastName, table.firstName),
     index('idx_guest_waivers_signed_at').on(table.signedAt),
   ],
-)
-
-export const wycWind = pgTable(
-  'wyc_wind',
-  {
-    index: integer().notNull(),
-    dateTime: timestamp('DateTime', { mode: 'string' }).notNull(),
-    windSpeed: doublePrecision('wind_speed').notNull(),
-    windGust: doublePrecision('wind_gust').notNull(),
-    windDirection: varchar('wind_direction', { length: 2 }).notNull(),
-  },
-  (table) => [primaryKey({ columns: [table.index] })],
 )
 
 export const writtenTestAttempts = pgTable(

@@ -126,6 +126,17 @@ See [RBAC docs](rbac.md) for detailed coverage.
 | ------------ | ------------------------------------ |
 | `boat_types` | Boat type definitions (fleet, count) |
 | `checkouts`  | Boat checkout records                |
+| `crew`       | Member crew on checkouts             |
+| `guests`     | Guest crew on checkouts              |
+
+### Keelboat reservations
+
+| Table               | Purpose                                |
+| ------------------- | -------------------------------------- |
+| `calendarboats`     | Reservable boats and fleet metadata    |
+| `calendartable`     | Keelboat reservations                  |
+| `calendarcomment`   | Comments attached to reservations      |
+| `keelboat_payments` | Square checkout state for reservations |
 
 ### Authentication (v2-active)
 
@@ -149,38 +160,13 @@ See [RBAC docs](rbac.md) for detailed coverage.
 | `member_waivers`                       | Executed member waivers linked to an application or renewal   |
 | `guest_waivers`                        | Executed guest waivers                                        |
 
-### Legacy-Only Tables
-
-These are defined in `schema.ts` but not imported or queried in v2 code. They exist because the v2 schema was generated from the production database.
-
-| Table                    | Domain     | Purpose                                                 |
-| ------------------------ | ---------- | ------------------------------------------------------- |
-| `processed_form_entries` | Membership | Processed WordPress signup entry IDs                    |
-| `options`                | Config     | Key-value config store (costs, status flags)            |
-| `recip`                  | Config     | Reciprocal sailing club directory                       |
-| `sessions`               | Auth       | Legacy session tracking (v2 uses cookie-based sessions) |
-| `calendaradmin`          | Calendar   | Calendar admin ACL                                      |
-| `calendarboats`          | Calendar   | Old boat reservation boats                              |
-| `calendarcomment`        | Calendar   | Calendar event comments                                 |
-| `calendarconfig`         | Calendar   | IP whitelist for calendar                               |
-| `calendartable`          | Calendar   | Old keelboat reservation system                         |
-| `keelboat_pricing`       | Keelboat   | Rental pricing tiers                                    |
-| `snc`                    | SNC        | Saturday Night Crew signups                             |
-| `snc_food`               | SNC        | SNC menu items                                          |
-| `snc_work`               | SNC        | SNC volunteer duty types                                |
-| `crew`                   | Boats      | Checkout crew member records                            |
-| `guests`                 | Boats      | Guest crew on checkouts                                 |
-| `noyes`                  | Lookup     | Yes/No boolean lookup                                   |
-| `priority_types`         | Misc       | Unused priority classification                          |
-| `wyc_wind`               | Misc       | Historical wind data                                    |
-
 ---
 
 ## Schema Conventions
 
 - **Primary keys** are `_index` (auto-increment int) on most tables. Exception: `WYCDatabase` uses `WYCNumber`.
 - **Foreign keys** on legacy tables are generally plain `int` columns. New workflow tables use database constraints where both sides of the relationship are application-owned.
-- **Lookup tables** (`memcat`, `class_type`, `noyes`, `pos_type`, `ratings`, `privs`) follow a common pattern: `_index` PK + `text` display column.
+- **Lookup tables** (`memcat`, `class_type`, `pos_type`, `ratings`, `privs`) follow a common pattern: `_index` PK + `text` display column.
 - **Dates** use `{ mode: 'string' }` in Drizzle, stored as `YYYY-MM-DD` strings (not `Date` objects) to survive JSON serialization across the TanStack Start boundary.
 - **Booleans** are PostgreSQL `smallint` — `0`/`1` in the database, converted to `boolean` in TypeScript mappers.
 - **Long text columns** (e.g., `lessons.comments`) use PostgreSQL `text` and UTF-8 strings.
