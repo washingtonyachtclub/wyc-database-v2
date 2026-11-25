@@ -36,8 +36,8 @@ export const lessonTableSelectFields = {
 
 export type LessonQueryRow = Awaited<ReturnType<typeof baseLessonQuery>>[number]
 
-export function baseLessonQuery() {
-  return db
+export function baseLessonQuery(database: Pick<typeof db, 'select'> = db) {
+  return database
     .select(lessonTableSelectFields)
     .from(lessons)
     .leftJoin(classType, eq(classType.index, lessons.type))
@@ -47,11 +47,12 @@ export function baseLessonQuery() {
 
 export async function fetchSessionsByLesson(
   lessonIds: number[],
+  database: Pick<typeof db, 'select'> = db,
 ): Promise<Map<number, LessonSession[]>> {
   const byLesson = new Map<number, LessonSession[]>()
   if (lessonIds.length === 0) return byLesson
 
-  const rows = await db
+  const rows = await database
     .select()
     .from(lessonSessions)
     .where(inArray(lessonSessions.lessonId, lessonIds))
@@ -65,12 +66,18 @@ export async function fetchSessionsByLesson(
   return byLesson
 }
 
-export async function fetchLessonSessions(lessonId: number): Promise<LessonSession[]> {
-  return (await fetchSessionsByLesson([lessonId])).get(lessonId) ?? []
+export async function fetchLessonSessions(
+  lessonId: number,
+  database: Pick<typeof db, 'select'> = db,
+): Promise<LessonSession[]> {
+  return (await fetchSessionsByLesson([lessonId], database)).get(lessonId) ?? []
 }
 
-export async function fetchLessonStudents(lessonId: number): Promise<LessonStudent[]> {
-  const rows = await db
+export async function fetchLessonStudents(
+  lessonId: number,
+  database: Pick<typeof db, 'select'> = db,
+): Promise<LessonStudent[]> {
+  const rows = await database
     .select({
       wycNumber: wycDatabase.wycNumber,
       first: wycDatabase.first,
@@ -100,9 +107,12 @@ function instructorIdsOf(lesson: InstructorRefs): number[] {
   )
 }
 
-export async function fetchInstructorEmails(ids: number[]): Promise<Map<number, string>> {
+export async function fetchInstructorEmails(
+  ids: number[],
+  database: Pick<typeof db, 'select'> = db,
+): Promise<Map<number, string>> {
   if (ids.length === 0) return new Map()
-  const rows = await db
+  const rows = await database
     .select({ wycNumber: wycDatabase.wycNumber, email: wycDatabase.email })
     .from(wycDatabase)
     .where(inArray(wycDatabase.wycNumber, ids))
@@ -129,8 +139,11 @@ export function toLessonEmailInfo(
 }
 
 /** Batch the two steps yourself when building info for more than one lesson. */
-export async function fetchLessonEmailInfo(lesson: RichLesson): Promise<LessonEmailInfo> {
-  return toLessonEmailInfo(lesson, await fetchInstructorEmails(instructorIdsOf(lesson)))
+export async function fetchLessonEmailInfo(
+  lesson: RichLesson,
+  database: Pick<typeof db, 'select'> = db,
+): Promise<LessonEmailInfo> {
+  return toLessonEmailInfo(lesson, await fetchInstructorEmails(instructorIdsOf(lesson), database))
 }
 
 export function allInstructorIds(lessons: InstructorRefs[]) {

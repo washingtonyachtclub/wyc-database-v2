@@ -35,14 +35,20 @@ import {
 } from '@/domains/lessons/schema'
 import { requireAuth, requireLessonManagement, requirePrivilege } from '@/lib/auth/auth-middleware'
 import { sendEmail } from '@/lib/email'
-import { lessonEnrolledEmail, lessonWaitlistedEmail } from '@/lib/emails/lessons'
+import {
+  lessonEnrolledEmail,
+  lessonWaitlistedEmail,
+  lessonWaitlistPromotionSubject,
+} from '@/lib/emails/lessons'
 import { lessonPageUrl } from '@/domains/lesson-announcements/email'
 import { deleteSessionEvent, gcalEnabled } from '@/lib/gcal'
 import { calendarLessonIds, syncLessonCalendar } from './calendar'
+import { getLessonCapacityChange, sendLessonCapacityEmails } from './capacity-change'
 import { CALENDAR_SYNC_START_DATE, lessonSignupsOpen } from './visibility'
 import { getTodayPacificDateString } from '@/lib/date-utils'
 import { createServerFn } from '@tanstack/react-start'
 import { and, asc, count, eq, gte, inArray, or } from 'drizzle-orm'
+import { z } from 'zod'
 
 export const getPublicLessons = createServerFn({ method: 'GET' }).handler(async () => {
   // No auth required — this is the public lesson list for the WordPress iframe
@@ -179,8 +185,12 @@ export const getLessonById = createServerFn({ method: 'GET' })
   })
 
 // Deltas rather than wipe-and-reinsert
-async function syncLessonSessions(lessonId: number, sessions: LessonSessionInput[]) {
-  const existing = await db
+async function syncLessonSessions(
+  lessonId: number,
+  sessions: LessonSessionInput[],
+  database: Pick<typeof db, 'select' | 'delete' | 'update' | 'insert'> = db,
+) {
+  const existing = await database
     .select({ index: lessonSessions.index, startsAt: lessonSessions.startsAt })
     .from(lessonSessions)
     .where(eq(lessonSessions.lessonId, lessonId))
@@ -192,15 +202,18 @@ async function syncLessonSessions(lessonId: number, sessions: LessonSessionInput
 
   const removedIds = [...existingIds].filter((id) => !keptIds.has(id))
   if (removedIds.length > 0) {
-    await db.delete(lessonSessions).where(inArray(lessonSessions.index, removedIds))
+    await database.delete(lessonSessions).where(inArray(lessonSessions.index, removedIds))
   }
 
   for (const session of sessions) {
     const values = { lessonId, ...fromSessionInput(session) }
     if (session.index !== null && keptIds.has(session.index)) {
-      await db.update(lessonSessions).set(values).where(eq(lessonSessions.index, session.index))
+      await database
+        .update(lessonSessions)
+        .set(values)
+        .where(eq(lessonSessions.index, session.index))
     } else {
-      await db.insert(lessonSessions).values(values)
+      await database.insert(lessonSessions).values(values)
     }
   }
 
@@ -265,12 +278,14 @@ export const createLesson = createServerFn({ method: 'POST' })
   })
 
 export const updateLesson = createServerFn({ method: 'POST' })
-  .validator((input: { index: number } & LessonInsert) => ({
-    ...lessonInsertSchema.parse(input),
-    index: Number(input.index),
-  }))
+  .validator(
+    lessonInsertSchema.extend({
+      index: z.number().int(),
+      sendCapacityEmails: z.boolean().optional(),
+    }),
+  )
   .handler(async ({ data }) => {
-    const { index, ...rest } = data
+    const { index, sendCapacityEmails, ...rest } = data
     await requireLessonManagement(index)
     const mismatch = quarterMismatchError(
       lastSessionDate(rest.sessions),
@@ -279,10 +294,62 @@ export const updateLesson = createServerFn({ method: 'POST' })
     )
     if (mismatch) throw new Error(mismatch)
     const row = fromLessonInsert(rest)
-    await db.update(lessons).set(row).where(eq(lessons.index, index))
-    const { removedIds } = await syncLessonSessions(index, rest.sessions)
-    await reconcileCalendar(index, removedIds)
-    return { success: true, index }
+
+    try {
+      const result = await db.transaction(async (tx) => {
+        const [current] = await tx
+          .select({ size: lessons.size })
+          .from(lessons)
+          .where(eq(lessons.index, index))
+          .for('update')
+        if (!current) throw new Error('Lesson not found')
+        const currentSize = current.size ?? 0
+        const students =
+          currentSize !== row.size && sendCapacityEmails !== false
+            ? await fetchLessonStudents(index, tx)
+            : []
+        const { changes, preview } = getLessonCapacityChange(students, currentSize, row.size)
+        if (changes.length > 0 && sendCapacityEmails === undefined) {
+          return { preview }
+        }
+
+        await tx.update(lessons).set(row).where(eq(lessons.index, index))
+        const { removedIds } = await syncLessonSessions(index, rest.sessions, tx)
+        if (!sendCapacityEmails || changes.length === 0) return { removedIds }
+
+        const [lessonRow] = await baseLessonQuery(tx).where(eq(lessons.index, index))
+        const lesson = toRichLesson(lessonRow, await fetchLessonSessions(index, tx))
+        const info = await fetchLessonEmailInfo(lesson, tx)
+        const [announcement] = await tx
+          .select({ id: lessonAnnouncements.id })
+          .from(lessonAnnouncements)
+          .where(eq(lessonAnnouncements.lessonId, index))
+          .limit(1)
+        return {
+          removedIds,
+          notification: {
+            changes,
+            info,
+            announcementsUrl: announcement ? lessonPageUrl(index) : undefined,
+          },
+        }
+      })
+      if (result.preview) return { status: 'confirm' as const, preview: result.preview }
+
+      const emails = result.notification
+        ? await sendLessonCapacityEmails(
+            index,
+            result.notification.info,
+            result.notification.changes,
+            result.notification.announcementsUrl,
+          )
+        : undefined
+      await reconcileCalendar(index, result.removedIds)
+      return { status: 'saved' as const, emails }
+    } catch (error) {
+      console.error('Failed to update lesson', index, error)
+      throw new Error('Failed to update lesson')
+    }
   })
 
 export const deleteLesson = createServerFn({ method: 'POST' })
@@ -344,7 +411,7 @@ export const removeStudentFromLesson = createServerFn({ method: 'POST' })
 
         await sendEmail({
           to: promotedStudent.email,
-          subject: "WYC - You're off the waitlist!",
+          subject: lessonWaitlistPromotionSubject,
           ...lessonEnrolledEmail(
             studentName,
             lessonEmailInfo,

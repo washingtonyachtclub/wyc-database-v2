@@ -43,14 +43,12 @@ export function useCreateLessonMutation(opts: { onSuccess?: () => void; onClose:
   })
 }
 
-export function useUpdateLessonMutation(opts: { onSuccess: () => void; onClose: () => void }) {
+export function useUpdateLessonMutation() {
   const queryClient = useQueryClient()
   return useMutation({
     mutationFn: updateLesson,
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['lessons'] })
-      opts.onSuccess()
-      opts.onClose()
+    onSuccess: (result) => {
+      if (result.status === 'saved') queryClient.invalidateQueries({ queryKey: ['lessons'] })
     },
   })
 }

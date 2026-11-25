@@ -79,6 +79,8 @@ function guideLine(lesson: LessonEmailInfo): string {
 }
 
 // TODO: Subject lines should live alongside templates, not in server functions
+export const lessonWaitlistPromotionSubject = "WYC - You're off the waitlist!"
+
 export function lessonEnrolledEmail(
   studentName: string,
   lesson: LessonEmailInfo,
@@ -136,5 +138,19 @@ If enough students drop the class, you will automatically be enrolled.
 
 You can check your waitlist status or drop the class at ${format.text(`${PUBLIC_APP_ORIGIN}/my-lessons`)}.
 `,
+  )
+}
+
+export const lessonWaitlistedByCapacitySubject = 'WYC - Your lesson spot has changed'
+
+export function lessonWaitlistedByCapacityEmail(studentName: string, lesson: LessonEmailInfo) {
+  return renderEmail(
+    (format) => `Hello ${format.text(studentName)},
+
+The capacity for ${format.text(lesson.subtype)} was reduced, and you’ve been moved to the waitlist.
+
+If this was unexpected, please contact your instructor${lesson.instructor1Email ? `, ${format.text(lesson.instructor1Name)} (${format.text(lesson.instructor1Email)})` : ''}.
+
+You can check your status in ${format.link(`${PUBLIC_APP_ORIGIN}/my-lessons`, 'My Lessons')}.`,
   )
 }

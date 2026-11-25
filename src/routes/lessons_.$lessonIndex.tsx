@@ -1,4 +1,6 @@
 import { LessonSizeField } from '@/components/lessons/LessonSizeField'
+import { LessonCapacityDialog } from '@/components/lessons/LessonCapacityDialog'
+import { EmailSimulatedNotice } from '@/components/ui/EmailSimulatedNotice'
 import { useCurrentUser } from '@/lib/auth/auth-query-options'
 import { canManageLesson } from '@/lib/resource-permissions'
 import { getLessonInstructorOptionsQueryOptions } from '@/domains/members/query-options'
@@ -26,6 +28,7 @@ import {
   useUpdateLessonMutation,
 } from '@/domains/lessons/query-options'
 import type { LessonInsert, LessonStudent, RichLesson } from '@/domains/lessons/schema'
+import type { LessonCapacityPreview } from '@/domains/lessons/capacity-change'
 import { lessonInsertSchemaForQuarters, toSessionInput } from '@/domains/lessons/schema'
 import { getQuartersQueryOptions } from '@/domains/quarters/query-options'
 import { useAppForm } from '@/hooks/form'
@@ -347,18 +350,35 @@ function LessonEditForm({ lesson }: { lesson: RichLesson }) {
   )
   const { data: quarters = [] } = useQuery(getQuartersQueryOptions())
   const { data: classTypes = [] } = useQuery(getLessonTypesQueryOptions())
-  const [saveMessage, setSaveMessage] = useState('')
+  const [saveResult, setSaveResult] = useState<{
+    emails?: { sentCount: number; failed: string[]; simulated: boolean }
+  }>()
+  const [confirmation, setConfirmation] = useState<{
+    value: LessonInsert
+    preview: LessonCapacityPreview
+  }>()
+  const updateMutation = useUpdateLessonMutation()
 
-  const updateMutation = useUpdateLessonMutation({
-    onSuccess: () => {
-      if (!canManageLesson({ userId: user?.wycNumber, privileges }, form.state.values)) {
+  async function saveLesson(value: LessonInsert, sendCapacityEmails?: boolean) {
+    setSaveResult(undefined)
+    try {
+      const result = await updateMutation.mutateAsync({
+        data: { index: lesson.index, ...value, sendCapacityEmails },
+      })
+      if (result.status === 'confirm') {
+        setConfirmation({ value, preview: result.preview })
+        return
+      }
+      setConfirmation(undefined)
+      if (!canManageLesson({ userId: user?.wycNumber, privileges }, value)) {
         navigate({ to: '/my-lessons' })
         return
       }
-      setSaveMessage('Lesson saved.')
-    },
-    onClose: () => {},
-  })
+      setSaveResult(result)
+    } catch {
+      // The mutation exposes the save error to the form or confirmation dialog.
+    }
+  }
 
   const lessonSchema = useMemo(() => lessonInsertSchemaForQuarters(quarters), [quarters])
 
@@ -368,8 +388,7 @@ function LessonEditForm({ lesson }: { lesson: RichLesson }) {
       onSubmit: lessonSchema,
     },
     onSubmit: async ({ value }) => {
-      setSaveMessage('')
-      await updateMutation.mutateAsync({ data: { index: lesson.index, ...value } })
+      await saveLesson(value)
     },
   })
 
@@ -396,13 +415,9 @@ function LessonEditForm({ lesson }: { lesson: RichLesson }) {
       }}
       className="space-y-4"
     >
-      <ErrorAlert error={mutationError} action="Updating lesson" />
+      <ErrorAlert error={confirmation ? undefined : mutationError} action="Updating lesson" />
 
-      {saveMessage && (
-        <div className="rounded-md bg-green-500/10 p-4 border border-green-500">
-          <div className="text-sm text-green-700">{saveMessage}</div>
-        </div>
-      )}
+      {saveResult && <LessonSaveNotice emails={saveResult.emails} />}
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <form.AppField
@@ -501,7 +516,45 @@ function LessonEditForm({ lesson }: { lesson: RichLesson }) {
           <form.SubmitButton label="Update Lesson" submittingLabel="Saving..." />
         </form.AppForm>
       </div>
+      <LessonCapacityDialog
+        preview={confirmation?.preview}
+        saving={updateMutation.isPending}
+        error={confirmation ? mutationError : undefined}
+        onBack={() => {
+          setConfirmation(undefined)
+          updateMutation.reset()
+        }}
+        onSave={(sendEmails) => {
+          if (confirmation && !updateMutation.isPending) {
+            void saveLesson(confirmation.value, sendEmails)
+          }
+        }}
+      />
     </form>
+  )
+}
+
+function LessonSaveNotice({
+  emails,
+}: {
+  emails?: { sentCount: number; failed: string[]; simulated: boolean }
+}) {
+  const count = emails?.sentCount ?? 0
+  return (
+    <div role="status" className="space-y-2">
+      <div className="rounded-md border border-border bg-muted p-3 text-sm">
+        Lesson saved.
+        {count > 0 &&
+          ` ${count} ${count === 1 ? 'email' : 'emails'} ${emails?.simulated ? 'simulated' : 'sent'}.`}
+      </div>
+      {!!emails?.failed.length && (
+        <div className="rounded-md border border-destructive bg-destructive/10 p-3 text-sm text-destructive">
+          {emails.failed.length === 1 ? 'Email failed' : 'Emails failed'} to send to{' '}
+          {new Intl.ListFormat('en').format(emails.failed)}.
+        </div>
+      )}
+      {emails?.simulated && <EmailSimulatedNotice />}
+    </div>
   )
 }
 
