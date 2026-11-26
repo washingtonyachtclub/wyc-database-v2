@@ -1,3 +1,4 @@
+import { lessonErrorMessage } from '@/components/lessons/lesson-error-message'
 import { Plus, X } from 'lucide-react'
 import { LessonLocationField, lessonTypeLocation } from './LessonLocationField'
 import { Button } from '../ui/button'
@@ -138,7 +139,7 @@ export const LessonSessionsField = withForm({
                       error ? 'mt-2 text-sm text-destructive' : 'mt-2 text-sm text-muted-foreground'
                     }
                   >
-                    {quarter ? `Membership quarter · ${quarter.school}` : error}
+                    {quarter ? `Membership quarter · ${quarter.school}` : lessonErrorMessage(error)}
                   </p>
                 )
               }}

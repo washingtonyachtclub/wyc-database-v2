@@ -1,3 +1,4 @@
+import { lessonErrorMessage } from '@/components/lessons/lesson-error-message'
 import { revalidateLogic } from '@tanstack/react-form'
 import { LessonSizeField } from '@/components/lessons/LessonSizeField'
 import { LessonCapacityDialog } from '@/components/lessons/LessonCapacityDialog'
@@ -409,7 +410,10 @@ function LessonEditForm({ lesson }: { lesson: RichLesson }) {
       }}
       className="space-y-4"
     >
-      <ErrorAlert error={confirmation ? undefined : mutationError} action="Updating lesson" />
+      <ErrorAlert
+        error={confirmation ? undefined : lessonErrorMessage(mutationError)}
+        action="Updating lesson"
+      />
 
       {saveResult && <LessonSaveNotice emails={saveResult.emails} />}
 
@@ -482,9 +486,7 @@ function LessonEditForm({ lesson }: { lesson: RichLesson }) {
           children={(field) => <field.TextField label="Requirements (optional)" />}
         />
 
-        <div className="md:col-span-2 grid grid-cols-1 md:grid-cols-3 gap-4 items-end">
-          <LessonSizeField form={form} />
-        </div>
+        <LessonSizeField form={form} />
       </div>
 
       <div className="flex justify-start gap-2 pt-4 border-t">

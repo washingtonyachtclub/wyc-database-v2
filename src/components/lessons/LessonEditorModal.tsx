@@ -1,3 +1,4 @@
+import { lessonErrorMessage } from '@/components/lessons/lesson-error-message'
 import { revalidateLogic } from '@tanstack/react-form'
 import { LessonSizeField } from '@/components/lessons/LessonSizeField'
 import { useQuery, useSuspenseQuery } from '@tanstack/react-query'
@@ -72,7 +73,7 @@ export function LessonFormModal({ onClose, onSuccess }: LessonFormModalProps) {
         }}
         className="p-6 space-y-4"
       >
-        <ErrorAlert error={mutationError} action="Saving lesson" />
+        <ErrorAlert error={lessonErrorMessage(mutationError)} action="Saving lesson" />
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <form.AppField
@@ -136,14 +137,11 @@ export function LessonFormModal({ onClose, onSuccess }: LessonFormModalProps) {
             )}
           />
 
-          <LessonSizeField form={form} />
-
           <form.AppField
             name="requirements"
-            children={(field) => (
-              <field.TextField label="Requirements (optional)" className="md:col-span-2" />
-            )}
+            children={(field) => <field.TextField label="Requirements (optional)" />}
           />
+          <LessonSizeField form={form} />
         </div>
 
         <div className="flex justify-end gap-2 pt-4 border-t">
