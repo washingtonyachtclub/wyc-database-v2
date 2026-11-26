@@ -2,6 +2,7 @@ import { memberSearchQuery } from '@/domains/members/queries'
 import { toMemberSearchResult } from '@/domains/members/schema'
 import { rankMembers, MAX_MEMBER_SEARCH_RESULTS } from '@/domains/members/search'
 import { createServerFn } from '@tanstack/react-start'
+import { setResponseHeader } from '@tanstack/react-start/server'
 import { and, desc, eq, gte, inArray, isNotNull, isNull, sql } from 'drizzle-orm'
 import { z } from 'zod'
 import db from '@/db/index'
@@ -27,20 +28,28 @@ import {
   baseCheckoutsQuery,
   baseMemberCheckoutExportQuery,
   checkoutSortColumns,
+  findCheckout,
+  getCheckoutCrew,
+  getCheckoutGuests,
   withCheckoutFilters,
 } from '@/domains/checkouts/queries'
 import {
   type CheckoutCrewMember,
   type CheckoutGuest,
+  checkInSchema,
+  checkoutEditSchema,
+  checkoutIndexSchema,
   checkoutInsertSchema,
   guestStatusLabel,
   manualCheckoutInsertSchema,
   toCheckout,
   toCheckoutCard,
+  toCheckoutEdit,
   toCheckoutTableRow,
+  toDbDateTime,
   toMemberCheckoutExportRow,
 } from '@/domains/checkouts/schema'
-import { CheckoutWriteError, writeCheckout } from '@/domains/checkouts/write'
+import { CheckoutWriteError, updateOpenCheckout, writeCheckout } from '@/domains/checkouts/write'
 import {
   optionalAuth,
   requireAuth,
@@ -48,7 +57,7 @@ import {
   requireSelfOrPrivilege,
   sessionHasPrivilege,
 } from '@/lib/auth/auth-middleware'
-import { getTodayPacificDateString } from '@/lib/date-utils'
+import { getNowPacificDateTimeString, getTodayPacificDateString } from '@/lib/date-utils'
 import type { CheckoutFilters } from './filter-types'
 
 export const getCheckouts = createServerFn({ method: 'GET' })
@@ -253,6 +262,7 @@ export const getCheckoutCards = createServerFn({ method: 'GET' }).handler(async 
   try {
     const me = await optionalAuth()
     const canAdminCheckIn = me !== null && (await sessionHasPrivilege('db', 'rtgs'))
+    const canAdminEdit = me !== null && (await sessionHasPrivilege('db'))
     const [active, returned] = await Promise.all([
       baseCheckoutCardsQuery().where(isNull(checkouts.timeReturn)).orderBy(desc(checkouts.index)),
       baseCheckoutCardsQuery()
@@ -266,11 +276,13 @@ export const getCheckoutCards = createServerFn({ method: 'GET' }).handler(async 
 
     const crewByCheckout = new Map<number, CheckoutCrewMember[]>()
     const guestsByCheckout = new Map<number, CheckoutGuest[]>()
+    const crewedCheckoutIds = new Set<number>()
 
     if (ids.length > 0) {
       const crewRows = await db
         .select({
           checkoutId: crew.checkoutId,
+          wycNumber: crew.crewId,
           first: wycDatabase.first,
           last: wycDatabase.last,
           status: memcat.text,
@@ -282,6 +294,7 @@ export const getCheckoutCards = createServerFn({ method: 'GET' }).handler(async 
         .leftJoin(quarters, eq(wycDatabase.expireQtrIndex, quarters.index))
         .where(inArray(crew.checkoutId, ids))
       for (const row of crewRows) {
+        if (row.wycNumber === me) crewedCheckoutIds.add(row.checkoutId)
         const list = crewByCheckout.get(row.checkoutId) ?? []
         list.push({
           name: fullName(row.first, row.last) || 'Unknown member',
@@ -302,15 +315,23 @@ export const getCheckoutCards = createServerFn({ method: 'GET' }).handler(async 
       }
     }
 
-    const toCard = (row: (typeof rows)[number]) =>
-      toCheckoutCard(
+    const toCard = (row: (typeof rows)[number]) => {
+      const isSkipper = row.wycNumber === me
+      return toCheckoutCard(
         row,
         crewByCheckout.get(row.index) ?? [],
         guestsByCheckout.get(row.index) ?? [],
-        me !== null && (row.wycNumber === me || canAdminCheckIn),
+        {
+          canCheckIn: isSkipper || canAdminCheckIn,
+          canEdit: isSkipper || canAdminEdit,
+          participation: isSkipper ? 'skipper' : crewedCheckoutIds.has(row.index) ? 'crew' : null,
+        },
       )
+    }
 
-    return { active: active.map(toCard), returned: returned.map(toCard) }
+    const activeCards = active.map(toCard)
+    activeCards.sort((a, b) => Number(Boolean(b.participation)) - Number(Boolean(a.participation)))
+    return { active: activeCards, returned: returned.map(toCard) }
   } catch (error) {
     console.error('Failed to fetch checkout cards:', error)
     throw new Error('Failed to fetch checkouts')
@@ -463,17 +484,73 @@ export const createManualCheckout = createServerFn({ method: 'POST' })
     }
   })
 
-export const checkInBoat = createServerFn({ method: 'POST' })
-  .validator((input) => z.object({ index: z.coerce.number().int().min(1) }).parse(input))
+async function requireOpenCheckoutEditor(index: number) {
+  const me = await requireAuth()
+  let checkout: Awaited<ReturnType<typeof findCheckout>>
+  try {
+    checkout = await findCheckout(index)
+  } catch (error) {
+    console.error('Failed to fetch checkout for editing:', error)
+    throw new Error('Failed to load checkout')
+  }
+  if (!checkout) throw new Error('Checkout not found')
+  if (checkout.wycNumber !== me) await requirePrivilege('db')
+  if (checkout.timeReturn !== null) throw new Error('This checkout is no longer open for editing')
+  return checkout
+}
+
+export const getCheckoutForEdit = createServerFn({ method: 'GET' })
+  .validator((input) => z.object({ index: checkoutIndexSchema }).parse(input))
   .handler(async ({ data: { index } }) => {
-    let row: { wycNumber: number; timeReturn: string | null } | undefined
+    setResponseHeader('Cache-Control', 'private, no-store')
+    const checkout = await requireOpenCheckoutEditor(index)
     try {
-      const rows = await db
-        .select({ wycNumber: checkouts.wycNumber, timeReturn: checkouts.timeReturn })
-        .from(checkouts)
-        .where(eq(checkouts.index, index))
-        .limit(1)
-      row = rows[0]
+      const [crewMembers, guestRows] = await Promise.all([
+        getCheckoutCrew(index),
+        getCheckoutGuests(index),
+      ])
+      return {
+        skipperWycNumber: checkout.wycNumber,
+        crewMembers: crewMembers.map((member) => ({
+          wycNumber: member.wycNumber,
+          first: str(member.first),
+          last: str(member.last),
+        })),
+        values: toCheckoutEdit(
+          checkout,
+          crewMembers.map((member) => member.wycNumber),
+          guestRows,
+        ),
+      }
+    } catch (error) {
+      console.error('Failed to load checkout details for editing:', error)
+      throw new Error('Failed to load checkout details')
+    }
+  })
+
+export const editCheckout = createServerFn({ method: 'POST' })
+  .validator((input) =>
+    z.object({ index: checkoutIndexSchema, changes: checkoutEditSchema }).parse(input),
+  )
+  .handler(async ({ data: { index, changes } }) => {
+    const checkout = await requireOpenCheckoutEditor(index)
+    let validationError: string | null
+    try {
+      validationError = await updateOpenCheckout(index, checkout.wycNumber, changes)
+    } catch (error) {
+      console.error('Failed to edit checkout:', error)
+      throw new Error('Failed to edit checkout')
+    }
+    if (validationError) throw new Error(validationError)
+    return { success: true }
+  })
+
+export const checkInBoat = createServerFn({ method: 'POST' })
+  .validator((input) => checkInSchema.parse(input))
+  .handler(async ({ data: { index, actualReturn } }) => {
+    let row: Awaited<ReturnType<typeof findCheckout>>
+    try {
+      row = await findCheckout(index)
     } catch (error) {
       console.error('Failed to fetch checkout for check-in:', error)
       throw new Error('Failed to check in boat')
@@ -482,16 +559,37 @@ export const checkInBoat = createServerFn({ method: 'POST' })
 
     await requireSelfOrPrivilege(row.wycNumber, 'db', 'rtgs')
 
+    const enteredReturn = actualReturn === undefined ? undefined : toDbDateTime(actualReturn)
+    if (enteredReturn && enteredReturn < row.timeDeparture) {
+      throw new Error('Actual return cannot be before departure')
+    }
+    if (enteredReturn && enteredReturn > getNowPacificDateTimeString()) {
+      throw new Error('Actual return cannot be in the future')
+    }
+
+    let updated: boolean
     try {
-      await db
+      const [checkedIn] = await db
         .update(checkouts)
         .set({
-          timeReturn: sql`timezone('America/Los_Angeles', now())`,
+          timeReturn: enteredReturn ?? sql`timezone('America/Los_Angeles', now())`,
         })
-        .where(and(eq(checkouts.index, index), isNull(checkouts.timeReturn)))
-      return { success: true }
+        .where(
+          and(
+            eq(checkouts.index, index),
+            eq(checkouts.wycNumber, row.wycNumber),
+            isNull(checkouts.timeReturn),
+          ),
+        )
+        .returning({ index: checkouts.index })
+      updated =
+        checkedIn !== undefined ||
+        enteredReturn === undefined ||
+        (await findCheckout(index))?.timeReturn === enteredReturn
     } catch (error) {
       console.error('Failed to check in boat:', error)
       throw new Error('Failed to check in boat')
     }
+    if (!updated) throw new Error('This boat has already been checked in')
+    return { success: true }
   })
