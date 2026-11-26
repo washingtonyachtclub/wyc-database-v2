@@ -18,11 +18,13 @@ export function DiscountCodeField({
   disabled,
   duration,
   onApplied,
+  onCheckingChange,
   tier,
 }: {
   audience: Exclude<DiscountCodeAudience, 'both'>
   disabled?: boolean
   duration: RenewalDuration
+  onCheckingChange?: (pending: boolean) => void
   onApplied: (discountCode: DiscountCodeQuote | null) => void
   tier: RenewalTier | null
 }) {
@@ -46,6 +48,7 @@ export function DiscountCodeField({
   async function apply() {
     if (!tier || !code.trim()) return
     setError(null)
+    onCheckingChange?.(true)
     try {
       const result = await quote.mutateAsync({ audience, code, duration, tier })
       setApplied(result)
@@ -55,6 +58,8 @@ export function DiscountCodeField({
       setApplied(null)
       onApplied(null)
       setError(caught?.message ?? 'Could not apply the discount code.')
+    } finally {
+      onCheckingChange?.(false)
     }
   }
 
@@ -98,11 +103,10 @@ export function DiscountCodeField({
           <div>
             <p className="font-medium">{applied.name}</p>
             <p className="text-muted-foreground">
-              {formatMoney(applied.discountCents, applied.currency)} discount · Total{' '}
-              {formatMoney(applied.finalCents, applied.currency)}
+              {formatMoney(applied.discountCents, applied.currency)} discount
             </p>
           </div>
-          <Button type="button" variant="ghost" size="sm" onClick={remove}>
+          <Button type="button" variant="ghost" size="sm" disabled={disabled} onClick={remove}>
             Remove
           </Button>
         </div>

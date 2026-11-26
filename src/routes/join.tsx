@@ -1,7 +1,9 @@
+import { ClubWordmark } from '@/components/ClubWordmark'
+import {
+  getCheckoutDraft,
+  discardCheckoutDraft,
+} from '@/domains/membership-applications/server-fns'
 import { MembershipQuestionnaireFields } from '@/components/renewals/MembershipQuestionnaireFields'
-import { DiscountCodeField } from '@/components/membership-discount-codes/DiscountCodeField'
-import type { SquareCardHandle } from '@/components/renewals/SquareCardForm'
-import { SquareCardForm } from '@/components/renewals/SquareCardForm'
 import { Checkbox } from '@/components/ui/checkbox'
 import { TriangleAlert } from 'lucide-react'
 import { Button } from '@/components/ui/button'
@@ -21,10 +23,8 @@ import {
   newMemberSignupOptionsQueryOptions,
   useCheckNewMemberEmailMutation,
   useStartNewMemberExemptionMutation,
-  useStartNewMemberPaymentMutation,
 } from '@/domains/membership-applications/query-options'
 import type { RenewalDuration } from '@/domains/renewals/compute-renewal'
-import type { DiscountCodeQuote } from '@/domains/membership-discount-codes/schema'
 import type {
   PlusOneResponse,
   QuestionnaireAnswers,
@@ -34,17 +34,24 @@ import { tierForUwStatus } from '@/domains/renewals/questionnaire'
 import { cn } from '@/lib/utils'
 import { useQuery, useSuspenseQuery } from '@tanstack/react-query'
 import { createFileRoute, Link, useNavigate } from '@tanstack/react-router'
-import { useRef, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 
 export const Route = createFileRoute('/join')({
   validateSearch: (search: Record<string, unknown>) => ({
+    ...(search.edit === true || search.edit === '1' ? { edit: true as const } : {}),
     embed:
       search.embed === true || search.embed === 'true' || search.embed === 1 || search.embed === '1'
         ? true
         : undefined,
   }),
-  loader: ({ context }) =>
-    context.queryClient.ensureQueryData(newMemberSignupOptionsQueryOptions()),
+  loader: async ({ context }) => {
+    const [draft] = await Promise.all([
+      getCheckoutDraft(),
+      context.queryClient.ensureQueryData(newMemberSignupOptionsQueryOptions()),
+    ])
+    return draft
+  },
+  headers: () => ({ 'Cache-Control': 'private, no-store' }),
   component: JoinPage,
 })
 
@@ -81,25 +88,76 @@ function FieldError({ error }: { error?: string }) {
 }
 
 function JoinPage() {
+  const draft = Route.useLoaderData()
+  const search = Route.useSearch()
+  const [discarding, setDiscarding] = useState(false)
+  const [discardError, setDiscardError] = useState<string | null>(null)
+  if (
+    draft &&
+    ['draft', 'pending', 'reconciliation_required'].includes(draft.paymentStatus) &&
+    !(search.edit && draft.paymentStatus === 'draft')
+  ) {
+    return (
+      <main className="mx-auto max-w-lg space-y-5 px-4 py-12">
+        <h1 className="font-wyc-heading text-3xl font-bold">Continue your signup</h1>
+        <p>You have an unfinished membership application on this browser.</p>
+        <Button asChild className="w-full">
+          <a href="/join/checkout" target="_top">
+            {draft.paymentStatus === 'draft' ? 'Resume checkout' : 'View payment status'}
+          </a>
+        </Button>
+        {draft.paymentStatus === 'draft' && (
+          <Button
+            className="w-full"
+            variant="outline"
+            disabled={discarding}
+            onClick={async () => {
+              setDiscarding(true)
+              try {
+                await discardCheckoutDraft({ data: draft.id })
+                window.location.reload()
+              } catch {
+                setDiscardError('Could not start over. Please try again.')
+                setDiscarding(false)
+              }
+            }}
+          >
+            Start over
+          </Button>
+        )}
+        <ErrorAlert error={discardError} action="Start over" />
+      </main>
+    )
+  }
+  return (
+    <JoinForm
+      key={search.edit && draft ? draft.id : 'new'}
+      draft={search.edit && draft?.paymentStatus === 'draft' ? draft : null}
+    />
+  )
+}
+
+function JoinForm({ draft }: { draft: Awaited<ReturnType<typeof getCheckoutDraft>> }) {
   const search = Route.useSearch()
   const { data: signupOptions } = useSuspenseQuery(newMemberSignupOptionsQueryOptions())
   const navigate = useNavigate()
-  const cardRef = useRef<SquareCardHandle>(null)
   const submittingRef = useRef(false)
-  const payment = useStartNewMemberPaymentMutation()
   const exemption = useStartNewMemberExemptionMutation()
   const emailCheck = useCheckNewMemberEmailMutation()
 
-  const [firstName, setFirstName] = useState('')
-  const [lastName, setLastName] = useState('')
-  const [primaryEmail, setPrimaryEmail] = useState('')
-  const [uwEmail, setUwEmail] = useState('')
-  const [uwStatus, setUwStatus] = useState<UwStatus | null>(null)
-  const [plusOne, setPlusOne] = useState<PlusOneResponse | null>(null)
-  const [duration, setDuration] = useState<RenewalDuration>('annual')
-  const [discountCode, setDiscountCode] = useState<DiscountCodeQuote | null>(null)
+  const [firstName, setFirstName] = useState(draft?.firstName ?? '')
+  const [lastName, setLastName] = useState(draft?.lastName ?? '')
+  const [primaryEmail, setPrimaryEmail] = useState(draft?.primaryEmail ?? '')
+  const [uwEmail, setUwEmail] = useState(draft?.uwEmail ?? '')
+  const [uwStatus, setUwStatus] = useState<UwStatus | null>(draft?.questionnaire.uwStatus ?? null)
+  const [plusOne, setPlusOne] = useState<PlusOneResponse | null>(
+    draft?.questionnaire.plusOneResponse ?? null,
+  )
+  const [duration, setDuration] = useState<RenewalDuration>(draft?.duration ?? 'annual')
   const emailVersion = useRef(0)
-  const [newMember, setNewMember] = useState(false)
+  const [emailChecked, setEmailChecked] = useState(false)
+  const emailLookup = useRef<Promise<{ existingMember: boolean }> | null>(null)
+  const [newMember, setNewMember] = useState(Boolean(draft))
   const [emailOverride, setEmailOverride] = useState(false)
   const [existingMember, setExistingMember] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -121,6 +179,15 @@ function JoinPage() {
 
   const questionnaire: QuestionnaireAnswers | null =
     uwStatus && plusOne ? { plusOneResponse: plusOne, uwStatus } : null
+
+  useEffect(() => {
+    function restore() {
+      submittingRef.current = false
+      setIsSubmitting(false)
+    }
+    window.addEventListener('pageshow', restore)
+    return () => window.removeEventListener('pageshow', restore)
+  }, [])
 
   function clearValidationError(field: ValidationField) {
     setValidationErrors((current) => {
@@ -154,14 +221,18 @@ function JoinPage() {
   async function checkEmail(): Promise<boolean> {
     const email = primaryEmail.trim().toLowerCase()
     if (!/^\S+@\S+\.\S+$/.test(email)) return false
+    if (emailChecked) return !existingMember || emailOverride
     const version = emailVersion.current
     try {
-      const result = await emailCheck.mutateAsync(email)
+      emailLookup.current ??= emailCheck.mutateAsync(email)
+      const result = await emailLookup.current
       if (version !== emailVersion.current) return false
+      setEmailChecked(true)
       setExistingMember(result.existingMember)
       return !result.existingMember || emailOverride
     } catch {
       if (version === emailVersion.current) {
+        emailLookup.current = null
         setError('Could not check your email. Please try again before you continue.')
       }
       return false
@@ -244,54 +315,27 @@ function JoinPage() {
     return questionnaire !== null
   }
 
-  async function submit(event: React.FormEvent) {
-    event.preventDefault()
-    if (submittingRef.current || !validateApplication(true) || !questionnaire) return
+  function submit(event: React.FormEvent<HTMLFormElement>) {
+    if (submittingRef.current || !validateApplication(true) || !questionnaire || duplicateBlocked) {
+      event.preventDefault()
+      return
+    }
+    if (!emailChecked) {
+      event.preventDefault()
+      const form = event.currentTarget
+      submittingRef.current = true
+      setIsSubmitting(true)
+      void checkEmail().then((ok) => {
+        if (ok) form.submit()
+        else {
+          submittingRef.current = false
+          setIsSubmitting(false)
+        }
+      })
+      return
+    }
     submittingRef.current = true
     setIsSubmitting(true)
-    try {
-      if (!(await checkEmail())) return
-      const sourceId = await cardRef.current!.tokenize()
-      const result = await payment.mutateAsync({
-        duration,
-        firstName,
-        lastName,
-        primaryEmail,
-        discountCode: discountCode
-          ? { code: discountCode.code, revision: discountCode.revision }
-          : null,
-        questionnaire,
-        sourceId,
-        uwEmail,
-      })
-
-      if (result.success) {
-        await navigate({
-          to: '/join/$applicationId',
-          params: { applicationId: result.applicationId },
-          search: {
-            embed: embedded ? true : undefined,
-            email: result.emailSent ? 'sent' : 'failed',
-            simulated: result.emailSimulated,
-          },
-        })
-        return
-      }
-      if (!result.retryAllowed && result.applicationId) {
-        await navigate({
-          to: '/join/$applicationId',
-          params: { applicationId: result.applicationId },
-          search: { embed: embedded ? true : undefined, email: undefined, simulated: false },
-        })
-        return
-      }
-      setError(result.message)
-    } catch (caught: any) {
-      setError(caught?.message ?? 'Something went wrong. Please try again.')
-    } finally {
-      submittingRef.current = false
-      setIsSubmitting(false)
-    }
   }
 
   async function openDuesExemptionConfirmation() {
@@ -316,6 +360,7 @@ function JoinPage() {
         return
       }
       const result = await exemption.mutateAsync({
+        draftId: draft?.id,
         firstName,
         lastName,
         primaryEmail,
@@ -350,14 +395,7 @@ function JoinPage() {
     <main className={cn('bg-background', !embedded && 'min-h-screen')}>
       {!embedded && (
         <header className="mx-auto flex max-w-7xl items-center justify-between border-b px-4 py-5 sm:px-6 lg:px-8">
-          <div className="flex items-center gap-3">
-            <img src="/favicon.png" alt="" className="size-12 object-contain sm:size-14" />
-            <p className="font-wyc-heading text-lg font-black uppercase leading-tight tracking-[0.09em] text-wyc-purple sm:text-xl">
-              Washington
-              <br />
-              Yacht Club
-            </p>
-          </div>
+          <ClubWordmark />
           <p className="hidden text-sm font-medium text-wyc-purple sm:block">
             University of Washington · Seattle
           </p>
@@ -464,7 +502,27 @@ function JoinPage() {
         </aside>
 
         <div className="border-t border-wyc-purple pt-10 lg:border-l lg:border-t-0 lg:pl-12 lg:pt-0">
-          <form onSubmit={submit} className="space-y-8" noValidate>
+          <form
+            action="/api/join-checkout"
+            method="post"
+            target="_top"
+            onSubmit={submit}
+            className="space-y-8"
+            noValidate
+          >
+            <Input
+              type="hidden"
+              name="signup"
+              value={JSON.stringify({
+                firstName,
+                lastName,
+                primaryEmail,
+                uwEmail,
+                duration,
+                questionnaire,
+                editId: draft?.id ?? null,
+              })}
+            />
             <section className="space-y-5">
               <div className="space-y-2">
                 <h2 className="font-wyc-heading text-3xl font-bold tracking-tight text-wyc-purple">
@@ -511,6 +569,8 @@ function JoinPage() {
                   value={primaryEmail}
                   onChange={(event) => {
                     emailVersion.current += 1
+                    emailLookup.current = null
+                    setEmailChecked(false)
                     setEmailOverride(false)
                     setPrimaryEmail(event.target.value)
                     setExistingMember(false)
@@ -635,18 +695,6 @@ function JoinPage() {
             </div>
 
             <section className="space-y-5 border-t pt-8">
-              <h2 className="font-wyc-heading text-xl font-bold text-wyc-purple">Payment</h2>
-              <DiscountCodeField
-                audience="new_members"
-                duration={duration}
-                tier={tier}
-                onApplied={setDiscountCode}
-                disabled={isSubmitting}
-              />
-              <div className="space-y-2">
-                <Label>Card</Label>
-                <SquareCardForm ref={cardRef} onError={setError} />
-              </div>
               {memberWarning}
               <ErrorAlert error={error} action="Pay membership dues" />
               <Button
@@ -657,23 +705,20 @@ function JoinPage() {
                   isSubmitting || duplicateBlocked || (tier !== null && selectedPrice.isLoading)
                 }
               >
-                {isSubmitting ? 'Processing…' : 'Pay and Sign Up'}
+                {isSubmitting ? 'Continuing…' : 'Continue to payment'}
               </Button>
-              <div className="flex items-center gap-3 text-sm text-muted-foreground">
-                <span className="h-px flex-1 bg-border" />
-                <span>or</span>
-                <span className="h-px flex-1 bg-border" />
+              <div className="flex justify-end">
+                <Button
+                  type="button"
+                  size="sm"
+                  variant="link"
+                  className="whitespace-normal px-1 text-right text-muted-foreground underline"
+                  disabled={isSubmitting || duplicateBlocked}
+                  onClick={openDuesExemptionConfirmation}
+                >
+                  Request Dues Exemption (Officers, Instructors)
+                </Button>
               </div>
-              <Button
-                type="button"
-                size="lg"
-                variant="outline"
-                className="w-full"
-                disabled={isSubmitting || duplicateBlocked}
-                onClick={openDuesExemptionConfirmation}
-              >
-                Request Dues Exemption
-              </Button>
             </section>
 
             <Dialog open={showExemptionModal} onOpenChange={setShowExemptionModal}>
