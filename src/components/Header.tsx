@@ -111,14 +111,12 @@ export default function Header() {
               WYC Database
             </Link>
             {isDevApp && !hideDevInfo && dbName && (
-              <span className="ml-1 hidden rounded bg-yellow-200 px-2 py-0.5 text-xs font-semibold text-yellow-900 sm:inline">
+              <span className="ml-1 max-sm:hidden rounded bg-yellow-200 px-2 py-0.5 text-xs font-semibold text-yellow-900">
                 Database: {dbName}
               </span>
             )}
           </div>
-          <div className="hidden md:block">
-            {!isBarePage && isAuthenticated && <QuickSwitcher />}
-          </div>
+          <div className="max-md:hidden">{!isBarePage && isAuthenticated && <QuickSwitcher />}</div>
           <div className="flex items-center gap-1 sm:gap-4 md:justify-self-end">
             {isAuthenticated && user ? (
               <>
@@ -131,7 +129,7 @@ export default function Header() {
                     <span className="sr-only">Settings</span>
                   </Link>
                 </Button>
-                <span className="hidden sm:inline text-sm font-semibold text-muted-foreground">
+                <span className="max-sm:hidden text-sm font-semibold text-muted-foreground">
                   {user.first} {user.last} ({user.wycNumber})
                 </span>
                 {!sailLockerMode && (
@@ -164,7 +162,7 @@ export default function Header() {
                 {adminData && (
                   <Button
                     variant="ghost"
-                    className="hidden sm:inline-flex text-sm text-muted-foreground font-normal"
+                    className="max-sm:hidden text-sm text-muted-foreground font-normal"
                     onClick={() => setShowAdminModal(true)}
                   >
                     Contact DB Admin: <br />
