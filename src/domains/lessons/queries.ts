@@ -51,18 +51,14 @@ export async function fetchSessionsByLesson(
   if (lessonIds.length === 0) return byLesson
 
   const rows = await database
-    .select({
-      session: lessonSessions,
-      legacy: { location: lessons.location, locationUrl: lessons.locationUrl },
-    })
+    .select()
     .from(lessonSessions)
-    .leftJoin(lessons, eq(lessons.index, lessonSessions.lessonId))
     .where(inArray(lessonSessions.lessonId, lessonIds))
     .orderBy(asc(lessonSessions.startsAt), asc(lessonSessions.index))
 
-  for (const { session, legacy } of rows) {
+  for (const session of rows) {
     const arr = byLesson.get(session.lessonId) ?? []
-    arr.push(toLessonSession(session, legacy))
+    arr.push(toLessonSession(session))
     byLesson.set(session.lessonId, arr)
   }
   return byLesson
