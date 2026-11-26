@@ -116,9 +116,7 @@ export default function Header() {
               </span>
             )}
           </div>
-          <div className="max-md:hidden">
-            {!isBarePage && isAuthenticated && <QuickSwitcher />}
-          </div>
+          <div className="max-md:hidden">{!isBarePage && isAuthenticated && <QuickSwitcher />}</div>
           <div className="flex items-center gap-1 sm:gap-4 md:justify-self-end">
             {isAuthenticated && user ? (
               <>
