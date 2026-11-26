@@ -1,10 +1,10 @@
 {
-  "id": "54c901e5-9b38-4065-920d-d8e63247d7f8",
+  "version": "8",
+  "dialect": "postgres",
+  "id": "c64014bc-fde8-44f4-9f7a-8986de7ab10f",
   "prevIds": [
     "e3b45366-a364-4634-ba2b-63b1ec6786f2"
   ],
-  "version": "8",
-  "dialect": "postgres",
   "ddl": [
     {
       "values": [
@@ -2083,32 +2083,6 @@
       "generated": null,
       "identity": null,
       "name": "Description",
-      "entityType": "columns",
-      "schema": "public",
-      "table": "lessons"
-    },
-    {
-      "type": "varchar(80)",
-      "typeSchema": null,
-      "notNull": false,
-      "dimensions": 0,
-      "default": null,
-      "generated": null,
-      "identity": null,
-      "name": "location",
-      "entityType": "columns",
-      "schema": "public",
-      "table": "lessons"
-    },
-    {
-      "type": "varchar(255)",
-      "typeSchema": null,
-      "notNull": false,
-      "dimensions": 0,
-      "default": null,
-      "generated": null,
-      "identity": null,
-      "name": "location_url",
       "entityType": "columns",
       "schema": "public",
       "table": "lessons"

@@ -254,8 +254,6 @@ export const lessons = pgTable(
     legacyDescription: text('Description')
       .notNull()
       .$default(() => ''),
-    location: varchar({ length: 80 }),
-    locationUrl: varchar('location_url', { length: 255 }),
     size: integer(),
     expire: integer(),
     display: smallint().default(0).notNull(),
