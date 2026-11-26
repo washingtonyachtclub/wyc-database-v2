@@ -64,8 +64,8 @@ export function RenewalQuarterSection({
         <p className="text-xl font-semibold">{label(renewal)}</p>
       </div>
       <p className="text-sm">
-        This is the quarter that new members sign up for and current members expiring this quarter or
-        earlier renew to. This can be used to open next quarter sign-ups / renewals early
+        This is the quarter that new members sign up for and current members expiring this quarter
+        or earlier renew to. This can be used to open next quarter sign-ups / renewals early
       </p>
       <div className="flex items-center gap-2">
         <Checkbox
