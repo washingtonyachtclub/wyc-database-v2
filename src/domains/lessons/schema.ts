@@ -174,18 +174,14 @@ export type ClassType = {
 
 // --- Mappers ---
 
-export function toLessonSession(
-  row: LessonSessionRow,
-  legacy: { location: string | null; locationUrl: string | null } | null,
-): LessonSession {
+export function toLessonSession(row: LessonSessionRow): LessonSession {
   return {
     index: row.index,
     startsAt: row.startsAt,
     endsAt: row.endsAt,
     allDay: row.allDay !== 0,
-    // A session inserted by the prior deployment can still have legacy-only locations.
-    location: str(row.location ?? legacy?.location),
-    locationUrl: str(row.locationUrl ?? legacy?.locationUrl),
+    location: str(row.location),
+    locationUrl: str(row.locationUrl),
   }
 }
 
