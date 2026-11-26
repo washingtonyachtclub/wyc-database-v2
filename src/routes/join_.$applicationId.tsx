@@ -196,6 +196,19 @@ function CompleteNewMemberApplicationPage() {
       </StatusPage>
     )
   }
+  if (application.paymentStatus === 'pending') {
+    return (
+      <StatusPage title="Payment in progress" embedded={embedded}>
+        <p>
+          Refresh to check whether your payment has finished. If this message persists, contact the
+          club before paying again.
+        </p>
+        <Button className="mt-4" onClick={() => window.location.reload()}>
+          Check payment status
+        </Button>
+      </StatusPage>
+    )
+  }
   if (!canCompleteMembershipApplication(application.paymentStatus)) {
     return (
       <StatusPage title="Payment not completed" embedded={embedded}>

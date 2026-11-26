@@ -1,7 +1,5 @@
-import type { SquareCardHandle } from '@/components/renewals/SquareCardForm'
-import { DiscountCodeField } from '@/components/membership-discount-codes/DiscountCodeField'
+import { MembershipCheckout } from '@/components/renewals/MembershipCheckout'
 import { MembershipQuestionnaireFields } from '@/components/renewals/MembershipQuestionnaireFields'
-import { SquareCardForm } from '@/components/renewals/SquareCardForm'
 import { Button } from '@/components/ui/button'
 import {
   Dialog,
@@ -34,7 +32,7 @@ import { MemberWaiverForm } from '@/domains/waivers/MemberWaiverForm'
 import { useQuery, useSuspenseQuery } from '@tanstack/react-query'
 import { createFileRoute, redirect, useNavigate } from '@tanstack/react-router'
 import { CircleHelp } from 'lucide-react'
-import { useRef, useState } from 'react'
+import { useState } from 'react'
 
 export const Route = createFileRoute('/renew-membership')({
   validateSearch: (search: Record<string, unknown>) => {
@@ -67,6 +65,8 @@ function RenewMembershipPage() {
   const { redirect: redirectTo } = Route.useSearch()
   const navigate = useNavigate()
 
+  const [paying, setPaying] = useState(false)
+
   // Quarterly is the smallest paid renewal, so it determines whether payment is available.
   const canPayToRenew = status.preview.quarterly.allowed
 
@@ -77,15 +77,11 @@ function RenewMembershipPage() {
   const [duration, setDuration] = useState<RenewalDuration>(
     status.preview.annual.allowed ? 'annual' : 'quarterly',
   )
-  const [discountCode, setDiscountCode] = useState<DiscountCodeQuote | null>(null)
-  const [error, setError] = useState<string | null>(null)
-  const [submitting, setSubmitting] = useState(false)
   const [result, setResult] = useState<CompletionResult | null>(null)
   const [requiredEmailSimulated, setRequiredEmailSimulated] = useState(false)
   const [exemptionEmailSimulated, setExemptionEmailSimulated] = useState(false)
   const [exemptRequested, setExemptRequested] = useState(false)
 
-  const cardRef = useRef<SquareCardHandle>(null)
   const mutation = usePayAndRenewMutation()
 
   function selectUwStatus(next: UwStatus) {
@@ -121,26 +117,17 @@ function RenewMembershipPage() {
     return query.data ? formatMoney(query.data.amountCents, query.data.currency) : 'Unavailable'
   }
 
-  async function handlePay() {
+  async function handlePay(sourceId: string, discountCode: DiscountCodeQuote | null) {
     if (!questionnaire) return
-    setError(null)
-    setSubmitting(true)
-    try {
-      const sourceId = await cardRef.current!.tokenize()
-      const data = await mutation.mutateAsync({
-        duration,
-        discountCode: discountCode
-          ? { code: discountCode.code, revision: discountCode.revision }
-          : null,
-        sourceId,
-        questionnaire,
-      })
-      setRequiredEmailSimulated(data.emailSimulated)
-    } catch (e: any) {
-      setError(e?.message ?? 'Something went wrong. Please try again.')
-    } finally {
-      setSubmitting(false)
-    }
+    const data = await mutation.mutateAsync({
+      duration,
+      questionnaire,
+      sourceId,
+      discountCode: discountCode
+        ? { code: discountCode.code, revision: discountCode.revision }
+        : null,
+    })
+    setRequiredEmailSimulated(data.emailSimulated)
   }
 
   if (result) {
@@ -232,99 +219,86 @@ function RenewMembershipPage() {
         Your membership is paid through <strong>{status.expireQtrLabel}</strong>.
       </p>
 
-      <MembershipQuestionnaireFields
-        uwStatus={uwStatus}
-        plusOne={plusOne}
-        onUwStatusChange={selectUwStatus}
-        onPlusOneChange={setPlusOne}
-      />
-      {canPayToRenew ? (
-        <>
-          <div className="space-y-2">
-            <Label className="text-base">Duration</Label>
-            {uwStatus === null && (
-              <p className="text-base font-medium text-muted-foreground">
-                Answer the questions above to see pricing.
-              </p>
-            )}
-            <div
-              className={`grid gap-3 ${status.preview.annual.allowed ? 'grid-cols-2' : 'grid-cols-1'}`}
-            >
-              <Button
-                type="button"
-                variant={duration === 'quarterly' ? 'default' : 'outline'}
-                onClick={() => setDuration('quarterly')}
-                disabled={uwStatus === null}
-                className="h-auto flex-col items-stretch gap-0 whitespace-normal border-2 px-4 py-3 text-left"
+      <fieldset className="space-y-6" disabled={paying}>
+        <MembershipQuestionnaireFields
+          uwStatus={uwStatus}
+          plusOne={plusOne}
+          onUwStatusChange={selectUwStatus}
+          onPlusOneChange={setPlusOne}
+        />
+        {canPayToRenew ? (
+          <>
+            <div className="space-y-2">
+              <Label className="text-base">Duration</Label>
+              {uwStatus === null && (
+                <p className="text-base font-medium text-muted-foreground">
+                  Answer the questions above to see pricing.
+                </p>
+              )}
+              <div
+                className={`grid gap-3 ${status.preview.annual.allowed ? 'grid-cols-2' : 'grid-cols-1'}`}
               >
-                <span className="flex items-baseline justify-between gap-2">
-                  <span className="text-base font-semibold">Quarterly</span>
-                  <span className="text-base font-semibold">{priceLabel(priceQuarterly)}</span>
-                </span>
-                <span className="my-2 h-px w-full bg-current opacity-25" />
-                <span className="text-base font-normal">{status.preview.quarterly.label}</span>
-              </Button>
-              {status.preview.annual.allowed && (
                 <Button
                   type="button"
-                  variant={duration === 'annual' ? 'default' : 'outline'}
-                  onClick={() => setDuration('annual')}
+                  variant={duration === 'quarterly' ? 'default' : 'outline'}
+                  onClick={() => setDuration('quarterly')}
                   disabled={uwStatus === null}
                   className="h-auto flex-col items-stretch gap-0 whitespace-normal border-2 px-4 py-3 text-left"
                 >
                   <span className="flex items-baseline justify-between gap-2">
-                    <span className="text-base font-semibold">Annual</span>
-                    <span className="text-base font-semibold">{priceLabel(priceAnnual)}</span>
+                    <span className="text-base font-semibold">Quarterly</span>
+                    <span className="text-base font-semibold">{priceLabel(priceQuarterly)}</span>
                   </span>
                   <span className="my-2 h-px w-full bg-current opacity-25" />
-                  <span className="text-base font-normal">{status.preview.annual.label}</span>
+                  <span className="text-base font-normal">{status.preview.quarterly.label}</span>
                 </Button>
-              )}
+                {status.preview.annual.allowed && (
+                  <Button
+                    type="button"
+                    variant={duration === 'annual' ? 'default' : 'outline'}
+                    onClick={() => setDuration('annual')}
+                    disabled={uwStatus === null}
+                    className="h-auto flex-col items-stretch gap-0 whitespace-normal border-2 px-4 py-3 text-left"
+                  >
+                    <span className="flex items-baseline justify-between gap-2">
+                      <span className="text-base font-semibold">Annual</span>
+                      <span className="text-base font-semibold">{priceLabel(priceAnnual)}</span>
+                    </span>
+                    <span className="my-2 h-px w-full bg-current opacity-25" />
+                    <span className="text-base font-normal">{status.preview.annual.label}</span>
+                  </Button>
+                )}
+              </div>
             </div>
+
+            {selectedPrice.data && tier && (
+              <MembershipCheckout
+                key={tier + duration}
+                audience="renewals"
+                price={selectedPrice.data}
+                duration={duration}
+                tier={tier}
+                onBusyChange={setPaying}
+                disabled={!questionnaire || !status.preview[duration].allowed}
+                onPay={handlePay}
+              />
+            )}
+          </>
+        ) : (
+          <div className="rounded-md border bg-muted p-4">
+            You've reached the paid-renewal advance limit. You can still request a dues exemption.
           </div>
+        )}
 
-          <DiscountCodeField
-            audience="renewals"
-            duration={duration}
-            tier={tier}
-            onApplied={setDiscountCode}
-            disabled={submitting}
-          />
-
-          <div className="space-y-2">
-            <Label className="text-base">Card</Label>
-            <SquareCardForm ref={cardRef} onError={setError} />
-          </div>
-
-          <ErrorAlert error={error} action="Renew membership" />
-
-          <Button
-            onClick={handlePay}
-            disabled={
-              submitting ||
-              questionnaire === null ||
-              selectedPrice.isLoading ||
-              !status.preview[duration].allowed
-            }
-            className="w-full"
-          >
-            {submitting ? 'Processing…' : 'Pay & Renew'}
-          </Button>
-        </>
-      ) : (
-        <div className="rounded-md border bg-muted p-4">
-          You've reached the paid-renewal advance limit. You can still request a dues exemption.
-        </div>
-      )}
-
-      <DuesExemptSection
-        targetQuarterLabel={status.preview.quarterly.label}
-        questionnaire={questionnaire}
-        onRequested={(emailSimulated) => {
-          setExemptionEmailSimulated(emailSimulated)
-          setExemptRequested(true)
-        }}
-      />
+        <DuesExemptSection
+          targetQuarterLabel={status.preview.quarterly.label}
+          questionnaire={questionnaire}
+          onRequested={(emailSimulated) => {
+            setExemptionEmailSimulated(emailSimulated)
+            setExemptRequested(true)
+          }}
+        />
+      </fieldset>
     </div>
   )
 }

@@ -2,7 +2,7 @@
 
 ## Overview
 
-Logged-in members renew on `/renew-membership` by paying with a card or requesting a dues exemption. Both paths create a renewal workflow. Membership expiry and category are updated only after the workflow has its required funding decision and a signed member waiver.
+Logged-in members renew on `/renew-membership` by paying dues or requesting a dues exemption. The shared membership checkout appears below the term selection and offers a discount code, card entry, and Apple Pay on supported devices. Both paths create a renewal workflow. Membership expiry and category are updated only after the workflow has its required funding decision and a signed member waiver.
 
 New member signup and new-member exemption requests are handled separately through `/join` and
 `/membership-approvals`. See [new member signup](new-member-signup.md).
@@ -27,7 +27,7 @@ The renewal page resumes an open workflow after a reload. It shows the waiver wh
 1. The member selects Student, Alumni, Employee/Retiree, or Public and completes the renewal questionnaire.
 2. UW status determines the price tier. Student uses the student tier; every other status uses the non-student tier.
 3. The member chooses quarterly or annual membership. The page fetches the matching live price from Square.
-4. The Square Web Payments SDK tokenizes the card into a single-use source ID.
+4. The member pays by card or, on a supported device, Apple Pay. Both methods produce a single-use Square source ID.
 5. `payAndRenew` creates a Square order from the configured catalog variation, applies an optional
    discount code, and charges the order total.
 6. A completed charge creates `membership_renewals`, `membership_payments`, and `renewal_questionnaire` rows in one database transaction. The questionnaire remains pending.
@@ -131,6 +131,7 @@ Square uses Sandbox in development and Production in production, selected by `is
 | ----------------------------------------------------- | ----------------------------------------------------------------------- |
 | `src/routes/renew-membership.tsx`                     | Renewal questionnaire, payment form, workflow status, and member waiver |
 | `src/routes/membership-approvals.tsx`                 | New-member and dues-exemption review                                    |
+| `src/components/renewals/MembershipCheckout.tsx`      | Shared dues total, discount, and payment controls                       |
 | `src/components/renewals/SquareCardForm.tsx`          | Square Web Payments SDK card form                                       |
 | `src/domains/renewals/server-fns.ts`                  | Renewal status, live pricing, payment, and paid workflow creation       |
 | `src/domains/renewals/exemption-server-fns.ts`        | Exemption request, cancellation, review, approval, and denial           |

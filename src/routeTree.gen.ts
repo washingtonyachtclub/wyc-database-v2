@@ -46,11 +46,13 @@ import { Route as SetCurrentQuarterRouteImport } from './routes/set-current-quar
 import { Route as SetPasswordRouteImport } from './routes/set-password'
 import { Route as SettingsRouteImport } from './routes/settings'
 import { Route as TestsRouteImport } from './routes/tests'
+import { Route as ApiJoinCheckoutRouteImport } from './routes/api.join-checkout'
 import { Route as ApiRuntimeRouteImport } from './routes/api.runtime'
 import { Route as CheckoutNewRouteImport } from './routes/checkout_.new'
 import { Route as GuidesFjRouteImport } from './routes/guides.fj'
 import { Route as GuidesKnotsRouteImport } from './routes/guides.knots'
 import { Route as JoinApplicationIdRouteImport } from './routes/join_.$applicationId'
+import { Route as JoinCheckoutRouteImport } from './routes/join_.checkout'
 import { Route as LessonsLessonIndexRouteImport } from './routes/lessons_.$lessonIndex'
 import { Route as MembersWycNumberRouteImport } from './routes/members_.$wycNumber'
 import { Route as MyLessonsLessonIndexRouteImport } from './routes/my-lessons.$lessonIndex'
@@ -245,6 +247,11 @@ const TestsRoute = TestsRouteImport.update({
   path: '/tests',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiJoinCheckoutRoute = ApiJoinCheckoutRouteImport.update({
+  id: '/api/join-checkout',
+  path: '/api/join-checkout',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiRuntimeRoute = ApiRuntimeRouteImport.update({
   id: '/api/runtime',
   path: '/api/runtime',
@@ -268,6 +275,11 @@ const GuidesKnotsRoute = GuidesKnotsRouteImport.update({
 const JoinApplicationIdRoute = JoinApplicationIdRouteImport.update({
   id: '/join_/$applicationId',
   path: '/join/$applicationId',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const JoinCheckoutRoute = JoinCheckoutRouteImport.update({
+  id: '/join_/checkout',
+  path: '/join/checkout',
   getParentRoute: () => rootRouteImport,
 } as any)
 const LessonsLessonIndexRoute = LessonsLessonIndexRouteImport.update({
@@ -349,11 +361,13 @@ export interface FileRoutesByFullPath {
   '/set-password': typeof SetPasswordRoute
   '/settings': typeof SettingsRoute
   '/tests': typeof TestsRoute
+  '/api/join-checkout': typeof ApiJoinCheckoutRoute
   '/api/runtime': typeof ApiRuntimeRoute
   '/checkout/new': typeof CheckoutNewRoute
   '/guides/fj': typeof GuidesFjRoute
   '/guides/knots': typeof GuidesKnotsRoute
   '/join/$applicationId': typeof JoinApplicationIdRoute
+  '/join/checkout': typeof JoinCheckoutRoute
   '/lessons/$lessonIndex': typeof LessonsLessonIndexRoute
   '/members/$wycNumber': typeof MembersWycNumberRoute
   '/my-lessons/$lessonIndex': typeof MyLessonsLessonIndexRoute
@@ -401,11 +415,13 @@ export interface FileRoutesByTo {
   '/set-password': typeof SetPasswordRoute
   '/settings': typeof SettingsRoute
   '/tests': typeof TestsRoute
+  '/api/join-checkout': typeof ApiJoinCheckoutRoute
   '/api/runtime': typeof ApiRuntimeRoute
   '/checkout/new': typeof CheckoutNewRoute
   '/guides/fj': typeof GuidesFjRoute
   '/guides/knots': typeof GuidesKnotsRoute
   '/join/$applicationId': typeof JoinApplicationIdRoute
+  '/join/checkout': typeof JoinCheckoutRoute
   '/lessons/$lessonIndex': typeof LessonsLessonIndexRoute
   '/members/$wycNumber': typeof MembersWycNumberRoute
   '/my-lessons/$lessonIndex': typeof MyLessonsLessonIndexRoute
@@ -454,11 +470,13 @@ export interface FileRoutesById {
   '/set-password': typeof SetPasswordRoute
   '/settings': typeof SettingsRoute
   '/tests': typeof TestsRoute
+  '/api/join-checkout': typeof ApiJoinCheckoutRoute
   '/api/runtime': typeof ApiRuntimeRoute
   '/checkout_/new': typeof CheckoutNewRoute
   '/guides/fj': typeof GuidesFjRoute
   '/guides/knots': typeof GuidesKnotsRoute
   '/join_/$applicationId': typeof JoinApplicationIdRoute
+  '/join_/checkout': typeof JoinCheckoutRoute
   '/lessons_/$lessonIndex': typeof LessonsLessonIndexRoute
   '/members_/$wycNumber': typeof MembersWycNumberRoute
   '/my-lessons/$lessonIndex': typeof MyLessonsLessonIndexRoute
@@ -508,11 +526,13 @@ export interface FileRouteTypes {
     | '/set-password'
     | '/settings'
     | '/tests'
+    | '/api/join-checkout'
     | '/api/runtime'
     | '/checkout/new'
     | '/guides/fj'
     | '/guides/knots'
     | '/join/$applicationId'
+    | '/join/checkout'
     | '/lessons/$lessonIndex'
     | '/members/$wycNumber'
     | '/my-lessons/$lessonIndex'
@@ -560,11 +580,13 @@ export interface FileRouteTypes {
     | '/set-password'
     | '/settings'
     | '/tests'
+    | '/api/join-checkout'
     | '/api/runtime'
     | '/checkout/new'
     | '/guides/fj'
     | '/guides/knots'
     | '/join/$applicationId'
+    | '/join/checkout'
     | '/lessons/$lessonIndex'
     | '/members/$wycNumber'
     | '/my-lessons/$lessonIndex'
@@ -612,11 +634,13 @@ export interface FileRouteTypes {
     | '/set-password'
     | '/settings'
     | '/tests'
+    | '/api/join-checkout'
     | '/api/runtime'
     | '/checkout_/new'
     | '/guides/fj'
     | '/guides/knots'
     | '/join_/$applicationId'
+    | '/join_/checkout'
     | '/lessons_/$lessonIndex'
     | '/members_/$wycNumber'
     | '/my-lessons/$lessonIndex'
@@ -665,11 +689,13 @@ export interface RootRouteChildren {
   SetPasswordRoute: typeof SetPasswordRoute
   SettingsRoute: typeof SettingsRoute
   TestsRoute: typeof TestsRoute
+  ApiJoinCheckoutRoute: typeof ApiJoinCheckoutRoute
   ApiRuntimeRoute: typeof ApiRuntimeRoute
   CheckoutNewRoute: typeof CheckoutNewRoute
   GuidesFjRoute: typeof GuidesFjRoute
   GuidesKnotsRoute: typeof GuidesKnotsRoute
   JoinApplicationIdRoute: typeof JoinApplicationIdRoute
+  JoinCheckoutRoute: typeof JoinCheckoutRoute
   LessonsLessonIndexRoute: typeof LessonsLessonIndexRoute
   MembersWycNumberRoute: typeof MembersWycNumberRoute
   QrLoginApproveRoute: typeof QrLoginApproveRoute
@@ -940,6 +966,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof TestsRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/join-checkout': {
+      id: '/api/join-checkout'
+      path: '/api/join-checkout'
+      fullPath: '/api/join-checkout'
+      preLoaderRoute: typeof ApiJoinCheckoutRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/runtime': {
       id: '/api/runtime'
       path: '/api/runtime'
@@ -973,6 +1006,13 @@ declare module '@tanstack/react-router' {
       path: '/join/$applicationId'
       fullPath: '/join/$applicationId'
       preLoaderRoute: typeof JoinApplicationIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/join_/checkout': {
+      id: '/join_/checkout'
+      path: '/join/checkout'
+      fullPath: '/join/checkout'
+      preLoaderRoute: typeof JoinCheckoutRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/lessons_/$lessonIndex': {
@@ -1084,11 +1124,13 @@ const rootRouteChildren: RootRouteChildren = {
   SetPasswordRoute: SetPasswordRoute,
   SettingsRoute: SettingsRoute,
   TestsRoute: TestsRoute,
+  ApiJoinCheckoutRoute: ApiJoinCheckoutRoute,
   ApiRuntimeRoute: ApiRuntimeRoute,
   CheckoutNewRoute: CheckoutNewRoute,
   GuidesFjRoute: GuidesFjRoute,
   GuidesKnotsRoute: GuidesKnotsRoute,
   JoinApplicationIdRoute: JoinApplicationIdRoute,
+  JoinCheckoutRoute: JoinCheckoutRoute,
   LessonsLessonIndexRoute: LessonsLessonIndexRoute,
   MembersWycNumberRoute: MembersWycNumberRoute,
   QrLoginApproveRoute: QrLoginApproveRoute,

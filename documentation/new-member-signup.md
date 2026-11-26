@@ -9,8 +9,16 @@ create a member or activate membership. A completed application enters the offic
 ## Payment
 
 The signup page collects the applicant's name, primary email, conditional UW email, UW status, Plus
-One Rec Membership response, duration, and card details. Primary email is checked against member
-records when the field loses focus. A match displays a recovery link but does not block signup.
+One Rec Membership response, and duration. Leaving the primary email field checks for an existing
+member. Applicants with a match can open the renewal page or override the warning. Changing the
+email clears the result. Continue to payment saves a draft and opens `/join/checkout` in the current browser tab.
+The checkout shows the selected term, a discount code field, the total, card entry, and Apple Pay
+on supported devices. Edit signup details restores the applicant's answers.
+
+A host-only, HTTP-only cookie named `wyc_join_draft` stores the random application ID for seven
+days. The answers stay in `membership_applications`. Returning to `/join` with an active draft
+offers Resume checkout and Start over. Starting over discards the draft. The daily maintenance
+task removes expired drafts and discarded rows without a Square order.
 
 Prices and order totals come from the same Square catalog variations used by renewals. An optional
 discount code applies to the catalog price before payment. The server derives the price tier from UW
@@ -40,9 +48,10 @@ request. New-member exemption requests do not use the existing-member renewal wo
 ## Website embedding
 
 The public website embeds `/join?embed=1`. Embedded mode shows the hero, membership information,
-and signup form without the standalone application header. Payment completion keeps `embed=1`
-while navigating to the application page. Direct visits to `/join` use the full standalone
-presentation.
+and signup form without the standalone application header. Paid signup submits to
+`/api/join-checkout` with the browser's top-level tab as its target. The server redirects to
+checkout, and the contact and waiver page opens in that same tab after payment. Dues-exemption
+requests continue to the contact and waiver page inside the embed.
 
 The embedded page reports layout changes to the parent window so the public website can resize the
 iframe and use the website's page scrollbar. Route transitions and final submission ask the parent
@@ -104,6 +113,8 @@ Funding and review are independent states:
 
 | State                     | Meaning                                                            |
 | ------------------------- | ------------------------------------------------------------------ |
+| `draft`                   | Saved, editable checkout or a retryable payment attempt            |
+| `discarded`               | Applicant selected Start over                                      |
 | `pending`                 | Application exists and its Square attempt has not finished         |
 | `failed`                  | The order or payment definitely failed and another attempt is safe |
 | `reconciliation_required` | The outcome may include a charge and requires manual review        |
@@ -120,7 +131,9 @@ Funding and review are independent states:
 
 | File                                                         | Purpose                                                                            |
 | ------------------------------------------------------------ | ---------------------------------------------------------------------------------- |
-| `src/routes/join.tsx`                                        | Public identity, questionnaire, pricing, and payment page                          |
+| `src/routes/join.tsx`                                        | Public signup, draft recovery, and checkout handoff                                |
+| `src/routes/join_.checkout.tsx`                              | Standalone dues checkout                                                           |
+| `src/domains/membership-applications/checkout-drafts.ts`     | Draft persistence, browser cookie, and expiration                                  |
 | `src/routes/join_.$applicationId.tsx`                        | Resumable contact, questionnaire, and waiver page                                  |
 | `src/components/EmbeddedJoinPage.tsx`                        | Public website iframe sizing and scroll coordination                               |
 | `src/routes/membership-approvals.tsx`                        | Shared new-member and dues-exemption approval inbox                                |
