@@ -1,9 +1,10 @@
 import { and, eq } from 'drizzle-orm'
 import db from '@/db/index'
-import { officers, positions, posType, wycDatabase } from '@/db/schema'
+import { memberPhoto, officers, positions, posType, wycDatabase } from '@/db/schema'
 
 export const chiefSelectFields = {
   index: officers.index,
+  photoVersion: memberPhoto.version,
   wycNumber: wycDatabase.wycNumber,
   memberFirst: wycDatabase.first,
   memberLast: wycDatabase.last,
@@ -19,6 +20,7 @@ export function baseChiefsQuery() {
   return db
     .select(chiefSelectFields)
     .from(officers)
+    .leftJoin(memberPhoto, eq(memberPhoto.wycNumber, officers.member))
     .leftJoin(wycDatabase, eq(officers.member, wycDatabase.wycNumber))
     .leftJoin(positions, eq(officers.position, positions.index))
     .leftJoin(posType, eq(positions.type, posType.index))

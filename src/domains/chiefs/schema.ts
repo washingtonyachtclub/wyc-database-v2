@@ -21,6 +21,7 @@ export type ChiefRole = {
 
 export type ChiefTableRow = {
   wycNumber: number
+  photoVersion: string
   memberName: string
   outToSea: boolean
   chiefRoles: ChiefRole[]
@@ -32,6 +33,7 @@ export function toChiefRow(row: ChiefQueryRow) {
   return {
     officerIndex: row.index,
     wycNumber: num(row.wycNumber),
+    photoVersion: str(row.photoVersion),
     memberName: fullName(row.memberFirst, row.memberLast),
     positionId: num(row.positionId),
     positionName: str(row.positionName),

@@ -9,8 +9,8 @@ import { nitro } from 'nitro/vite'
 export default defineConfig(async ({ mode }) => {
   const plugins = [
     nitro({
-      traceDeps: ['square'],
-      commonJS: { exclude: [/node_modules\/square\//] },
+      traceDeps: ['square', 'sharp'],
+      commonJS: { exclude: [/node_modules\/(square|sharp)\//] },
       rollupConfig: {
         external: [...builtinModules, /^node:/],
       },

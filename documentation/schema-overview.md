@@ -1,6 +1,6 @@
 # Database Schema Overview
 
-The database has 46 tables defined in `src/db/schema.ts`, including tables used by v2 and tables retained for legacy applications.
+The database tables are defined in `src/db/schema.ts`, including tables used by v2 and tables retained for legacy applications.
 
 ---
 
@@ -29,7 +29,10 @@ Primary table. One row per member, keyed by WYC number.
 | `JoinDate`        | timestamp    | Auto-populated on insert                                                         |
 | `out_to_sea`      | tinyint(1)   | Blocks boat checkout even if membership is active                                |
 | `password_argon2` | varchar(255) | Modern Argon2id password hash                                                    |
-| `image_name`      | char(50)     | Profile image filename                                                           |
+
+### `member_photo` — Profile Photos
+
+One optional row per WYC number. `source_key` and `avatar_key` identify private R2 objects. The crop stores percentages of the uncropped image. Each save assigns a new version. Photos awaiting avatar generation use a centered square.
 
 ### `lessons` — Lesson/Class Offerings
 

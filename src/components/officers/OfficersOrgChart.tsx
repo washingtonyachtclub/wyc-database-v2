@@ -1,3 +1,4 @@
+import { MemberPhotoPreview } from '@/components/members/MemberPhotoPreview'
 import { Link } from '@tanstack/react-router'
 import { X } from 'lucide-react'
 import type { ReactNode } from 'react'
@@ -95,7 +96,17 @@ function RoleCard({
                   {officer.memberName}
                 </Link>
               ) : (
-                <span className={HOLDER_NAME_CLASSES}>{officer.memberName}</span>
+                <span className={HOLDER_NAME_CLASSES}>
+                  <MemberPhotoPreview
+                    nameTrigger
+                    id={officer.wycNumber}
+                    name={officer.memberName}
+                    version={officer.photoVersion}
+                    className="block text-[inherit] font-normal leading-[inherit] hover:underline"
+                  >
+                    {officer.memberName}
+                  </MemberPhotoPreview>
+                </span>
               )}
               {onDeactivate && (
                 <Tooltip>

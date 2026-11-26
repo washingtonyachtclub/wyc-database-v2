@@ -3,7 +3,16 @@ import type { PgColumn, PgSelect } from 'drizzle-orm/pg-core'
 import db from '@/db/index'
 import type { MemberFilters } from './filter-types'
 import { nameSearchCondition } from '@/db/query-helpers'
-import { memcat, quarters, wycDatabase } from '@/db/schema'
+import { memberPhoto, memcat, quarters, wycDatabase } from '@/db/schema'
+
+export function memberProfileQuery(wycNumber: number) {
+  return db
+    .select({ member: wycDatabase, version: memberPhoto.version, crop: memberPhoto.crop })
+    .from(wycDatabase)
+    .leftJoin(memberPhoto, eq(memberPhoto.wycNumber, wycDatabase.wycNumber))
+    .where(eq(wycDatabase.wycNumber, wycNumber))
+}
+export type MemberProfileRow = Awaited<ReturnType<typeof memberProfileQuery>>[number]
 
 export const memberTableSelectFields = {
   wycNumber: wycDatabase.wycNumber,

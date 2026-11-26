@@ -1,3 +1,4 @@
+import type { PhotoCrop } from '@/domains/member-photos/photo'
 import type { TestSnapshot } from '@/domains/written-tests/schema'
 import { sql } from 'drizzle-orm'
 import {
@@ -15,6 +16,7 @@ import {
   text,
   timestamp,
   unique,
+  uuid,
   varchar,
 } from 'drizzle-orm/pg-core'
 
@@ -61,13 +63,22 @@ export const wycDatabase = pgTable(
     passwordArgon2: varchar('password_argon2', { length: 255 }),
     outToSea: smallint('out_to_sea').default(0),
     joinDate: timestamp('JoinDate', { mode: 'string' }).defaultNow().notNull(),
-    imageName: varchar('image_name', { length: 50 }),
   },
   (table) => [
     primaryKey({ columns: [table.wycNumber] }),
     unique('IDX_WYCNumber').on(table.wycNumber),
   ],
 )
+
+export const memberPhoto = pgTable('member_photo', {
+  wycNumber: integer('wyc_number')
+    .primaryKey()
+    .references(() => wycDatabase.wycNumber),
+  version: uuid().defaultRandom().notNull(),
+  sourceKey: text('source_key').notNull(),
+  avatarKey: text('avatar_key'),
+  crop: json().$type<PhotoCrop>(),
+})
 
 export const boatTypes = pgTable(
   'boat_types',

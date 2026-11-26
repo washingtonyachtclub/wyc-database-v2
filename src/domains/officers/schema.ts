@@ -16,6 +16,7 @@ export type OfficerInsert = z.infer<typeof officerInsertSchema>
 export type Officer = {
   index: number
   wycNumber: number
+  photoVersion: string
   memberName: string
   positionId: number
   positionName: string
@@ -30,6 +31,7 @@ export function toOfficer(row: OfficerQueryRow): Officer {
   return {
     index: row.index,
     wycNumber: num(row.wycNumber),
+    photoVersion: str(row.photoVersion),
     memberName: fullName(row.memberFirst, row.memberLast),
     positionId: num(row.positionId),
     positionName: str(row.positionName),

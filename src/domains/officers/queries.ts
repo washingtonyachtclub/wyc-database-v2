@@ -1,10 +1,11 @@
 import { and, desc, eq, inArray } from 'drizzle-orm'
 import { OFFICER_PAGE_TYPES } from '@/db/constants'
 import db from '@/db/index'
-import { officers, posType, positions, wycDatabase } from '@/db/schema'
+import { memberPhoto, officers, posType, positions, wycDatabase } from '@/db/schema'
 
 export const officerSelectFields = {
   index: officers.index,
+  photoVersion: memberPhoto.version,
   wycNumber: wycDatabase.wycNumber,
   memberFirst: wycDatabase.first,
   memberLast: wycDatabase.last,
@@ -21,6 +22,7 @@ export function baseOfficersQuery() {
   return db
     .select(officerSelectFields)
     .from(officers)
+    .leftJoin(memberPhoto, eq(memberPhoto.wycNumber, officers.member))
     .leftJoin(wycDatabase, eq(officers.member, wycDatabase.wycNumber))
     .leftJoin(positions, eq(officers.position, positions.index))
     .leftJoin(posType, eq(positions.type, posType.index))
@@ -32,6 +34,7 @@ export function officerPageQuery(includeInactive = false) {
   return db
     .select(officerSelectFields)
     .from(officers)
+    .leftJoin(memberPhoto, eq(memberPhoto.wycNumber, officers.member))
     .leftJoin(wycDatabase, eq(officers.member, wycDatabase.wycNumber))
     .leftJoin(positions, eq(officers.position, positions.index))
     .leftJoin(posType, eq(positions.type, posType.index))
@@ -81,6 +84,7 @@ export function baseMemberPositionsQuery(wycNumber: number) {
   return db
     .select(officerSelectFields)
     .from(officers)
+    .leftJoin(memberPhoto, eq(memberPhoto.wycNumber, officers.member))
     .leftJoin(wycDatabase, eq(officers.member, wycDatabase.wycNumber))
     .leftJoin(positions, eq(officers.position, positions.index))
     .leftJoin(posType, eq(positions.type, posType.index))

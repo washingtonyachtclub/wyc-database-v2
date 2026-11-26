@@ -1,3 +1,4 @@
+import { MemberPhotoEditor } from '@/components/members/MemberPhotoEditor'
 import { MemberCheckoutsSection } from '@/components/members/MemberCheckoutsSection'
 import { MemberLessonsSection } from '@/components/members/MemberLessonsSection'
 import { MemberPositionsSection } from '@/components/members/MemberPositionsSection'
@@ -94,11 +95,21 @@ function MemberDetailPage() {
 
   return (
     <div className="p-4 space-y-8">
-      <div>
-        <h1 className="text-2xl font-bold">
-          WYC #{member.wycNumber} — {member.first} {member.last}
-        </h1>
-        <MemberExpireQuarter expireQtrIndex={member.expireQtrIndex} />
+      <div className="flex items-center gap-4">
+        <MemberPhotoEditor
+          key={member.wycNumber}
+          id={member.wycNumber}
+          name={`${member.first} ${member.last}`}
+          version={member.photoVersion}
+          crop={member.photoCrop}
+          canEdit={canSeeContactInfo}
+        />
+        <div>
+          <h1 className="text-2xl font-bold">
+            WYC #{member.wycNumber} — {member.first} {member.last}
+          </h1>
+          <MemberExpireQuarter expireQtrIndex={member.expireQtrIndex} />
+        </div>
       </div>
 
       <MemberRatingsSection wycNumber={member.wycNumber} />

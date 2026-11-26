@@ -59,6 +59,7 @@ import { Route as RatingsRatingIndexRouteImport } from './routes/ratings_.$ratin
 import { Route as SignupLessonIndexRouteImport } from './routes/signup.$lessonIndex'
 import { Route as ApiCronDailyTasksRouteImport } from './routes/api.cron.daily-tasks'
 import { Route as ApiCronLessonRemindersRouteImport } from './routes/api.cron.lesson-reminders'
+import { Route as ApiMemberPhotoWycNumberRouteImport } from './routes/api.member-photo.$wycNumber'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -310,6 +311,11 @@ const ApiCronLessonRemindersRoute = ApiCronLessonRemindersRouteImport.update({
   path: '/api/cron/lesson-reminders',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiMemberPhotoWycNumberRoute = ApiMemberPhotoWycNumberRouteImport.update({
+  id: '/api/member-photo/$wycNumber',
+  path: '/api/member-photo/$wycNumber',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -362,6 +368,7 @@ export interface FileRoutesByFullPath {
   '/signup/$lessonIndex': typeof SignupLessonIndexRoute
   '/api/cron/daily-tasks': typeof ApiCronDailyTasksRoute
   '/api/cron/lesson-reminders': typeof ApiCronLessonRemindersRoute
+  '/api/member-photo/$wycNumber': typeof ApiMemberPhotoWycNumberRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -414,6 +421,7 @@ export interface FileRoutesByTo {
   '/signup/$lessonIndex': typeof SignupLessonIndexRoute
   '/api/cron/daily-tasks': typeof ApiCronDailyTasksRoute
   '/api/cron/lesson-reminders': typeof ApiCronLessonRemindersRoute
+  '/api/member-photo/$wycNumber': typeof ApiMemberPhotoWycNumberRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -467,6 +475,7 @@ export interface FileRoutesById {
   '/signup/$lessonIndex': typeof SignupLessonIndexRoute
   '/api/cron/daily-tasks': typeof ApiCronDailyTasksRoute
   '/api/cron/lesson-reminders': typeof ApiCronLessonRemindersRoute
+  '/api/member-photo/$wycNumber': typeof ApiMemberPhotoWycNumberRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -521,6 +530,7 @@ export interface FileRouteTypes {
     | '/signup/$lessonIndex'
     | '/api/cron/daily-tasks'
     | '/api/cron/lesson-reminders'
+    | '/api/member-photo/$wycNumber'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -573,6 +583,7 @@ export interface FileRouteTypes {
     | '/signup/$lessonIndex'
     | '/api/cron/daily-tasks'
     | '/api/cron/lesson-reminders'
+    | '/api/member-photo/$wycNumber'
   id:
     | '__root__'
     | '/'
@@ -625,6 +636,7 @@ export interface FileRouteTypes {
     | '/signup/$lessonIndex'
     | '/api/cron/daily-tasks'
     | '/api/cron/lesson-reminders'
+    | '/api/member-photo/$wycNumber'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -677,6 +689,7 @@ export interface RootRouteChildren {
   SignupLessonIndexRoute: typeof SignupLessonIndexRoute
   ApiCronDailyTasksRoute: typeof ApiCronDailyTasksRoute
   ApiCronLessonRemindersRoute: typeof ApiCronLessonRemindersRoute
+  ApiMemberPhotoWycNumberRoute: typeof ApiMemberPhotoWycNumberRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -1031,6 +1044,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiCronLessonRemindersRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/member-photo/$wycNumber': {
+      id: '/api/member-photo/$wycNumber'
+      path: '/api/member-photo/$wycNumber'
+      fullPath: '/api/member-photo/$wycNumber'
+      preLoaderRoute: typeof ApiMemberPhotoWycNumberRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
@@ -1096,6 +1116,7 @@ const rootRouteChildren: RootRouteChildren = {
   SignupLessonIndexRoute: SignupLessonIndexRoute,
   ApiCronDailyTasksRoute: ApiCronDailyTasksRoute,
   ApiCronLessonRemindersRoute: ApiCronLessonRemindersRoute,
+  ApiMemberPhotoWycNumberRoute: ApiMemberPhotoWycNumberRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

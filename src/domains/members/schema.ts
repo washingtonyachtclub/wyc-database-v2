@@ -1,5 +1,5 @@
 import { z } from 'zod'
-import type { MemberQueryRow } from './queries'
+import type { MemberQueryRow, MemberProfileRow } from './queries'
 import { num, str, fullName } from '@/db/mapper-utils'
 import { toPacificDateString } from '@/lib/date-utils'
 import type { RatingQueryRow } from '@/domains/ratings/queries'
@@ -113,6 +113,14 @@ export function toRedactedMember(row: typeof wycDatabase.$inferSelect): Member {
     phone1: '',
     phone2: '',
     studentId: null,
+  }
+}
+
+export function toMemberProfile(row: MemberProfileRow, canEdit: boolean) {
+  return {
+    ...(canEdit ? toMember(row.member) : toRedactedMember(row.member)),
+    photoVersion: str(row.version),
+    photoCrop: canEdit ? row.crop : null,
   }
 }
 
