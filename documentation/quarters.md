@@ -5,7 +5,7 @@
 Quarters are the universal time unit in the WYC database. They control:
 
 - **Membership status** — a member is active if their `ExpireQtr >= currentQuarter`
-- **Lesson membership eligibility** — membership must cover the lesson’s `expire` quarter
+- **Lesson membership eligibility** — membership must cover the quarter containing the final session day
 - **Instructor privileges** — teaching a current or future-quarter lesson grants the `rtgs` privilege
 
 Quarters are stored as **integer indices**, not formatted strings. The `quarters` table maps each index to display text.
@@ -70,14 +70,13 @@ This comparison drives membership validation across the app, including page acce
 
 ### Lesson Expiration
 
-The `lessons.expire` column identifies the membership quarter required to sign up.
-It also groups lessons in administrative quarter lists. Public visibility depends
-on session dates in Seattle; calendar sync covers sessions from July 21, 2026
-onward. See [lesson visibility and calendar](lesson-calendar.md).
+The last session's end date determines the membership quarter required for signup and the quarter used in administrative lists. The previous quarter's end date is exclusive and the assigned quarter's end date is inclusive. Historical lessons without session rows use their recorded calendar date.
+
+Creating or updating a lesson requires an unambiguous quarter. A session ending on a recorded quarter end belongs to that quarter. Changes to quarter dates take effect for new signups and leave existing enrollments in place. New signups close if the quarter cannot be determined. Public visibility depends on session dates in Seattle. See [lesson visibility and calendar](lesson-calendar.md).
 
 ### Instructor Privilege Grant
 
-Users assigned as `instructor1` or `instructor2` for a lesson where `expire >= currentQuarter` receive the `rtgs` privilege.
+Users assigned as `instructor1` or `instructor2` for a lesson whose final session falls in the current quarter or later receive the `rtgs` privilege.
 
 ---
 

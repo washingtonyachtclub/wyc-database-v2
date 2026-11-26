@@ -28,6 +28,7 @@ export function useCreateQuarterMutation(opts?: { onSuccess?: () => void; onClos
     mutationFn: createQuarter,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['quarters'] })
+      queryClient.invalidateQueries({ queryKey: ['lessons'] })
       opts?.onSuccess?.()
       opts?.onClose?.()
     },
@@ -40,6 +41,7 @@ export function useUpdateQuarterMutation(opts?: { onSuccess?: () => void }) {
     mutationFn: updateQuarter,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['quarters'] })
+      queryClient.invalidateQueries({ queryKey: ['lessons'] })
       opts?.onSuccess?.()
     },
   })
@@ -51,6 +53,7 @@ export function useDeleteQuarterMutation() {
     mutationFn: deleteQuarter,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['quarters'] })
+      queryClient.invalidateQueries({ queryKey: ['lessons'] })
     },
   })
 }

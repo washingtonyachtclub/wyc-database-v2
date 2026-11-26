@@ -1,3 +1,4 @@
+import { lessonErrorMessage } from '@/components/lessons/lesson-error-message'
 import type { LessonCapacityPreview } from '@/domains/lessons/capacity-change'
 import {
   AlertDialog,
@@ -53,7 +54,7 @@ export function LessonCapacityDialog({
             </div>
             {error && (
               <p role="alert" className="text-sm text-destructive">
-                {error}
+                {lessonErrorMessage(error)}
               </p>
             )}
             <AlertDialogFooter className="flex-col-reverse gap-2 sm:flex-row sm:space-x-0">
