@@ -1,3 +1,4 @@
+import { revalidateLogic } from '@tanstack/react-form'
 import { LessonSizeField } from '@/components/lessons/LessonSizeField'
 import { LessonCapacityDialog } from '@/components/lessons/LessonCapacityDialog'
 import { EmailSimulatedNotice } from '@/components/ui/EmailSimulatedNotice'
@@ -107,7 +108,6 @@ function lessonToDefaults(lesson: RichLesson): LessonInsert {
     requirements: lesson.requirements,
     size: lesson.size === 0 ? 1 : lesson.size,
     unlimitedSize: lesson.size === 0,
-    expire: lesson.expire,
   }
 }
 
@@ -346,7 +346,7 @@ function LessonEditForm({ lesson }: { lesson: RichLesson }) {
   const { data: instructorOptions = [] } = useQuery(
     getLessonInstructorOptionsQueryOptions(lesson.index),
   )
-  const { data: quarters = [] } = useQuery(getQuartersQueryOptions())
+  const { data: quarters } = useSuspenseQuery(getQuartersQueryOptions())
   const { data: classTypes = [] } = useQuery(getLessonTypesQueryOptions())
   const [saveResult, setSaveResult] = useState<{
     emails?: { sentCount: number; failed: string[]; simulated: boolean }
@@ -382,8 +382,9 @@ function LessonEditForm({ lesson }: { lesson: RichLesson }) {
 
   const form = useAppForm({
     defaultValues: lessonToDefaults(lesson),
+    validationLogic: revalidateLogic(),
     validators: {
-      onSubmit: lessonSchema,
+      onDynamic: lessonSchema,
     },
     onSubmit: async ({ value }) => {
       await saveLesson(value)
@@ -399,11 +400,6 @@ function LessonEditForm({ lesson }: { lesson: RichLesson }) {
       .filter((id) => classTypeMap.has(id))
       .map((id) => ({ value: id, label: classTypeMap.get(id)! })),
   })).filter((g) => g.options.length > 0)
-
-  const quarterOptions = quarters.map((q) => ({
-    value: q.index,
-    label: q.school || q.text || `Quarter ${q.index}`,
-  }))
 
   return (
     <form
@@ -440,7 +436,7 @@ function LessonEditForm({ lesson }: { lesson: RichLesson }) {
           children={(field) => <field.TextField label="Title" required />}
         />
 
-        <LessonSessionsField form={form} />
+        <LessonSessionsField form={form} quarters={quarters} />
 
         <form.AppField
           name="instructor1"
@@ -488,18 +484,6 @@ function LessonEditForm({ lesson }: { lesson: RichLesson }) {
 
         <div className="md:col-span-2 grid grid-cols-1 md:grid-cols-3 gap-4 items-end">
           <LessonSizeField form={form} />
-
-          <form.AppField
-            name="expire"
-            children={(field) => (
-              <field.SelectField
-                label="Expire"
-                required
-                placeholder="Select quarter"
-                options={quarterOptions}
-              />
-            )}
-          />
         </div>
       </div>
 

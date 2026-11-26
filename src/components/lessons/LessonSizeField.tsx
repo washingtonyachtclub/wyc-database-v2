@@ -11,7 +11,6 @@ const lessonSizeDefaults: LessonInsert = {
   requirements: '',
   size: 1,
   unlimitedSize: false,
-  expire: 0,
 }
 
 export const LessonSizeField = withForm({

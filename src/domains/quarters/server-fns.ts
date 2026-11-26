@@ -1,3 +1,4 @@
+import { lessonQuarterIndex } from '@/domains/lessons/quarter-query'
 import { createServerFn } from '@tanstack/react-start'
 import { and, count, desc, eq, gte, lt, sql } from 'drizzle-orm'
 import type { QuarterInsertData } from '@/domains/quarters/schema'
@@ -23,9 +24,9 @@ async function getQuarterUsageCounts() {
     .from(wycDatabase)
     .groupBy(wycDatabase.expireQtrIndex)
   const lessonUsage = await db
-    .select({ q: lessons.expire, n: count() })
+    .select({ q: lessonQuarterIndex, n: count() })
     .from(lessons)
-    .groupBy(lessons.expire)
+    .groupBy(lessonQuarterIndex)
   const counts = new Map<number, number>()
   for (const u of [...memberUsage, ...lessonUsage]) {
     if (u.q != null) counts.set(u.q, (counts.get(u.q) ?? 0) + u.n)
@@ -188,7 +189,7 @@ export const deleteQuarter = createServerFn({ method: 'POST' })
     const [{ n: lessonN }] = await db
       .select({ n: count() })
       .from(lessons)
-      .where(eq(lessons.expire, index))
+      .where(eq(lessonQuarterIndex, index))
     const total = memberN + lessonN
     if (total > 0) {
       throw new Error(

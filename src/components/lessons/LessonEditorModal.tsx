@@ -1,5 +1,6 @@
+import { revalidateLogic } from '@tanstack/react-form'
 import { LessonSizeField } from '@/components/lessons/LessonSizeField'
-import { useQuery } from '@tanstack/react-query'
+import { useQuery, useSuspenseQuery } from '@tanstack/react-query'
 import { LESSON_CATEGORIES, TBD_WYC_NUMBER } from '../../db/constants'
 import { lessonTypeLocation, sessionsForLessonType } from './LessonLocationField'
 import { LessonSessionsField } from './LessonSessionsField'
@@ -15,7 +16,7 @@ import { Button } from '../ui/button'
 import { MemberCombobox } from '../ui/MemberCombobox'
 import { Modal } from '../ui/Modal'
 
-const emptyDefaults = (expireDefault: number): LessonInsert => ({
+const emptyDefaults = (): LessonInsert => ({
   classTypeId: 1,
   subtype: '',
   sessions: [{ ...emptySessionInput, ...lessonTypeLocation(1) }],
@@ -25,29 +26,26 @@ const emptyDefaults = (expireDefault: number): LessonInsert => ({
   requirements: '',
   size: 1,
   unlimitedSize: false,
-  expire: expireDefault,
 })
 
 type LessonFormModalProps = {
   onClose: () => void
-  currentQuarter: number
   onSuccess?: () => void
 }
 
-export function LessonFormModal({ onClose, currentQuarter, onSuccess }: LessonFormModalProps) {
-  const { data: quarters = [] } = useQuery(getQuartersQueryOptions())
+export function LessonFormModal({ onClose, onSuccess }: LessonFormModalProps) {
+  const { data: quarters } = useSuspenseQuery(getQuartersQueryOptions())
   const { data: classTypes = [] } = useQuery(getLessonTypesQueryOptions())
-
-  const defaultQuarter = quarters.find((q) => q.index === currentQuarter) ?? quarters[0]
 
   const createLessonMutation = useCreateLessonMutation({ onSuccess, onClose })
 
   const lessonSchema = useMemo(() => lessonInsertSchemaForQuarters(quarters), [quarters])
 
   const form = useAppForm({
-    defaultValues: emptyDefaults(defaultQuarter?.index ?? 0),
+    defaultValues: emptyDefaults(),
+    validationLogic: revalidateLogic(),
     validators: {
-      onSubmit: lessonSchema,
+      onDynamic: lessonSchema,
     },
     onSubmit: async ({ value }) => {
       await createLessonMutation.mutateAsync({ data: value })
@@ -63,11 +61,6 @@ export function LessonFormModal({ onClose, currentQuarter, onSuccess }: LessonFo
       .filter((id) => classTypeMap.has(id))
       .map((id) => ({ value: id, label: classTypeMap.get(id)! })),
   })).filter((g) => g.options.length > 0)
-
-  const quarterOptions = quarters.map((q) => ({
-    value: q.index,
-    label: q.school || q.text || `Quarter ${q.index}`,
-  }))
 
   return (
     <Modal onClose={onClose} title="New Lesson">
@@ -104,7 +97,7 @@ export function LessonFormModal({ onClose, currentQuarter, onSuccess }: LessonFo
             children={(field) => <field.TextField label="Title" required />}
           />
 
-          <LessonSessionsField form={form} />
+          <LessonSessionsField form={form} quarters={quarters} />
 
           <form.AppField
             name="instructor1"
@@ -149,18 +142,6 @@ export function LessonFormModal({ onClose, currentQuarter, onSuccess }: LessonFo
             name="requirements"
             children={(field) => (
               <field.TextField label="Requirements (optional)" className="md:col-span-2" />
-            )}
-          />
-
-          <form.AppField
-            name="expire"
-            children={(field) => (
-              <field.SelectField
-                label="Expire"
-                required
-                placeholder="Select quarter"
-                options={quarterOptions}
-              />
             )}
           />
         </div>

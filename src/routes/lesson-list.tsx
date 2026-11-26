@@ -201,10 +201,10 @@ function LessonCard({ entry, muted }: { entry: PublicLesson; muted?: boolean }) 
 
         {/* Enroll button */}
         <div className="px-3 pt-1 pb-2.5 md:flex md:w-[25%] md:items-center md:justify-center md:py-2.5">
-          {lessonSignupsOpen(lesson.sessions, lesson.size, now) ? (
+          {lesson.expire > 0 && lessonSignupsOpen(lesson.sessions, lesson.size, now) ? (
             <EnrollAction lessonIndex={lesson.index} isFull={isFull} />
           ) : (
-            lesson.size !== 0 && <span>Signups closed</span>
+            <span>Signups closed</span>
           )}
         </div>
       </div>

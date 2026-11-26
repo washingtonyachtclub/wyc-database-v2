@@ -322,12 +322,7 @@ function LessonsPage() {
         />
       </section>
 
-      {isLessonModalOpen && (
-        <LessonFormModal
-          onClose={() => setIsLessonModalOpen(false)}
-          currentQuarter={currentQuarter}
-        />
-      )}
+      {isLessonModalOpen && <LessonFormModal onClose={() => setIsLessonModalOpen(false)} />}
     </div>
   )
 }
