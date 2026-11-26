@@ -245,12 +245,20 @@ export function lessonIdsEndingOnOrAfter(date: string) {
 }
 
 export async function insertEligibleSignup(lessonIndex: number, userId: number) {
-  const result = await db.execute(sql`
-    insert into ${signups} ("class", "student")
-    select ${lessons.index}, ${wycDatabase.wycNumber}
-    from ${lessons} join ${wycDatabase} on ${wycDatabase.wycNumber} = ${userId}
-    where ${lessons.index} = ${lessonIndex}
-      and ${wycDatabase.expireQtrIndex} >= ${lessonQuarterIndex}
-  `)
-  return result.rowCount === 1
+  return db.transaction(
+    async (tx) => {
+      const [eligible] = await tx
+        .select({ class: lessons.index, student: wycDatabase.wycNumber })
+        .from(lessons)
+        .innerJoin(wycDatabase, eq(wycDatabase.wycNumber, userId))
+        .where(
+          and(eq(lessons.index, lessonIndex), gte(wycDatabase.expireQtrIndex, lessonQuarterIndex)),
+        )
+      if (!eligible) return false
+
+      await tx.insert(signups).values(eligible)
+      return true
+    },
+    { isolationLevel: 'serializable' },
+  )
 }

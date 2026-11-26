@@ -1,18 +1,28 @@
-import { sql } from 'drizzle-orm'
+import { and, asc, eq, gte, max, sql } from 'drizzle-orm'
+import { alias, QueryBuilder } from 'drizzle-orm/pg-core'
 import { lessonSessions, lessons, quarters } from '@/db/schema'
 import { FIRST_LESSON_QUARTER } from './quarter-rules'
 
+const qb = new QueryBuilder()
+const lastSession = qb
+  .select({ end: max(lessonSessions.endsAt) })
+  .from(lessonSessions)
+  .where(eq(lessonSessions.lessonId, lessons.index))
+
 // Sessionless historical lessons have only CalendarDate.
-export const lessonQuarterIndex = sql<number | null>`(
-  select case when q."endDate" = final.day or prev."endDate" < final.day then q."_index" end
-  from (select coalesce(
-    (select max(s.ends_at)::date from ${lessonSessions} s
-     where s.lesson_id = ${lessons}."_index"),
-    ${lessons}."CalendarDate"
-  ) as day) as final
-  join ${quarters} q on q."endDate" >= final.day
-  left join ${quarters} prev on prev."_index" = q."_index" - 1
-  where q."_index" >= ${sql.raw(String(FIRST_LESSON_QUARTER))}
-  order by q."_index"
-  limit 1
-)`
+const finalDay = sql<string>`coalesce(${lastSession}::date, ${lessons.calendarDate})`
+
+const previous = alias(quarters, 'previous_quarter')
+const quarter = qb
+  .select({
+    index: sql<
+      number | null
+    >`case when ${quarters.endDate} = ${finalDay} or ${previous.endDate} < ${finalDay} then ${quarters.index} end`,
+  })
+  .from(quarters)
+  .leftJoin(previous, eq(previous.index, sql`${quarters.index} - 1`))
+  .where(and(gte(quarters.index, FIRST_LESSON_QUARTER), gte(quarters.endDate, finalDay)))
+  .orderBy(asc(quarters.index))
+  .limit(1)
+
+export const lessonQuarterIndex = sql<number | null>`${quarter}`

@@ -23,10 +23,14 @@ async function getQuarterUsageCounts() {
     .select({ q: wycDatabase.expireQtrIndex, n: count() })
     .from(wycDatabase)
     .groupBy(wycDatabase.expireQtrIndex)
-  const lessonUsage = await db
-    .select({ q: lessonQuarterIndex, n: count() })
+  const lessonQuarters = db
+    .select({ q: lessonQuarterIndex.as('q') })
     .from(lessons)
-    .groupBy(lessonQuarterIndex)
+    .as('lesson_quarters')
+  const lessonUsage = await db
+    .select({ q: lessonQuarters.q, n: count() })
+    .from(lessonQuarters)
+    .groupBy(lessonQuarters.q)
   const counts = new Map<number, number>()
   for (const u of [...memberUsage, ...lessonUsage]) {
     if (u.q != null) counts.set(u.q, (counts.get(u.q) ?? 0) + u.n)
