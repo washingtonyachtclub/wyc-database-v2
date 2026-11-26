@@ -4,9 +4,11 @@ import {
   checkInBoat,
   createCheckout,
   createManualCheckout,
+  editCheckout,
   getAllCheckouts,
   getCheckoutBoatTypes,
   getCheckoutCards,
+  getCheckoutForEdit,
   getCheckoutFormBoatTypes,
   getCheckoutFormMembers,
   getCheckoutMembers,
@@ -55,6 +57,14 @@ export const getCheckoutCardsQueryOptions = (wycNumber?: number) =>
     queryKey: ['checkouts', 'cards', wycNumber],
     queryFn: getCheckoutCards,
     staleTime: 60_000,
+  })
+
+export const getCheckoutEditQueryOptions = (index: number, wycNumber: number) =>
+  queryOptions({
+    queryKey: ['checkouts', 'edit', index, wycNumber],
+    queryFn: () => getCheckoutForEdit({ data: { index } }),
+    gcTime: 0,
+    retry: false,
   })
 
 export const getMyRatingsQueryOptions = () =>
@@ -110,6 +120,17 @@ export function useCreateManualCheckoutMutation(opts: { onSuccess: () => void })
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['checkouts'] })
       opts.onSuccess()
+    },
+  })
+}
+
+export function useEditCheckoutMutation(onSuccess: () => void | Promise<void>) {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: editCheckout,
+    onSuccess: async () => {
+      await onSuccess()
+      await queryClient.invalidateQueries({ queryKey: ['checkouts'] })
     },
   })
 }
