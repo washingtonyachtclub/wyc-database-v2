@@ -254,8 +254,6 @@ export const lessons = pgTable(
     legacyDescription: text('Description')
       .notNull()
       .$default(() => ''),
-    location: varchar({ length: 80 }),
-    locationUrl: varchar('location_url', { length: 255 }),
     size: integer(),
     expire: integer(),
     display: smallint().default(0).notNull(),
@@ -293,6 +291,16 @@ export const lessonSessions = pgTable(
     locationUrl: varchar('location_url', { length: 255 }),
   },
   (table) => [index('lesson_id_idx').on(table.lessonId), primaryKey({ columns: [table.index] })],
+)
+
+export const legacyLessonLocations = pgTable(
+  'legacy_lesson_locations',
+  {
+    lessonId: integer('lesson_id').notNull(),
+    location: varchar({ length: 80 }),
+    locationUrl: varchar('location_url', { length: 255 }),
+  },
+  (table) => [primaryKey({ columns: [table.lessonId] })],
 )
 
 export const memcat = pgTable(
