@@ -153,7 +153,7 @@ export function SidebarNav({ onNavigate }: { onNavigate?: () => void }) {
 
 export default function Sidebar() {
   return (
-    <aside className="hidden md:block w-64 bg-muted border-r min-h-screen p-4">
+    <aside className="max-md:hidden w-64 bg-muted border-r min-h-screen p-4">
       <SidebarNav />
     </aside>
   )

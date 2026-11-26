@@ -112,7 +112,7 @@ export function QuickSwitcher() {
         variant="outline"
         size="sm"
         onClick={() => changeOpen(true)}
-        className="hidden md:flex w-44 justify-between text-muted-foreground font-normal"
+        className="flex w-44 justify-between text-muted-foreground font-normal"
       >
         <span className="flex items-center gap-2">
           <Search className="h-4 w-4" />
