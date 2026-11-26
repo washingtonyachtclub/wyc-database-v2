@@ -1,3 +1,4 @@
+import { readQuarterConfig } from '@/domains/quarters/config'
 import db from '@/db'
 import {
   memberWaivers,
@@ -17,7 +18,7 @@ import {
   insertMembershipDiscountCodeRedemption,
   resolveMembershipDiscountCode,
 } from '@/domains/membership-discount-codes/service'
-import { RENEWAL_QUARTER, computeRenewal } from '@/domains/renewals/compute-renewal'
+import { computeRenewal } from '@/domains/renewals/compute-renewal'
 import { tierForUwStatus } from '@/domains/renewals/questionnaire'
 import { isDevEnvironment } from '@/lib/env'
 import { discordUsernameSchema, normalizeDiscordUsername } from '@/lib/discord'
@@ -159,14 +160,15 @@ export const checkNewMemberEmail = createServerFn({ method: 'POST' })
 
 export const getNewMemberSignupOptions = createServerFn({ method: 'GET' }).handler(async () => {
   try {
+    const { renewalQuarter } = await readQuarterConfig()
     const targets = {
-      annual: computeRenewal(0, 'annual'),
-      quarterly: computeRenewal(0, 'quarterly'),
+      annual: computeRenewal(0, 'annual', renewalQuarter),
+      quarterly: computeRenewal(0, 'quarterly', renewalQuarter),
     }
     const rows = await db
       .select({ index: quarters.index, school: quarters.school })
       .from(quarters)
-      .where(gte(quarters.index, RENEWAL_QUARTER))
+      .where(gte(quarters.index, renewalQuarter))
     const labelFor = (index: number) =>
       rows.find((quarter) => quarter.index === index)?.school ?? `quarter ${index}`
 

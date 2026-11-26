@@ -29,17 +29,19 @@ export function QuarterMaintenanceBanner() {
     maintenanceMessages.push(`End date not set for ${health.missingEndDates.join(' and ')}.`)
   }
 
-  // Bumping RENEWAL_QUARTER is a code change, not a /quarters edit, so it gets its own bar
-  // with no "Manage quarters" button.
   let renewalMessage: string | null = null
   const reminder = health.renewalReminder
   if (reminder?.state === 'stale') {
-    renewalMessage =
-      'Renewal quarter is stale: the current quarter has passed it. Bump it in compute-renewal.ts.'
+    renewalMessage = 'The renewal quarter is behind the current quarter.'
   } else if (reminder?.state === 'dueSoon') {
-    const window =
-      reminder.days >= 1 ? ` (in ${reminder.days} day${reminder.days === 1 ? '' : 's'})` : ''
-    renewalMessage = `Renewal quarter needs bumping in compute-renewal.ts before ${reminder.quarterName} ends${window}.`
+    const timing =
+      reminder.days < 0
+        ? 'has ended'
+        : reminder.days === 0
+          ? 'ends today'
+          : `ends in ${reminder.days} day${reminder.days === 1 ? '' : 's'}`
+
+    renewalMessage = `${reminder.quarterName} ${timing}. Open renewals for the next quarter.`
   }
 
   if (!health.currentQuarterOverdue && maintenanceMessages.length === 0 && !renewalMessage) {
@@ -77,9 +79,14 @@ export function QuarterMaintenanceBanner() {
         </div>
       )}
       {renewalMessage && (
-        <div className="border-b border-blue-300 bg-blue-50 text-blue-900">
+        <div className="border-b border-primary/20 bg-accent text-accent-foreground">
           <div className="mx-auto flex max-w-7xl flex-wrap items-center justify-center gap-3 px-4 py-2 sm:px-6 lg:px-8">
             <span className="text-sm font-medium">{renewalMessage}</span>
+            <Button asChild size="sm" variant="outline">
+              <Link to="/set-current-quarter" hash="renewal-quarter">
+                Set renewal quarter
+              </Link>
+            </Button>
           </div>
         </div>
       )}

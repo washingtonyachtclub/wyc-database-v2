@@ -1,10 +1,11 @@
+import { RenewalQuarterSection } from '@/components/quarters/RenewalQuarterSection'
 import { Button } from '@/components/ui/button'
 import { Checkbox } from '@/components/ui/checkbox'
 import { ConfirmDialog } from '@/components/ui/ConfirmDialog'
 import { Label } from '@/components/ui/label'
 import { SearchableSelect } from '@/components/ui/SearchableSelect'
-import { getCurrentQuarterQueryOptions } from '@/domains/lessons/query-options'
 import {
+  getQuarterHealthQueryOptions,
   getQuarterChangeImpactQueryOptions,
   getQuartersQueryOptions,
   useUpdateCurrentQuarterMutation,
@@ -19,11 +20,17 @@ export const Route = createFileRoute('/set-current-quarter')({
   beforeLoad: ({ context }) => {
     requirePrivilegeForRoute(context, '/set-current-quarter')
   },
+  loader: ({ context: { queryClient } }) =>
+    Promise.all([
+      queryClient.ensureQueryData(getQuarterHealthQueryOptions()),
+      queryClient.ensureQueryData(getQuartersQueryOptions()),
+    ]),
   component: SetCurrentQuarterPage,
 })
 
 function SetCurrentQuarterPage() {
-  const { data: currentQuarterIndex } = useQuery(getCurrentQuarterQueryOptions())
+  const { data: health } = useQuery(getQuarterHealthQueryOptions())
+  const currentQuarterIndex = health?.currentQuarter
   const { data: allQuarters } = useQuery(getQuartersQueryOptions())
 
   const [readAbove, setReadAbove] = useState(false)
@@ -199,6 +206,14 @@ function SetCurrentQuarterPage() {
             </div>
           )}
         </>
+      )}
+
+      {health && (
+        <RenewalQuarterSection
+          current={health.currentQuarter}
+          renewal={health.renewalQuarter}
+          quarters={allQuarters}
+        />
       )}
 
       {/* Confirmation dialog */}

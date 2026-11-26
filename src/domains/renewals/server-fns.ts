@@ -1,7 +1,7 @@
+import { readQuarterConfig } from '@/domains/quarters/config'
 import db from '@/db/index'
 import {
   duesExemptionRequests,
-  lessonQuarter,
   memberWaivers,
   membershipPayments,
   membershipRenewals,
@@ -30,7 +30,7 @@ import { createServerFn } from '@tanstack/react-start'
 import { and, desc, eq, isNull } from 'drizzle-orm'
 import { createHash, randomUUID } from 'node:crypto'
 import type { RenewalDuration, RenewalTier } from './compute-renewal'
-import { MAX_QUARTERS_AHEAD, RENEWAL_QUARTER, computeRenewal } from './compute-renewal'
+import { MAX_QUARTERS_AHEAD, computeRenewal } from './compute-renewal'
 import { parseQuestionnaire, tierForUwStatus } from './questionnaire'
 import type { QuestionnaireAnswers } from './questionnaire'
 
@@ -51,12 +51,7 @@ const unknownPaymentOutcomeMessage =
 export const getRenewalStatus = createServerFn({ method: 'GET' }).handler(async () => {
   const wycNumber = await requireAuth()
 
-  const [cq] = await db
-    .select({ quarter: lessonQuarter.quarter })
-    .from(lessonQuarter)
-    .where(eq(lessonQuarter.index, 1))
-    .limit(1)
-  const currentQuarter = cq.quarter
+  const { currentQuarter, renewalQuarter } = await readQuarterConfig()
 
   const [member] = await db
     .select({
@@ -103,11 +98,11 @@ export const getRenewalStatus = createServerFn({ method: 'GET' }).handler(async 
     .limit(1)
 
   const previewFor = (duration: RenewalDuration) => {
-    const newExpireQtr = computeRenewal(expireQtr, duration)
+    const newExpireQtr = computeRenewal(expireQtr, duration, renewalQuarter)
     return {
       newExpireQtr,
       label: labelFor(newExpireQtr),
-      allowed: newExpireQtr <= RENEWAL_QUARTER + MAX_QUARTERS_AHEAD,
+      allowed: newExpireQtr <= renewalQuarter + MAX_QUARTERS_AHEAD,
     }
   }
 
@@ -324,8 +319,9 @@ export const payAndRenew = createServerFn({ method: 'POST' })
     }
 
     const prevExpireQtr = member.expireQtrIndex ?? 0
-    const targetExpireQtr = computeRenewal(prevExpireQtr, data.duration)
-    if (targetExpireQtr > RENEWAL_QUARTER + MAX_QUARTERS_AHEAD) {
+    const { renewalQuarter } = await readQuarterConfig()
+    const targetExpireQtr = computeRenewal(prevExpireQtr, data.duration, renewalQuarter)
+    if (targetExpireQtr > renewalQuarter + MAX_QUARTERS_AHEAD) {
       throw new Error(
         'Your membership is already paid as far ahead as we allow. Please renew again closer to your expiry date.',
       )

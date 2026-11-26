@@ -241,6 +241,9 @@ export const lessonQuarter = pgTable(
   {
     index: integer('_index').generatedByDefaultAsIdentity().notNull(),
     quarter: integer().default(0).notNull(),
+    renewalQuarter: integer('renewal_quarter')
+      .notNull()
+      .references(() => quarters.index),
   },
   (table) => [primaryKey({ columns: [table.index] })],
 )

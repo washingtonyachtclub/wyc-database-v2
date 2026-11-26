@@ -46,19 +46,19 @@ Each member waiver links to exactly one workflow through either `renewal_id` or 
 
 ## Quarter math
 
-All renewal math anchors to `RENEWAL_QUARTER`, a hand-maintained constant in `compute-renewal.ts`. It is the quarter an expired member renews into. `computeRenewal(expireQtr, duration)` rewards early renewal and never removes paid time:
+The renewal quarter is stored in `lesson_quarter.renewal_quarter`. New memberships and renewals use it to calculate expiration.
 
-- Active membership (`expireQtr >= RENEWAL_QUARTER`) stacks the new period on remaining time. Quarterly adds one quarter and annual adds four.
-- Expired membership (`expireQtr < RENEWAL_QUARTER`) starts fresh. Quarterly lands on `RENEWAL_QUARTER` and annual lands on `RENEWAL_QUARTER + 3`.
+- Active membership (`expireQtr >= renewalQuarter`) stacks the new period on remaining time. Quarterly adds one quarter and annual adds four.
+- Expired membership (`expireQtr < renewalQuarter`) starts fresh. Quarterly lands on `renewalQuarter` and annual lands on `renewalQuarter + 3`.
 
 `MAX_QUARTERS_AHEAD = 4` prevents paid renewals from moving expiry more than four quarters past
-`RENEWAL_QUARTER`. Dues exemptions have no advance limit, including exemption applications applied
+`renewalQuarter`. Dues exemptions have no advance limit, including exemption applications applied
 to existing members. Each approved exemption adds one quarter using the same renewal math.
 Members at the paid-renewal limit can still submit an exemption request.
 
-### Maintaining `RENEWAL_QUARTER`
+### Setting the renewal quarter
 
-`RENEWAL_QUARTER` normally equals the current lesson quarter. It can be advanced shortly before a quarter ends so members can renew into the upcoming quarter. `QuarterMaintenanceBanner` reminds `db`-privileged users when the constant is due to advance or is stale.
+On **Set Current Quarter**, users with the `db` privilege can set the renewal quarter to the current or next defined quarter. The maintenance banner links to this setting when the renewal quarter is behind, or when both quarters match and the current quarter ends within 14 days or has already ended.
 
 ## Square integration
 

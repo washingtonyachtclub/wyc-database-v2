@@ -93,7 +93,7 @@ A member can hold multiple ratings and can earn the same rating more than once (
 | `WYCDatabase`    | Primary member records                                                |
 | `memcat`         | Membership category lookup (Student, Faculty, Alumni, Honorary)       |
 | `quarters`       | Quarter index → display text mapping. See [quarters doc](quarters.md) |
-| `lesson_quarter` | Single-row config: current active quarter                             |
+| `lesson_quarter` | Single-row config: current and renewal quarters                       |
 
 ### Lessons (v2-active)
 
