@@ -1,4 +1,4 @@
-import { memberSearchQuery } from './queries'
+import { memberProfileQuery, memberSearchQuery } from './queries'
 import { toMemberSearchResult } from './schema'
 import { createServerFn } from '@tanstack/react-start'
 import { asc, count, desc, eq } from 'drizzle-orm'
@@ -10,10 +10,9 @@ import {
 import { toRichLesson } from '@/domains/lessons/schema'
 import {
   fromMemberInsert,
-  toMember,
+  toMemberProfile,
   toMemberRating,
   toMemberTableRow,
-  toRedactedMember,
 } from '@/domains/members/schema'
 import type { MemberFilters } from '@/domains/members/filter-types'
 import { baseMemberQuery, memberSortColumns, withMemberFilters } from '@/domains/members/queries'
@@ -134,10 +133,10 @@ export const getMemberById = createServerFn({ method: 'GET' })
   .validator((input: { wycNumber: number }) => ({ wycNumber: Number(input.wycNumber) }))
   .handler(async ({ data: { wycNumber } }) => {
     const userId = await requireSelfOrPrivilege(wycNumber, 'db', 'rtgs')
-    const [row] = await db.select().from(wycDatabase).where(eq(wycDatabase.wycNumber, wycNumber))
+    const [row] = await memberProfileQuery(wycNumber)
     if (!row) return null
     const canSeeContactInfo = userId === wycNumber || (await sessionHasPrivilege('db'))
-    return canSeeContactInfo ? toMember(row) : toRedactedMember(row)
+    return toMemberProfile(row, canSeeContactInfo)
   })
 
 export const updateMemberProfile = createServerFn({ method: 'POST' })

@@ -23,6 +23,7 @@ export const getChiefsTable = createServerFn({ method: 'GET' }).handler(async ()
     const grouped = new Map<
       number,
       {
+        photoVersion: string
         memberName: string
         outToSea: boolean
         roles: { officerIndex: number; positionId: number; positionName: string }[]
@@ -40,6 +41,7 @@ export const getChiefsTable = createServerFn({ method: 'GET' }).handler(async ()
         existing.roles.push(role)
       } else {
         grouped.set(row.wycNumber, {
+          photoVersion: row.photoVersion,
           memberName: row.memberName,
           outToSea: row.outToSea,
           roles: [role],
@@ -48,9 +50,10 @@ export const getChiefsTable = createServerFn({ method: 'GET' }).handler(async ()
     }
 
     const allChiefs: ChiefTableRow[] = Array.from(grouped.entries())
-      .map(([wycNumber, { memberName, outToSea, roles }]) => ({
+      .map(([wycNumber, { memberName, photoVersion, outToSea, roles }]) => ({
         wycNumber,
         memberName,
+        photoVersion,
         outToSea,
         chiefRoles: roles.map((r) => ({
           officerIndex: r.officerIndex,

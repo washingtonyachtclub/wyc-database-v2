@@ -1,3 +1,5 @@
+import { MemberPhotoPreview } from '@/components/members/MemberPhotoPreview'
+import { MemberAvatar } from '@/components/members/MemberAvatar'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
 import { Link } from '@tanstack/react-router'
 import { createColumnHelper } from '@tanstack/react-table'
@@ -26,7 +28,21 @@ const wycIdColumn = columnHelper.accessor('wycNumber', {
 
 const nameColumn = columnHelper.accessor('memberName', {
   header: 'Name',
-  cell: (info) => info.getValue() || '—',
+  cell: ({ row: { original } }) => {
+    const photo = {
+      id: original.wycNumber,
+      name: original.memberName,
+      version: original.photoVersion,
+    }
+    return (
+      <span className="flex items-center gap-3">
+        <MemberPhotoPreview {...photo}>
+          <MemberAvatar {...photo} className="size-14 text-base" />
+        </MemberPhotoPreview>
+        {original.memberName}
+      </span>
+    )
+  },
   enableSorting: false,
 })
 
