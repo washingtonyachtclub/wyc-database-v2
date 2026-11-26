@@ -25,5 +25,17 @@
       "path": "/api/cron/daily-tasks",
       "schedule": "0 15 * * *"
     }
+  ],
+  "redirects": [
+    {
+      "source": "/guides/fj",
+      "destination": "https://washingtonyachtclub.org/guides/fj",
+      "permanent": true
+    },
+    {
+      "source": "/guides/knots",
+      "destination": "https://washingtonyachtclub.org/guides/knots",
+      "permanent": true
+    }
   ]
 }

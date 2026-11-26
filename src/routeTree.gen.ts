@@ -49,8 +49,6 @@ import { Route as TestsRouteImport } from './routes/tests'
 import { Route as ApiJoinCheckoutRouteImport } from './routes/api.join-checkout'
 import { Route as ApiRuntimeRouteImport } from './routes/api.runtime'
 import { Route as CheckoutNewRouteImport } from './routes/checkout_.new'
-import { Route as GuidesFjRouteImport } from './routes/guides.fj'
-import { Route as GuidesKnotsRouteImport } from './routes/guides.knots'
 import { Route as JoinApplicationIdRouteImport } from './routes/join_.$applicationId'
 import { Route as JoinCheckoutRouteImport } from './routes/join_.checkout'
 import { Route as LessonsLessonIndexRouteImport } from './routes/lessons_.$lessonIndex'
@@ -263,16 +261,6 @@ const CheckoutNewRoute = CheckoutNewRouteImport.update({
   path: '/checkout/new',
   getParentRoute: () => rootRouteImport,
 } as any)
-const GuidesFjRoute = GuidesFjRouteImport.update({
-  id: '/guides/fj',
-  path: '/guides/fj',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const GuidesKnotsRoute = GuidesKnotsRouteImport.update({
-  id: '/guides/knots',
-  path: '/guides/knots',
-  getParentRoute: () => rootRouteImport,
-} as any)
 const JoinApplicationIdRoute = JoinApplicationIdRouteImport.update({
   id: '/join_/$applicationId',
   path: '/join/$applicationId',
@@ -370,8 +358,6 @@ export interface FileRoutesByFullPath {
   '/api/join-checkout': typeof ApiJoinCheckoutRoute
   '/api/runtime': typeof ApiRuntimeRoute
   '/checkout/new': typeof CheckoutNewRoute
-  '/guides/fj': typeof GuidesFjRoute
-  '/guides/knots': typeof GuidesKnotsRoute
   '/join/$applicationId': typeof JoinApplicationIdRoute
   '/join/checkout': typeof JoinCheckoutRoute
   '/lessons/$lessonIndex': typeof LessonsLessonIndexRoute
@@ -425,8 +411,6 @@ export interface FileRoutesByTo {
   '/api/join-checkout': typeof ApiJoinCheckoutRoute
   '/api/runtime': typeof ApiRuntimeRoute
   '/checkout/new': typeof CheckoutNewRoute
-  '/guides/fj': typeof GuidesFjRoute
-  '/guides/knots': typeof GuidesKnotsRoute
   '/join/$applicationId': typeof JoinApplicationIdRoute
   '/join/checkout': typeof JoinCheckoutRoute
   '/lessons/$lessonIndex': typeof LessonsLessonIndexRoute
@@ -481,8 +465,6 @@ export interface FileRoutesById {
   '/api/join-checkout': typeof ApiJoinCheckoutRoute
   '/api/runtime': typeof ApiRuntimeRoute
   '/checkout_/new': typeof CheckoutNewRoute
-  '/guides/fj': typeof GuidesFjRoute
-  '/guides/knots': typeof GuidesKnotsRoute
   '/join_/$applicationId': typeof JoinApplicationIdRoute
   '/join_/checkout': typeof JoinCheckoutRoute
   '/lessons_/$lessonIndex': typeof LessonsLessonIndexRoute
@@ -538,8 +520,6 @@ export interface FileRouteTypes {
     | '/api/join-checkout'
     | '/api/runtime'
     | '/checkout/new'
-    | '/guides/fj'
-    | '/guides/knots'
     | '/join/$applicationId'
     | '/join/checkout'
     | '/lessons/$lessonIndex'
@@ -593,8 +573,6 @@ export interface FileRouteTypes {
     | '/api/join-checkout'
     | '/api/runtime'
     | '/checkout/new'
-    | '/guides/fj'
-    | '/guides/knots'
     | '/join/$applicationId'
     | '/join/checkout'
     | '/lessons/$lessonIndex'
@@ -648,8 +626,6 @@ export interface FileRouteTypes {
     | '/api/join-checkout'
     | '/api/runtime'
     | '/checkout_/new'
-    | '/guides/fj'
-    | '/guides/knots'
     | '/join_/$applicationId'
     | '/join_/checkout'
     | '/lessons_/$lessonIndex'
@@ -704,8 +680,6 @@ export interface RootRouteChildren {
   ApiJoinCheckoutRoute: typeof ApiJoinCheckoutRoute
   ApiRuntimeRoute: typeof ApiRuntimeRoute
   CheckoutNewRoute: typeof CheckoutNewRoute
-  GuidesFjRoute: typeof GuidesFjRoute
-  GuidesKnotsRoute: typeof GuidesKnotsRoute
   JoinApplicationIdRoute: typeof JoinApplicationIdRoute
   JoinCheckoutRoute: typeof JoinCheckoutRoute
   LessonsLessonIndexRoute: typeof LessonsLessonIndexRoute
@@ -1000,20 +974,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof CheckoutNewRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/guides/fj': {
-      id: '/guides/fj'
-      path: '/guides/fj'
-      fullPath: '/guides/fj'
-      preLoaderRoute: typeof GuidesFjRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/guides/knots': {
-      id: '/guides/knots'
-      path: '/guides/knots'
-      fullPath: '/guides/knots'
-      preLoaderRoute: typeof GuidesKnotsRouteImport
-      parentRoute: typeof rootRouteImport
-    }
     '/join_/$applicationId': {
       id: '/join_/$applicationId'
       path: '/join/$applicationId'
@@ -1147,8 +1107,6 @@ const rootRouteChildren: RootRouteChildren = {
   ApiJoinCheckoutRoute: ApiJoinCheckoutRoute,
   ApiRuntimeRoute: ApiRuntimeRoute,
   CheckoutNewRoute: CheckoutNewRoute,
-  GuidesFjRoute: GuidesFjRoute,
-  GuidesKnotsRoute: GuidesKnotsRoute,
   JoinApplicationIdRoute: JoinApplicationIdRoute,
   JoinCheckoutRoute: JoinCheckoutRoute,
   LessonsLessonIndexRoute: LessonsLessonIndexRoute,
