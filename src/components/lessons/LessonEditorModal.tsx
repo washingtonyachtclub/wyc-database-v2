@@ -1,7 +1,7 @@
 import { LessonSizeField } from '@/components/lessons/LessonSizeField'
 import { useQuery } from '@tanstack/react-query'
-import { LESSON_CATEGORIES, LESSON_LOCATION_PRESETS, TBD_WYC_NUMBER } from '../../db/constants'
-import { LessonLocationField, typeLocationDefault } from './LessonLocationField'
+import { LESSON_CATEGORIES, TBD_WYC_NUMBER } from '../../db/constants'
+import { lessonTypeLocation, sessionsForLessonType } from './LessonLocationField'
 import { LessonSessionsField } from './LessonSessionsField'
 import { ErrorAlert } from '../ui/ErrorAlert'
 import type { LessonInsert } from '@/domains/lessons/schema'
@@ -15,18 +15,14 @@ import { Button } from '../ui/button'
 import { MemberCombobox } from '../ui/MemberCombobox'
 import { Modal } from '../ui/Modal'
 
-const [WAC] = LESSON_LOCATION_PRESETS
-
 const emptyDefaults = (expireDefault: number): LessonInsert => ({
   classTypeId: 1,
   subtype: '',
-  sessions: [{ ...emptySessionInput }],
+  sessions: [{ ...emptySessionInput, ...lessonTypeLocation(1) }],
   instructor1: TBD_WYC_NUMBER,
   instructor2: null,
   description: '',
   requirements: '',
-  location: WAC.name,
-  locationUrl: WAC.url,
   size: 1,
   unlimitedSize: false,
   expire: expireDefault,
@@ -90,11 +86,7 @@ export function LessonFormModal({ onClose, currentQuarter, onSuccess }: LessonFo
             name="classTypeId"
             listeners={{
               onChange: ({ value }) => {
-                const next = typeLocationDefault(value ?? 0, form.getFieldValue('location'))
-                if (next) {
-                  form.setFieldValue('location', next.name)
-                  form.setFieldValue('locationUrl', next.url)
-                }
+                form.setFieldValue('sessions', (sessions) => sessionsForLessonType(sessions, value))
               },
             }}
             children={(field) => (
@@ -150,8 +142,6 @@ export function LessonFormModal({ onClose, currentQuarter, onSuccess }: LessonFo
               />
             )}
           />
-
-          <LessonLocationField form={form} />
 
           <LessonSizeField form={form} />
 

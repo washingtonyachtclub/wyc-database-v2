@@ -4,7 +4,7 @@ import { EmailSimulatedNotice } from '@/components/ui/EmailSimulatedNotice'
 import { useCurrentUser } from '@/lib/auth/auth-query-options'
 import { canManageLesson } from '@/lib/resource-permissions'
 import { getLessonInstructorOptionsQueryOptions } from '@/domains/members/query-options'
-import { LessonLocationField, typeLocationDefault } from '@/components/lessons/LessonLocationField'
+import { sessionsForLessonType } from '@/components/lessons/LessonLocationField'
 import { LessonSessionsField } from '@/components/lessons/LessonSessionsField'
 import {
   MemberLessonDetails,
@@ -105,8 +105,6 @@ function lessonToDefaults(lesson: RichLesson): LessonInsert {
     instructor2: lesson.instructor2,
     description: lesson.description,
     requirements: lesson.requirements,
-    location: lesson.location,
-    locationUrl: lesson.locationUrl,
     size: lesson.size === 0 ? 1 : lesson.size,
     unlimitedSize: lesson.size === 0,
     expire: lesson.expire,
@@ -424,11 +422,7 @@ function LessonEditForm({ lesson }: { lesson: RichLesson }) {
           name="classTypeId"
           listeners={{
             onChange: ({ value }) => {
-              const next = typeLocationDefault(value ?? 0, form.getFieldValue('location'))
-              if (next) {
-                form.setFieldValue('location', next.name)
-                form.setFieldValue('locationUrl', next.url)
-              }
+              form.setFieldValue('sessions', (sessions) => sessionsForLessonType(sessions, value))
             },
           }}
           children={(field) => (
@@ -486,8 +480,6 @@ function LessonEditForm({ lesson }: { lesson: RichLesson }) {
             />
           )}
         />
-
-        <LessonLocationField form={form} />
 
         <form.AppField
           name="requirements"

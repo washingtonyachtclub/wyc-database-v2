@@ -21,11 +21,11 @@ export type CalendarSession = {
   startsAt: string // 'YYYY-MM-DD HH:MM:SS', club local
   endsAt: string // inclusive
   allDay: boolean
+  location: string
 }
 
 export type CalendarLesson = {
   title: string
-  location: string
   description: string
   requirements: string
   instructors: string[]
@@ -117,7 +117,7 @@ function eventBody(lesson: CalendarLesson, session: CalendarSession) {
     id: sessionEventId(session.index),
     status: 'confirmed',
     summary: lesson.title,
-    location: lesson.location,
+    location: session.location,
     description: calendarDescriptionHtml(lesson),
     ...(lesson.colorId ? { colorId: lesson.colorId } : {}),
     ...timePoint,

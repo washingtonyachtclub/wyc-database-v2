@@ -289,6 +289,8 @@ export const lessonSessions = pgTable(
     endsAt: timestamp('ends_at', { mode: 'string' }).notNull(),
     // When set, the time components are filler
     allDay: smallint('all_day').default(0).notNull(),
+    location: varchar({ length: 80 }),
+    locationUrl: varchar('location_url', { length: 255 }),
   },
   (table) => [index('lesson_id_idx').on(table.lessonId), primaryKey({ columns: [table.index] })],
 )

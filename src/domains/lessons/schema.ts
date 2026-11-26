@@ -17,6 +17,8 @@ export const lessonSessionInputSchema = z
     allDay: z.boolean(),
     // Editor-only: reveals the end date input. `fromSessionInput` collapses it away.
     multiDay: z.boolean(),
+    location: z.string().max(80),
+    locationUrl: z.string().max(255),
   })
   .superRefine((s, ctx) => {
     if (s.multiDay) {
@@ -58,6 +60,8 @@ export const emptySessionInput: LessonSessionInput = {
   endTime: '',
   allDay: false,
   multiDay: false,
+  location: '',
+  locationUrl: '',
 }
 
 export const lessonInsertSchema = z.object({
@@ -68,8 +72,6 @@ export const lessonInsertSchema = z.object({
   instructor2: z.number().nullable(),
   description: z.string(),
   requirements: z.string(),
-  location: z.string(),
-  locationUrl: z.string(),
   size: z
     .number({ error: 'Size is required' })
     .int()
@@ -100,6 +102,12 @@ export function lessonInsertSchemaForQuarters(quarters: QuarterDates[]) {
 
 export type LessonSessionRow = typeof lessonSessions.$inferSelect
 
+export type LessonLocation = { location: string; locationUrl: string }
+
+export function sameLessonLocation(a: LessonLocation, b: LessonLocation): boolean {
+  return a.location === b.location && a.locationUrl === b.locationUrl
+}
+
 /**
  * 'YYYY-MM-DD HH:MM:SS', no timezone (club local is always assumed). `endsAt` is
  * inclusive. When `allDay`, the time components are filler and mean nothing.
@@ -109,7 +117,7 @@ export type LessonSession = {
   startsAt: string
   endsAt: string
   allDay: boolean
-}
+} & LessonLocation
 
 export type Lesson = {
   index: number
@@ -120,8 +128,6 @@ export type Lesson = {
   instructor2: number | null // wycNumber (FK)
   description: string
   requirements: string
-  location: string
-  locationUrl: string
   size: number
   expire: number // quarter index (FK)
 }
@@ -141,8 +147,6 @@ export type RichLesson = {
   instructor2Name: string
   description: string
   requirements: string
-  location: string
-  locationUrl: string
   size: number
 }
 
@@ -170,12 +174,18 @@ export type ClassType = {
 
 // --- Mappers ---
 
-export function toLessonSession(row: LessonSessionRow): LessonSession {
+export function toLessonSession(
+  row: LessonSessionRow,
+  legacy: { location: string | null; locationUrl: string | null } | null,
+): LessonSession {
   return {
     index: row.index,
     startsAt: row.startsAt,
     endsAt: row.endsAt,
     allDay: row.allDay !== 0,
+    // A session inserted by the prior deployment can still have legacy-only locations.
+    location: str(row.location ?? legacy?.location),
+    locationUrl: str(row.locationUrl ?? legacy?.locationUrl),
   }
 }
 
@@ -198,6 +208,8 @@ export function toSessionInput(session: LessonSession): LessonSessionInput {
     endTime: session.allDay ? '' : timeOf(session.endsAt).slice(0, 5),
     allDay: session.allDay,
     multiDay: dateOf(session.startsAt) !== dateOf(session.endsAt),
+    location: session.location,
+    locationUrl: session.locationUrl,
   }
 }
 
@@ -208,6 +220,8 @@ export function fromSessionInput(input: LessonSessionInput) {
     startsAt: at(input.date, input.startTime),
     endsAt: at(effectiveEndDate(input), input.endTime),
     allDay: input.allDay ? 1 : 0,
+    location: input.location,
+    locationUrl: input.locationUrl,
   }
 }
 
@@ -245,8 +259,6 @@ export function toRichLesson(row: LessonQueryRow, sessions: LessonSession[]): Ri
     instructor2Name: fullName(row.instructor2First, row.instructor2Last),
     description: str(row.description),
     requirements: str(row.requirements),
-    location: str(row.location),
-    locationUrl: str(row.locationUrl),
     size: num(row.size),
   }
 }
@@ -261,8 +273,6 @@ export function fromLessonInsert(data: LessonInsert) {
     instructor2: data.instructor2,
     description: data.description,
     requirements: data.requirements,
-    location: data.location,
-    locationUrl: data.locationUrl,
     size: data.unlimitedSize ? 0 : data.size,
     expire: data.expire,
   }

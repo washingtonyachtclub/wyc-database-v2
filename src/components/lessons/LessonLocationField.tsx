@@ -1,25 +1,49 @@
 import { LESSON_LOCATION_PRESETS, WINDSURFING_TYPE_ID } from '@/db/constants'
-import type { LessonInsert } from '@/domains/lessons/schema'
+import {
+  sameLessonLocation,
+  type LessonInsert,
+  type LessonLocation,
+} from '@/domains/lessons/schema'
 import { withForm } from '@/hooks/form'
+import { useId, useRef } from 'react'
+import { Input } from '../ui/input'
 import { Label } from '../ui/label'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select'
 
 const OTHER = 'Other'
+const presets = LESSON_LOCATION_PRESETS.map(({ name, url }) => ({
+  location: name,
+  locationUrl: url,
+}))
 
-const SSP = LESSON_LOCATION_PRESETS.find((p) => p.name === 'SSP')!
-const WAC = LESSON_LOCATION_PRESETS.find((p) => p.name === 'WAC')!
+export function lessonTypeLocation(typeId: number): LessonLocation {
+  return presets.find((p) => p.location === (typeId === WINDSURFING_TYPE_ID ? 'SSP' : 'WAC'))!
+}
 
-/**
- * The preset a class type defaults to (SSP for windsurfing, WAC otherwise), but only while
- * the location is still an untouched preset — a custom location is left alone.
- */
-export function typeLocationDefault(
-  typeId: number,
-  currentLocation: string,
-): { name: string; url: string } | null {
-  const isPreset = LESSON_LOCATION_PRESETS.some((p) => p.name === currentLocation)
-  if (!isPreset) return null
-  return typeId === WINDSURFING_TYPE_ID ? SSP : WAC
+function changeSessionLocation(
+  sessions: LessonInsert['sessions'],
+  index: number,
+  location: Partial<LessonLocation>,
+  copyToAll: boolean,
+): LessonInsert['sessions'] {
+  return sessions.map((session, i) =>
+    i === index || copyToAll ? { ...session, ...location } : session,
+  )
+}
+
+function allShareFirstLocation(sessions: LessonInsert['sessions']): boolean {
+  return sessions.every((session) => sameLessonLocation(sessions[0], session))
+}
+
+export function sessionsForLessonType(sessions: LessonInsert['sessions'], typeId: number) {
+  const first = sessions[0]
+  if (!first || !presets.some((preset) => sameLessonLocation(preset, first))) return sessions
+  return changeSessionLocation(
+    sessions,
+    0,
+    lessonTypeLocation(typeId),
+    allShareFirstLocation(sessions),
+  )
 }
 
 const locationFieldDefaults: LessonInsert = {
@@ -30,8 +54,6 @@ const locationFieldDefaults: LessonInsert = {
   instructor2: null,
   description: '',
   requirements: '',
-  location: '',
-  locationUrl: '',
   size: 1,
   unlimitedSize: false,
   expire: 0,
@@ -39,31 +61,45 @@ const locationFieldDefaults: LessonInsert = {
 
 export const LessonLocationField = withForm({
   defaultValues: locationFieldDefaults,
-  render: function LessonLocationRender({ form }) {
+  props: { index: 0 },
+  render: function LessonLocationRender({ form, index }) {
+    const id = useId()
+    const canCopyCustomLocation = useRef(true)
+    const update = (location: Partial<LessonLocation>, isPreset = false) => {
+      const sessions = form.getFieldValue('sessions')
+      const copyToAll =
+        index === 0 && canCopyCustomLocation.current && allShareFirstLocation(sessions)
+      // Clearing a preset to enter a custom venue can briefly match another session's blank value.
+      canCopyCustomLocation.current = isPreset || copyToAll
+      form.setFieldValue('sessions', changeSessionLocation(sessions, index, location, copyToAll))
+    }
+
     return (
-      <form.Subscribe selector={(state) => state.values.location}>
-        {(location) => {
-          const preset = LESSON_LOCATION_PRESETS.find((p) => p.name === location)
-          const selectValue = preset ? preset.name : OTHER
+      <form.Subscribe selector={(state) => state.values.sessions[index]}>
+        {(session) => {
+          if (!session) return null
+          const preset = presets.find((p) => sameLessonLocation(p, session))
+          const selectValue = preset?.location ?? OTHER
 
           return (
-            <div>
-              <Label className="mb-1">Location</Label>
+            <div className="mt-2">
+              <Label htmlFor={id} className="mb-1">
+                Location
+              </Label>
               <Select
                 value={selectValue}
                 onValueChange={(value) => {
-                  const next = LESSON_LOCATION_PRESETS.find((p) => p.name === value)
-                  form.setFieldValue('location', next?.name ?? '')
-                  form.setFieldValue('locationUrl', next?.url ?? '')
+                  const next = presets.find((p) => p.location === value)
+                  update(next ?? { location: '', locationUrl: '' }, Boolean(next))
                 }}
               >
-                <SelectTrigger>
+                <SelectTrigger id={id}>
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  {LESSON_LOCATION_PRESETS.map((p) => (
-                    <SelectItem key={p.name} value={p.name}>
-                      {p.name}
+                  {presets.map(({ location }) => (
+                    <SelectItem key={location} value={location}>
+                      {location}
                     </SelectItem>
                   ))}
                   <SelectItem value={OTHER}>Other</SelectItem>
@@ -71,13 +107,29 @@ export const LessonLocationField = withForm({
               </Select>
 
               {selectValue === OTHER && (
-                <div className="mt-2 grid grid-cols-1 gap-2">
-                  <form.AppField name="location">
-                    {(field) => <field.TextField label="Location name" />}
-                  </form.AppField>
-                  <form.AppField name="locationUrl">
-                    {(field) => <field.TextField label="URL (optional)" />}
-                  </form.AppField>
+                <div className="mt-2 grid grid-cols-1 gap-2 sm:grid-cols-2">
+                  <div>
+                    <Label className="mb-1" htmlFor={`${id}-name`}>
+                      Location name
+                    </Label>
+                    <Input
+                      id={`${id}-name`}
+                      value={session.location}
+                      maxLength={80}
+                      onChange={(event) => update({ location: event.target.value })}
+                    />
+                  </div>
+                  <div>
+                    <Label className="mb-1" htmlFor={`${id}-url`}>
+                      URL (optional)
+                    </Label>
+                    <Input
+                      id={`${id}-url`}
+                      value={session.locationUrl}
+                      maxLength={255}
+                      onChange={(event) => update({ locationUrl: event.target.value })}
+                    />
+                  </div>
                 </div>
               )}
             </div>

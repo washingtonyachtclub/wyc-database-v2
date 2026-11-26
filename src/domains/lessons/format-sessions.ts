@@ -1,4 +1,29 @@
-import { dateOf, timeOf, type LessonSession } from './schema'
+import {
+  dateOf,
+  sameLessonLocation,
+  timeOf,
+  type LessonLocation,
+  type LessonSession,
+} from './schema'
+
+export const NO_SESSION_LOCATION = 'Location TBD'
+
+export function sharedSessionLocation(sessions: LessonSession[]): LessonLocation | undefined {
+  const first = sessions[0]
+  return first && sessions.every((session) => sameLessonLocation(first, session))
+    ? first
+    : undefined
+}
+
+export function formatLessonSchedule(sessions: LessonSession[]) {
+  const sharedLocation = sharedSessionLocation(sessions)
+  const lines: { date: string; venue?: LessonLocation }[] = sharedLocation
+    ? formatSessions(sessions).map((date) => ({ date }))
+    : [...sessions]
+        .sort((a, b) => a.startsAt.localeCompare(b.startsAt))
+        .map((session) => ({ date: formatSession(session), venue: session }))
+  return { lines, sharedLocation }
+}
 
 const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
 const WEEKDAYS_SHORT = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']

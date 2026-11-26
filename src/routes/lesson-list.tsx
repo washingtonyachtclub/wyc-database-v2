@@ -4,8 +4,9 @@ import { createFileRoute } from '@tanstack/react-router'
 import { MapPin } from 'lucide-react'
 import { useState } from 'react'
 import { LESSON_CATEGORIES } from '../db/constants'
-import { formatSession } from '@/domains/lessons/format-sessions'
-import { dateOf, type RichLesson } from '@/domains/lessons/schema'
+import { formatSession, sharedSessionLocation } from '@/domains/lessons/format-sessions'
+import { LessonLocationName } from '@/components/lessons/LessonSchedule'
+import { dateOf, type LessonSession, type RichLesson } from '@/domains/lessons/schema'
 import { getPublicLessons } from '@/domains/lessons/server-fns'
 import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
@@ -106,6 +107,7 @@ function LessonCard({ entry, muted }: { entry: PublicLesson; muted?: boolean }) 
   const hasTwo = !!lesson.instructor2Name
   const [showAllSessions, setShowAllSessions] = useState(false)
   const orderedSessions = [...lesson.sessions].sort((a, b) => a.startsAt.localeCompare(b.startsAt))
+  const sharedLocation = sharedSessionLocation(orderedSessions)
   const hasLongSchedule = orderedSessions.length > 3
   const now = getNowPacificDateTimeString()
   const upcomingSessions = orderedSessions.filter((session) =>
@@ -130,9 +132,11 @@ function LessonCard({ entry, muted }: { entry: PublicLesson; muted?: boolean }) 
             <>
               {compactSessions.length > 0 ? (
                 compactSessions.map((session) => (
-                  <div key={session.index} className="text-[13px] leading-relaxed text-[#444]">
-                    {formatSession(session)}
-                  </div>
+                  <PublicSessionDate
+                    key={session.index}
+                    session={session}
+                    showLocation={!sharedLocation}
+                  />
                 ))
               ) : (
                 <div className="text-[13px] leading-relaxed text-[#444]">No upcoming sessions</div>
@@ -170,22 +174,14 @@ function LessonCard({ entry, muted }: { entry: PublicLesson; muted?: boolean }) 
             </div>
           </div>
 
-          {lesson.location && (
+          {sharedLocation?.location && (
             <div className="flex-1 px-3 pt-1 pb-1 md:py-2.5">
               <div className="flex items-start gap-1 text-[13px] leading-relaxed text-[#444]">
                 <MapPin className="mt-[3px] h-3.5 w-3.5 shrink-0" />
-                {lesson.locationUrl ? (
-                  <a
-                    href={lesson.locationUrl}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="font-bold text-[#00859b] underline"
-                  >
-                    {lesson.location}
-                  </a>
-                ) : (
-                  <span>{lesson.location}</span>
-                )}
+                <LessonLocationName
+                  venue={sharedLocation}
+                  linkClassName="font-bold text-[#00859b] underline"
+                />
               </div>
             </div>
           )}
@@ -219,9 +215,11 @@ function LessonCard({ entry, muted }: { entry: PublicLesson; muted?: boolean }) 
           className="grid grid-cols-1 gap-x-6 gap-y-0.5 border-t border-[#C0C0C0] px-3 py-2.5 sm:grid-cols-2 md:grid-cols-4"
         >
           {orderedSessions.map((session) => (
-            <div key={session.index} className="text-[13px] leading-relaxed text-[#444]">
-              {formatSession(session)}
-            </div>
+            <PublicSessionDate
+              key={session.index}
+              session={session}
+              showLocation={!sharedLocation}
+            />
           ))}
         </div>
       )}
@@ -237,6 +235,26 @@ function LessonCard({ entry, muted }: { entry: PublicLesson; muted?: boolean }) 
           <span className="font-bold">Requirements: </span>
           {lesson.requirements}
         </div>
+      )}
+    </div>
+  )
+}
+
+function PublicSessionDate({
+  session,
+  showLocation,
+}: {
+  session: LessonSession
+  showLocation: boolean
+}) {
+  return (
+    <div className="text-[13px] leading-relaxed text-[#444]">
+      {formatSession(session)}
+      {showLocation && (
+        <>
+          {' · '}
+          <LessonLocationName venue={session} linkClassName="font-bold text-[#00859b] underline" />
+        </>
       )}
     </div>
   )

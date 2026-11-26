@@ -28,8 +28,6 @@ export const lessonTableSelectFields = {
   instructor2Last: instructor2Table.last,
   description: lessons.description,
   requirements: lessons.requirements,
-  location: lessons.location,
-  locationUrl: lessons.locationUrl,
   size: lessons.size,
   expire: lessons.expire,
 }
@@ -53,15 +51,19 @@ export async function fetchSessionsByLesson(
   if (lessonIds.length === 0) return byLesson
 
   const rows = await database
-    .select()
+    .select({
+      session: lessonSessions,
+      legacy: { location: lessons.location, locationUrl: lessons.locationUrl },
+    })
     .from(lessonSessions)
+    .leftJoin(lessons, eq(lessons.index, lessonSessions.lessonId))
     .where(inArray(lessonSessions.lessonId, lessonIds))
     .orderBy(asc(lessonSessions.startsAt), asc(lessonSessions.index))
 
-  for (const row of rows) {
-    const arr = byLesson.get(row.lessonId) ?? []
-    arr.push(toLessonSession(row))
-    byLesson.set(row.lessonId, arr)
+  for (const { session, legacy } of rows) {
+    const arr = byLesson.get(session.lessonId) ?? []
+    arr.push(toLessonSession(session, legacy))
+    byLesson.set(session.lessonId, arr)
   }
   return byLesson
 }
@@ -133,8 +135,6 @@ export function toLessonEmailInfo(
     instructor1Email: instructorEmails.get(lesson.instructor1) ?? '',
     instructor2Name: lesson.instructor2Name,
     instructor2Email: lesson.instructor2 ? (instructorEmails.get(lesson.instructor2) ?? '') : '',
-    location: lesson.location,
-    locationUrl: lesson.locationUrl,
   }
 }
 

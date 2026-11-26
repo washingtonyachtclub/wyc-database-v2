@@ -9,8 +9,6 @@ const lessonSizeDefaults: LessonInsert = {
   instructor2: null,
   description: '',
   requirements: '',
-  location: '',
-  locationUrl: '',
   size: 1,
   unlimitedSize: false,
   expire: 0,

@@ -1,5 +1,5 @@
 import { LessonCard } from '@/components/lessons/LessonCard'
-import { formatSessions } from '@/domains/lessons/format-sessions'
+import { LessonSchedule } from '@/components/lessons/LessonSchedule'
 import {
   AlertDialog,
   AlertDialogAction,
@@ -137,7 +137,6 @@ function SignedUpLessonCard({ lesson }: { lesson: SignedUpLesson }) {
   const isEnrolled = lesson.status === 'enrolled'
   const [showUnenroll, setShowUnenroll] = useState(false)
   const unenrollMutation = useUnenrollFromLessonMutation()
-  const sessionLines = formatSessions(lesson.sessions)
   const hasPassed = !isLessonUpcoming(lesson.calendarDate)
 
   return (
@@ -170,9 +169,7 @@ function SignedUpLessonCard({ lesson }: { lesson: SignedUpLesson }) {
         </div>
 
         <div className="text-sm text-muted-foreground space-y-1">
-          {sessionLines.map((line) => (
-            <p key={line}>{line}</p>
-          ))}
+          <LessonSchedule sessions={lesson.sessions} linkLocations={false} />
           <p>Class size: {lesson.size}</p>
         </div>
 
