@@ -1,3 +1,4 @@
+import { readQuarterConfig } from '@/domains/quarters/config'
 import db from '@/db/index'
 import {
   duesExemptionRequests,
@@ -107,7 +108,11 @@ export const requestDuesExemption = createServerFn({ method: 'POST' })
     }
 
     const expireQtr = member.expireQtrIndex ?? 0
-    const requestedExpireQtr = computeRenewal(expireQtr, 'quarterly')
+    const requestedExpireQtr = computeRenewal(
+      expireQtr,
+      'quarterly',
+      (await readQuarterConfig()).renewalQuarter,
+    )
     const renewalId = randomUUID()
 
     try {

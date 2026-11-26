@@ -1,11 +1,12 @@
 import { createServerFn } from '@tanstack/react-start'
-import { and, count, desc, eq, gte, lt } from 'drizzle-orm'
+import { and, count, desc, eq, gte, lt, sql } from 'drizzle-orm'
 import type { QuarterInsertData } from '@/domains/quarters/schema'
 import { toQuarter } from '@/domains/quarters/schema'
 import { lessonQuarter, lessons, quarters, wycDatabase } from '@/db/schema'
 import db from '@/db/index'
 import { requireAuth, requirePrivilege } from '@/lib/auth/auth-middleware'
-import { RENEWAL_QUARTER } from '@/domains/renewals/compute-renewal'
+import { readQuarterConfig } from './config'
+import { z } from 'zod'
 import { daysUntil } from '@/lib/date-utils'
 
 export const QUARTERS_AHEAD_TARGET = 8
@@ -59,12 +60,7 @@ export const createQuarter = createServerFn({ method: 'POST' })
 export const getQuarterHealth = createServerFn({ method: 'GET' }).handler(async () => {
   await requirePrivilege('db')
 
-  const [cq] = await db
-    .select({ quarter: lessonQuarter.quarter })
-    .from(lessonQuarter)
-    .where(eq(lessonQuarter.index, 1))
-    .limit(1)
-  const currentQuarter = cq.quarter
+  const { currentQuarter, renewalQuarter } = await readQuarterConfig()
 
   const rows = await db
     .select({ index: quarters.index, school: quarters.school, endDate: quarters.endDate })
@@ -90,14 +86,10 @@ export const getQuarterHealth = createServerFn({ method: 'GET' }).handler(async 
         }
       : null
 
-  // RENEWAL_QUARTER is hand-maintained and normally equals the current quarter. It gets bumped to
-  // the next quarter a couple weeks early so members can renew ahead of the rollover. Nag once we're
-  // inside that window and it hasn't been bumped yet ('dueSoon'), or if the quarter already rolled
-  // past it ('stale'/overdue). A missing end date is nagged separately.
   const renewalReminder: RenewalReminder =
-    RENEWAL_QUARTER < currentQuarter
+    renewalQuarter < currentQuarter
       ? { state: 'stale' }
-      : RENEWAL_QUARTER === currentQuarter && daysToEnd != null && daysToEnd <= 14
+      : renewalQuarter === currentQuarter && daysToEnd != null && daysToEnd <= 14
         ? {
             state: 'dueSoon',
             quarterName: current?.school ?? `quarter ${currentQuarter}`,
@@ -107,6 +99,7 @@ export const getQuarterHealth = createServerFn({ method: 'GET' }).handler(async 
 
   return {
     currentQuarter,
+    renewalQuarter,
     quartersAhead,
     target: QUARTERS_AHEAD_TARGET,
     isLow: quartersAhead < QUARTERS_AHEAD_MIN,
@@ -208,5 +201,30 @@ export const deleteQuarter = createServerFn({ method: 'POST' })
     } catch (error) {
       console.error('Failed to delete quarter:', error)
       throw new Error('Failed to delete quarter')
+    }
+  })
+
+export const updateRenewalQuarter = createServerFn({ method: 'POST' })
+  .validator(
+    z.object({ newQuarter: z.number().int().positive(), previousQuarter: z.number().int() }),
+  )
+  .handler(async ({ data }) => {
+    await requirePrivilege('db')
+    try {
+      const changed = await db
+        .update(lessonQuarter)
+        .set({ renewalQuarter: data.newQuarter })
+        .where(
+          and(
+            eq(lessonQuarter.index, 1),
+            eq(lessonQuarter.renewalQuarter, data.previousQuarter),
+            sql`${data.newQuarter}::integer IN (${lessonQuarter.quarter}, ${lessonQuarter.quarter} + 1)`,
+          ),
+        )
+        .returning({ quarter: lessonQuarter.renewalQuarter })
+      return { updated: changed.length > 0 }
+    } catch (error) {
+      console.error('Failed to update renewal quarter:', error)
+      throw new Error('Failed to update renewal quarter')
     }
   })

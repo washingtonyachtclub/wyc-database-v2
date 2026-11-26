@@ -1,3 +1,4 @@
+import { readQuarterConfig } from '@/domains/quarters/config'
 import db from '@/db'
 import {
   memberEmergencyContacts,
@@ -512,7 +513,8 @@ export const previewMembershipApplicationRenewal = createServerFn({ method: 'GET
         throw new Error('Application is not ready for renewal')
       }
       const duration = applicationRenewalDuration(application.duration, application.paymentStatus)
-      const targetExpireQtr = computeRenewal(member.expireQtrIndex, duration)
+      const { renewalQuarter } = await readQuarterConfig()
+      const targetExpireQtr = computeRenewal(member.expireQtrIndex, duration, renewalQuarter)
       const labels = await db
         .select({ index: quarters.index, label: quarters.school })
         .from(quarters)
@@ -527,7 +529,7 @@ export const previewMembershipApplicationRenewal = createServerFn({ method: 'GET
         duration,
         withinAdvanceLimit:
           application.paymentStatus === 'exemption_requested' ||
-          withinAdvanceLimit(member.expireQtrIndex, duration),
+          withinAdvanceLimit(member.expireQtrIndex, duration, renewalQuarter),
       }
     } catch (error) {
       console.error('Failed to preview application renewal:', error)
@@ -603,12 +605,17 @@ export const applyMembershipApplicationToExistingMember = createServerFn({ metho
         }
 
         const duration = applicationRenewalDuration(application.duration, application.paymentStatus)
-        const expireQtrIndex = computeRenewal(existingMember.expireQtrIndex, duration)
+        const { renewalQuarter } = await readQuarterConfig(tx)
+        const expireQtrIndex = computeRenewal(
+          existingMember.expireQtrIndex,
+          duration,
+          renewalQuarter,
+        )
         if (
           existingMember.expireQtrIndex !== data.expectedPreviousExpireQtr ||
           expireQtrIndex !== data.expectedTargetExpireQtr ||
           (application.paymentStatus !== 'exemption_requested' &&
-            !withinAdvanceLimit(existingMember.expireQtrIndex, duration))
+            !withinAdvanceLimit(existingMember.expireQtrIndex, duration, renewalQuarter))
         ) {
           throw new Error('Renewal preview is stale or exceeds the advance limit')
         }

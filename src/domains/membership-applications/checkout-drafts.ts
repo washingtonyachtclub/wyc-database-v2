@@ -1,3 +1,4 @@
+import { readQuarterConfig } from '@/domains/quarters/config'
 import db from '@/db'
 import { membershipApplications, quarters } from '@/db/schema'
 import { getCookie, setCookie, deleteCookie } from '@tanstack/react-start/server'
@@ -107,7 +108,11 @@ export async function updateCheckoutDraft(
       uwStatus: input.questionnaire.uwStatus,
       plusOneResponse: input.questionnaire.plusOneResponse,
       duration: input.duration,
-      targetExpireQtr: computeRenewal(0, input.duration),
+      targetExpireQtr: computeRenewal(
+        0,
+        input.duration,
+        (await readQuarterConfig()).renewalQuarter,
+      ),
       tier: tierForUwStatus(input.questionnaire.uwStatus),
     })
     .where(editableDraft(input.editId))

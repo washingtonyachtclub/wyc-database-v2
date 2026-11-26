@@ -6,6 +6,7 @@ import {
   getQuarterChangeImpact,
   getQuarterHealth,
   updateCurrentQuarter,
+  updateRenewalQuarter,
   updateQuarter,
 } from './server-fns'
 
@@ -69,6 +70,20 @@ export function useUpdateCurrentQuarterMutation() {
       queryClient.invalidateQueries({ queryKey: ['quarters'] })
       queryClient.invalidateQueries({ queryKey: ['lessons'] })
       queryClient.invalidateQueries({ queryKey: ['members'] })
+    },
+  })
+}
+
+export function useUpdateRenewalQuarterMutation() {
+  const client = useQueryClient()
+  return useMutation({
+    mutationFn: updateRenewalQuarter,
+    onSettled: async () => {
+      await Promise.all([
+        client.invalidateQueries({ queryKey: ['quarters'] }),
+        client.invalidateQueries({ queryKey: ['renewals', 'status'] }),
+        client.invalidateQueries({ queryKey: ['membership-applications'] }),
+      ])
     },
   })
 }

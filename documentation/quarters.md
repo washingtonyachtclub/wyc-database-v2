@@ -43,14 +43,15 @@ _index  text          school          endDate
 
 ### `lesson_quarter`
 
-Single-row configuration table that stores which quarter is "current."
+Single-row configuration for the current quarter and the renewal quarter.
 
-| Column    | Type   | Description                                     |
-| --------- | ------ | ----------------------------------------------- |
-| `_index`  | int PK | Always 1                                        |
-| `quarter` | int    | Current quarter index (FK to `quarters._index`) |
+| Column            | Type   | Description                               |
+| ----------------- | ------ | ----------------------------------------- |
+| `_index`          | int PK | Always 1                                  |
+| `quarter`         | int    | Current quarter index                     |
+| `renewal_quarter` | int    | Renewal quarter (FK to `quarters._index`) |
 
-This value is **manually updated** — there is no automatic rollover. In the legacy system, the Vice Commodore updates it via the Lesson Control Panel. If set incorrectly, membership validation, administrative lesson lists, and instructor privilege grants will all be wrong.
+Users with the `db` privilege set each value independently on **Set Current Quarter**. The current quarter determines membership status. The renewal quarter determines the starting quarter for new memberships and renewals. See [membership renewals](membership-renewals.md).
 
 ---
 

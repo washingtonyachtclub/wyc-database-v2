@@ -1,3 +1,4 @@
+import { readQuarterConfig } from '@/domains/quarters/config'
 import db from '@/db'
 import { membershipApplications } from '@/db/schema'
 import { and, count, eq, gte } from 'drizzle-orm'
@@ -103,7 +104,7 @@ export async function createMembershipApplication(
   }
 
   const applicationId = randomUUID()
-  const targetExpireQtr = computeRenewal(0, duration)
+  const targetExpireQtr = computeRenewal(0, duration, (await readQuarterConfig()).renewalQuarter)
   const tier = tierForUwStatus(input.questionnaire.uwStatus)
   try {
     await db.insert(membershipApplications).values({
