@@ -1,6 +1,6 @@
-import { formatSessions } from '@/domains/lessons/format-sessions'
+import { LessonSchedule } from './LessonSchedule'
 import type { RichLesson } from '@/domains/lessons/schema'
-import { ChevronRight, MapPin } from 'lucide-react'
+import { ChevronRight } from 'lucide-react'
 import { RichText } from '../ui/RichText'
 
 export function LessonCard({
@@ -12,8 +12,6 @@ export function LessonCard({
   onClick?: () => void
   dimmed?: boolean
 }) {
-  const sessionLines = formatSessions(lesson.sessions)
-
   return (
     <div
       className={`border rounded-lg p-4 hover:bg-accent transition-colors ${
@@ -54,11 +52,7 @@ export function LessonCard({
         </div>
       </div>
       <div className="mt-3 space-y-1 text-sm">
-        {sessionLines.map((line) => (
-          <div key={line} className="text-foreground font-medium">
-            {line}
-          </div>
-        ))}
+        <LessonSchedule sessions={lesson.sessions} dateClassName="text-foreground font-medium" />
         {(lesson.instructor1Name || lesson.instructor2Name) && (
           <div className="text-foreground space-y-0.5">
             {lesson.instructor1Name && (
@@ -72,24 +66,6 @@ export function LessonCard({
                 <span className="font-medium">Instructor 2: </span>
                 <span>{lesson.instructor2Name}</span>
               </div>
-            )}
-          </div>
-        )}
-        {lesson.location && (
-          <div className="flex items-center gap-1 text-foreground">
-            <MapPin className="h-3.5 w-3.5 shrink-0" />
-            {lesson.locationUrl ? (
-              <a
-                href={lesson.locationUrl}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="underline"
-                onClick={(e) => e.stopPropagation()}
-              >
-                {lesson.location}
-              </a>
-            ) : (
-              <span>{lesson.location}</span>
             )}
           </div>
         )}

@@ -1,4 +1,5 @@
 import { Plus, X } from 'lucide-react'
+import { LessonLocationField, lessonTypeLocation } from './LessonLocationField'
 import { Button } from '../ui/button'
 import { Label } from '../ui/label'
 import type { LessonInsert } from '@/domains/lessons/schema'
@@ -13,8 +14,6 @@ const lessonSessionsDefaults: LessonInsert = {
   instructor2: null,
   description: '',
   requirements: '',
-  location: '',
-  locationUrl: '',
   size: 1,
   unlimitedSize: false,
   expire: 0,
@@ -106,6 +105,7 @@ export const LessonSessionsField = withForm({
                       {(field) => <field.CheckboxField label="Ends on another day" />}
                     </form.AppField>
                   </div>
+                  <LessonLocationField form={form} index={i} />
                 </div>
               ))}
             </div>
@@ -115,7 +115,12 @@ export const LessonSessionsField = withForm({
               variant="outline"
               size="sm"
               className="mt-2"
-              onClick={() => sessionsField.pushValue({ ...emptySessionInput })}
+              onClick={() => {
+                const first = form.getFieldValue('sessions')[0]
+                const { location, locationUrl } =
+                  first ?? lessonTypeLocation(form.getFieldValue('classTypeId'))
+                sessionsField.pushValue({ ...emptySessionInput, location, locationUrl })
+              }}
             >
               <Plus className="h-4 w-4" />
               Add day

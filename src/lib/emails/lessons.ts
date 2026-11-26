@@ -1,8 +1,8 @@
 import { emailLink, emailTextToHtml } from './html'
 import { PUBLIC_APP_ORIGIN } from '@/lib/urls'
 
-import { formatSessions } from '@/domains/lessons/format-sessions'
-import type { LessonSession } from '@/domains/lessons/schema'
+import { formatLessonSchedule, NO_SESSION_LOCATION } from '@/domains/lessons/format-sessions'
+import type { LessonLocation, LessonSession } from '@/domains/lessons/schema'
 
 export type LessonEmailInfo = {
   type: string
@@ -14,8 +14,6 @@ export type LessonEmailInfo = {
   instructor1Email: string
   instructor2Name: string
   instructor2Email: string
-  location: string
-  locationUrl: string
 }
 
 type EmailFormat = {
@@ -33,6 +31,33 @@ const htmlFormat: EmailFormat = {
   link: emailLink,
 }
 
+function locationText(venue: LessonLocation, format: EmailFormat): string {
+  if (!venue.location) return NO_SESSION_LOCATION
+  return venue.locationUrl
+    ? format.link(venue.locationUrl, venue.location)
+    : format.text(venue.location)
+}
+
+function scheduleDetails(sessions: LessonSession[], format: EmailFormat) {
+  const { lines, sharedLocation } = formatLessonSchedule(sessions)
+  return {
+    sessionLines: lines.map(({ date, venue }) =>
+      venue ? `${format.text(date)} · ${locationText(venue, format)}` : format.text(date),
+    ),
+    locationLine: sharedLocation?.location
+      ? `Location: ${locationText(sharedLocation, format)}`
+      : '',
+  }
+}
+
+export function lessonScheduleEmailLines(sessions: LessonSession[], mode: 'text' | 'html') {
+  const { sessionLines, locationLine } = scheduleDetails(
+    sessions,
+    mode === 'text' ? plainTextFormat : htmlFormat,
+  )
+  return locationLine ? [...sessionLines, locationLine] : sessionLines
+}
+
 function renderEmail(render: (format: EmailFormat) => string) {
   return {
     text: render(plainTextFormat),
@@ -41,16 +66,11 @@ function renderEmail(render: (format: EmailFormat) => string) {
 }
 
 function formatLessonInfo(lesson: LessonEmailInfo, format: EmailFormat): string {
-  const sessionLines = formatSessions(lesson.sessions)
+  const { sessionLines, locationLine } = scheduleDetails(lesson.sessions, format)
   const lines = [`Class: ${format.text(lesson.subtype)}`]
-  if (sessionLines.length === 1) lines.push(`When: ${format.text(sessionLines[0])}`)
-  else if (sessionLines.length > 1)
-    lines.push('When:', ...sessionLines.map((l) => `  ${format.text(l)}`))
-  if (lesson.location) {
-    lines.push(
-      `Location: ${lesson.locationUrl ? format.link(lesson.locationUrl, lesson.location) : format.text(lesson.location)}`,
-    )
-  }
+  if (sessionLines.length === 1) lines.push(`When: ${sessionLines[0]}`)
+  else if (sessionLines.length > 1) lines.push('When:', ...sessionLines.map((line) => `  ${line}`))
+  if (locationLine) lines.push(locationLine)
   lines.push(
     `Instructor: ${format.text(lesson.instructor1Name)}${lesson.instructor1Email ? ` (${format.text(lesson.instructor1Email)})` : ''}`,
   )

@@ -19,7 +19,6 @@ export async function calendarLessonIds(): Promise<number[]> {
 export function calendarLesson(lesson: RichLesson) {
   return {
     title: lesson.subtype || lesson.type || 'WYC Lesson',
-    location: lesson.location,
     description: lesson.description,
     requirements: lesson.requirements,
     instructors: [lesson.instructor1Name, lesson.instructor2Name].filter(

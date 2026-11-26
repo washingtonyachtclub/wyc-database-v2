@@ -188,7 +188,7 @@ export const getLessonById = createServerFn({ method: 'GET' })
 async function syncLessonSessions(
   lessonId: number,
   sessions: LessonSessionInput[],
-  database: Pick<typeof db, 'select' | 'delete' | 'update' | 'insert'> = db,
+  database: Pick<typeof db, 'select' | 'delete' | 'update' | 'insert'>,
 ) {
   const existing = await database
     .select({ index: lessonSessions.index, startsAt: lessonSessions.startsAt })
@@ -271,10 +271,13 @@ export const createLesson = createServerFn({ method: 'POST' })
     )
     if (mismatch) throw new Error(mismatch)
     const row = fromLessonInsert(data)
-    const [result] = await db.insert(lessons).values(row).returning({ id: lessons.index })
-    await syncLessonSessions(result.id, data.sessions)
-    await reconcileCalendar(result.id)
-    return { success: true, id: result.id }
+    const id = await db.transaction(async (tx) => {
+      const [result] = await tx.insert(lessons).values(row).returning({ id: lessons.index })
+      await syncLessonSessions(result.id, data.sessions, tx)
+      return result.id
+    })
+    await reconcileCalendar(id)
+    return { success: true, id }
   })
 
 export const updateLesson = createServerFn({ method: 'POST' })

@@ -12,11 +12,11 @@ import {
 } from '@/components/ui/alert-dialog'
 import { Button } from '@/components/ui/button'
 import { getMemberLessonPageQueryOptions } from '@/domains/lesson-announcements/query-options'
-import { formatSessions } from '@/domains/lessons/format-sessions'
+import { LessonSchedule } from './LessonSchedule'
 import { useUnenrollFromLessonMutation } from '@/domains/lessons/query-options'
 import { useSuspenseQuery } from '@tanstack/react-query'
 import { Link, useNavigate } from '@tanstack/react-router'
-import { ArrowLeft, MapPin } from 'lucide-react'
+import { ArrowLeft } from 'lucide-react'
 import { useState } from 'react'
 
 export type LessonSignupStatus = 'enrolled' | 'waitlisted'
@@ -47,7 +47,6 @@ export function MemberLessonDetails({
   }
 
   const { lesson, status, announcements } = data
-  const sessionLines = formatSessions(lesson.sessions)
 
   return (
     <div className="mx-auto max-w-3xl p-4 space-y-8">
@@ -85,32 +84,11 @@ export function MemberLessonDetails({
         </div>
 
         <div className="rounded-lg border border-border p-4 text-sm space-y-2">
-          {sessionLines.map((line) => (
-            <p key={line} className="font-medium">
-              {line}
-            </p>
-          ))}
+          <LessonSchedule sessions={lesson.sessions} dateClassName="font-medium" />
           <p>
             Instructor: {lesson.instructor1Name}
             {lesson.instructor2Name ? `, ${lesson.instructor2Name}` : ''}
           </p>
-          {lesson.location && (
-            <p className="flex items-center gap-1">
-              <MapPin className="h-4 w-4" />
-              {lesson.locationUrl ? (
-                <a
-                  href={lesson.locationUrl}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="underline"
-                >
-                  {lesson.location}
-                </a>
-              ) : (
-                lesson.location
-              )}
-            </p>
-          )}
           {lesson.description && (
             <div>
               <p className="font-medium">Description</p>

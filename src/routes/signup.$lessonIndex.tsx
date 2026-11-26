@@ -1,5 +1,5 @@
 import { Button } from '@/components/ui/button'
-import { formatSessions } from '@/domains/lessons/format-sessions'
+import { LessonSchedule } from '@/components/lessons/LessonSchedule'
 import {
   getLessonForSignupQueryOptions,
   useEnrollInLessonMutation,
@@ -54,7 +54,6 @@ function SignupPage() {
     signupsOpen,
   } = signupData
   const isFull = lesson.size > 0 && enrolledCount >= lesson.size
-  const sessionLines = formatSessions(lesson.sessions)
 
   const handleSignup = () => {
     enrollMutation.mutate(
@@ -82,9 +81,7 @@ function SignupPage() {
 
         {/* Lesson info */}
         <div className="text-sm text-muted-foreground space-y-1">
-          {sessionLines.map((line) => (
-            <p key={line}>{line}</p>
-          ))}
+          <LessonSchedule sessions={lesson.sessions} />
           <p>
             <span className="font-medium text-foreground">Instructor: </span>
             {lesson.instructor1Name}
