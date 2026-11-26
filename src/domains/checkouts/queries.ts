@@ -2,7 +2,7 @@ import { sql, and, asc, count, eq, exists, gte, lte, or } from 'drizzle-orm'
 import type { PgColumn, PgSelect } from 'drizzle-orm/pg-core'
 import { alias } from 'drizzle-orm/pg-core'
 import db from '@/db/index'
-import { boatTypes, checkouts, crew, ratings, wycDatabase } from '@/db/schema'
+import { boatTypes, checkouts, crew, guests, ratings, wycDatabase } from '@/db/schema'
 import type { CheckoutFilters } from './filter-types'
 
 const skipperTable = alias(wycDatabase, 'skipper')
@@ -118,6 +118,24 @@ export function baseCheckoutCardsQuery() {
     .leftJoin(boatTypes, eq(checkouts.boat, sql`${boatTypes.index}::text`))
     .leftJoin(ratings, eq(checkouts.relevantRating, ratings.index))
     .leftJoin(supervisorTable, eq(checkouts.chiefId, supervisorTable.wycNumber))
+}
+
+export async function findCheckout(index: number) {
+  const [row] = await db.select().from(checkouts).where(eq(checkouts.index, index)).limit(1)
+  return row
+}
+
+export function getCheckoutCrew(index: number) {
+  return db
+    .select({ wycNumber: crew.crewId, first: wycDatabase.first, last: wycDatabase.last })
+    .from(crew)
+    .leftJoin(wycDatabase, eq(crew.crewId, wycDatabase.wycNumber))
+    .where(eq(crew.checkoutId, index))
+    .orderBy(crew.index)
+}
+
+export function getCheckoutGuests(index: number) {
+  return db.select().from(guests).where(eq(guests.checkoutId, index)).orderBy(guests.index)
 }
 
 // --- Table page queries (paginated, sortable, filterable) ---

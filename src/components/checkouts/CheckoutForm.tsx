@@ -1,29 +1,26 @@
 import { useQuery } from '@tanstack/react-query'
-import { ChevronDown, Plus, X } from 'lucide-react'
-import { useCallback, useMemo, useState } from 'react'
+import { ChevronDown } from 'lucide-react'
+import { useMemo, useState } from 'react'
 import { formErrorMessage } from '@/components/ui/app-form-fields'
-import type { MemberLite } from '@/components/ui/MemberCombobox'
 import { boatTypeGroups } from '@/domains/boat-types/order'
 import {
   getCheckoutFormBoatTypesQueryOptions,
-  getCheckoutFormMembersQueryOptions,
   getMyRatingsQueryOptions,
   useCreateCheckoutMutation,
 } from '@/domains/checkouts/query-options'
-import { searchCheckoutMembers } from '@/domains/checkouts/server-fns'
 import {
   type CheckoutInsert,
   checkoutInsertSchema,
   DESTINATIONS,
   emptyCheckoutInsert,
-  emptyGuestInput,
-  GUEST_STATUSES,
 } from '@/domains/checkouts/schema'
 import { useAppForm } from '@/hooks/form'
 import { cn } from '@/lib/utils'
 import { Button } from '../ui/button'
 import { ErrorAlert } from '../ui/ErrorAlert'
 import { Label } from '../ui/label'
+import { CheckoutGuestFields } from './CheckoutGuestFields'
+import { useCheckoutMemberOptions } from './use-checkout-member-options'
 import { CheckoutQualificationField } from './CheckoutQualificationField'
 import { MemberMultiCombobox } from './MemberMultiCombobox'
 
@@ -56,10 +53,9 @@ export function CheckoutForm({
   onSuccess: () => void | Promise<void>
 }) {
   const [showMoreDestinations, setShowMoreDestinations] = useState(false)
-  const [additionalMembers, setAdditionalMembers] = useState<MemberLite[]>([])
   const { data: boatTypes = [] } = useQuery(getCheckoutFormBoatTypesQueryOptions())
   const { data: myRatings = [] } = useQuery(getMyRatingsQueryOptions())
-  const { data: members = [] } = useQuery(getCheckoutFormMembersQueryOptions())
+  const { selectableMembers, searchAllMembers, rememberMember } = useCheckoutMemberOptions()
   const createCheckout = useCreateCheckoutMutation({ onSuccess })
 
   const form = useAppForm({
@@ -72,24 +68,6 @@ export function CheckoutForm({
 
   const boatGroups = useMemo(() => boatTypeGroups(boatTypes), [boatTypes])
   const excludedMembers = useMemo(() => [skipperWycNumber], [skipperWycNumber])
-  const selectableMembers = useMemo(() => {
-    const byWycNumber = new Map<number, MemberLite>(
-      members.map((member) => [member.wycNumber, member]),
-    )
-    for (const member of additionalMembers) byWycNumber.set(member.wycNumber, member)
-    return [...byWycNumber.values()]
-  }, [additionalMembers, members])
-  const searchAllMembers = useCallback(
-    (query: string) => searchCheckoutMembers({ data: { query } }),
-    [],
-  )
-  const rememberMember = useCallback((member: MemberLite) => {
-    setAdditionalMembers((current) =>
-      current.some((candidate) => candidate.wycNumber === member.wycNumber)
-        ? current
-        : [...current, member],
-    )
-  }, [])
 
   return (
     <form
@@ -210,79 +188,7 @@ export function CheckoutForm({
         )}
       </form.AppField>
 
-      <form.AppField name="guests" mode="array">
-        {(guestsField) => (
-          <div>
-            <Label className="mb-1">Guests</Label>
-            <div className="mb-3 space-y-1 text-sm text-muted-foreground">
-              <p>
-                All non-WYC members must complete a{' '}
-                <a
-                  href="https://waiver.washingtonyachtclub.org/"
-                  target="_blank"
-                  rel="noreferrer"
-                  className="font-medium text-foreground underline underline-offset-2"
-                >
-                  waiver
-                </a>
-                .
-              </p>
-              <p>
-                Make sure your guests are well dressed and aware of the inherent risks of sailing.
-              </p>
-            </div>
-            <div className="space-y-3">
-              {guestsField.state.value.map((_, index) => (
-                <div key={index} className="rounded-md border p-3">
-                  <div className="flex items-start gap-2">
-                    <div className="grid flex-1 gap-3 sm:grid-cols-2">
-                      <form.AppField name={`guests[${index}].name`}>
-                        {(field) => <field.TextField label="Name" required />}
-                      </form.AppField>
-                      <form.AppField name={`guests[${index}].status`}>
-                        {(field) => (
-                          <field.SelectField
-                            label="Status"
-                            required
-                            placeholder="Select guest status"
-                            options={GUEST_STATUSES.map((status) => ({
-                              value: status.value,
-                              label: status.label,
-                            }))}
-                          />
-                        )}
-                      </form.AppField>
-                      <form.AppField name={`guests[${index}].email`}>
-                        {(field) => <field.TextField label="Email" type="email" />}
-                      </form.AppField>
-                    </div>
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="sm"
-                      aria-label="Remove guest"
-                      className="mt-6 h-9 w-9 shrink-0 p-0 text-muted-foreground hover:text-destructive"
-                      onClick={() => guestsField.removeValue(index)}
-                    >
-                      <X className="h-4 w-4" />
-                    </Button>
-                  </div>
-                </div>
-              ))}
-            </div>
-            <Button
-              type="button"
-              variant="outline"
-              size="sm"
-              className="mt-2"
-              onClick={() => guestsField.pushValue({ ...emptyGuestInput })}
-            >
-              <Plus className="h-4 w-4" />
-              Add guest
-            </Button>
-          </div>
-        )}
-      </form.AppField>
+      <CheckoutGuestFields form={form} fields={{ guests: 'guests' }} />
 
       <div className="pt-2">
         <form.AppForm>

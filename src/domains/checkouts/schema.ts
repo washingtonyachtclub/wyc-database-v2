@@ -6,6 +6,7 @@ import type {
   CheckoutTableQueryRow,
   MemberCheckoutExportQueryRow,
 } from './queries'
+import type { checkouts, guests } from '@/db/schema'
 
 // --- Core types ---
 
@@ -159,13 +160,19 @@ export type CheckoutCard = {
   guests: CheckoutGuest[]
   isOut: boolean
   canCheckIn: boolean
+  canEdit: boolean
+  participation: 'skipper' | 'crew' | null
 }
 
 export function toCheckoutCard(
   row: CheckoutCardQueryRow,
   crew: CheckoutCrewMember[],
   guests: CheckoutGuest[],
-  canManage: boolean,
+  permissions: {
+    canCheckIn: boolean
+    canEdit: boolean
+    participation: CheckoutCard['participation']
+  },
 ): CheckoutCard {
   const isOut = row.timeReturn === null
   return {
@@ -183,7 +190,9 @@ export function toCheckoutCard(
     crew,
     guests,
     isOut,
-    canCheckIn: isOut && canManage,
+    canCheckIn: isOut && permissions.canCheckIn,
+    canEdit: isOut && permissions.canEdit,
+    participation: permissions.participation,
   }
 }
 
@@ -268,14 +277,18 @@ const destinationSchema = z
   .union([z.enum(DESTINATIONS), z.literal('')])
   .refine((destination) => destination !== '', 'Destination is required')
 
+const crewSchema = z
+  .array(z.number().int().min(1))
+  .refine((ids) => new Set(ids).size === ids.length, {
+    message: 'Crew members must be unique',
+  })
+
 const checkoutFields = {
   boatId: z.number({ error: 'Boat is required' }).int().min(1, 'Boat is required'),
   qualification: checkoutQualificationSchema,
   destination: destinationSchema,
   otherDestination: z.string().trim().max(100, 'Destination is too long'),
-  crew: z.array(z.number().int().min(1)).refine((ids) => new Set(ids).size === ids.length, {
-    message: 'Crew members must be unique',
-  }),
+  crew: crewSchema,
   guests: z.array(guestInputSchema),
 }
 
@@ -306,6 +319,46 @@ export const checkoutInsertSchema = z
   })
 
 export type CheckoutInsert = z.input<typeof checkoutInsertSchema>
+
+export const checkoutIndexSchema = z.coerce.number().int().min(1)
+
+export const checkoutEditSchema = z
+  .object({
+    destination: destinationSchema,
+    otherDestination: checkoutFields.otherDestination,
+    expectedReturn: datetimeLocalSchema('Estimated return time is required'),
+    crew: crewSchema,
+    guests: z.array(guestInputSchema.extend({ id: z.number().int().positive().optional() })),
+  })
+  .superRefine(validateDestination)
+
+export type CheckoutEdit = z.input<typeof checkoutEditSchema>
+
+export function toCheckoutEdit(
+  row: typeof checkouts.$inferSelect,
+  crewIds: number[],
+  guestRows: (typeof guests.$inferSelect)[],
+): CheckoutEdit {
+  const destination =
+    DESTINATIONS.find((value) => value !== 'Other' && value === row.destination) ?? 'Other'
+  return {
+    destination,
+    otherDestination: destination === 'Other' ? row.destination : '',
+    expectedReturn: str(row.expectedReturn).slice(0, 16).replace(' ', 'T'),
+    crew: crewIds,
+    guests: guestRows.map((guest) => ({
+      id: guest.index,
+      name: str(guest.name),
+      status: guest.status,
+      email: str(guest.email),
+    })),
+  }
+}
+
+export const checkInSchema = z.object({
+  index: checkoutIndexSchema,
+  actualReturn: datetimeLocalSchema('Enter the actual return date and time').optional(),
+})
 
 export const emptyCheckoutInsert: CheckoutInsert = {
   boatId: 0,

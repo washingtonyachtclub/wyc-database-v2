@@ -11,7 +11,7 @@ import {
   SubmitButton,
 } from '../components/ui/app-form-fields'
 
-export const { useAppForm, withForm } = createFormHook({
+export const { useAppForm, withForm, withFieldGroup } = createFormHook({
   fieldContext,
   formContext,
   fieldComponents: {

@@ -5,6 +5,7 @@ import { CheckInDialog } from '@/components/checkouts/CheckInDialog'
 import type { CheckoutCard as CheckoutCardType } from '@/domains/checkouts/schema'
 import { CheckoutCard } from '@/components/checkouts/CheckoutCard'
 import { CheckoutHistoryTable } from '@/components/checkouts/CheckoutHistoryTable'
+import { EditCheckoutDialog } from '@/components/checkouts/EditCheckoutDialog'
 import { WindHistoryChart } from '@/components/checkouts/WindHistoryChart'
 import { Button } from '@/components/ui/button'
 import { getCheckoutCardsQueryOptions } from '@/domains/checkouts/query-options'
@@ -26,6 +27,7 @@ function CheckoutPage() {
   const navigate = useNavigate()
   const router = useRouter()
   const [checkInCheckout, setCheckInCheckout] = useState<CheckoutCardType | null>(null)
+  const [editCheckout, setEditCheckout] = useState<CheckoutCardType | null>(null)
   const [showWindHistory, setShowWindHistory] = useState(false)
 
   const finishSailLockerAction = async () => {
@@ -121,6 +123,7 @@ function CheckoutPage() {
                   key={checkout.index}
                   checkout={checkout}
                   onCheckIn={() => setCheckInCheckout(checkout)}
+                  onEdit={() => setEditCheckout(checkout)}
                 />
               ))}
             </div>
@@ -144,6 +147,15 @@ function CheckoutPage() {
           checkout={checkInCheckout}
           onClose={() => setCheckInCheckout(null)}
           onCheckedIn={sailLockerMode ? finishSailLockerAction : undefined}
+        />
+      )}
+      {user && editCheckout && (
+        <EditCheckoutDialog
+          key={editCheckout.index}
+          checkout={editCheckout}
+          viewerWycNumber={user.wycNumber}
+          onClose={() => setEditCheckout(null)}
+          onSaved={sailLockerMode ? finishSailLockerAction : undefined}
         />
       )}
     </div>
