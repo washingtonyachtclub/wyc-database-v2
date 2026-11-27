@@ -7,7 +7,7 @@ The Worker reads and writes Cloudflare D1 through the `DB` binding. Wrangler tra
 ## Workflow
 
 1. Edit the SQLite schema in `src/db/schema.ts` and run `npm run db:generate -- description` to create a migration.
-2. Write the SQL in that file and include revision triggers for new tables used by atomic writes.
+2. Write the SQL in that file.
 3. Run `npm run db:check` to apply every migration to an empty SQLite database and compare column names with Drizzle.
 4. Run `npm run db:migrate:local` and verify the application locally. Apply the same SQL to the hosted development database with `npm run db:migrate:dev`.
 

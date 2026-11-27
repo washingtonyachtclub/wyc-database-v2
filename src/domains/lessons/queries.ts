@@ -1,5 +1,4 @@
 import { inIdList } from '@/db/query-helpers'
-import { atomicWrite } from '@/db/atomic'
 import { lessonQuarterIndex } from '@/domains/lessons/quarter-query'
 import { and, asc, eq, gte, like, or, sql } from 'drizzle-orm'
 import { alias, type SQLiteColumn, type SQLiteSelect } from 'drizzle-orm/sqlite-core'
@@ -250,17 +249,15 @@ export function lessonIdsEndingOnOrAfter(date: string) {
 }
 
 export async function insertEligibleSignup(lessonIndex: number, userId: number) {
-  return atomicWrite(async (tx) => {
-    const [eligible] = await db
-      .select({ class: lessons.index, student: wycDatabase.wycNumber })
-      .from(lessons)
-      .innerJoin(wycDatabase, eq(wycDatabase.wycNumber, userId))
-      .where(
-        and(eq(lessons.index, lessonIndex), gte(wycDatabase.expireQtrIndex, lessonQuarterIndex)),
-      )
-    if (!eligible) return false
-
-    tx.add(db.insert(signups).values(eligible))
-    return true
-  })
+  const eligible = db
+    .select({
+      index: sql<number>`null`.as('_index'),
+      class: lessons.index,
+      student: wycDatabase.wycNumber,
+    })
+    .from(lessons)
+    .innerJoin(wycDatabase, eq(wycDatabase.wycNumber, userId))
+    .where(and(eq(lessons.index, lessonIndex), gte(wycDatabase.expireQtrIndex, lessonQuarterIndex)))
+  const inserted = await db.insert(signups).select(eligible)
+  return inserted.meta.changes > 0
 }
