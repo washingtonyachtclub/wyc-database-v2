@@ -1,5 +1,6 @@
-import { and, eq, gte, inArray } from 'drizzle-orm'
-import type { PgSelect } from 'drizzle-orm/pg-core'
+import { inIdList } from '@/db/query-helpers'
+import { and, eq, gte } from 'drizzle-orm'
+import type { SQLiteSelect } from 'drizzle-orm/sqlite-core'
 import db from '@/db/index'
 import { officers, positions, ratings, wycDatabase, wycRatings } from '@/db/schema'
 
@@ -25,7 +26,7 @@ export type ExaminerFilters = {
   showInactive?: boolean
 }
 
-export function withExaminerFilters<T extends PgSelect>(
+export function withExaminerFilters<T extends SQLiteSelect>(
   qb: T,
   filters: ExaminerFilters | undefined,
 ) {
@@ -45,5 +46,5 @@ export async function getSkipperRatingsForMembers(wycNumbers: number[]) {
     .select({ member: wycRatings.member, ratingText: ratings.text })
     .from(wycRatings)
     .innerJoin(ratings, eq(ratings.index, wycRatings.rating))
-    .where(and(inArray(wycRatings.member, wycNumbers), gte(ratings.degree, 3)))
+    .where(and(inIdList(wycRatings.member, wycNumbers), gte(ratings.degree, 3)))
 }

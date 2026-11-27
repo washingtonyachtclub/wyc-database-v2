@@ -2,7 +2,7 @@ import { readQuarterConfig } from '@/domains/quarters/config'
 import db from '@/db'
 import { membershipApplications } from '@/db/schema'
 import { and, count, eq, gte } from 'drizzle-orm'
-import { getRequestIP } from '@tanstack/react-start/server'
+import { getRequest } from '@tanstack/react-start/server'
 import { createHmac, randomUUID } from 'node:crypto'
 import { z } from 'zod'
 import { computeRenewal, type RenewalDuration, type RenewalTier } from '../renewals/compute-renewal'
@@ -48,7 +48,7 @@ export function requireStudentUwEmail(
 
 function hashRequestIp(): string {
   if (!process.env.SESSION_SECRET) throw new Error('SESSION_SECRET is not set')
-  const ip = getRequestIP({ xForwardedFor: process.env.VERCEL === '1' }) ?? 'unknown'
+  const ip = getRequest().headers.get('CF-Connecting-IP') ?? 'unknown'
   return createHmac('sha256', process.env.SESSION_SECRET).update(ip).digest('hex')
 }
 

@@ -77,7 +77,7 @@ export async function pruneCheckoutDrafts(dryRun: boolean) {
   if (dryRun)
     return (await db.select({ count: count() }).from(membershipApplications).where(expired))[0]
       .count
-  return (await db.delete(membershipApplications).where(expired)).rowCount ?? 0
+  return (await db.delete(membershipApplications).where(expired)).meta.changes ?? 0
 }
 
 const draftInput = z
@@ -116,7 +116,7 @@ export async function updateCheckoutDraft(
       tier: tierForUwStatus(input.questionnaire.uwStatus),
     })
     .where(editableDraft(input.editId))
-  if (result.rowCount !== 1) throw new Error('Checkout unavailable')
+  if (result.meta.changes !== 1) throw new Error('Checkout unavailable')
 }
 
 export async function saveCheckoutDraft(payload: unknown) {
@@ -137,7 +137,7 @@ export async function discardDraft(id: string) {
       .update(membershipApplications)
       .set({ paymentStatus: 'discarded' })
       .where(editableDraft(id))
-    if (result.rowCount !== 1) return false
+    if (result.meta.changes !== 1) return false
     deleteCookie(draftCookie, cookieOptions)
     return true
   } catch (error) {

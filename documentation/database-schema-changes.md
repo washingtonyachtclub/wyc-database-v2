@@ -1,24 +1,20 @@
-# Database Schema Changes
+# Database schema changes
 
 ## Overview
 
-`src/db/schema.ts` defines the PostgreSQL schema. Production deployments apply pending migrations before building. Each Vercel project uses `MIGRATION_DATABASE_URL` for migrations and `DATABASE_URL` for the application. The URLs target the same database branch with separate roles. Preview deployments only build the app.
+The Worker reads and writes Cloudflare D1 through the `DB` binding. Wrangler tracks applied SQL files in `d1_migrations`.
 
 ## Workflow
 
-1. Edit the schema and run `npm run db:generate -- --name=description`.
-2. Review the SQL and apply locally with `npm run db:migrate:dev` (uses `.env.local`).
-3. Run `npm run db:check` and `npm run typecheck`. Commit the schema and migration together.
-4. Merge the reviewed migration. Production Vercel deployments run `npm run db:migrate` and stop if it fails. If the app build fails after the migration succeeds, the schema change remains applied.
+1. Edit the SQLite schema in `src/db/schema.ts` and run `npm run db:generate -- description` to create a migration.
+2. Write the SQL in that file and include revision triggers for new tables used by atomic writes.
+3. Run `npm run db:check` to apply every migration to an empty SQLite database and compare column names with Drizzle.
+4. Run `npm run db:migrate:local` and verify the application locally. Apply the same SQL to the hosted development database with `npm run db:migrate:dev`.
 
-Never edit applied migrations. Back up before destructive changes.
+## Key files
 
-## Key Files
-
-| File                       | Purpose                            |
-| -------------------------- | ---------------------------------- |
-| `src/db/schema.ts`         | Tables and constraints             |
-| `drizzle-postgres/`        | Active migrations and snapshots    |
-| `drizzle/`                 | Archived MySQL migrations          |
-| `drizzle.config.ts`        | Dialect, paths, and connection     |
-| `scripts/vercel-build.mjs` | Production migration and app build |
+| File               | Purpose                     |
+| ------------------ | --------------------------- |
+| `src/db/schema.ts` | Drizzle table definitions   |
+| `migrations/d1/`   | Ordered D1 migration files  |
+| `wrangler.jsonc`   | Worker and database binding |

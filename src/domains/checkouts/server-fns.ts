@@ -1,9 +1,10 @@
+import { inIdList } from '@/db/query-helpers'
 import { memberSearchQuery } from '@/domains/members/queries'
 import { toMemberSearchResult } from '@/domains/members/schema'
 import { rankMembers, MAX_MEMBER_SEARCH_RESULTS } from '@/domains/members/search'
 import { createServerFn } from '@tanstack/react-start'
 import { setResponseHeader } from '@tanstack/react-start/server'
-import { and, desc, eq, gte, inArray, isNotNull, isNull, sql } from 'drizzle-orm'
+import { and, desc, eq, gte, isNotNull, isNull } from 'drizzle-orm'
 import { z } from 'zod'
 import db from '@/db/index'
 import { fullName, str } from '@/db/mapper-utils'
@@ -93,12 +94,12 @@ export const getMemberCheckoutExport = createServerFn({ method: 'GET' })
           })
           .from(crew)
           .innerJoin(wycDatabase, eq(crew.crewId, wycDatabase.wycNumber))
-          .where(inArray(crew.checkoutId, checkoutIds))
+          .where(inIdList(crew.checkoutId, checkoutIds))
           .orderBy(crew.checkoutId, wycDatabase.last, wycDatabase.first),
         db
           .select({ checkoutId: guests.checkoutId, name: guests.name })
           .from(guests)
-          .where(inArray(guests.checkoutId, checkoutIds))
+          .where(inIdList(guests.checkoutId, checkoutIds))
           .orderBy(guests.checkoutId, guests.name),
       ])
 
@@ -292,7 +293,7 @@ export const getCheckoutCards = createServerFn({ method: 'GET' }).handler(async 
         .leftJoin(wycDatabase, eq(crew.crewId, wycDatabase.wycNumber))
         .leftJoin(memcat, eq(wycDatabase.categoryId, memcat.index))
         .leftJoin(quarters, eq(wycDatabase.expireQtrIndex, quarters.index))
-        .where(inArray(crew.checkoutId, ids))
+        .where(inIdList(crew.checkoutId, ids))
       for (const row of crewRows) {
         if (row.wycNumber === me) crewedCheckoutIds.add(row.checkoutId)
         const list = crewByCheckout.get(row.checkoutId) ?? []
@@ -304,7 +305,7 @@ export const getCheckoutCards = createServerFn({ method: 'GET' }).handler(async 
         crewByCheckout.set(row.checkoutId, list)
       }
 
-      const guestRows = await db.select().from(guests).where(inArray(guests.checkoutId, ids))
+      const guestRows = await db.select().from(guests).where(inIdList(guests.checkoutId, ids))
       for (const row of guestRows) {
         const list = guestsByCheckout.get(row.checkoutId) ?? []
         list.push({
@@ -572,7 +573,7 @@ export const checkInBoat = createServerFn({ method: 'POST' })
       const [checkedIn] = await db
         .update(checkouts)
         .set({
-          timeReturn: enteredReturn ?? sql`timezone('America/Los_Angeles', now())`,
+          timeReturn: enteredReturn ?? getNowPacificDateTimeString(),
         })
         .where(
           and(

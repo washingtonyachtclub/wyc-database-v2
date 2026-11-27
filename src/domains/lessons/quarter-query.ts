@@ -1,5 +1,5 @@
 import { and, asc, eq, gte, max, sql } from 'drizzle-orm'
-import { alias, QueryBuilder } from 'drizzle-orm/pg-core'
+import { alias, QueryBuilder } from 'drizzle-orm/sqlite-core'
 import { lessonSessions, lessons, quarters } from '@/db/schema'
 import { FIRST_LESSON_QUARTER } from './quarter-rules'
 
@@ -10,7 +10,7 @@ const lastSession = qb
   .where(eq(lessonSessions.lessonId, lessons.index))
 
 // Sessionless historical lessons have only CalendarDate.
-const finalDay = sql<string>`coalesce(${lastSession}::date, ${lessons.calendarDate})`
+const finalDay = sql<string>`coalesce(date(${lastSession}), ${lessons.calendarDate})`
 
 const previous = alias(quarters, 'previous_quarter')
 const quarter = qb

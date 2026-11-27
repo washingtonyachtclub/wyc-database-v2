@@ -1,11 +1,16 @@
 {
   "$schema": "./node_modules/wrangler/config-schema.json",
   "name": "wyc-database-dev",
-  "main": "@tanstack/react-start/server-entry",
+  "main": "src/worker.ts",
   "compatibility_date": "2026-11-26",
   "compatibility_flags": ["nodejs_compat"],
-  "workers_dev": false,
+  "workers_dev": true,
   "preview_urls": false,
+  "images": { "binding": "IMAGES" },
+  "r2_buckets": [
+    { "binding": "PROFILE_PHOTOS", "bucket_name": "profile-pictures-dev" },
+    { "binding": "WAIVERS", "bucket_name": "wyc-waivers-dev" },
+  ],
   "d1_databases": [
     {
       "binding": "DB",

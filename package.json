@@ -5,20 +5,20 @@
   "scripts": {
     "dev": "vite dev --host 0.0.0.0 --port 3000",
     "build": "vite build",
-    "vercel-build": "node scripts/vercel-build.mjs",
     "preview": "vite preview",
     "test": "vitest run",
-    "db:generate": "drizzle-kit generate",
-    "db:check": "node scripts/check-drizzle.mjs",
-    "db:migrate": "drizzle-kit migrate",
-    "db:migrate:dev": "dotenv -e .env.local -- drizzle-kit migrate",
+    "db:generate": "wrangler d1 migrations create DB",
+    "db:check": "tsx scripts/check-drizzle.ts",
+    "db:migrate:dev": "wrangler d1 migrations apply DB --remote",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "prepare": "husky",
     "typecheck": "tsc --noEmit",
     "db:import:mysql": "tsx scripts/import-mysql.ts",
-    "dev:cloudflare": "VITE_APP_ENV=dev vite dev --config vite.cloudflare.config.ts",
-    "build:cloudflare": "VITE_APP_ENV=dev vite build --config vite.cloudflare.config.ts"
+    "dev:cloudflare": "VITE_APP_ENV=dev vite dev",
+    "build:cloudflare": "VITE_APP_ENV=dev VITE_PUBLIC_APP_ORIGIN=https://wyc-database-dev.wyc-emdash-website.workers.dev vite build",
+    "db:migrate:local": "wrangler d1 migrations apply DB --local",
+    "deploy:dev": "npm run build:cloudflare && wrangler deploy --config dist/server/wrangler.json"
   },
   "lint-staged": {
     "**/*": "prettier --write --ignore-unknown"

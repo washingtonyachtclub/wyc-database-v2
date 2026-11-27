@@ -1,3 +1,4 @@
+import { inIdList } from '@/db/query-helpers'
 import db from '@/db/index'
 import { lessonSessions, lessons, signups, wycDatabase } from '@/db/schema'
 import { splitEnrollment } from '@/db/signup-utils'
@@ -13,7 +14,7 @@ import { pacificDatePlusDays } from '@/lib/date-utils'
 import { sendEmailBatch, type BatchMessage } from '@/lib/email'
 import { lessonReminderEmail, lessonReminderSubject } from '@/lib/emails/lessons'
 import { isDevEnvironment } from '@/lib/env'
-import { asc, eq, inArray, sql } from 'drizzle-orm'
+import { asc, eq, sql } from 'drizzle-orm'
 
 export const REMINDER_DAYS_AHEAD = 2
 
@@ -53,7 +54,7 @@ async function fetchSignupsByLesson(lessonIds: number[]) {
     })
     .from(signups)
     .innerJoin(wycDatabase, eq(signups.student, wycDatabase.wycNumber))
-    .where(inArray(signups.class, lessonIds))
+    .where(inIdList(signups.class, lessonIds))
     .orderBy(asc(signups.index))
 
   const byLesson = new Map<number, typeof rows>()
@@ -82,7 +83,7 @@ export async function sendLessonReminders({
   const startingIds = await lessonIdsStartingOn(targetDate)
   if (startingIds.length === 0) return empty
 
-  const lessonRows = await baseLessonQuery().where(inArray(lessons.index, startingIds))
+  const lessonRows = await baseLessonQuery().where(inIdList(lessons.index, startingIds))
   if (lessonRows.length === 0) return empty
 
   const lessonIds = lessonRows.map((r) => r.index)

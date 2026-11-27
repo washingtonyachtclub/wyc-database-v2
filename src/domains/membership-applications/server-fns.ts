@@ -1,3 +1,4 @@
+import { atomicWrite } from '@/db/atomic'
 import { readQuarterConfig } from '@/domains/quarters/config'
 import db from '@/db'
 import {
@@ -281,7 +282,7 @@ export const startNewMemberPayment = createServerFn({ method: 'POST' })
               eq(table.plusOneResponse, data.questionnaire.plusOneResponse),
             ),
           )
-        if (claim.rowCount !== 1) throw new Error('Checkout changed')
+        if (claim.meta.changes !== 1) throw new Error('Checkout changed')
         applicationId = draft.id
         targetExpireQtr = draft.targetExpireQtr
       } catch (error) {
@@ -375,45 +376,49 @@ export const startNewMemberPayment = createServerFn({ method: 'POST' })
     }
 
     try {
-      await db.transaction(async (tx) => {
-        const [application] = await tx
+      await atomicWrite(async (tx) => {
+        const [application] = await db
           .select({ paymentStatus: membershipApplications.paymentStatus })
           .from(membershipApplications)
           .where(eq(membershipApplications.id, applicationId))
-          .for('update', { of: membershipApplications })
         if (!application || application.paymentStatus !== 'pending') {
           throw new Error('Application payment state changed')
         }
 
-        const result = await tx
-          .insert(membershipPayments)
-          .values({
-            amountCents: order.amountCents,
-            applicationId,
-            currency: order.currency,
-            duration: data.duration,
-            newExpireQtr: targetExpireQtr,
-            prevExpireQtr: 0,
-            squareOrderId: order.orderId,
-            squarePaymentId,
-            status: 'COMPLETED',
-            tier,
-            wycNumber: null,
-          })
-          .returning({ id: membershipPayments.index })
+        const paymentId = await tx.nextId(membershipPayments)
+        tx.add(
+          db
+            .insert(membershipPayments)
+            .values({
+              index: paymentId,
+              amountCents: order.amountCents,
+              applicationId,
+              currency: order.currency,
+              duration: data.duration,
+              newExpireQtr: targetExpireQtr,
+              prevExpireQtr: 0,
+              squareOrderId: order.orderId,
+              squarePaymentId,
+              status: 'COMPLETED',
+              tier,
+              wycNumber: null,
+            }),
+        )
         if (discountCode) {
           await insertMembershipDiscountCodeRedemption(tx, {
             discountCents: order.discountCents,
             finalCents: order.amountCents,
-            paymentId: result[0].id,
+            paymentId,
             discountCode,
             subtotalCents: order.subtotalCents,
           })
         }
-        await tx
-          .update(membershipApplications)
-          .set({ paymentCompletedAt: new Date(), paymentStatus: 'completed' })
-          .where(eq(membershipApplications.id, applicationId))
+        tx.add(
+          db
+            .update(membershipApplications)
+            .set({ paymentCompletedAt: new Date(), paymentStatus: 'completed' })
+            .where(eq(membershipApplications.id, applicationId)),
+        )
       })
     } catch (error) {
       console.error('New-member payment completed but database recording failed:', {
@@ -612,8 +617,8 @@ export const completeNewMemberApplication = createServerFn({ method: 'POST' })
       })
 
       let alreadySubmitted = false
-      await db.transaction(async (tx) => {
-        const [current] = await tx
+      await atomicWrite(async (tx) => {
+        const [current] = await db
           .select({
             closedAt: membershipApplications.closedAt,
             paymentStatus: membershipApplications.paymentStatus,
@@ -622,7 +627,6 @@ export const completeNewMemberApplication = createServerFn({ method: 'POST' })
           })
           .from(membershipApplications)
           .where(eq(membershipApplications.id, data.applicationId))
-          .for('update', { of: membershipApplications })
         if (!current || !canCompleteMembershipApplication(current.paymentStatus)) {
           throw new Error('Application is not eligible for completion')
         }
@@ -634,40 +638,44 @@ export const completeNewMemberApplication = createServerFn({ method: 'POST' })
           throw new Error('Application is closed')
         }
 
-        await tx.insert(memberWaivers).values({
-          applicationId: data.applicationId,
-          email: application.primaryEmail,
-          firstName: application.firstName,
-          id: acceptanceId,
-          lastName: application.lastName,
-          objectKey,
-          pdfContentType: 'application/pdf',
-          pdfSha256: sha256,
-          pdfSize: pdf.byteLength,
-          renewalId: null,
-          signedAt: new Date(signedAt),
-          submittedValues: isMock
-            ? { adultAcknowledged: true, testAcknowledged: true }
-            : { adultAcknowledged: true },
-          waiverVersion: memberWaiverVersion,
-        })
-        await tx
-          .update(membershipApplications)
-          .set({
-            ...data.contact,
-            discordUsername: data.contact.discordUsername || null,
-            questionnaireResponses: responses,
-            requirementsCompletedAt: new Date(),
-            reviewStatus: 'pending_review',
-          })
-          .where(
-            and(
-              eq(membershipApplications.id, data.applicationId),
-              eq(membershipApplications.reviewStatus, 'not_ready'),
-              isNull(membershipApplications.closedAt),
-              isNull(membershipApplications.requirementsCompletedAt),
+        tx.add(
+          db.insert(memberWaivers).values({
+            applicationId: data.applicationId,
+            email: application.primaryEmail,
+            firstName: application.firstName,
+            id: acceptanceId,
+            lastName: application.lastName,
+            objectKey,
+            pdfContentType: 'application/pdf',
+            pdfSha256: sha256,
+            pdfSize: pdf.byteLength,
+            renewalId: null,
+            signedAt: new Date(signedAt),
+            submittedValues: isMock
+              ? { adultAcknowledged: true, testAcknowledged: true }
+              : { adultAcknowledged: true },
+            waiverVersion: memberWaiverVersion,
+          }),
+        )
+        tx.add(
+          db
+            .update(membershipApplications)
+            .set({
+              ...data.contact,
+              discordUsername: data.contact.discordUsername || null,
+              questionnaireResponses: responses,
+              requirementsCompletedAt: new Date(),
+              reviewStatus: 'pending_review',
+            })
+            .where(
+              and(
+                eq(membershipApplications.id, data.applicationId),
+                eq(membershipApplications.reviewStatus, 'not_ready'),
+                isNull(membershipApplications.closedAt),
+                isNull(membershipApplications.requirementsCompletedAt),
+              ),
             ),
-          )
+        )
       })
 
       return {

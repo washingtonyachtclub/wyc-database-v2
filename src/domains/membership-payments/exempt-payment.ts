@@ -1,7 +1,8 @@
+import { type AtomicWrite } from '@/db/atomic'
 import db from '@/db'
 import { membershipPayments } from '@/db/schema'
 
-type MembershipPaymentTransaction = Parameters<Parameters<typeof db.transaction>[0]>[0]
+type MembershipPaymentTransaction = AtomicWrite
 
 type ExemptPaymentLink =
   | { applicationId: string; renewalId?: never }
@@ -15,22 +16,25 @@ export async function insertExemptMembershipPayment(
     wycNumber: number | null
   },
 ) {
-  const result = await tx
-    .insert(membershipPayments)
-    .values({
-      applicationId: input.applicationId ?? null,
-      renewalId: input.renewalId ?? null,
-      wycNumber: input.wycNumber,
-      squarePaymentId: null,
-      squareOrderId: null,
-      amountCents: 0,
-      currency: 'USD',
-      tier: 'exempt',
-      duration: 'quarterly',
-      prevExpireQtr: input.prevExpireQtr,
-      newExpireQtr: input.newExpireQtr,
-      status: 'EXEMPT',
-    })
-    .returning({ id: membershipPayments.index })
-  return result[0].id
+  const paymentId = await tx.nextId(membershipPayments)
+  tx.add(
+    db
+      .insert(membershipPayments)
+      .values({
+        index: paymentId,
+        applicationId: input.applicationId ?? null,
+        renewalId: input.renewalId ?? null,
+        wycNumber: input.wycNumber,
+        squarePaymentId: null,
+        squareOrderId: null,
+        amountCents: 0,
+        currency: 'USD',
+        tier: 'exempt',
+        duration: 'quarterly',
+        prevExpireQtr: input.prevExpireQtr,
+        newExpireQtr: input.newExpireQtr,
+        status: 'EXEMPT',
+      }),
+  )
+  return paymentId
 }

@@ -1,5 +1,6 @@
+import { atomicWrite } from '@/db/atomic'
 import { createServerFn } from '@tanstack/react-start'
-import { getRequest, getRequestIP } from '@tanstack/react-start/server'
+import { getRequest } from '@tanstack/react-start/server'
 import { and, count, eq, gt, gte, inArray, lt } from 'drizzle-orm'
 import { createHash, createHmac, randomBytes } from 'node:crypto'
 import db from '@/db/index'
@@ -45,7 +46,7 @@ function hashRequestIp(): string {
     throw new Error('SESSION_SECRET is not set')
   }
 
-  const ip = getRequestIP({ xForwardedFor: process.env.VERCEL === '1' }) ?? 'unknown'
+  const ip = getRequest().headers.get('CF-Connecting-IP') ?? 'unknown'
   return createHmac('sha256', process.env.SESSION_SECRET).update(ip).digest('hex')
 }
 
@@ -130,13 +131,12 @@ export const approveQrLoginRequestServerFn = createServerFn({ method: 'POST' })
     }
 
     try {
-      return await db.transaction(async (tx): Promise<ApproveQrLoginResponse> => {
-        const [request] = await tx
+      return await atomicWrite(async (tx): Promise<ApproveQrLoginResponse> => {
+        const [request] = await db
           .select()
           .from(qrLoginRequests)
           .where(eq(qrLoginRequests.approvalSecretHash, hashSecret(data.approvalSecret)))
           .limit(1)
-          .for('update', { of: qrLoginRequests })
 
         if (!request) {
           return { status: 'unavailable' }
@@ -144,10 +144,12 @@ export const approveQrLoginRequestServerFn = createServerFn({ method: 'POST' })
 
         if (request.expiresAt.getTime() <= Date.now()) {
           if (request.status === 'pending' || request.status === 'approved') {
-            await tx
-              .update(qrLoginRequests)
-              .set({ status: 'expired' })
-              .where(eq(qrLoginRequests.id, request.id))
+            tx.add(
+              db
+                .update(qrLoginRequests)
+                .set({ status: 'expired' })
+                .where(eq(qrLoginRequests.id, request.id)),
+            )
           }
           return { status: 'unavailable' }
         }
@@ -163,14 +165,16 @@ export const approveQrLoginRequestServerFn = createServerFn({ method: 'POST' })
           return { status: 'unavailable' }
         }
 
-        await tx
-          .update(qrLoginRequests)
-          .set({
-            status: 'approved',
-            approvedBy: approvingMember,
-            approvedAt: new Date(),
-          })
-          .where(eq(qrLoginRequests.id, request.id))
+        tx.add(
+          db
+            .update(qrLoginRequests)
+            .set({
+              status: 'approved',
+              approvedBy: approvingMember,
+              approvedAt: new Date(),
+            })
+            .where(eq(qrLoginRequests.id, request.id)),
+        )
 
         return { status: 'approved' }
       })
@@ -190,18 +194,17 @@ export const pollQrLoginRequestServerFn = createServerFn({ method: 'POST' })
     }
 
     try {
-      const result = await db.transaction(
+      const result = await atomicWrite(
         async (
           tx,
         ): Promise<
           { status: 'pending' | 'unavailable' } | { status: 'consume'; wycNumber: number }
         > => {
-          const [request] = await tx
+          const [request] = await db
             .select()
             .from(qrLoginRequests)
             .where(eq(qrLoginRequests.pollingSecretHash, hashSecret(data.pollingSecret)))
             .limit(1)
-            .for('update', { of: qrLoginRequests })
 
           if (!request) {
             return { status: 'unavailable' }
@@ -209,10 +212,12 @@ export const pollQrLoginRequestServerFn = createServerFn({ method: 'POST' })
 
           if (request.expiresAt.getTime() <= Date.now()) {
             if (request.status === 'pending' || request.status === 'approved') {
-              await tx
-                .update(qrLoginRequests)
-                .set({ status: 'expired' })
-                .where(eq(qrLoginRequests.id, request.id))
+              tx.add(
+                db
+                  .update(qrLoginRequests)
+                  .set({ status: 'expired' })
+                  .where(eq(qrLoginRequests.id, request.id)),
+              )
             }
             return { status: 'unavailable' }
           }
@@ -225,10 +230,12 @@ export const pollQrLoginRequestServerFn = createServerFn({ method: 'POST' })
             return { status: 'unavailable' }
           }
 
-          await tx
-            .update(qrLoginRequests)
-            .set({ status: 'consumed', consumedAt: new Date() })
-            .where(eq(qrLoginRequests.id, request.id))
+          tx.add(
+            db
+              .update(qrLoginRequests)
+              .set({ status: 'consumed', consumedAt: new Date() })
+              .where(eq(qrLoginRequests.id, request.id)),
+          )
 
           return { status: 'consume', wycNumber: request.approvedBy }
         },

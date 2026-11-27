@@ -12,4 +12,3 @@ for (const photo of pending) {
     process.exitCode = 1
   }
 }
-await db.$client.end()

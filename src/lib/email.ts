@@ -2,11 +2,10 @@ import { Resend } from 'resend'
 import { plainTextEmailHtml } from './emails/html'
 import { isDevEnvironment } from './env'
 
-if (!process.env.RESEND_API_KEY) {
-  throw new Error('RESEND_API_KEY is missing')
+function emailClient() {
+  if (!process.env.RESEND_API_KEY) throw new Error('RESEND_API_KEY is missing')
+  return new Resend(process.env.RESEND_API_KEY)
 }
-
-const resend = new Resend(process.env.RESEND_API_KEY)
 
 const SEND_DOMAIN = 'mail.washingtonyachtclub.org'
 const FROM_ADDRESS = `Washington Yacht Club <database@${SEND_DOMAIN}>`
@@ -51,7 +50,7 @@ async function sendOneBatch(messages: BatchMessage[], key: string, simulated: bo
     })
   }
 
-  const { data, error } = await resend.batch.send(
+  const { data, error } = await emailClient().batch.send(
     messages.map((m) => ({
       from: FROM_ADDRESS,
       replyTo: REPLY_TO,
@@ -116,7 +115,7 @@ export async function sendEmail({
     })
   }
 
-  const { data, error } = await resend.emails.send(
+  const { data, error } = await emailClient().emails.send(
     {
       from: FROM_ADDRESS,
       replyTo: REPLY_TO,

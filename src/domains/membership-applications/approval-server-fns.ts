@@ -1,3 +1,4 @@
+import { atomicWrite, type AtomicWrite } from '@/db/atomic'
 import { readQuarterConfig } from '@/domains/quarters/config'
 import db from '@/db'
 import {
@@ -102,7 +103,7 @@ function combineAddress(line1: string, line2: string | null): string {
   return address
 }
 
-type ApplicationTransaction = Parameters<Parameters<typeof db.transaction>[0]>[0]
+type ApplicationTransaction = AtomicWrite
 
 async function ensureApplicationFunding(
   tx: ApplicationTransaction,
@@ -112,11 +113,10 @@ async function ensureApplicationFunding(
     targetExpireQtr: number
   },
 ) {
-  const [payment] = await tx
+  const [payment] = await db
     .select({ index: membershipPayments.index })
     .from(membershipPayments)
     .where(eq(membershipPayments.applicationId, application.id))
-    .for('update', { of: membershipPayments })
 
   if (application.paymentStatus === 'completed') {
     if (!payment) throw new Error('Application payment is missing')
@@ -254,15 +254,14 @@ export const updateMembershipApplicationEmails = createServerFn({ method: 'POST'
   .handler(async ({ data }) => {
     const editor = await requireRouteAccess('/membership-approvals')
     try {
-      await db.transaction(async (tx) => {
-        const [application] = await tx
+      await atomicWrite(async (tx) => {
+        const [application] = await db
           .select({
             reviewStatus: membershipApplications.reviewStatus,
             uwStatus: membershipApplications.uwStatus,
           })
           .from(membershipApplications)
           .where(eq(membershipApplications.id, data.applicationId))
-          .for('update', { of: membershipApplications })
         if (!application || !['not_ready', 'pending_review'].includes(application.reviewStatus)) {
           throw new Error('Application is not editable')
         }
@@ -270,15 +269,17 @@ export const updateMembershipApplicationEmails = createServerFn({ method: 'POST'
         if (application.uwStatus === 'student' && !uwEmail) {
           throw new Error('UW email is required for students')
         }
-        await tx
-          .update(membershipApplications)
-          .set({
-            emailEditedAt: new Date(),
-            emailEditedBy: editor,
-            primaryEmail: data.primaryEmail,
-            uwEmail,
-          })
-          .where(eq(membershipApplications.id, data.applicationId))
+        tx.add(
+          db
+            .update(membershipApplications)
+            .set({
+              emailEditedAt: new Date(),
+              emailEditedBy: editor,
+              primaryEmail: data.primaryEmail,
+              uwEmail,
+            })
+            .where(eq(membershipApplications.id, data.applicationId)),
+        )
       })
       return { success: true as const }
     } catch (error) {
@@ -349,12 +350,11 @@ export const approveNewMembershipApplication = createServerFn({ method: 'POST' }
       | undefined
 
     try {
-      await db.transaction(async (tx) => {
-        const [application] = await tx
+      await atomicWrite(async (tx) => {
+        const [application] = await db
           .select()
           .from(membershipApplications)
           .where(eq(membershipApplications.id, data.applicationId))
-          .for('update', { of: membershipApplications })
         if (
           !application ||
           !canCompleteMembershipApplication(application.paymentStatus) ||
@@ -365,14 +365,13 @@ export const approveNewMembershipApplication = createServerFn({ method: 'POST' }
         }
         if (!isUwStatus(application.uwStatus)) throw new Error('Invalid UW status')
 
-        const [waiver] = await tx
+        const [waiver] = await db
           .select({ id: memberWaivers.id })
           .from(memberWaivers)
           .where(eq(memberWaivers.applicationId, data.applicationId))
-          .for('update', { of: memberWaivers })
         if (!waiver) throw new Error('Application records are incomplete')
 
-        const memberCandidates = await tx.select(memberMatchSelect).from(wycDatabase)
+        const memberCandidates = await db.select(memberMatchSelect).from(wycDatabase)
         const [possibleMatch] = findMemberMatches(
           {
             firstName: application.firstName,
@@ -402,47 +401,55 @@ export const approveNewMembershipApplication = createServerFn({ method: 'POST' }
 
         const funding = await ensureApplicationFunding(tx, application)
 
-        const wycNumber = await allocateWycNumber(tx)
-        await tx.insert(wycDatabase).values({
-          categoryId: categoryIdForUwStatus(application.uwStatus),
-          city: application.city,
-          discordUsername: application.discordUsername,
-          email: application.primaryEmail,
-          expireQtrIndex: application.targetExpireQtr,
-          first: application.firstName,
-          last: application.lastName,
-          outToSea: 0,
-          passwordArgon2: credentials.passwordArgon2,
-          phone1: application.phone,
-          phone2: '',
-          state: application.state,
-          streetAddress: combineAddress(application.addressLine1, application.addressLine2),
-          studentId: null,
-          uwEmail: application.uwEmail,
-          wycNumber,
-          zipCode: application.zipCode,
-        })
-        await tx.insert(memberEmergencyContacts).values({
-          firstName: application.emergencyFirstName,
-          lastName: application.emergencyLastName,
-          phone: application.emergencyPhone,
-          relationship: application.emergencyRelationship,
-          wycNumber,
-        })
-        await tx
-          .update(membershipPayments)
-          .set({ wycNumber })
-          .where(eq(membershipPayments.applicationId, data.applicationId))
-        await tx
-          .update(membershipApplications)
-          .set({
-            ...(funding === 'exempt' && { paymentStatus: 'exempt' }),
-            resolvedWycNumber: wycNumber,
-            reviewedAt: new Date(),
-            reviewedBy: reviewer,
-            reviewStatus: 'approved_new',
-          })
-          .where(eq(membershipApplications.id, data.applicationId))
+        const wycNumber = await allocateWycNumber()
+        tx.add(
+          db.insert(wycDatabase).values({
+            categoryId: categoryIdForUwStatus(application.uwStatus),
+            city: application.city,
+            discordUsername: application.discordUsername,
+            email: application.primaryEmail,
+            expireQtrIndex: application.targetExpireQtr,
+            first: application.firstName,
+            last: application.lastName,
+            outToSea: 0,
+            passwordArgon2: credentials.passwordArgon2,
+            phone1: application.phone,
+            phone2: '',
+            state: application.state,
+            streetAddress: combineAddress(application.addressLine1, application.addressLine2),
+            studentId: null,
+            uwEmail: application.uwEmail,
+            wycNumber,
+            zipCode: application.zipCode,
+          }),
+        )
+        tx.add(
+          db.insert(memberEmergencyContacts).values({
+            firstName: application.emergencyFirstName,
+            lastName: application.emergencyLastName,
+            phone: application.emergencyPhone,
+            relationship: application.emergencyRelationship,
+            wycNumber,
+          }),
+        )
+        tx.add(
+          db
+            .update(membershipPayments)
+            .set({ wycNumber })
+            .where(eq(membershipPayments.applicationId, data.applicationId)),
+        )
+        tx.add(
+          db
+            .update(membershipApplications)
+            .set({
+              ...(funding === 'exempt' && { paymentStatus: 'exempt' }),
+              resolvedWycNumber: wycNumber,
+              reviewedAt: new Date(),
+              reviewedBy: reviewer,
+              reviewStatus: 'approved_new',
+            })
+            .where(eq(membershipApplications.id, data.applicationId)),
+        )
 
         member = {
           email: application.primaryEmail,
@@ -559,13 +566,12 @@ export const applyMembershipApplicationToExistingMember = createServerFn({ metho
       | undefined
 
     try {
-      await db.transaction(async (tx) => {
-        const [application] = await tx
+      await atomicWrite(async (tx) => {
+        const [application] = await db
           .select()
           .from(membershipApplications)
           .where(eq(membershipApplications.id, data.applicationId))
-          .for('update', { of: membershipApplications })
-        const [existingMember] = await tx
+        const [existingMember] = await db
           .select({
             discordUsername: wycDatabase.discordUsername,
             expireQtrIndex: wycDatabase.expireQtrIndex,
@@ -574,7 +580,6 @@ export const applyMembershipApplicationToExistingMember = createServerFn({ metho
           })
           .from(wycDatabase)
           .where(eq(wycDatabase.wycNumber, data.wycNumber))
-          .for('update', { of: wycDatabase })
         if (
           !application ||
           !existingMember ||
@@ -584,11 +589,10 @@ export const applyMembershipApplicationToExistingMember = createServerFn({ metho
         ) {
           throw new Error('Application is not ready for resolution')
         }
-        const [waiver] = await tx
+        const [waiver] = await db
           .select({ id: memberWaivers.id })
           .from(memberWaivers)
           .where(eq(memberWaivers.applicationId, data.applicationId))
-          .for('update', { of: memberWaivers })
         if (!waiver) throw new Error('Application records are incomplete')
         if (
           !application.addressLine1 ||
@@ -605,7 +609,7 @@ export const applyMembershipApplicationToExistingMember = createServerFn({ metho
         }
 
         const duration = applicationRenewalDuration(application.duration, application.paymentStatus)
-        const { renewalQuarter } = await readQuarterConfig(tx)
+        const { renewalQuarter } = await readQuarterConfig()
         const expireQtrIndex = computeRenewal(
           existingMember.expireQtrIndex,
           duration,
@@ -623,58 +627,66 @@ export const applyMembershipApplicationToExistingMember = createServerFn({ metho
           ...application,
           targetExpireQtr: expireQtrIndex,
         })
-        await tx
-          .update(wycDatabase)
-          .set({
-            city: application.city,
-            discordUsername: existingMember.discordUsername || application.discordUsername,
-            email: application.primaryEmail,
-            expireQtrIndex,
-            phone1: application.phone,
-            state: application.state,
-            streetAddress: combineAddress(application.addressLine1, application.addressLine2),
-            uwEmail: application.uwEmail,
-            zipCode: application.zipCode,
-          })
-          .where(eq(wycDatabase.wycNumber, data.wycNumber))
-        await tx
-          .insert(memberEmergencyContacts)
-          .values({
-            firstName: application.emergencyFirstName,
-            lastName: application.emergencyLastName,
-            phone: application.emergencyPhone,
-            relationship: application.emergencyRelationship,
-            wycNumber: data.wycNumber,
-          })
-          .onConflictDoUpdate({
-            target: memberEmergencyContacts.wycNumber,
-            set: {
+        tx.add(
+          db
+            .update(wycDatabase)
+            .set({
+              city: application.city,
+              discordUsername: existingMember.discordUsername || application.discordUsername,
+              email: application.primaryEmail,
+              expireQtrIndex,
+              phone1: application.phone,
+              state: application.state,
+              streetAddress: combineAddress(application.addressLine1, application.addressLine2),
+              uwEmail: application.uwEmail,
+              zipCode: application.zipCode,
+            })
+            .where(eq(wycDatabase.wycNumber, data.wycNumber)),
+        )
+        tx.add(
+          db
+            .insert(memberEmergencyContacts)
+            .values({
               firstName: application.emergencyFirstName,
               lastName: application.emergencyLastName,
               phone: application.emergencyPhone,
               relationship: application.emergencyRelationship,
-            },
-          })
-        await tx
-          .update(membershipPayments)
-          .set({
-            wycNumber: data.wycNumber,
-            prevExpireQtr: existingMember.expireQtrIndex,
-            newExpireQtr: expireQtrIndex,
-          })
-          .where(eq(membershipPayments.applicationId, data.applicationId))
-        await tx
-          .update(membershipApplications)
-          .set({
-            ...(funding === 'exempt' && { paymentStatus: 'exempt' }),
-            resolvedWycNumber: data.wycNumber,
-            reviewedAt: new Date(),
-            reviewedBy: reviewer,
-            reviewStatus: 'approved_existing',
-            targetExpireQtr: expireQtrIndex,
-          })
-          .where(eq(membershipApplications.id, data.applicationId))
-        const [quarter] = await tx
+              wycNumber: data.wycNumber,
+            })
+            .onConflictDoUpdate({
+              target: memberEmergencyContacts.wycNumber,
+              set: {
+                firstName: application.emergencyFirstName,
+                lastName: application.emergencyLastName,
+                phone: application.emergencyPhone,
+                relationship: application.emergencyRelationship,
+              },
+            }),
+        )
+        tx.add(
+          db
+            .update(membershipPayments)
+            .set({
+              wycNumber: data.wycNumber,
+              prevExpireQtr: existingMember.expireQtrIndex,
+              newExpireQtr: expireQtrIndex,
+            })
+            .where(eq(membershipPayments.applicationId, data.applicationId)),
+        )
+        tx.add(
+          db
+            .update(membershipApplications)
+            .set({
+              ...(funding === 'exempt' && { paymentStatus: 'exempt' }),
+              resolvedWycNumber: data.wycNumber,
+              reviewedAt: new Date(),
+              reviewedBy: reviewer,
+              reviewStatus: 'approved_existing',
+              targetExpireQtr: expireQtrIndex,
+            })
+            .where(eq(membershipApplications.id, data.applicationId)),
+        )
+        const [quarter] = await db
           .select({ label: quarters.school })
           .from(quarters)
           .where(eq(quarters.index, expireQtrIndex))
@@ -741,7 +753,7 @@ export const closeMembershipApplication = createServerFn({ method: 'POST' })
             inArray(membershipApplications.reviewStatus, ['not_ready', 'pending_review']),
           ),
         )
-      if (result.rowCount !== 1) throw new Error('Application is no longer open')
+      if (result.meta.changes !== 1) throw new Error('Application is no longer open')
       return { success: true as const }
     } catch (error) {
       console.error('Failed to close membership application:', {

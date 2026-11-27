@@ -30,7 +30,7 @@ async function getQuarterUsageCounts() {
   const lessonUsage = await db
     .select({ q: lessonQuarters.q, n: count() })
     .from(lessonQuarters)
-    .groupBy(lessonQuarters.q)
+    .groupBy(({ q }) => q)
   const counts = new Map<number, number>()
   for (const u of [...memberUsage, ...lessonUsage]) {
     if (u.q != null) counts.set(u.q, (counts.get(u.q) ?? 0) + u.n)
@@ -223,7 +223,7 @@ export const updateRenewalQuarter = createServerFn({ method: 'POST' })
           and(
             eq(lessonQuarter.index, 1),
             eq(lessonQuarter.renewalQuarter, data.previousQuarter),
-            sql`${data.newQuarter}::integer IN (${lessonQuarter.quarter}, ${lessonQuarter.quarter} + 1)`,
+            sql`cast(${data.newQuarter} as integer) IN (${lessonQuarter.quarter}, ${lessonQuarter.quarter} + 1)`,
           ),
         )
         .returning({ quarter: lessonQuarter.renewalQuarter })

@@ -1,5 +1,5 @@
 import { and, eq } from 'drizzle-orm'
-import type { PgSelect } from 'drizzle-orm/pg-core'
+import type { SQLiteSelect } from 'drizzle-orm/sqlite-core'
 import db from '@/db/index'
 import { officers, positions, posType, wycDatabase } from '@/db/schema'
 
@@ -29,7 +29,7 @@ export type PrivilegeFilters = {
   privilegeType?: number
 }
 
-export function withPrivilegeFilters<T extends PgSelect>(
+export function withPrivilegeFilters<T extends SQLiteSelect>(
   qb: T,
   filters: PrivilegeFilters | undefined,
 ) {

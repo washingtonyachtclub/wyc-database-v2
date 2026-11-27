@@ -1,3 +1,5 @@
+import { inIdList } from '@/db/query-helpers'
+import { atomicWrite, type AtomicWrite } from '@/db/atomic'
 import { lessonQuarterIndex } from '@/domains/lessons/quarter-query'
 import db from '@/db/index'
 import { listPublicLessons } from '@/domains/lessons/public-lessons'
@@ -49,7 +51,7 @@ import { getLessonCapacityChange, sendLessonCapacityEmails } from './capacity-ch
 import { CALENDAR_SYNC_START_DATE, lessonSignupsOpen } from './visibility'
 import { getTodayPacificDateString } from '@/lib/date-utils'
 import { createServerFn } from '@tanstack/react-start'
-import { and, asc, count, eq, gte, inArray, or } from 'drizzle-orm'
+import { and, asc, count, eq, gte, or } from 'drizzle-orm'
 import { z } from 'zod'
 
 export const getPublicLessons = createServerFn({ method: 'GET' }).handler(async () => {
@@ -70,7 +72,7 @@ export const getQuarterLessons = createServerFn({ method: 'GET' }).handler(async
     const counts = await db
       .select({ class: signups.class, count: count() })
       .from(signups)
-      .where(inArray(signups.class, lessonIds))
+      .where(inIdList(signups.class, lessonIds))
       .groupBy(signups.class)
     enrollmentCounts = new Map(counts.map((c) => [c.class, c.count]))
   }
@@ -165,9 +167,9 @@ export const getLessonById = createServerFn({ method: 'GET' })
 async function syncLessonSessions(
   lessonId: number,
   sessions: LessonSessionInput[],
-  database: Pick<typeof db, 'select' | 'delete' | 'update' | 'insert'>,
+  write: AtomicWrite,
 ) {
-  const existing = await database
+  const existing = await db
     .select({ index: lessonSessions.index, startsAt: lessonSessions.startsAt })
     .from(lessonSessions)
     .where(eq(lessonSessions.lessonId, lessonId))
@@ -179,18 +181,17 @@ async function syncLessonSessions(
 
   const removedIds = [...existingIds].filter((id) => !keptIds.has(id))
   if (removedIds.length > 0) {
-    await database.delete(lessonSessions).where(inArray(lessonSessions.index, removedIds))
+    write.add(db.delete(lessonSessions).where(inIdList(lessonSessions.index, removedIds)))
   }
 
   for (const session of sessions) {
     const values = { lessonId, ...fromSessionInput(session) }
     if (session.index !== null && keptIds.has(session.index)) {
-      await database
-        .update(lessonSessions)
-        .set(values)
-        .where(eq(lessonSessions.index, session.index))
+      write.add(
+        db.update(lessonSessions).set(values).where(eq(lessonSessions.index, session.index)),
+      )
     } else {
-      await database.insert(lessonSessions).values(values)
+      write.add(db.insert(lessonSessions).values(values))
     }
   }
 
@@ -247,10 +248,11 @@ export const createLesson = createServerFn({ method: 'POST' })
     )
     if (error) throw new Error(error)
     const row = fromLessonInsert(data)
-    const id = await db.transaction(async (tx) => {
-      const [result] = await tx.insert(lessons).values(row).returning({ id: lessons.index })
-      await syncLessonSessions(result.id, data.sessions, tx)
-      return result.id
+    const id = await atomicWrite(async (tx) => {
+      const lessonId = await tx.nextId(lessons)
+      tx.add(db.insert(lessons).values({ ...row, index: lessonId }))
+      await syncLessonSessions(lessonId, data.sessions, tx)
+      return lessonId
     })
     await reconcileCalendar(id)
     return { success: true, id }
@@ -274,31 +276,27 @@ export const updateLesson = createServerFn({ method: 'POST' })
     const row = fromLessonInsert(rest)
 
     try {
-      const result = await db.transaction(async (tx) => {
-        const [current] = await tx
+      const result = await atomicWrite(async (tx) => {
+        const [current] = await db
           .select({ size: lessons.size })
           .from(lessons)
           .where(eq(lessons.index, index))
-          .for('update')
         if (!current) throw new Error('Lesson not found')
         const currentSize = current.size ?? 0
         const students =
           currentSize !== row.size && sendCapacityEmails !== false
-            ? await fetchLessonStudents(index, tx)
+            ? await fetchLessonStudents(index)
             : []
         const { changes, preview } = getLessonCapacityChange(students, currentSize, row.size)
         if (changes.length > 0 && sendCapacityEmails === undefined) {
           return { preview }
         }
 
-        await tx.update(lessons).set(row).where(eq(lessons.index, index))
+        tx.add(db.update(lessons).set(row).where(eq(lessons.index, index)))
         const { removedIds } = await syncLessonSessions(index, rest.sessions, tx)
         if (!sendCapacityEmails || changes.length === 0) return { removedIds }
 
-        const [lessonRow] = await baseLessonQuery(tx).where(eq(lessons.index, index))
-        const lesson = toRichLesson(lessonRow, await fetchLessonSessions(index, tx))
-        const info = await fetchLessonEmailInfo(lesson, tx)
-        const [announcement] = await tx
+        const [announcement] = await db
           .select({ id: lessonAnnouncements.id })
           .from(lessonAnnouncements)
           .where(eq(lessonAnnouncements.lessonId, index))
@@ -307,21 +305,24 @@ export const updateLesson = createServerFn({ method: 'POST' })
           removedIds,
           notification: {
             changes,
-            info,
             announcementsUrl: announcement ? lessonPageUrl(index) : undefined,
           },
         }
       })
       if (result.preview) return { status: 'confirm' as const, preview: result.preview }
 
-      const emails = result.notification
-        ? await sendLessonCapacityEmails(
-            index,
-            result.notification.info,
-            result.notification.changes,
-            result.notification.announcementsUrl,
-          )
-        : undefined
+      let emails
+      if (result.notification) {
+        const [lessonRow] = await baseLessonQuery().where(eq(lessons.index, index))
+        const lesson = toRichLesson(lessonRow, await fetchLessonSessions(index))
+        const info = await fetchLessonEmailInfo(lesson)
+        emails = await sendLessonCapacityEmails(
+          index,
+          info,
+          result.notification.changes,
+          result.notification.announcementsUrl,
+        )
+      }
       await reconcileCalendar(index, result.removedIds)
       return { status: 'saved' as const, emails }
     } catch (error) {
@@ -448,7 +449,7 @@ export const getMySignedUpLessons = createServerFn({ method: 'GET' }).handler(as
   const allSignups = await db
     .select({ class: signups.class, index: signups.index })
     .from(signups)
-    .where(inArray(signups.class, lessonIds))
+    .where(inIdList(signups.class, lessonIds))
     .orderBy(asc(signups.class), asc(signups.index))
 
   // Group signup indices by lesson

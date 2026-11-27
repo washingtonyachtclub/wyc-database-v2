@@ -1,5 +1,5 @@
 import { and, eq, gte } from 'drizzle-orm'
-import type { PgColumn, PgSelect } from 'drizzle-orm/pg-core'
+import type { SQLiteColumn, SQLiteSelect } from 'drizzle-orm/sqlite-core'
 import db from '@/db/index'
 import type { MemberFilters } from './filter-types'
 import { nameSearchCondition } from '@/db/query-helpers'
@@ -36,7 +36,7 @@ export type MemberQueryRow = Awaited<ReturnType<typeof baseMemberQuery>>[number]
 
 // Column ID → actual DB column for sorting
 // 'expireQtrSchoolText' sorts by the raw int, not the display string
-export const memberSortColumns: Record<string, PgColumn> = {
+export const memberSortColumns: Record<string, SQLiteColumn> = {
   expireQtrSchoolText: wycDatabase.expireQtrIndex,
   joinDate: wycDatabase.joinDate,
   wycNumber: wycDatabase.wycNumber,
@@ -44,7 +44,10 @@ export const memberSortColumns: Record<string, PgColumn> = {
   last: wycDatabase.last,
 }
 
-export function withMemberFilters<T extends PgSelect>(qb: T, filters: MemberFilters | undefined) {
+export function withMemberFilters<T extends SQLiteSelect>(
+  qb: T,
+  filters: MemberFilters | undefined,
+) {
   const conditions = []
 
   if (filters?.wycId) {

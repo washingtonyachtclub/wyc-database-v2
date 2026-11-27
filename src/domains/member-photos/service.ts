@@ -1,3 +1,4 @@
+import { atomicWrite } from '@/db/atomic'
 import { and, eq, inArray } from 'drizzle-orm'
 import db from '@/db'
 import { memberPhoto, officers, positions, wycDatabase } from '@/db/schema'
@@ -50,21 +51,17 @@ export async function changePhoto(
       staged.push(avatarKey)
       next = { version: crypto.randomUUID(), wycNumber: id, sourceKey, avatarKey, crop }
     }
-    await db.transaction(async (tx) => {
-      const [member] = await tx
+    await atomicWrite(async (tx) => {
+      const [member] = await db
         .select({ id: wycDatabase.wycNumber })
         .from(wycDatabase)
         .where(eq(wycDatabase.wycNumber, id))
-        .for('update')
-      const [current] = await tx
-        .select()
-        .from(memberPhoto)
-        .where(eq(memberPhoto.wycNumber, id))
-        .for('update')
+      const [current] = await db.select().from(memberPhoto).where(eq(memberPhoto.wycNumber, id))
       if (!member || (current?.version ?? '') !== expected) throw new StalePhoto()
-      if (!next) await tx.delete(memberPhoto).where(eq(memberPhoto.wycNumber, id))
-      else if (current) await tx.update(memberPhoto).set(next).where(eq(memberPhoto.wycNumber, id))
-      else await tx.insert(memberPhoto).values(next)
+      if (!next) tx.add(db.delete(memberPhoto).where(eq(memberPhoto.wycNumber, id)))
+      else if (current)
+        tx.add(db.update(memberPhoto).set(next).where(eq(memberPhoto.wycNumber, id)))
+      else tx.add(db.insert(memberPhoto).values(next))
     })
   } catch (error) {
     // An interrupted COMMIT may already have published the new keys.

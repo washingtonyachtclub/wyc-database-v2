@@ -1,5 +1,5 @@
 import { and, eq } from 'drizzle-orm'
-import type { PgSelect } from 'drizzle-orm/pg-core'
+import type { SQLiteSelect } from 'drizzle-orm/sqlite-core'
 import db from '@/db/index'
 import { officers, positions, quarters, wycDatabase } from '@/db/schema'
 
@@ -28,7 +28,7 @@ export type HonoraryFilters = {
   showOutToSea?: boolean
 }
 
-export function withHonoraryFilters<T extends PgSelect>(
+export function withHonoraryFilters<T extends SQLiteSelect>(
   qb: T,
   filters: HonoraryFilters | undefined,
 ) {

@@ -1,3 +1,4 @@
+import { atomicWrite } from '@/db/atomic'
 import db from '@/db'
 import { memberWaivers, membershipRenewals, wycDatabase } from '@/db/schema'
 import { requireAuth } from '@/lib/auth/auth-middleware'
@@ -65,7 +66,7 @@ export const submitMemberWaiver = createServerFn({ method: 'POST' })
       if (!renewal.completedAt && !renewal.closedAt) {
         let recoveredCompletion: RenewalCompletion | null = null
         try {
-          await db.transaction(async (tx) => {
+          await atomicWrite(async (tx) => {
             recoveredCompletion = await reconcileRenewal(tx, data.renewalId)
           })
         } catch (error) {
@@ -126,8 +127,8 @@ export const submitMemberWaiver = createServerFn({ method: 'POST' })
         sha256,
       })
 
-      await db.transaction(async (tx) => {
-        const [openRenewal] = await tx
+      await atomicWrite(async (tx) => {
+        const [openRenewal] = await db
           .select({ id: membershipRenewals.id })
           .from(membershipRenewals)
           .where(
@@ -138,28 +139,29 @@ export const submitMemberWaiver = createServerFn({ method: 'POST' })
               isNull(membershipRenewals.closedAt),
             ),
           )
-          .for('update', { of: membershipRenewals })
         if (!openRenewal) throw new Error('Renewal is no longer open')
 
         const submittedValues = { adultAcknowledged: data.adultAcknowledged }
-        await tx.insert(memberWaivers).values({
-          id: acceptanceId,
-          renewalId: data.renewalId,
-          applicationId: null,
-          waiverVersion: memberWaiverVersion,
-          firstName: renewal.first ?? '',
-          lastName: renewal.last ?? '',
-          email: renewal.email ?? '',
-          submittedValues: isMock
-            ? { ...submittedValues, testAcknowledged: data.testAcknowledged }
-            : submittedValues,
-          signedAt: new Date(signedAt),
-          objectKey,
-          pdfSha256: sha256,
-          pdfSize: pdf.byteLength,
-          pdfContentType: 'application/pdf',
-        })
-        completion = await reconcileRenewal(tx, data.renewalId)
+        tx.add(
+          db.insert(memberWaivers).values({
+            id: acceptanceId,
+            renewalId: data.renewalId,
+            applicationId: null,
+            waiverVersion: memberWaiverVersion,
+            firstName: renewal.first ?? '',
+            lastName: renewal.last ?? '',
+            email: renewal.email ?? '',
+            submittedValues: isMock
+              ? { ...submittedValues, testAcknowledged: data.testAcknowledged }
+              : submittedValues,
+            signedAt: new Date(signedAt),
+            objectKey,
+            pdfSha256: sha256,
+            pdfSize: pdf.byteLength,
+            pdfContentType: 'application/pdf',
+          }),
+        )
+        completion = await reconcileRenewal(tx, data.renewalId, 'waiver')
       })
     } catch (error) {
       console.error('Member waiver submission failed:', error)

@@ -1,6 +1,8 @@
+import { inIdList } from '@/db/query-helpers'
+import { atomicWrite } from '@/db/atomic'
 import { lessonQuarterIndex } from '@/domains/lessons/quarter-query'
-import { and, asc, eq, gte, inArray, ilike, or, sql } from 'drizzle-orm'
-import { alias, type PgColumn, type PgSelect } from 'drizzle-orm/pg-core'
+import { and, asc, eq, gte, like, or, sql } from 'drizzle-orm'
+import { alias, type SQLiteColumn, type SQLiteSelect } from 'drizzle-orm/sqlite-core'
 import db from '@/db/index'
 import type { LessonFilters } from './filter-types'
 import { toLessonSession, type LessonSession, type LessonStudent, type RichLesson } from './schema'
@@ -10,7 +12,7 @@ import type { LessonEmailInfo } from '@/lib/emails/lessons'
 const instructor1Table = alias(wycDatabase, 'i1')
 const instructor2Table = alias(wycDatabase, 'i2')
 
-export const lessonSortColumns: Record<string, PgColumn> = {
+export const lessonSortColumns: Record<string, SQLiteColumn> = {
   calendarDate: lessons.calendarDate,
   index: lessons.index,
 }
@@ -54,7 +56,7 @@ export async function fetchSessionsByLesson(
   const rows = await database
     .select()
     .from(lessonSessions)
-    .where(inArray(lessonSessions.lessonId, lessonIds))
+    .where(inIdList(lessonSessions.lessonId, lessonIds))
     .orderBy(asc(lessonSessions.startsAt), asc(lessonSessions.index))
 
   for (const session of rows) {
@@ -114,7 +116,7 @@ export async function fetchInstructorEmails(
   const rows = await database
     .select({ wycNumber: wycDatabase.wycNumber, email: wycDatabase.email })
     .from(wycDatabase)
-    .where(inArray(wycDatabase.wycNumber, ids))
+    .where(inIdList(wycDatabase.wycNumber, ids))
   return new Map(rows.map((r) => [r.wycNumber, r.email ?? '']))
 }
 
@@ -147,7 +149,10 @@ export function allInstructorIds(lessons: InstructorRefs[]) {
   return [...new Set(lessons.flatMap(instructorIdsOf))]
 }
 
-export function withLessonFilters<T extends PgSelect>(qb: T, filters: LessonFilters | undefined) {
+export function withLessonFilters<T extends SQLiteSelect>(
+  qb: T,
+  filters: LessonFilters | undefined,
+) {
   const conditions = []
 
   if (filters?.classTypeId !== undefined) {
@@ -171,7 +176,7 @@ export function withLessonFilters<T extends PgSelect>(qb: T, filters: LessonFilt
 
   if (filters?.search) {
     const pattern = `%${filters.search}%`
-    conditions.push(or(ilike(lessons.subtype, pattern), ilike(lessons.description, pattern)))
+    conditions.push(or(like(lessons.subtype, pattern), like(lessons.description, pattern)))
   }
 
   if (conditions.length > 0) {
@@ -245,20 +250,17 @@ export function lessonIdsEndingOnOrAfter(date: string) {
 }
 
 export async function insertEligibleSignup(lessonIndex: number, userId: number) {
-  return db.transaction(
-    async (tx) => {
-      const [eligible] = await tx
-        .select({ class: lessons.index, student: wycDatabase.wycNumber })
-        .from(lessons)
-        .innerJoin(wycDatabase, eq(wycDatabase.wycNumber, userId))
-        .where(
-          and(eq(lessons.index, lessonIndex), gte(wycDatabase.expireQtrIndex, lessonQuarterIndex)),
-        )
-      if (!eligible) return false
+  return atomicWrite(async (tx) => {
+    const [eligible] = await db
+      .select({ class: lessons.index, student: wycDatabase.wycNumber })
+      .from(lessons)
+      .innerJoin(wycDatabase, eq(wycDatabase.wycNumber, userId))
+      .where(
+        and(eq(lessons.index, lessonIndex), gte(wycDatabase.expireQtrIndex, lessonQuarterIndex)),
+      )
+    if (!eligible) return false
 
-      await tx.insert(signups).values(eligible)
-      return true
-    },
-    { isolationLevel: 'serializable' },
-  )
+    tx.add(db.insert(signups).values(eligible))
+    return true
+  })
 }
