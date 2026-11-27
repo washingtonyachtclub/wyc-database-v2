@@ -1,3 +1,4 @@
+import { lessonQuarterIndex } from '@/domains/lessons/quarter-query'
 import db from '@/db/index'
 import { listPublicLessons } from '@/domains/lessons/public-lessons'
 import { isMembershipActive } from '@/db/membership-utils'
@@ -13,7 +14,7 @@ import {
 } from '@/db/schema'
 import { enrollmentStatus, splitEnrollment } from '@/db/signup-utils'
 import type { LessonFilters } from '@/domains/lessons/filter-types'
-import { quarterMismatchError } from '@/domains/lessons/quarter-rules'
+import { resolveLessonQuarter } from '@/domains/lessons/quarter-rules'
 import {
   baseLessonQuery,
   baseSignedUpWithDetailsQuery,
@@ -21,6 +22,7 @@ import {
   fetchLessonSessions,
   fetchLessonStudents,
   fetchSessionsByLesson,
+  insertEligibleSignup,
   lessonSortColumns,
   withLessonFilters,
 } from '@/domains/lessons/queries'
@@ -59,7 +61,7 @@ export const getQuarterLessons = createServerFn({ method: 'GET' }).handler(async
   const currentQuarter = await getCurrentQuarter()
 
   const raw = await baseLessonQuery()
-    .where(gte(lessons.expire, currentQuarter))
+    .where(gte(lessonQuarterIndex, currentQuarter))
     .orderBy(asc(lessons.calendarDate))
 
   const lessonIds = raw.map((r) => r.index)
@@ -239,12 +241,11 @@ export const createLesson = createServerFn({ method: 'POST' })
   .validator((data: LessonInsert) => lessonInsertSchema.parse(data))
   .handler(async ({ data }) => {
     await requirePrivilege('db')
-    const mismatch = quarterMismatchError(
+    const { error } = resolveLessonQuarter(
       lastSessionDate(data.sessions),
-      data.expire,
       await fetchQuarterDates(),
     )
-    if (mismatch) throw new Error(mismatch)
+    if (error) throw new Error(error)
     const row = fromLessonInsert(data)
     const id = await db.transaction(async (tx) => {
       const [result] = await tx.insert(lessons).values(row).returning({ id: lessons.index })
@@ -265,12 +266,11 @@ export const updateLesson = createServerFn({ method: 'POST' })
   .handler(async ({ data }) => {
     const { index, sendCapacityEmails, ...rest } = data
     await requireLessonManagement(index)
-    const mismatch = quarterMismatchError(
+    const { error } = resolveLessonQuarter(
       lastSessionDate(rest.sessions),
-      rest.expire,
       await fetchQuarterDates(),
     )
-    if (mismatch) throw new Error(mismatch)
+    if (error) throw new Error(error)
     const row = fromLessonInsert(rest)
 
     try {
@@ -493,9 +493,8 @@ export const getLessonForSignup = createServerFn({ method: 'GET' })
       .from(wycDatabase)
       .where(eq(wycDatabase.wycNumber, userId))
       .limit(1)
-    const isMembershipSufficient = member
-      ? isMembershipActive(member.expireQtrIndex, lesson.expire)
-      : false
+    const isMembershipSufficient =
+      member && lesson.expire > 0 ? isMembershipActive(member.expireQtrIndex, lesson.expire) : false
 
     const [requiredQuarter] = await db
       .select({ school: quarters.school })
@@ -517,7 +516,7 @@ export const getLessonForSignup = createServerFn({ method: 'GET' })
       lesson,
       enrolledCount: enrolled.length,
       waitlistedCount: waitlisted.length,
-      signupsOpen: lessonSignupsOpen(lesson.sessions, lesson.size),
+      signupsOpen: lesson.expire > 0 && lessonSignupsOpen(lesson.sessions, lesson.size),
       isAlreadySignedUp: lessonSignups.some((s) => s.student === userId),
       isMembershipSufficient,
       requiredQuarterName,
@@ -534,7 +533,7 @@ export const enrollInLesson = createServerFn({ method: 'POST' })
       const [lessonRow] = await baseLessonQuery().where(eq(lessons.index, lessonIndex))
       if (!lessonRow) throw new Error('Lesson not found')
       const lesson = toRichLesson(lessonRow, await fetchLessonSessions(lessonIndex))
-      if (!lessonSignupsOpen(lesson.sessions, lesson.size)) {
+      if (!lesson.expire || !lessonSignupsOpen(lesson.sessions, lesson.size)) {
         throw new Error('Signups are closed for this lesson')
       }
 
@@ -575,7 +574,9 @@ export const enrollInLesson = createServerFn({ method: 'POST' })
       }
 
       // Insert signup
-      await db.insert(signups).values({ class: lessonIndex, student: userId })
+      if (!(await insertEligibleSignup(lessonIndex, userId))) {
+        throw new Error('Lesson eligibility changed. Refresh and try again.')
+      }
 
       // Compute enrollment status
       const allSignups = await db
@@ -616,6 +617,7 @@ export const enrollInLesson = createServerFn({ method: 'POST' })
       // Re-throw known user-facing errors
       if (
         error.message === 'Signups are closed for this lesson' ||
+        error.message === 'Lesson eligibility changed. Refresh and try again.' ||
         error.message === 'Lesson not found' ||
         error.message === 'Member not found' ||
         error.message === 'You are already signed up for this lesson.' ||

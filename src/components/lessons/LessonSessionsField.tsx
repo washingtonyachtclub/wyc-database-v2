@@ -1,9 +1,11 @@
+import { lessonErrorMessage } from '@/components/lessons/lesson-error-message'
 import { Plus, X } from 'lucide-react'
 import { LessonLocationField, lessonTypeLocation } from './LessonLocationField'
 import { Button } from '../ui/button'
 import { Label } from '../ui/label'
 import type { LessonInsert } from '@/domains/lessons/schema'
-import { emptySessionInput } from '@/domains/lessons/schema'
+import { resolveLessonQuarter, type QuarterDates } from '@/domains/lessons/quarter-rules'
+import { lastSessionDate, emptySessionInput } from '@/domains/lessons/schema'
 import { withForm } from '@/hooks/form'
 
 const lessonSessionsDefaults: LessonInsert = {
@@ -16,12 +18,12 @@ const lessonSessionsDefaults: LessonInsert = {
   requirements: '',
   size: 1,
   unlimitedSize: false,
-  expire: 0,
 }
 
 export const LessonSessionsField = withForm({
   defaultValues: lessonSessionsDefaults,
-  render: function LessonSessionsRender({ form }) {
+  props: { quarters: [] as QuarterDates[] },
+  render: function LessonSessionsRender({ form, quarters }) {
     return (
       <form.AppField name="sessions" mode="array">
         {(sessionsField) => (
@@ -126,9 +128,26 @@ export const LessonSessionsField = withForm({
               Add day
             </Button>
 
-            {sessionsField.state.meta.errors[0] && (
-              <p className="text-sm text-destructive mt-1">{sessionsField.state.meta.errors[0]}</p>
-            )}
+            <form.Subscribe selector={(state) => lastSessionDate(state.values.sessions)}>
+              {(day) => {
+                if (!day) return null
+                const { quarter, error } = resolveLessonQuarter(day, quarters)
+                return (
+                  <p
+                    aria-live="polite"
+                    className={
+                      error ? 'mt-2 text-sm text-destructive' : 'mt-2 text-sm text-muted-foreground'
+                    }
+                  >
+                    {quarter ? `Membership quarter · ${quarter.school}` : lessonErrorMessage(error)}
+                  </p>
+                )
+              }}
+            </form.Subscribe>
+            {sessionsField.state.value.length === 0 &&
+              sessionsField.state.meta.errors.length > 0 && (
+                <p className="text-sm text-destructive mt-1">At least one session is required</p>
+              )}
           </div>
         )}
       </form.AppField>

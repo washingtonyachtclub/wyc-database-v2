@@ -157,7 +157,7 @@ function SignupPage() {
             </Button>
           )}
 
-        {lesson.size !== 0 && !signupsOpen && !isAlreadySignedUp && (
+        {!signupsOpen && !isAlreadySignedUp && (
           <p className="text-sm text-muted-foreground">Signups closed</p>
         )}
 

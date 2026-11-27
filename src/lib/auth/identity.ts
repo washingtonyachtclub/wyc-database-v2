@@ -1,3 +1,4 @@
+import { lessonQuarterIndex } from '@/domains/lessons/quarter-query'
 import { and, count, eq, gte, or } from 'drizzle-orm'
 import db from '@/db/index'
 import {
@@ -62,7 +63,7 @@ export async function loadUserPrivileges(wycNumber: number): Promise<Privilege[]
     .where(
       and(
         or(eq(lessons.instructor1, wycNumber), eq(lessons.instructor2, wycNumber)),
-        gte(lessons.expire, quarterRow.quarter),
+        gte(lessonQuarterIndex, quarterRow.quarter),
       ),
     )
 

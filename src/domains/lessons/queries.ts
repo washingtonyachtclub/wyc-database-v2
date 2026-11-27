@@ -1,3 +1,4 @@
+import { lessonQuarterIndex } from '@/domains/lessons/quarter-query'
 import { and, asc, eq, gte, inArray, ilike, or, sql } from 'drizzle-orm'
 import { alias, type PgColumn, type PgSelect } from 'drizzle-orm/pg-core'
 import db from '@/db/index'
@@ -29,7 +30,7 @@ export const lessonTableSelectFields = {
   description: lessons.description,
   requirements: lessons.requirements,
   size: lessons.size,
-  expire: lessons.expire,
+  expire: lessonQuarterIndex,
 }
 
 export type LessonQueryRow = Awaited<ReturnType<typeof baseLessonQuery>>[number]
@@ -162,9 +163,9 @@ export function withLessonFilters<T extends PgSelect>(qb: T, filters: LessonFilt
   if (filters?.expireQtrFilter) {
     const { quarter, mode } = filters.expireQtrFilter
     if (mode === 'atLeast') {
-      conditions.push(gte(lessons.expire, quarter))
+      conditions.push(gte(lessonQuarterIndex, quarter))
     } else {
-      conditions.push(eq(lessons.expire, quarter))
+      conditions.push(eq(lessonQuarterIndex, quarter))
     }
   }
 
@@ -215,7 +216,7 @@ export function baseSignedUpWithDetailsQuery(wycNumber: number, minExpire: numbe
     .leftJoin(classType, eq(classType.index, lessons.type))
     .leftJoin(instructor1Table, eq(lessons.instructor1, instructor1Table.wycNumber))
     .leftJoin(instructor2Table, eq(lessons.instructor2, instructor2Table.wycNumber))
-    .where(and(eq(signups.student, wycNumber), gte(lessons.expire, minExpire)))
+    .where(and(eq(signups.student, wycNumber), gte(lessonQuarterIndex, minExpire)))
     .orderBy(sql`${lessons.calendarDate} asc nulls last`)
 }
 
@@ -241,4 +242,23 @@ export function lessonIdsEndingOnOrAfter(date: string) {
     .select({ id: lessonSessions.lessonId })
     .from(lessonSessions)
     .where(gte(lessonSessions.endsAt, `${date} 00:00:00`))
+}
+
+export async function insertEligibleSignup(lessonIndex: number, userId: number) {
+  return db.transaction(
+    async (tx) => {
+      const [eligible] = await tx
+        .select({ class: lessons.index, student: wycDatabase.wycNumber })
+        .from(lessons)
+        .innerJoin(wycDatabase, eq(wycDatabase.wycNumber, userId))
+        .where(
+          and(eq(lessons.index, lessonIndex), gte(wycDatabase.expireQtrIndex, lessonQuarterIndex)),
+        )
+      if (!eligible) return false
+
+      await tx.insert(signups).values(eligible)
+      return true
+    },
+    { isolationLevel: 'serializable' },
+  )
 }

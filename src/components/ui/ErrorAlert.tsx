@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, type ReactNode } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { useLocation } from '@tanstack/react-router'
 import { getDatabaseAdmin } from '@/domains/officers/server-fns'
@@ -6,7 +6,7 @@ import { AdminContactModal } from '../AdminContactModal'
 import { CopyRow } from './CopyRow'
 
 type ErrorAlertProps = {
-  error: string | null | undefined
+  error: ReactNode
   action?: string
 }
 

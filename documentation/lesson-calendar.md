@@ -13,11 +13,9 @@ at the beginning of the first day. The public list and signup page show “Signu
 closed” afterward. The server enforces this deadline even for an already open
 signup page.
 
-Unlimited lessons accept signups after their start date and time and never show
-“Signups closed”. Membership eligibility and duplicate-signup checks still apply.
+Unlimited lessons accept signups after their start date and time when their membership quarter is known. Membership eligibility and duplicate-signup checks still apply.
 
-The lesson's `expire` quarter controls membership eligibility and quarter-based
-administrative lists, independently of public visibility.
+The final session day determines the [membership quarter](quarters.md) used for eligibility and administrative lists.
 
 ## Capacity
 

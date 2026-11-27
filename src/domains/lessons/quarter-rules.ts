@@ -1,29 +1,26 @@
 export type QuarterDates = {
   index: number
   school: string
-  endDate: string // YYYY-MM-DD, or '' if not set
+  endDate: string
 }
 
-// A lesson's quarter is wrong if that quarter ends before the lesson's calendar
-// date. Quarters with no end date on file are skipped, so partial data never
-// blocks a valid lesson.
-export function quarterMismatchError(
-  calendarDate: string,
-  expire: number,
-  quarters: QuarterDates[],
-): string | null {
-  if (!calendarDate) return null
+// Indices 1 and 2 are the legacy Unknown and Honorary placeholders.
+export const FIRST_LESSON_QUARTER = 3
 
-  const assigned = quarters.find((q) => q.index === expire)
-  if (!assigned || !assigned.endDate) return null
-  if (calendarDate <= assigned.endDate) return null
+export function resolveLessonQuarter(day: string, quarters: QuarterDates[]) {
+  const ordered = [...quarters].sort((a, b) => a.index - b.index)
+  const current = ordered.find((q) => q.index >= FIRST_LESSON_QUARTER && q.endDate >= day)
+  const previous = current && ordered.find((q) => q.index === current.index - 1)
+  if (
+    current &&
+    day &&
+    (current.endDate === day || (previous?.endDate && previous.endDate < day))
+  ) {
+    return { quarter: current, error: null }
+  }
 
-  // Earliest quarter whose end date covers the lesson, for a more helpful message.
-  const required = quarters
-    .filter((q) => q.endDate)
-    .sort((a, b) => a.endDate.localeCompare(b.endDate))
-    .find((q) => q.endDate >= calendarDate)
-  const target = required ? `${required.school} or later` : 'a later quarter'
-
-  return `This lesson's date (${calendarDate}) is after ${assigned.school} ends (${assigned.endDate}). Set the Expire quarter to ${target}.`
+  if (current && previous && !previous.endDate) {
+    return { quarter: null, error: `Add the end date for ${previous.school} in Quarters.` }
+  }
+  return { quarter: null, error: `Add quarter dates covering ${day} in Quarters.` }
 }

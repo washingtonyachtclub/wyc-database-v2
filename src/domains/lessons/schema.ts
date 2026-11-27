@@ -1,6 +1,6 @@
 import { z } from 'zod'
 import type { LessonQueryRow } from './queries'
-import { quarterMismatchError, type QuarterDates } from './quarter-rules'
+import { resolveLessonQuarter, type QuarterDates } from './quarter-rules'
 import { num, str, fullName } from '@/db/mapper-utils'
 import type { classType, lessonSessions } from '@/db/schema'
 
@@ -10,8 +10,8 @@ export const lessonSessionInputSchema = z
   .object({
     // null for a row added in the editor.
     index: z.number().nullable(),
-    date: z.string().min(1, 'Date is required'),
-    endDate: z.string(),
+    date: z.iso.date('Enter a valid date'),
+    endDate: z.union([z.literal(''), z.iso.date('Enter a valid end date')]),
     startTime: z.string(),
     endTime: z.string(),
     allDay: z.boolean(),
@@ -77,7 +77,6 @@ export const lessonInsertSchema = z.object({
     .int()
     .positive('Size must be a positive whole number'),
   unlimitedSize: z.boolean(),
-  expire: z.number({ error: 'Expire quarter is required' }),
 })
 
 export type LessonInsert = z.infer<typeof lessonInsertSchema>
@@ -91,9 +90,11 @@ export function lastSessionDate(sessions: LessonSessionInput[]): string {
 
 export function lessonInsertSchemaForQuarters(quarters: QuarterDates[]) {
   return lessonInsertSchema.superRefine((data, ctx) => {
-    const error = quarterMismatchError(lastSessionDate(data.sessions), data.expire, quarters)
+    const day = lastSessionDate(data.sessions)
+    if (!day) return
+    const { error } = resolveLessonQuarter(day, quarters)
     if (error) {
-      ctx.addIssue({ code: 'custom', message: error, path: ['expire'] })
+      ctx.addIssue({ code: 'custom', message: error, path: ['sessions'] })
     }
   })
 }
@@ -129,7 +130,7 @@ export type Lesson = {
   description: string
   requirements: string
   size: number
-  expire: number // quarter index (FK)
+  expire: number // derived membership quarter
 }
 
 export type RichLesson = {
@@ -270,6 +271,5 @@ export function fromLessonInsert(data: LessonInsert) {
     description: data.description,
     requirements: data.requirements,
     size: data.unlimitedSize ? 0 : data.size,
-    expire: data.expire,
   }
 }
