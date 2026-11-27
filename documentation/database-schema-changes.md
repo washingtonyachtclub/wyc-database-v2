@@ -18,3 +18,9 @@ The Worker reads and writes Cloudflare D1 through the `DB` binding. Wrangler tra
 | `src/db/schema.ts` | Drizzle table definitions   |
 | `migrations/d1/`   | Ordered D1 migration files  |
 | `wrangler.jsonc`   | Worker and database binding |
+
+## Migration from PlanetScale
+
+Run `node --env-file=/private/path/source.env scripts/export-planetscale-d1.mjs /private/path/club.sql` with the source PostgreSQL connection in `DATABASE_URL`. The exporter reads a consistent snapshot, preserves record IDs and password hashes, checks foreign keys, and prints per-table counts. The SQL file contains private member data.
+
+Apply the D1 migrations to an empty destination, then import the snapshot with `npx wrangler d1 execute DB --remote --file /private/path/club.sql`. Check counts against the export before pointing a Worker at the destination. For console access, open the database under **Storage & databases → D1 SQL database → Console** in the club account.

@@ -1,10 +1,9 @@
-import { inIdList } from '@/db/query-helpers'
 import { atomicWrite, type AtomicWrite } from '@/db/atomic'
 import { lessonQuarterIndex } from '@/domains/lessons/quarter-query'
 import db from '@/db/index'
 import { listPublicLessons } from '@/domains/lessons/public-lessons'
 import { isMembershipActive } from '@/db/membership-utils'
-import { withPagination, withSorting } from '@/db/query-helpers'
+import { inIdList, withPagination, withSorting } from '@/db/query-helpers'
 import {
   lessonAnnouncements,
   lessonQuarter,

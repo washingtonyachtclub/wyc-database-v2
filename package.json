@@ -4,7 +4,7 @@
   "type": "module",
   "scripts": {
     "dev": "vite dev --host 0.0.0.0 --port 3000",
-    "build": "vite build",
+    "build": "npm run build:cloudflare",
     "preview": "vite preview",
     "test": "vitest run",
     "db:generate": "wrangler d1 migrations create DB",
@@ -24,7 +24,6 @@
     "**/*": "prettier --write --ignore-unknown"
   },
   "dependencies": {
-    "@aws-sdk/client-s3": "^3.1116.0",
     "@faker-js/faker": "^10.0.0",
     "@mdxeditor/editor": "^4.2.3",
     "@noble/hashes": "^2.4.0",
@@ -48,9 +47,7 @@
     "@tanstack/react-start": "^1.168.60",
     "@tanstack/react-table": "^8.21.2",
     "@tanstack/router-plugin": "^1.132.0",
-    "@vercel/analytics": "^2.0.1",
     "@vitejs/plugin-react": "^5.0.4",
-    "argon2": "^0.44.0",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "cmdk": "^1.1.1",
@@ -61,7 +58,6 @@
     "google-auth-library": "^10.9.0",
     "libphonenumber-js": "^1.12.42",
     "lucide-react": "^0.561.0",
-    "nitro": "latest",
     "papaparse": "^5.5.3",
     "pdf-lib": "^1.17.1",
     "pg": "^8.23.1",
@@ -77,7 +73,6 @@
     "remark-parse": "^11.0.0",
     "remark-rehype": "^11.1.2",
     "resend": "^6.9.4",
-    "sharp": "^0.34.5",
     "signature_pad": "^5.1.4",
     "square": "^44.1.0",
     "tailwind-merge": "^3.4.0",

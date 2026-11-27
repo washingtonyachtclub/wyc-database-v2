@@ -1,4 +1,3 @@
-import { inIdList } from '@/db/query-helpers'
 import { memberSearchQuery } from '@/domains/members/queries'
 import { toMemberSearchResult } from '@/domains/members/schema'
 import { rankMembers, MAX_MEMBER_SEARCH_RESULTS } from '@/domains/members/search'
@@ -8,7 +7,7 @@ import { and, desc, eq, gte, isNotNull, isNull } from 'drizzle-orm'
 import { z } from 'zod'
 import db from '@/db/index'
 import { fullName, str } from '@/db/mapper-utils'
-import { withPagination, withSorting } from '@/db/query-helpers'
+import { inIdList, withPagination, withSorting } from '@/db/query-helpers'
 import { compareBoatTypes } from '@/domains/boat-types/order'
 import {
   boatTypes,
