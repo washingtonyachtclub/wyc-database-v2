@@ -72,3 +72,18 @@ export async function loadUserPrivileges(wycNumber: number): Promise<Privilege[]
 
   return userPrivileges
 }
+
+export async function loadPasswordUser(wycNumber: number) {
+  const [user] = await db
+    .select({
+      wycNumber: wycDatabase.wycNumber,
+      first: wycDatabase.first,
+      last: wycDatabase.last,
+      email: wycDatabase.email,
+      passwordArgon2: wycDatabase.passwordArgon2,
+    })
+    .from(wycDatabase)
+    .where(eq(wycDatabase.wycNumber, wycNumber))
+    .limit(1)
+  return user ?? null
+}

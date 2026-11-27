@@ -6,7 +6,7 @@ import db from '@/db/index'
 import { qrLoginRequests } from '@/db/schema'
 import { isSailLockerMode } from './device-mode'
 import { requireAuth } from './auth-middleware'
-import { loadAuthUser, loadUserPrivileges } from './identity'
+import { loadAuthUser, loadUserPrivileges } from '@/lib/auth/identity'
 import { createAuthenticatedSessionData, useAppSession } from './session'
 
 const QR_LOGIN_TTL_MS = 60 * 1000

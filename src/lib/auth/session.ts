@@ -2,7 +2,7 @@ import { useSession } from '@tanstack/react-start/server'
 import type { Privilege } from '../permissions'
 import { isDevEnvironment } from '../env'
 import { isSailLockerMode } from './device-mode'
-import { loadAuthUser, loadUserPrivileges, type AuthUser } from './identity'
+import { loadAuthUser, loadUserPrivileges, type AuthUser } from '@/lib/auth/identity'
 import { getSessionMaxAgeSeconds, shouldRefreshIdentity } from './session-policy'
 
 export type SessionIdentity = {
