@@ -159,7 +159,7 @@ export const updateMembershipDiscountCode = createServerFn({ method: 'POST' })
           updatedBy: editor,
         })
         .where(eq(membershipDiscountCodes.index, data.index))
-      if (result.rowCount !== 1) throw new Error('Discount code not found')
+      if (result.meta.changes !== 1) throw new Error('Discount code not found')
       return { success: true as const }
     } catch (error) {
       console.error('Failed to update membership discount code:', error)
@@ -219,7 +219,7 @@ export const setMembershipDiscountCodeActive = createServerFn({ method: 'POST' }
           updatedBy: editor,
         })
         .where(eq(membershipDiscountCodes.index, data.index))
-      if (result.rowCount !== 1) throw new Error('Discount code not found')
+      if (result.meta.changes !== 1) throw new Error('Discount code not found')
       return { success: true as const }
     } catch (error) {
       console.error('Failed to update membership discount code status:', error)

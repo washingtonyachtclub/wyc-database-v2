@@ -226,8 +226,7 @@ export const getMemberLessonsSignedUp = createServerFn({ method: 'GET' })
   })
 
 export const getDatabaseName = createServerFn({ method: 'GET' }).handler(async () => {
-  const url = process.env.DATABASE_URL ?? ''
-  return url.split('/').pop() ?? 'unknown'
+  return process.env.DATABASE_NAME || 'D1'
 })
 
 export const getMemberSearchIndex = createServerFn({ method: 'GET' }).handler(async () => {

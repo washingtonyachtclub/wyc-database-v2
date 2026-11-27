@@ -2,8 +2,8 @@ import db from '@/db/index'
 import { ratings, wycDatabase, wycRatings } from '@/db/schema'
 import { isRatingActive } from '@/lib/rating-expiry'
 import { sql, and, count, eq, gte, lte } from 'drizzle-orm'
-import type { PgColumn, PgSelect } from 'drizzle-orm/pg-core'
-import { alias } from 'drizzle-orm/pg-core'
+import type { SQLiteColumn, SQLiteSelect } from 'drizzle-orm/sqlite-core'
+import { alias } from 'drizzle-orm/sqlite-core'
 import type { RatingFilters } from './filter-types'
 
 const memberTable = alias(wycDatabase, 'member')
@@ -64,14 +64,17 @@ export function baseAllRatingsCountQuery() {
     .leftJoin(enteredByTable, eq(wycRatings.enteredBy, enteredByTable.wycNumber))
 }
 
-export const ratingSortColumns: Record<string, PgColumn> = {
+export const ratingSortColumns: Record<string, SQLiteColumn> = {
   date: wycRatings.date,
   ratingText: ratings.text,
   memberName: memberTable.last,
   examinerName: examinerTable.last,
 }
 
-export function withRatingFilters<T extends PgSelect>(qb: T, filters: RatingFilters | undefined) {
+export function withRatingFilters<T extends SQLiteSelect>(
+  qb: T,
+  filters: RatingFilters | undefined,
+) {
   const conditions = []
 
   if (filters?.ratingIndex !== undefined) {

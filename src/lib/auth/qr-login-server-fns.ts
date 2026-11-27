@@ -1,12 +1,12 @@
 import { createServerFn } from '@tanstack/react-start'
-import { getRequest, getRequestIP } from '@tanstack/react-start/server'
+import { getRequest } from '@tanstack/react-start/server'
 import { and, count, eq, gt, gte, inArray, lt } from 'drizzle-orm'
 import { createHash, createHmac, randomBytes } from 'node:crypto'
 import db from '@/db/index'
 import { qrLoginRequests } from '@/db/schema'
 import { isSailLockerMode } from './device-mode'
 import { requireAuth } from './auth-middleware'
-import { loadAuthUser, loadUserPrivileges } from './identity'
+import { loadAuthUser, loadUserPrivileges } from '@/lib/auth/identity'
 import { createAuthenticatedSessionData, useAppSession } from './session'
 
 const QR_LOGIN_TTL_MS = 60 * 1000
@@ -45,7 +45,7 @@ function hashRequestIp(): string {
     throw new Error('SESSION_SECRET is not set')
   }
 
-  const ip = getRequestIP({ xForwardedFor: process.env.VERCEL === '1' }) ?? 'unknown'
+  const ip = getRequest().headers.get('CF-Connecting-IP') ?? 'unknown'
   return createHmac('sha256', process.env.SESSION_SECRET).update(ip).digest('hex')
 }
 
@@ -130,50 +130,32 @@ export const approveQrLoginRequestServerFn = createServerFn({ method: 'POST' })
     }
 
     try {
-      return await db.transaction(async (tx): Promise<ApproveQrLoginResponse> => {
-        const [request] = await tx
-          .select()
-          .from(qrLoginRequests)
-          .where(eq(qrLoginRequests.approvalSecretHash, hashSecret(data.approvalSecret)))
-          .limit(1)
-          .for('update', { of: qrLoginRequests })
+      const secret = eq(qrLoginRequests.approvalSecretHash, hashSecret(data.approvalSecret))
+      const [approved] = await db
+        .update(qrLoginRequests)
+        .set({ status: 'approved', approvedBy: approvingMember, approvedAt: new Date() })
+        .where(
+          and(
+            secret,
+            eq(qrLoginRequests.status, 'pending'),
+            gt(qrLoginRequests.expiresAt, new Date()),
+          ),
+        )
+        .returning({ id: qrLoginRequests.id })
+      if (approved) return { status: 'approved' }
 
-        if (!request) {
-          return { status: 'unavailable' }
-        }
-
-        if (request.expiresAt.getTime() <= Date.now()) {
-          if (request.status === 'pending' || request.status === 'approved') {
-            await tx
-              .update(qrLoginRequests)
-              .set({ status: 'expired' })
-              .where(eq(qrLoginRequests.id, request.id))
-          }
-          return { status: 'unavailable' }
-        }
-
-        if (
-          (request.status === 'approved' || request.status === 'consumed') &&
-          request.approvedBy === approvingMember
-        ) {
-          return { status: 'approved' }
-        }
-
-        if (request.status !== 'pending') {
-          return { status: 'unavailable' }
-        }
-
-        await tx
-          .update(qrLoginRequests)
-          .set({
-            status: 'approved',
-            approvedBy: approvingMember,
-            approvedAt: new Date(),
-          })
-          .where(eq(qrLoginRequests.id, request.id))
-
-        return { status: 'approved' }
-      })
+      const [existing] = await db
+        .select({ id: qrLoginRequests.id })
+        .from(qrLoginRequests)
+        .where(
+          and(
+            secret,
+            eq(qrLoginRequests.approvedBy, approvingMember),
+            inArray(qrLoginRequests.status, ['approved', 'consumed']),
+            gt(qrLoginRequests.expiresAt, new Date()),
+          ),
+        )
+      return { status: existing ? 'approved' : 'unavailable' }
     } catch (error) {
       console.error('Approve QR login request error:', error)
       return { status: 'unavailable' }
@@ -190,57 +172,34 @@ export const pollQrLoginRequestServerFn = createServerFn({ method: 'POST' })
     }
 
     try {
-      const result = await db.transaction(
-        async (
-          tx,
-        ): Promise<
-          { status: 'pending' | 'unavailable' } | { status: 'consume'; wycNumber: number }
-        > => {
-          const [request] = await tx
-            .select()
-            .from(qrLoginRequests)
-            .where(eq(qrLoginRequests.pollingSecretHash, hashSecret(data.pollingSecret)))
-            .limit(1)
-            .for('update', { of: qrLoginRequests })
-
-          if (!request) {
-            return { status: 'unavailable' }
-          }
-
-          if (request.expiresAt.getTime() <= Date.now()) {
-            if (request.status === 'pending' || request.status === 'approved') {
-              await tx
-                .update(qrLoginRequests)
-                .set({ status: 'expired' })
-                .where(eq(qrLoginRequests.id, request.id))
-            }
-            return { status: 'unavailable' }
-          }
-
-          if (request.status === 'pending') {
-            return { status: 'pending' }
-          }
-
-          if (request.status !== 'approved' || request.approvedBy === null) {
-            return { status: 'unavailable' }
-          }
-
-          await tx
-            .update(qrLoginRequests)
-            .set({ status: 'consumed', consumedAt: new Date() })
-            .where(eq(qrLoginRequests.id, request.id))
-
-          return { status: 'consume', wycNumber: request.approvedBy }
-        },
-      )
-
-      if (result.status !== 'consume') {
-        return result
+      const secret = eq(qrLoginRequests.pollingSecretHash, hashSecret(data.pollingSecret))
+      const [consumed] = await db
+        .update(qrLoginRequests)
+        .set({ status: 'consumed', consumedAt: new Date() })
+        .where(
+          and(
+            secret,
+            eq(qrLoginRequests.status, 'approved'),
+            gt(qrLoginRequests.expiresAt, new Date()),
+          ),
+        )
+        .returning({ wycNumber: qrLoginRequests.approvedBy })
+      if (consumed?.wycNumber == null) {
+        const [pending] = await db
+          .select({ id: qrLoginRequests.id })
+          .from(qrLoginRequests)
+          .where(
+            and(
+              secret,
+              inArray(qrLoginRequests.status, ['pending', 'approved']),
+              gt(qrLoginRequests.expiresAt, new Date()),
+            ),
+          )
+        return { status: pending ? 'pending' : 'unavailable' }
       }
-
       const [user, privileges] = await Promise.all([
-        loadAuthUser(result.wycNumber),
-        loadUserPrivileges(result.wycNumber),
+        loadAuthUser(consumed.wycNumber),
+        loadUserPrivileges(consumed.wycNumber),
       ])
 
       if (!user) {

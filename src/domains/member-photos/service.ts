@@ -1,6 +1,6 @@
 import { and, eq, inArray } from 'drizzle-orm'
 import db from '@/db'
-import { memberPhoto, officers, positions, wycDatabase } from '@/db/schema'
+import { memberPhoto, officers, positions } from '@/db/schema'
 import { OFFICER_PAGE_TYPES } from '@/db/constants'
 import { cropPhoto, normalizePhoto } from './images'
 import { discardPhoto, readPhoto, writePhoto } from './storage'
@@ -50,22 +50,16 @@ export async function changePhoto(
       staged.push(avatarKey)
       next = { version: crypto.randomUUID(), wycNumber: id, sourceKey, avatarKey, crop }
     }
-    await db.transaction(async (tx) => {
-      const [member] = await tx
-        .select({ id: wycDatabase.wycNumber })
-        .from(wycDatabase)
-        .where(eq(wycDatabase.wycNumber, id))
-        .for('update')
-      const [current] = await tx
-        .select()
-        .from(memberPhoto)
-        .where(eq(memberPhoto.wycNumber, id))
-        .for('update')
-      if (!member || (current?.version ?? '') !== expected) throw new StalePhoto()
-      if (!next) await tx.delete(memberPhoto).where(eq(memberPhoto.wycNumber, id))
-      else if (current) await tx.update(memberPhoto).set(next).where(eq(memberPhoto.wycNumber, id))
-      else await tx.insert(memberPhoto).values(next)
-    })
+    if (old) {
+      const current = and(eq(memberPhoto.wycNumber, id), eq(memberPhoto.version, expected))
+      const result = next
+        ? await db.update(memberPhoto).set(next).where(current)
+        : await db.delete(memberPhoto).where(current)
+      if (!result.meta.changes) throw new StalePhoto()
+    } else if (next) {
+      const result = await db.insert(memberPhoto).values(next).onConflictDoNothing()
+      if (!result.meta.changes) throw new StalePhoto()
+    }
   } catch (error) {
     // An interrupted COMMIT may already have published the new keys.
     const current = await getPhoto(id)

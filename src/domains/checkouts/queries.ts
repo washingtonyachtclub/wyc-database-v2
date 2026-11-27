@@ -1,6 +1,6 @@
 import { sql, and, asc, count, eq, exists, gte, lte, or } from 'drizzle-orm'
-import type { PgColumn, PgSelect } from 'drizzle-orm/pg-core'
-import { alias } from 'drizzle-orm/pg-core'
+import type { SQLiteColumn, SQLiteSelect } from 'drizzle-orm/sqlite-core'
+import { alias } from 'drizzle-orm/sqlite-core'
 import db from '@/db/index'
 import { boatTypes, checkouts, crew, guests, ratings, wycDatabase } from '@/db/schema'
 import type { CheckoutFilters } from './filter-types'
@@ -48,7 +48,7 @@ export function baseCheckoutsQuery(opts?: { wycNumber?: number; since?: string }
     .select(checkoutSelectFields)
     .from(checkouts)
     .leftJoin(skipperTable, eq(checkouts.wycNumber, skipperTable.wycNumber))
-    .leftJoin(boatTypes, eq(checkouts.boat, sql`${boatTypes.index}::text`))
+    .leftJoin(boatTypes, eq(checkouts.boat, sql`cast(${boatTypes.index} as text)`))
     .$dynamic()
 
   if (conditions.length > 0) {
@@ -84,7 +84,10 @@ export function baseMemberCheckoutExportQuery(wycNumber: number) {
     .leftJoin(skipperTable, eq(checkouts.wycNumber, skipperTable.wycNumber))
     .leftJoin(
       boatTypes,
-      or(eq(checkouts.boat, sql`${boatTypes.index}::text`), eq(checkouts.boat, boatTypes.type)),
+      or(
+        eq(checkouts.boat, sql`cast(${boatTypes.index} as text)`),
+        eq(checkouts.boat, boatTypes.type),
+      ),
     )
     .where(memberCheckoutCondition(wycNumber))
     .orderBy(asc(checkouts.timeDeparture), asc(checkouts.index))
@@ -115,7 +118,7 @@ export function baseCheckoutCardsQuery() {
     .select(checkoutCardSelectFields)
     .from(checkouts)
     .leftJoin(skipperTable, eq(checkouts.wycNumber, skipperTable.wycNumber))
-    .leftJoin(boatTypes, eq(checkouts.boat, sql`${boatTypes.index}::text`))
+    .leftJoin(boatTypes, eq(checkouts.boat, sql`cast(${boatTypes.index} as text)`))
     .leftJoin(ratings, eq(checkouts.relevantRating, ratings.index))
     .leftJoin(supervisorTable, eq(checkouts.chiefId, supervisorTable.wycNumber))
 }
@@ -160,7 +163,7 @@ export function baseAllCheckoutsQuery() {
     .select(checkoutTableSelectFields)
     .from(checkouts)
     .leftJoin(skipperTable, eq(checkouts.wycNumber, skipperTable.wycNumber))
-    .leftJoin(boatTypes, eq(checkouts.boat, sql`${boatTypes.index}::text`))
+    .leftJoin(boatTypes, eq(checkouts.boat, sql`cast(${boatTypes.index} as text)`))
     .leftJoin(ratings, eq(checkouts.relevantRating, ratings.index))
 }
 
@@ -169,11 +172,11 @@ export function baseAllCheckoutsCountQuery() {
     .select({ count: count() })
     .from(checkouts)
     .leftJoin(skipperTable, eq(checkouts.wycNumber, skipperTable.wycNumber))
-    .leftJoin(boatTypes, eq(checkouts.boat, sql`${boatTypes.index}::text`))
+    .leftJoin(boatTypes, eq(checkouts.boat, sql`cast(${boatTypes.index} as text)`))
     .leftJoin(ratings, eq(checkouts.relevantRating, ratings.index))
 }
 
-export const checkoutSortColumns: Record<string, PgColumn> = {
+export const checkoutSortColumns: Record<string, SQLiteColumn> = {
   index: checkouts.index,
   memberName: skipperTable.last,
   boatName: boatTypes.type,
@@ -183,7 +186,7 @@ export const checkoutSortColumns: Record<string, PgColumn> = {
   ratingName: ratings.text,
 }
 
-export function withCheckoutFilters<T extends PgSelect>(
+export function withCheckoutFilters<T extends SQLiteSelect>(
   qb: T,
   filters: CheckoutFilters | undefined,
 ) {

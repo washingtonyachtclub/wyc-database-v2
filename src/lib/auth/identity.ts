@@ -1,5 +1,5 @@
-import { lessonQuarterIndex } from '@/domains/lessons/quarter-query'
-import { and, count, eq, gte, or } from 'drizzle-orm'
+import { lessonQuarterAtLeast } from '@/domains/lessons/quarter-query'
+import { and, count, eq, or } from 'drizzle-orm'
 import db from '@/db/index'
 import {
   lessonQuarter,
@@ -63,7 +63,7 @@ export async function loadUserPrivileges(wycNumber: number): Promise<Privilege[]
     .where(
       and(
         or(eq(lessons.instructor1, wycNumber), eq(lessons.instructor2, wycNumber)),
-        gte(lessonQuarterIndex, quarterRow.quarter),
+        lessonQuarterAtLeast(quarterRow.quarter),
       ),
     )
 
@@ -72,4 +72,19 @@ export async function loadUserPrivileges(wycNumber: number): Promise<Privilege[]
   }
 
   return userPrivileges
+}
+
+export async function loadPasswordUser(wycNumber: number) {
+  const [user] = await db
+    .select({
+      wycNumber: wycDatabase.wycNumber,
+      first: wycDatabase.first,
+      last: wycDatabase.last,
+      email: wycDatabase.email,
+      passwordArgon2: wycDatabase.passwordArgon2,
+    })
+    .from(wycDatabase)
+    .where(eq(wycDatabase.wycNumber, wycNumber))
+    .limit(1)
+  return user ?? null
 }

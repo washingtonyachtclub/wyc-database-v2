@@ -1,5 +1,6 @@
+import { inIdList } from '@/db/query-helpers'
 import { createServerFn } from '@tanstack/react-start'
-import { eq, inArray, sql } from 'drizzle-orm'
+import { eq, sql } from 'drizzle-orm'
 import db from '@/db/index'
 import { fullName } from '@/db/mapper-utils'
 import { isMembershipActive } from '@/db/membership-utils'
@@ -61,7 +62,7 @@ export const getMyDoorCodes = createServerFn({ method: 'GET' }).handler(async ()
           last: wycDatabase.last,
         })
         .from(wycDatabase)
-        .where(inArray(wycDatabase.wycNumber, editorIds))
+        .where(inIdList(wycDatabase.wycNumber, editorIds))
       for (const e of editors) {
         editorNames.set(e.wycNumber, fullName(e.first, e.last))
       }
@@ -119,7 +120,7 @@ export const updateDoorCode = createServerFn({ method: 'POST' })
         .update(doorCodes)
         .set({
           code: data.code,
-          updatedAt: sql`timezone('UTC', now())`,
+          updatedAt: sql`CURRENT_TIMESTAMP`,
           updatedBy: wycNumber,
         })
         .where(eq(doorCodes.index, data.index))

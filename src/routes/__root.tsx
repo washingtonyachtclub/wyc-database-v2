@@ -16,7 +16,6 @@ import Sidebar from '../components/Sidebar'
 import { TanStackDevTools } from '../components/TanStackDevTools'
 import { TooltipProvider } from '../components/ui/tooltip'
 
-import { Analytics } from '@vercel/analytics/react'
 import appCss from '../styles.css?url'
 
 import { getCurrentUserQueryOptions } from '@/lib/auth/auth-query-options'
@@ -173,7 +172,6 @@ function RootDocument({ children }: { children: React.ReactNode }) {
           </TooltipProvider>
         )}
         <Scripts />
-        <Analytics />
       </body>
     </html>
   )

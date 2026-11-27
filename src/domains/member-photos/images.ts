@@ -1,33 +1,32 @@
-import sharp from 'sharp'
+import { env } from 'cloudflare:workers'
 import { maxPhotoEdge, type PhotoCrop } from './photo'
 
 export class InvalidPhoto extends Error {}
 
 export async function normalizePhoto(input: Buffer) {
   try {
-    const image = sharp(input, { limitInputPixels: 60_000_000 })
-    const { format, pages } = await image.metadata()
-    if (!format || !['jpeg', 'png', 'webp'].includes(format) || (pages ?? 1) > 1) {
+    const bytes = new Response(new Uint8Array(input))
+    const info = await env.IMAGES.info(bytes.clone().body!)
+    if (
+      !('width' in info) ||
+      !['image/jpeg', 'image/png', 'image/webp'].includes(info.format) ||
+      info.width * info.height > 60_000_000
+    )
       throw new InvalidPhoto()
-    }
-    return await image
-      .autoOrient()
-      .resize({
-        width: maxPhotoEdge,
-        height: maxPhotoEdge,
-        fit: 'inside',
-        withoutEnlargement: true,
-      })
-      .webp({ quality: 90 })
-      .toBuffer()
+    const transformed = await env.IMAGES.input(bytes.body!)
+      .transform({ width: maxPhotoEdge, height: maxPhotoEdge, fit: 'scale-down' })
+      .output({ format: 'image/webp', quality: 90, anim: false })
+    return Buffer.from(await transformed.response().arrayBuffer())
   } catch {
     throw new InvalidPhoto()
   }
 }
 
 export async function cropPhoto(source: Buffer, area?: PhotoCrop) {
-  const image = sharp(source)
-  const { width, height } = await image.metadata()
+  const bytes = new Response(new Uint8Array(source))
+  const info = await env.IMAGES.info(bytes.clone().body!)
+  if (!('width' in info)) throw new InvalidPhoto()
+  const { width, height } = info
   const side = Math.min(width, height)
   const crop = area ?? {
     x: ((width - side) / width) * 50,
@@ -46,10 +45,10 @@ export async function cropPhoto(source: Buffer, area?: PhotoCrop) {
     throw new InvalidPhoto()
   const left = Math.min(width - size, Math.round((width * crop.x) / 100))
   const top = Math.min(height - size, Math.round((height * crop.y) / 100))
-  const avatar = await image
-    .extract({ left, top, width: size, height: size })
-    .resize(384, 384)
-    .webp({ quality: 86 })
-    .toBuffer()
+  const result = await env.IMAGES.input(bytes.body!)
+    .transform({ trim: { left, top, right: width - left - size, bottom: height - top - size } })
+    .transform({ width: 384, height: 384 })
+    .output({ format: 'image/webp', quality: 86, anim: false })
+  const avatar = Buffer.from(await result.response().arrayBuffer())
   return { crop, avatar }
 }

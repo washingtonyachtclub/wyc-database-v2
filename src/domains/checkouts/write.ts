@@ -1,4 +1,6 @@
-import { and, eq, inArray } from 'drizzle-orm'
+import { inIdList } from '@/db/query-helpers'
+import { atomicWrite } from '@/db/atomic'
+import { and, eq } from 'drizzle-orm'
 import db from '@/db/index'
 import { boatTypes, checkouts, crew, guests, wycDatabase, wycRatings } from '@/db/schema'
 import type { CheckoutEdit, CheckoutQualification, GuestInput } from './schema'
@@ -20,7 +22,7 @@ type CheckoutWriteInput = {
 }
 
 export async function writeCheckout(input: CheckoutWriteInput) {
-  return db.transaction(async (tx) => {
+  return atomicWrite(async (tx) => {
     const memberIds = new Set([input.skipperWycNumber, ...input.crew])
     if (input.qualification.supervised && input.qualification.supervisorWycNumber > 0) {
       memberIds.add(input.qualification.supervisorWycNumber)
@@ -37,15 +39,15 @@ export async function writeCheckout(input: CheckoutWriteInput) {
       throw new CheckoutWriteError('The skipper cannot supervise their own checkout')
     }
 
-    const existingMembers = await tx
+    const existingMembers = await db
       .select({ wycNumber: wycDatabase.wycNumber })
       .from(wycDatabase)
-      .where(inArray(wycDatabase.wycNumber, [...memberIds]))
+      .where(inIdList(wycDatabase.wycNumber, [...memberIds]))
     if (existingMembers.length !== memberIds.size) {
       throw new CheckoutWriteError('One or more selected members no longer exist')
     }
 
-    const [boat] = await tx
+    const [boat] = await db
       .select({ index: boatTypes.index, active: boatTypes.active })
       .from(boatTypes)
       .where(eq(boatTypes.index, input.boatId))
@@ -58,7 +60,7 @@ export async function writeCheckout(input: CheckoutWriteInput) {
     }
 
     if (!input.qualification.supervised) {
-      const [memberRating] = await tx
+      const [memberRating] = await db
         .select({ index: wycRatings.index })
         .from(wycRatings)
         .where(
@@ -74,7 +76,7 @@ export async function writeCheckout(input: CheckoutWriteInput) {
     }
 
     const timeDeparture = toDbDateTime(input.departure)
-    const [duplicate] = await tx
+    const [duplicate] = await db
       .select({ index: checkouts.index })
       .from(checkouts)
       .where(
@@ -89,9 +91,10 @@ export async function writeCheckout(input: CheckoutWriteInput) {
       throw new CheckoutWriteError('This checkout has already been entered')
     }
 
-    const [result] = await tx
-      .insert(checkouts)
-      .values({
+    const checkoutId = await tx.nextId(checkouts)
+    tx.add(
+      db.insert(checkouts).values({
+        index: checkoutId,
         wycNumber: input.skipperWycNumber,
         timeDeparture,
         crew: '[]',
@@ -106,22 +109,19 @@ export async function writeCheckout(input: CheckoutWriteInput) {
           input.qualification.supervised && input.qualification.supervisorWycNumber > 0
             ? input.qualification.supervisorWycNumber
             : null,
-      })
-      .returning({ id: checkouts.index })
-    const checkoutId = result.id
+      }),
+    )
 
-    if (input.crew.length > 0) {
-      await tx.insert(crew).values(input.crew.map((crewId) => ({ checkoutId, crewId })))
-    }
-    if (input.guests.length > 0) {
-      await tx.insert(guests).values(
-        input.guests.map((guest) => ({
+    for (const crewId of input.crew) tx.add(db.insert(crew).values({ checkoutId, crewId }))
+    for (const guest of input.guests) {
+      tx.add(
+        db.insert(guests).values({
           checkoutId,
           name: guest.name,
           status: guest.status,
           email: guest.email || null,
           phone: null,
-        })),
+        }),
       )
     }
 
@@ -134,13 +134,8 @@ export async function updateOpenCheckout(
   skipperWycNumber: number,
   input: CheckoutEdit,
 ) {
-  return db.transaction(async (tx) => {
-    const [checkout] = await tx
-      .select()
-      .from(checkouts)
-      .where(eq(checkouts.index, index))
-      .limit(1)
-      .for('update')
+  return atomicWrite(async (tx) => {
+    const [checkout] = await db.select().from(checkouts).where(eq(checkouts.index, index)).limit(1)
     if (!checkout || checkout.wycNumber !== skipperWycNumber || checkout.timeReturn !== null) {
       return 'This checkout is no longer open for editing'
     }
@@ -154,7 +149,7 @@ export async function updateOpenCheckout(
     if (expectedReturn <= checkout.timeDeparture) return 'Estimated return must be after departure'
     if (input.crew.includes(skipperWycNumber)) return 'The skipper cannot also be a crew member'
 
-    const existingCrew = await tx
+    const existingCrew = await db
       .select({ id: crew.crewId })
       .from(crew)
       .where(eq(crew.checkoutId, index))
@@ -163,14 +158,14 @@ export async function updateOpenCheckout(
     const addedCrew = input.crew.filter((id) => !existingCrewIds.has(id))
     const removedCrew = existingCrew.filter(({ id }) => !selectedCrew.has(id)).map(({ id }) => id)
     if (addedCrew.length) {
-      const members = await tx
+      const members = await db
         .select({ id: wycDatabase.wycNumber })
         .from(wycDatabase)
-        .where(inArray(wycDatabase.wycNumber, addedCrew))
+        .where(inIdList(wycDatabase.wycNumber, addedCrew))
       if (members.length !== addedCrew.length) return 'One or more selected members no longer exist'
     }
 
-    const existingGuests = await tx.select().from(guests).where(eq(guests.checkoutId, index))
+    const existingGuests = await db.select().from(guests).where(eq(guests.checkoutId, index))
     const existingGuestIds = new Set(existingGuests.map((guest) => guest.index))
     const guestIds = input.guests.flatMap((guest) => (guest.id === undefined ? [] : [guest.id]))
     const selectedGuests = new Set(guestIds)
@@ -184,36 +179,42 @@ export async function updateOpenCheckout(
       .filter((guest) => !selectedGuests.has(guest.index))
       .map((guest) => guest.index)
 
-    await tx
-      .update(checkouts)
-      .set({
-        destination: input.destination === 'Other' ? input.otherDestination : input.destination,
-        expectedReturn,
-      })
-      .where(eq(checkouts.index, index))
+    tx.add(
+      db
+        .update(checkouts)
+        .set({
+          destination: input.destination === 'Other' ? input.otherDestination : input.destination,
+          expectedReturn,
+        })
+        .where(eq(checkouts.index, index)),
+    )
 
     if (removedCrew.length) {
-      await tx
-        .delete(crew)
-        .where(and(eq(crew.checkoutId, index), inArray(crew.crewId, removedCrew)))
+      tx.add(
+        db.delete(crew).where(and(eq(crew.checkoutId, index), inIdList(crew.crewId, removedCrew))),
+      )
     }
     if (addedCrew.length) {
-      await tx.insert(crew).values(addedCrew.map((crewId) => ({ checkoutId: index, crewId })))
+      for (const crewId of addedCrew) tx.add(db.insert(crew).values({ checkoutId: index, crewId }))
     }
     if (removedGuests.length) {
-      await tx
-        .delete(guests)
-        .where(and(eq(guests.checkoutId, index), inArray(guests.index, removedGuests)))
+      tx.add(
+        db
+          .delete(guests)
+          .where(and(eq(guests.checkoutId, index), inIdList(guests.index, removedGuests))),
+      )
     }
     for (const guest of input.guests) {
       const values = { name: guest.name, status: guest.status, email: guest.email || null }
       if (guest.id === undefined) {
-        await tx.insert(guests).values({ checkoutId: index, ...values })
+        tx.add(db.insert(guests).values({ checkoutId: index, ...values }))
       } else {
-        await tx
-          .update(guests)
-          .set(values)
-          .where(and(eq(guests.checkoutId, index), eq(guests.index, guest.id)))
+        tx.add(
+          db
+            .update(guests)
+            .set(values)
+            .where(and(eq(guests.checkoutId, index), eq(guests.index, guest.id))),
+        )
       }
     }
 

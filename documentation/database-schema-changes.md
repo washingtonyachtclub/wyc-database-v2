@@ -1,24 +1,26 @@
-# Database Schema Changes
+# Database schema changes
 
 ## Overview
 
-`src/db/schema.ts` defines the PostgreSQL schema. Production deployments apply pending migrations before building. Each Vercel project uses `MIGRATION_DATABASE_URL` for migrations and `DATABASE_URL` for the application. The URLs target the same database branch with separate roles. Preview deployments only build the app.
+The Worker reads and writes Cloudflare D1 through the `DB` binding. Wrangler tracks applied SQL files in `d1_migrations`.
 
 ## Workflow
 
-1. Edit the schema and run `npm run db:generate -- --name=description`.
-2. Review the SQL and apply locally with `npm run db:migrate:dev` (uses `.env.local`).
-3. Run `npm run db:check` and `npm run typecheck`. Commit the schema and migration together.
-4. Merge the reviewed migration. Production Vercel deployments run `npm run db:migrate` and stop if it fails. If the app build fails after the migration succeeds, the schema change remains applied.
+1. Edit the SQLite schema in `src/db/schema.ts` and run `npm run db:generate -- description` to create a migration.
+2. Write the SQL in that file.
+3. Run `npm run db:check` to apply every migration to an empty SQLite database and compare column names with Drizzle.
+4. Run `npm run db:migrate:local` and verify the application locally. Apply the same SQL to the hosted development database with `npm run db:migrate:dev`.
 
-Never edit applied migrations. Back up before destructive changes.
+## Key files
 
-## Key Files
+| File               | Purpose                     |
+| ------------------ | --------------------------- |
+| `src/db/schema.ts` | Drizzle table definitions   |
+| `migrations/d1/`   | Ordered D1 migration files  |
+| `wrangler.jsonc`   | Worker and database binding |
 
-| File                       | Purpose                            |
-| -------------------------- | ---------------------------------- |
-| `src/db/schema.ts`         | Tables and constraints             |
-| `drizzle-postgres/`        | Active migrations and snapshots    |
-| `drizzle/`                 | Archived MySQL migrations          |
-| `drizzle.config.ts`        | Dialect, paths, and connection     |
-| `scripts/vercel-build.mjs` | Production migration and app build |
+## Migration from PlanetScale
+
+Run `node --env-file=/private/path/source.env scripts/export-planetscale-d1.mjs /private/path/club.sql` with the source PostgreSQL connection in `DATABASE_URL`. The exporter reads a consistent snapshot, preserves record IDs and password hashes, checks foreign keys, and prints per-table counts. The SQL file contains private member data.
+
+Apply the D1 migrations to an empty destination, then import the snapshot with `npx wrangler d1 execute DB --remote --file /private/path/club.sql`. Check counts against the export before pointing a Worker at the destination. For console access, open the database under **Storage & databases → D1 SQL database → Console** in the club account.

@@ -8,7 +8,7 @@ import { loginOtpEmail } from '@/lib/emails/auth'
 import { isDevEnvironment } from '../env'
 import { hasPrivilege, type Privilege } from '../permissions'
 import { isSailLockerMode } from './device-mode'
-import { loadUserPrivileges, type AuthUser } from './identity'
+import { loadPasswordUser, loadUserPrivileges, type AuthUser } from '@/lib/auth/identity'
 import {
   checkRequestRateLimit,
   consumeOtp,
@@ -75,17 +75,7 @@ export const loginServerFn = createServerFn({ method: 'POST' })
   })
   .handler(async ({ data }) => {
     try {
-      const [user] = await db
-        .select({
-          wycNumber: wycDatabase.wycNumber,
-          first: wycDatabase.first,
-          last: wycDatabase.last,
-          email: wycDatabase.email,
-          passwordArgon2: wycDatabase.passwordArgon2,
-        })
-        .from(wycDatabase)
-        .where(eq(wycDatabase.wycNumber, data.wycNumber))
-        .limit(1)
+      const user = await loadPasswordUser(data.wycNumber)
 
       if (user && !user.passwordArgon2?.trim()) {
         return {

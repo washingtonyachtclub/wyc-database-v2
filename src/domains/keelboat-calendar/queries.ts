@@ -1,6 +1,6 @@
 import { CATEGORY_IDS } from '@/domains/renewals/questionnaire'
 import type { PricingTier } from './pricing'
-import { alias } from 'drizzle-orm/pg-core'
+import { alias } from 'drizzle-orm/sqlite-core'
 import { and, asc, eq, gt, gte, inArray, isNull, lte } from 'drizzle-orm'
 import db from '@/db/index'
 import {

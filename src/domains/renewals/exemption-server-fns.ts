@@ -1,3 +1,4 @@
+import { atomicWrite } from '@/db/atomic'
 import { readQuarterConfig } from '@/domains/quarters/config'
 import db from '@/db/index'
 import {
@@ -116,36 +117,41 @@ export const requestDuesExemption = createServerFn({ method: 'POST' })
     const renewalId = randomUUID()
 
     try {
-      await db.transaction(async (tx) => {
-        await tx.insert(membershipRenewals).values({
-          id: renewalId,
-          wycNumber,
-          source: 'exempt',
-          tier: 'exempt',
-          duration: 'quarterly',
-          previousExpireQtr: expireQtr,
-          targetExpireQtr: requestedExpireQtr,
-        })
-        const [request] = await tx
-          .insert(duesExemptionRequests)
-          .values({
+      await atomicWrite(async (tx) => {
+        tx.add(
+          db.insert(membershipRenewals).values({
+            id: renewalId,
+            wycNumber,
+            source: 'exempt',
+            tier: 'exempt',
+            duration: 'quarterly',
+            previousExpireQtr: expireQtr,
+            targetExpireQtr: requestedExpireQtr,
+          }),
+        )
+        const requestId = await tx.nextId(duesExemptionRequests)
+        tx.add(
+          db.insert(duesExemptionRequests).values({
+            index: requestId,
             renewalId,
             wycNumber,
             requestedExpireQtr,
             status: 'pending',
-          })
-          .returning({ id: duesExemptionRequests.index })
+          }),
+        )
 
-        await tx.insert(renewalQuestionnaire).values({
-          renewalId,
-          wycNumber,
-          quarter: requestedExpireQtr,
-          uwStatus: data.answers.uwStatus,
-          plusOneResponse: data.answers.plusOneResponse,
-          status: 'pending',
-          source: 'exempt',
-          requestId: request.id,
-        })
+        tx.add(
+          db.insert(renewalQuestionnaire).values({
+            renewalId,
+            wycNumber,
+            quarter: requestedExpireQtr,
+            uwStatus: data.answers.uwStatus,
+            plusOneResponse: data.answers.plusOneResponse,
+            status: 'pending',
+            source: 'exempt',
+            requestId,
+          }),
+        )
       })
     } catch (error) {
       console.error('requestDuesExemption: DB write failed:', error)
@@ -180,27 +186,32 @@ export const cancelDuesExemption = createServerFn({ method: 'POST' }).handler(as
   if (!existing) return { success: true as const }
 
   try {
-    await db.transaction(async (tx) => {
-      const [locked] = await tx
+    await atomicWrite(async (tx) => {
+      const [locked] = await db
         .select({ status: duesExemptionRequests.status })
         .from(duesExemptionRequests)
         .where(eq(duesExemptionRequests.index, existing.index))
-        .for('update', { of: duesExemptionRequests })
       if (!locked || locked.status !== 'pending') return
 
-      await tx
-        .update(duesExemptionRequests)
-        .set({ status: 'cancelled', decidedAt: new Date() })
-        .where(eq(duesExemptionRequests.index, existing.index))
-      await tx
-        .update(renewalQuestionnaire)
-        .set({ status: 'void' })
-        .where(eq(renewalQuestionnaire.requestId, existing.index))
+      tx.add(
+        db
+          .update(duesExemptionRequests)
+          .set({ status: 'cancelled', decidedAt: new Date() })
+          .where(eq(duesExemptionRequests.index, existing.index)),
+      )
+      tx.add(
+        db
+          .update(renewalQuestionnaire)
+          .set({ status: 'void' })
+          .where(eq(renewalQuestionnaire.requestId, existing.index)),
+      )
       if (existing.renewalId) {
-        await tx
-          .update(membershipRenewals)
-          .set({ closedAt: new Date() })
-          .where(eq(membershipRenewals.id, existing.renewalId))
+        tx.add(
+          db
+            .update(membershipRenewals)
+            .set({ closedAt: new Date() })
+            .where(eq(membershipRenewals.id, existing.renewalId)),
+        )
       }
     })
   } catch (error) {
@@ -296,15 +307,14 @@ export const approveExemptionRequest = createServerFn({ method: 'POST' })
     const alreadyCovered = (request.currentExpireQtr ?? 0) >= request.requestedExpireQtr
     let completion: RenewalCompletion | null = null
     try {
-      await db.transaction(async (tx) => {
-        const [lockedRequest] = await tx
+      await atomicWrite(async (tx) => {
+        const [lockedRequest] = await db
           .select({
             renewalId: duesExemptionRequests.renewalId,
             status: duesExemptionRequests.status,
           })
           .from(duesExemptionRequests)
           .where(eq(duesExemptionRequests.index, data.requestId))
-          .for('update', { of: duesExemptionRequests })
         if (
           !lockedRequest ||
           lockedRequest.status !== 'pending' ||
@@ -313,11 +323,10 @@ export const approveExemptionRequest = createServerFn({ method: 'POST' })
           throw new Error('The request is no longer pending.')
         }
 
-        const [lockedWaiver] = await tx
+        const [lockedWaiver] = await db
           .select({ id: memberWaivers.id })
           .from(memberWaivers)
           .where(eq(memberWaivers.renewalId, renewalId))
-          .for('update', { of: memberWaivers })
         if (!lockedWaiver) throw new Error('The member waiver is not complete.')
 
         const paymentId = await insertExemptMembershipPayment(tx, {
@@ -327,17 +336,19 @@ export const approveExemptionRequest = createServerFn({ method: 'POST' })
           newExpireQtr: Math.max(request.currentExpireQtr ?? 0, request.requestedExpireQtr),
         })
 
-        await tx
-          .update(duesExemptionRequests)
-          .set({
-            status: 'approved',
-            paymentId,
-            decidedBy: approver,
-            decidedAt: new Date(),
-          })
-          .where(eq(duesExemptionRequests.index, data.requestId))
+        tx.add(
+          db
+            .update(duesExemptionRequests)
+            .set({
+              status: 'approved',
+              paymentId,
+              decidedBy: approver,
+              decidedAt: new Date(),
+            })
+            .where(eq(duesExemptionRequests.index, data.requestId)),
+        )
 
-        completion = await reconcileRenewal(tx, renewalId)
+        completion = await reconcileRenewal(tx, renewalId, 'exemption-approval')
         if (!completion) throw new Error('The renewal requirements are incomplete.')
       })
     } catch (error) {
@@ -367,32 +378,37 @@ export const denyExemptionRequest = createServerFn({ method: 'POST' })
     if (request.status !== 'pending') throw new Error('This request has already been decided.')
 
     try {
-      await db.transaction(async (tx) => {
-        const [lockedRequest] = await tx
+      await atomicWrite(async (tx) => {
+        const [lockedRequest] = await db
           .select({
             renewalId: duesExemptionRequests.renewalId,
             status: duesExemptionRequests.status,
           })
           .from(duesExemptionRequests)
           .where(eq(duesExemptionRequests.index, data.requestId))
-          .for('update', { of: duesExemptionRequests })
         if (!lockedRequest || lockedRequest.status !== 'pending') {
           throw new Error('The request is no longer pending.')
         }
 
-        await tx
-          .update(duesExemptionRequests)
-          .set({ status: 'denied', decidedBy: approver, decidedAt: new Date() })
-          .where(eq(duesExemptionRequests.index, data.requestId))
-        await tx
-          .update(renewalQuestionnaire)
-          .set({ status: 'void' })
-          .where(eq(renewalQuestionnaire.requestId, data.requestId))
+        tx.add(
+          db
+            .update(duesExemptionRequests)
+            .set({ status: 'denied', decidedBy: approver, decidedAt: new Date() })
+            .where(eq(duesExemptionRequests.index, data.requestId)),
+        )
+        tx.add(
+          db
+            .update(renewalQuestionnaire)
+            .set({ status: 'void' })
+            .where(eq(renewalQuestionnaire.requestId, data.requestId)),
+        )
         if (lockedRequest.renewalId) {
-          await tx
-            .update(membershipRenewals)
-            .set({ closedAt: new Date() })
-            .where(eq(membershipRenewals.id, lockedRequest.renewalId))
+          tx.add(
+            db
+              .update(membershipRenewals)
+              .set({ closedAt: new Date() })
+              .where(eq(membershipRenewals.id, lockedRequest.renewalId)),
+          )
         }
       })
     } catch (error) {

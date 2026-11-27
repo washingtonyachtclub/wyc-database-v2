@@ -1,3 +1,4 @@
+import { type AtomicWrite } from '@/db/atomic'
 import db from '@/db'
 import {
   duesExemptionRequests,
@@ -22,20 +23,14 @@ export type RenewalCompletion = {
   wycNumber: number
 }
 
-type RenewalTransaction = Parameters<Parameters<typeof db.transaction>[0]>[0]
+type RenewalTransaction = AtomicWrite
 
 export async function reconcileRenewal(
   tx: RenewalTransaction,
   renewalId: string,
+  pending?: 'waiver' | 'exemption-approval',
 ): Promise<RenewalCompletion | null> {
-  await tx
-    .select({ id: membershipRenewals.id })
-    .from(membershipRenewals)
-    .innerJoin(wycDatabase, eq(wycDatabase.wycNumber, membershipRenewals.wycNumber))
-    .where(eq(membershipRenewals.id, renewalId))
-    .for('update', { of: [membershipRenewals, wycDatabase] })
-
-  const [row] = await tx
+  const [row] = await db
     .select({
       closedAt: membershipRenewals.closedAt,
       completedAt: membershipRenewals.completedAt,
@@ -59,14 +54,15 @@ export async function reconcileRenewal(
     .leftJoin(renewalQuestionnaire, eq(renewalQuestionnaire.renewalId, membershipRenewals.id))
     .where(eq(membershipRenewals.id, renewalId))
 
-  if (!row || row.completedAt || row.closedAt || !row.waiverId) return null
+  if (!row || row.completedAt || row.closedAt || (!row.waiverId && pending !== 'waiver'))
+    return null
 
   const fundingComplete =
     row.source === 'paid'
       ? row.paymentStatus === 'COMPLETED'
       : row.source === 'exempt' &&
-        row.paymentStatus === 'EXEMPT' &&
-        row.exemptionStatus === 'approved'
+        (pending === 'exemption-approval' ||
+          (row.paymentStatus === 'EXEMPT' && row.exemptionStatus === 'approved'))
   if (!fundingComplete) return null
 
   const update = {
@@ -74,21 +70,25 @@ export async function reconcileRenewal(
     ...(isUwStatus(row.uwStatus) && { categoryId: categoryIdForUwStatus(row.uwStatus) }),
   }
 
-  await tx.update(wycDatabase).set(update).where(eq(wycDatabase.wycNumber, row.wycNumber))
-  await tx
-    .update(renewalQuestionnaire)
-    .set({ status: 'active' })
-    .where(eq(renewalQuestionnaire.renewalId, renewalId))
-  await tx
-    .update(membershipRenewals)
-    .set({ completedAt: new Date() })
-    .where(
-      and(
-        eq(membershipRenewals.id, renewalId),
-        isNull(membershipRenewals.completedAt),
-        isNull(membershipRenewals.closedAt),
+  tx.add(db.update(wycDatabase).set(update).where(eq(wycDatabase.wycNumber, row.wycNumber)))
+  tx.add(
+    db
+      .update(renewalQuestionnaire)
+      .set({ status: 'active' })
+      .where(eq(renewalQuestionnaire.renewalId, renewalId)),
+  )
+  tx.add(
+    db
+      .update(membershipRenewals)
+      .set({ completedAt: new Date() })
+      .where(
+        and(
+          eq(membershipRenewals.id, renewalId),
+          isNull(membershipRenewals.completedAt),
+          isNull(membershipRenewals.closedAt),
+        ),
       ),
-    )
+  )
 
   return {
     first: row.first ?? '',

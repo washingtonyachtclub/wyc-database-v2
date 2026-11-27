@@ -1,3 +1,4 @@
+import { type AtomicWrite } from '@/db/atomic'
 import db from '@/db'
 import { membershipDiscountCodeRedemptions, membershipDiscountCodes } from '@/db/schema'
 import { getTodayPacificDateString } from '@/lib/date-utils'
@@ -69,7 +70,7 @@ export async function resolveMembershipDiscountCode(input: {
   }
 }
 
-type DiscountCodeTransaction = Parameters<Parameters<typeof db.transaction>[0]>[0]
+type DiscountCodeTransaction = AtomicWrite
 
 export async function insertMembershipDiscountCodeRedemption(
   tx: DiscountCodeTransaction,
@@ -81,15 +82,17 @@ export async function insertMembershipDiscountCodeRedemption(
     subtotalCents: number
   },
 ) {
-  await tx.insert(membershipDiscountCodeRedemptions).values({
-    amountOffCents: input.discountCode.amountOffCents,
-    code: input.discountCode.code,
-    discountCents: input.discountCents,
-    finalCents: input.finalCents,
-    paymentId: input.paymentId,
-    percentageOff: input.discountCode.percentageOff,
-    discountCodeId: input.discountCode.index,
-    revision: input.discountCode.revision,
-    subtotalCents: input.subtotalCents,
-  })
+  tx.add(
+    db.insert(membershipDiscountCodeRedemptions).values({
+      amountOffCents: input.discountCode.amountOffCents,
+      code: input.discountCode.code,
+      discountCents: input.discountCents,
+      finalCents: input.finalCents,
+      paymentId: input.paymentId,
+      percentageOff: input.discountCode.percentageOff,
+      discountCodeId: input.discountCode.index,
+      revision: input.discountCode.revision,
+      subtotalCents: input.subtotalCents,
+    }),
+  )
 }

@@ -2,7 +2,7 @@
 
 Database interface tool for The [Washington Yacht Club](https://washingtonyachtclub.org), a student-run recreational sailing club at the University of Washington in Seattle. Manages member records, lesson scheduling, ratings, and various club operations.
 
-This is a ground-up rewrite replacing the legacy Perl/PHP system that was in use from approximately 2007 to 2025. The new stack is React, TypeScript, and Drizzle ORM on the TanStack ecosystem (Start, Router, Query, Table). It uses PostgreSQL and preserves the legacy record identifiers.
+This is a ground-up rewrite replacing the legacy Perl/PHP system that was in use from approximately 2007 to 2025. The new stack is React, TypeScript, and Drizzle ORM on the TanStack ecosystem (Start, Router, Query, Table). It uses Cloudflare D1 and preserves the legacy record identifiers.
 
 ## Tech Stack
 
@@ -11,10 +11,10 @@ This is a ground-up rewrite replacing the legacy Perl/PHP system that was in use
 - **Data fetching**: [TanStack Query](https://tanstack.com/query) (server state management)
 - **Tables**: [TanStack Table](https://tanstack.com/table) (headless table logic)
 - **Forms**: [TanStack Form](https://tanstack.com/form) + [Zod](https://zod.dev) validation
-- **ORM**: [Drizzle](https://orm.drizzle.team) (PostgreSQL)
+- **ORM**: [Drizzle](https://orm.drizzle.team) (SQLite on D1)
 - **UI**: [shadcn/ui](https://ui.shadcn.com) (Radix + Tailwind CSS)
 - **Email**: [Resend](https://resend.com)
-- **Hosting**: [Vercel](https://vercel.com)
+- **Hosting**: [Cloudflare Workers](https://workers.cloudflare.com)
 
 ## Project Structure
 
@@ -54,23 +54,17 @@ Issues are tracked in Linear. See [https://database.washingtonyachtclub.org/main
 
 ## Environment Setup
 
-Copy `.env.example` to `.env.local` and fill in your values:
+Set the public Vite variables from `.env.example` in `.env.local`. Put server secrets in `.dev.vars.local`. Use a random session secret of at least 32 characters and Square sandbox credentials in development.
+
+## Running the application
 
 ```bash
-cp .env.example .env.local
-```
-
-- `DATABASE_URL` — PostgreSQL connection string
-- `SESSION_SECRET` — Secret for session cookies
-- `RESEND_API_KEY` — [Resend](https://resend.com) API key for sending emails
-- `VITE_APP_ENV` — Set to `"dev"` for development (omit in production)
-
-## Running the Application
-
-```bash
-npm install
+npm ci &&
+npm run db:migrate:local &&
 npm run dev
 ```
+
+The local Worker uses Wrangler's local SQLite and R2 stores. For hosted development, `npm run db:migrate:dev` applies migrations to `wyc-database-dev`, and `npm run deploy:dev` builds and publishes the Worker. Set runtime secrets on the Worker. The Cloudflare dashboard's D1 Console supports SQL reports and writes.
 
 ## Linting & Formatting
 

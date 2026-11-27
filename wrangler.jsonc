@@ -1,0 +1,45 @@
+{
+  "$schema": "./node_modules/wrangler/config-schema.json",
+  "name": "wyc-database-dev",
+  "main": "src/worker.ts",
+  "compatibility_date": "2026-11-26",
+  "compatibility_flags": ["nodejs_compat"],
+  "workers_dev": true,
+  "limits": { "cpu_ms": 5000 },
+  "vars": { "DATABASE_NAME": "wyc-database-dev" },
+  "preview_urls": false,
+  "images": { "binding": "IMAGES" },
+  "r2_buckets": [
+    { "binding": "PROFILE_PHOTOS", "bucket_name": "profile-pictures-dev" },
+    { "binding": "WAIVERS", "bucket_name": "wyc-waivers-dev" },
+  ],
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "wyc-database-dev",
+      "database_id": "3962fed4-2455-442a-96c4-c5a104408c05",
+      "migrations_dir": "migrations/d1",
+    },
+  ],
+  "env": {
+    "production": {
+      "name": "wyc-database-production",
+      "workers_dev": false,
+      "preview_urls": false,
+      "vars": { "DATABASE_NAME": "wyc-database-production" },
+      "images": { "binding": "IMAGES" },
+      "r2_buckets": [
+        { "binding": "PROFILE_PHOTOS", "bucket_name": "profile-pictures" },
+        { "binding": "WAIVERS", "bucket_name": "wyc-waivers-prod" },
+      ],
+      "d1_databases": [
+        {
+          "binding": "DB",
+          "database_name": "wyc-database-production",
+          "database_id": "ad925ee1-b4e0-4f68-82df-83fd861eddd2",
+          "migrations_dir": "migrations/d1",
+        },
+      ],
+    },
+  },
+}

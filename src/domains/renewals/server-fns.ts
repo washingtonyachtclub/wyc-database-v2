@@ -1,3 +1,4 @@
+import { atomicWrite } from '@/db/atomic'
 import { readQuarterConfig } from '@/domains/quarters/config'
 import db from '@/db/index'
 import {
@@ -189,19 +190,22 @@ async function recordPaidRenewal(input: {
   wycNumber: number
 }) {
   const renewalId = randomUUID()
-  await db.transaction(async (tx) => {
-    await tx.insert(membershipRenewals).values({
-      id: renewalId,
-      wycNumber: input.wycNumber,
-      source: 'paid',
-      tier: input.tier,
-      duration: input.duration,
-      previousExpireQtr: input.prevExpireQtr,
-      targetExpireQtr: input.targetExpireQtr,
-    })
-    const result = await tx
-      .insert(membershipPayments)
-      .values({
+  await atomicWrite(async (tx) => {
+    tx.add(
+      db.insert(membershipRenewals).values({
+        id: renewalId,
+        wycNumber: input.wycNumber,
+        source: 'paid',
+        tier: input.tier,
+        duration: input.duration,
+        previousExpireQtr: input.prevExpireQtr,
+        targetExpireQtr: input.targetExpireQtr,
+      }),
+    )
+    const paymentId = await tx.nextId(membershipPayments)
+    tx.add(
+      db.insert(membershipPayments).values({
+        index: paymentId,
         renewalId,
         wycNumber: input.wycNumber,
         squarePaymentId: input.squarePaymentId,
@@ -213,26 +217,28 @@ async function recordPaidRenewal(input: {
         prevExpireQtr: input.prevExpireQtr,
         newExpireQtr: input.targetExpireQtr,
         status: 'COMPLETED',
-      })
-      .returning({ id: membershipPayments.index })
+      }),
+    )
     if (input.discountCode) {
       await insertMembershipDiscountCodeRedemption(tx, {
         discountCents: input.discountCents,
         finalCents: input.amountCents,
-        paymentId: result[0].id,
+        paymentId,
         discountCode: input.discountCode,
         subtotalCents: input.subtotalCents,
       })
     }
-    await tx.insert(renewalQuestionnaire).values({
-      renewalId,
-      wycNumber: input.wycNumber,
-      quarter: input.targetExpireQtr,
-      uwStatus: input.questionnaire.uwStatus,
-      plusOneResponse: input.questionnaire.plusOneResponse,
-      status: 'pending',
-      source: 'paid',
-    })
+    tx.add(
+      db.insert(renewalQuestionnaire).values({
+        renewalId,
+        wycNumber: input.wycNumber,
+        quarter: input.targetExpireQtr,
+        uwStatus: input.questionnaire.uwStatus,
+        plusOneResponse: input.questionnaire.plusOneResponse,
+        status: 'pending',
+        source: 'paid',
+      }),
+    )
   })
   return renewalId
 }
