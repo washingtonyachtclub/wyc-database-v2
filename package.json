@@ -16,7 +16,9 @@
     "format:check": "prettier --check .",
     "prepare": "husky",
     "typecheck": "tsc --noEmit",
-    "db:import:mysql": "tsx scripts/import-mysql.ts"
+    "db:import:mysql": "tsx scripts/import-mysql.ts",
+    "dev:cloudflare": "VITE_APP_ENV=dev vite dev --config vite.cloudflare.config.ts",
+    "build:cloudflare": "VITE_APP_ENV=dev vite build --config vite.cloudflare.config.ts"
   },
   "lint-staged": {
     "**/*": "prettier --write --ignore-unknown"
@@ -84,6 +86,8 @@
     "zod": "^4.3.6"
   },
   "devDependencies": {
+    "@cloudflare/vite-plugin": "^1.70.2",
+    "@cloudflare/workers-types": "^5.20261127.1",
     "@tanstack/devtools-vite": "^0.3.11",
     "@tanstack/eslint-config": "^0.3.0",
     "@testing-library/dom": "^10.4.0",
@@ -104,6 +108,7 @@
     "typescript": "^5.7.2",
     "vite": "^7.1.7",
     "vitest": "^3.0.5",
-    "web-vitals": "^5.1.0"
+    "web-vitals": "^5.1.0",
+    "wrangler": "^4.168.0"
   }
 }

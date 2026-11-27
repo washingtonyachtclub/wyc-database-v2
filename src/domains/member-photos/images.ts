@@ -1,9 +1,9 @@
-import sharp from 'sharp'
 import { maxPhotoEdge, type PhotoCrop } from './photo'
 
 export class InvalidPhoto extends Error {}
 
 export async function normalizePhoto(input: Buffer) {
+  const { default: sharp } = await import('sharp')
   try {
     const image = sharp(input, { limitInputPixels: 60_000_000 })
     const { format, pages } = await image.metadata()
@@ -26,6 +26,7 @@ export async function normalizePhoto(input: Buffer) {
 }
 
 export async function cropPhoto(source: Buffer, area?: PhotoCrop) {
+  const { default: sharp } = await import('sharp')
   const image = sharp(source)
   const { width, height } = await image.metadata()
   const side = Math.min(width, height)

@@ -1,4 +1,5 @@
 import db from '@/db/index'
+import { listPublicLessons } from '@/domains/lessons/public-lessons'
 import { isMembershipActive } from '@/db/membership-utils'
 import { withPagination, withSorting } from '@/db/query-helpers'
 import {
@@ -21,7 +22,6 @@ import {
   fetchLessonStudents,
   fetchSessionsByLesson,
   lessonSortColumns,
-  lessonIdsEndingOnOrAfter,
   withLessonFilters,
 } from '@/domains/lessons/queries'
 import type { LessonInsert, LessonSessionInput, SignedUpLesson } from '@/domains/lessons/schema'
@@ -51,32 +51,7 @@ import { and, asc, count, eq, gte, inArray, or } from 'drizzle-orm'
 import { z } from 'zod'
 
 export const getPublicLessons = createServerFn({ method: 'GET' }).handler(async () => {
-  // No auth required — this is the public lesson list for the WordPress iframe
-  const raw = await baseLessonQuery()
-    .where(inArray(lessons.index, lessonIdsEndingOnOrAfter(getTodayPacificDateString())))
-    .orderBy(asc(lessons.calendarDate))
-
-  const lessonIds = raw.map((r) => r.index)
-
-  // Batch enrollment counts
-  let enrollmentCounts = new Map<number, number>()
-  if (lessonIds.length > 0) {
-    const counts = await db
-      .select({ class: signups.class, count: count() })
-      .from(signups)
-      .where(inArray(signups.class, lessonIds))
-      .groupBy(signups.class)
-    enrollmentCounts = new Map(counts.map((c) => [c.class, c.count]))
-  }
-
-  const sessionsByLesson = await fetchSessionsByLesson(lessonIds)
-
-  return raw
-    .map((row) => ({
-      lesson: toRichLesson(row, sessionsByLesson.get(row.index) ?? []),
-      enrolledCount: enrollmentCounts.get(row.index) ?? 0,
-    }))
-    .sort((a, b) => byDateThenStart(a.lesson, b.lesson))
+  return listPublicLessons(getTodayPacificDateString())
 })
 
 export const getQuarterLessons = createServerFn({ method: 'GET' }).handler(async () => {
