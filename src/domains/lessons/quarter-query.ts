@@ -1,4 +1,4 @@
-import { and, asc, eq, gte, max, sql } from 'drizzle-orm'
+import { and, asc, eq, gt, gte, lt, max, sql } from 'drizzle-orm'
 import { alias, QueryBuilder } from 'drizzle-orm/sqlite-core'
 import { lessonSessions, lessons, quarters } from '@/db/schema'
 import { FIRST_LESSON_QUARTER } from './quarter-rules'
@@ -26,3 +26,12 @@ const quarter = qb
   .limit(1)
 
 export const lessonQuarterIndex = sql<number | null>`${quarter}`
+
+export function lessonQuarterAtLeast(minimum: number) {
+  const earlierEnd = qb
+    .select({ end: max(quarters.endDate) })
+    .from(quarters)
+    .where(and(gte(quarters.index, FIRST_LESSON_QUARTER), lt(quarters.index, minimum)))
+  // Eliminate historical lessons before resolving each remaining lesson's exact quarter.
+  return and(gt(finalDay, sql`coalesce(${earlierEnd}, '')`), gte(lessonQuarterIndex, minimum))
+}

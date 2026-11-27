@@ -1,5 +1,5 @@
 import { atomicWrite, type AtomicWrite } from '@/db/atomic'
-import { lessonQuarterIndex } from '@/domains/lessons/quarter-query'
+import { lessonQuarterAtLeast } from '@/domains/lessons/quarter-query'
 import db from '@/db/index'
 import { listPublicLessons } from '@/domains/lessons/public-lessons'
 import { isMembershipActive } from '@/db/membership-utils'
@@ -50,7 +50,7 @@ import { getLessonCapacityChange, sendLessonCapacityEmails } from './capacity-ch
 import { CALENDAR_SYNC_START_DATE, lessonSignupsOpen } from './visibility'
 import { getTodayPacificDateString } from '@/lib/date-utils'
 import { createServerFn } from '@tanstack/react-start'
-import { and, asc, count, eq, gte, or } from 'drizzle-orm'
+import { and, asc, count, eq, or } from 'drizzle-orm'
 import { z } from 'zod'
 
 export const getPublicLessons = createServerFn({ method: 'GET' }).handler(async () => {
@@ -62,7 +62,7 @@ export const getQuarterLessons = createServerFn({ method: 'GET' }).handler(async
   const currentQuarter = await getCurrentQuarter()
 
   const raw = await baseLessonQuery()
-    .where(gte(lessonQuarterIndex, currentQuarter))
+    .where(lessonQuarterAtLeast(currentQuarter))
     .orderBy(asc(lessons.calendarDate))
 
   const lessonIds = raw.map((r) => r.index)
@@ -247,12 +247,18 @@ export const createLesson = createServerFn({ method: 'POST' })
     )
     if (error) throw new Error(error)
     const row = fromLessonInsert(data)
-    const id = await atomicWrite(async (tx) => {
-      const lessonId = await tx.nextId(lessons)
-      tx.add(db.insert(lessons).values({ ...row, index: lessonId }))
-      await syncLessonSessions(lessonId, data.sessions, tx)
-      return lessonId
-    })
+    let id: number
+    try {
+      id = await atomicWrite(async (tx) => {
+        const lessonId = await tx.nextId(lessons)
+        tx.add(db.insert(lessons).values({ ...row, index: lessonId }))
+        await syncLessonSessions(lessonId, data.sessions, tx)
+        return lessonId
+      })
+    } catch (error) {
+      console.error('Create lesson failed:', error)
+      throw new Error('Could not save the lesson. Please try again.')
+    }
     await reconcileCalendar(id)
     return { success: true, id }
   })

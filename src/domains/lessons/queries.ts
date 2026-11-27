@@ -1,5 +1,5 @@
 import { inIdList } from '@/db/query-helpers'
-import { lessonQuarterIndex } from '@/domains/lessons/quarter-query'
+import { lessonQuarterAtLeast, lessonQuarterIndex } from '@/domains/lessons/quarter-query'
 import { and, asc, eq, gte, like, or, sql } from 'drizzle-orm'
 import { alias, type SQLiteColumn, type SQLiteSelect } from 'drizzle-orm/sqlite-core'
 import db from '@/db/index'
@@ -167,7 +167,7 @@ export function withLessonFilters<T extends SQLiteSelect>(
   if (filters?.expireQtrFilter) {
     const { quarter, mode } = filters.expireQtrFilter
     if (mode === 'atLeast') {
-      conditions.push(gte(lessonQuarterIndex, quarter))
+      conditions.push(lessonQuarterAtLeast(quarter))
     } else {
       conditions.push(eq(lessonQuarterIndex, quarter))
     }
@@ -220,7 +220,7 @@ export function baseSignedUpWithDetailsQuery(wycNumber: number, minExpire: numbe
     .leftJoin(classType, eq(classType.index, lessons.type))
     .leftJoin(instructor1Table, eq(lessons.instructor1, instructor1Table.wycNumber))
     .leftJoin(instructor2Table, eq(lessons.instructor2, instructor2Table.wycNumber))
-    .where(and(eq(signups.student, wycNumber), gte(lessonQuarterIndex, minExpire)))
+    .where(and(eq(signups.student, wycNumber), lessonQuarterAtLeast(minExpire)))
     .orderBy(sql`${lessons.calendarDate} asc nulls last`)
 }
 
