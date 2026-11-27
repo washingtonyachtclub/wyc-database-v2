@@ -14,11 +14,11 @@
     "format:check": "prettier --check .",
     "prepare": "husky",
     "typecheck": "tsc --noEmit",
-    "db:import:mysql": "tsx scripts/import-mysql.ts",
     "dev:cloudflare": "VITE_APP_ENV=dev vite dev",
     "build:cloudflare": "NODE_OPTIONS=--max-old-space-size=4096 VITE_APP_ENV=dev VITE_PUBLIC_APP_ORIGIN=https://wyc-database-dev.wyc-emdash-website.workers.dev vite build",
     "db:migrate:local": "wrangler d1 migrations apply DB --local",
-    "deploy:dev": "npm run build:cloudflare && wrangler deploy --config dist/server/wrangler.json"
+    "deploy:dev": "npm run build:cloudflare && wrangler deploy --config dist/server/wrangler.json",
+    "build:production": "NODE_OPTIONS=--max-old-space-size=4096 CLOUDFLARE_ENV=production VITE_APP_ENV=production VITE_PUBLIC_APP_ORIGIN=https://database.washingtonyachtclub.org vite build"
   },
   "lint-staged": {
     "**/*": "prettier --write --ignore-unknown"

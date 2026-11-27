@@ -10,9 +10,14 @@ if (!destination || !process.env.DATABASE_URL) {
 const sqlite = new DatabaseSync(':memory:')
 sqlite.exec(readFileSync(new URL('../migrations/d1/0001_club_schema.sql', import.meta.url), 'utf8'))
 const quote = (name) => '"' + name.replaceAll('"', '""') + '"'
-const literal = (value) => (value == null ? 'NULL' : "'" + value.replaceAll("'", "''") + "'")
+function literal(value) {
+  if (value == null) return 'NULL'
+  // Wrangler normalizes line endings in multiline SQL literals during import.
+  if (/[\r\n\0]/.test(value)) return "CAST(X'" + Buffer.from(value).toString('hex') + "' AS TEXT)"
+  return "'" + value.replaceAll("'", "''") + "'"
+}
 const tables = sqlite
-  .prepare("SELECT name FROM sqlite_schema WHERE type='table' AND name != 'sqlite_sequence'")
+  .prepare("SELECT name, sql FROM sqlite_schema WHERE type='table' AND name != 'sqlite_sequence'")
   .all()
 const pending = new Set(tables.map((t) => t.name))
 const source = new pg.Client({
@@ -61,6 +66,35 @@ try {
       bytes += size
     }
     await flush()
+    if (tables.find((t) => t.name === table).sql.includes('AUTOINCREMENT')) {
+      const { name: key } = sqlite
+        .prepare('SELECT name FROM pragma_table_info(?) WHERE pk = 1')
+        .get(table)
+      const {
+        rows: [sequence],
+      } = await source.query(
+        'SELECT n.nspname, c.relname FROM pg_class c JOIN pg_namespace n ON n.oid = c.relnamespace WHERE c.oid = pg_get_serial_sequence($1, $2)::regclass',
+        ['public.' + quote(table), key],
+      )
+      if (!sequence) throw new Error('Source sequence missing for ' + table)
+      const {
+        rows: [state],
+      } = await source.query(
+        'SELECT last_value - CASE WHEN is_called THEN 0 ELSE 1 END AS used FROM ' +
+          quote(sequence.nspname) +
+          '.' +
+          quote(sequence.relname),
+      )
+      const used = BigInt(state.used)
+      const current = sqlite.prepare('SELECT seq FROM sqlite_sequence WHERE name=?').get(table)
+      if (used > BigInt(current?.seq ?? 0)) {
+        const statement = current
+          ? 'UPDATE sqlite_sequence SET seq=' + used + ' WHERE name=' + literal(table) + ';'
+          : 'INSERT INTO sqlite_sequence(name, seq) VALUES (' + literal(table) + ', ' + used + ');'
+        sqlite.exec(statement)
+        await file.writeFile(statement + '\n')
+      }
+    }
     pending.delete(table)
     console.log(table, rows.length)
   }
