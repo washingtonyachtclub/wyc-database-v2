@@ -18,23 +18,21 @@ export async function insertExemptMembershipPayment(
 ) {
   const paymentId = await tx.nextId(membershipPayments)
   tx.add(
-    db
-      .insert(membershipPayments)
-      .values({
-        index: paymentId,
-        applicationId: input.applicationId ?? null,
-        renewalId: input.renewalId ?? null,
-        wycNumber: input.wycNumber,
-        squarePaymentId: null,
-        squareOrderId: null,
-        amountCents: 0,
-        currency: 'USD',
-        tier: 'exempt',
-        duration: 'quarterly',
-        prevExpireQtr: input.prevExpireQtr,
-        newExpireQtr: input.newExpireQtr,
-        status: 'EXEMPT',
-      }),
+    db.insert(membershipPayments).values({
+      index: paymentId,
+      applicationId: input.applicationId ?? null,
+      renewalId: input.renewalId ?? null,
+      wycNumber: input.wycNumber,
+      squarePaymentId: null,
+      squareOrderId: null,
+      amountCents: 0,
+      currency: 'USD',
+      tier: 'exempt',
+      duration: 'quarterly',
+      prevExpireQtr: input.prevExpireQtr,
+      newExpireQtr: input.newExpireQtr,
+      status: 'EXEMPT',
+    }),
   )
   return paymentId
 }

@@ -131,15 +131,13 @@ export const requestDuesExemption = createServerFn({ method: 'POST' })
         )
         const requestId = await tx.nextId(duesExemptionRequests)
         tx.add(
-          db
-            .insert(duesExemptionRequests)
-            .values({
-              index: requestId,
-              renewalId,
-              wycNumber,
-              requestedExpireQtr,
-              status: 'pending',
-            }),
+          db.insert(duesExemptionRequests).values({
+            index: requestId,
+            renewalId,
+            wycNumber,
+            requestedExpireQtr,
+            status: 'pending',
+          }),
         )
 
         tx.add(

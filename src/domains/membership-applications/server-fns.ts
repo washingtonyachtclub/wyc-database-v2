@@ -387,22 +387,20 @@ export const startNewMemberPayment = createServerFn({ method: 'POST' })
 
         const paymentId = await tx.nextId(membershipPayments)
         tx.add(
-          db
-            .insert(membershipPayments)
-            .values({
-              index: paymentId,
-              amountCents: order.amountCents,
-              applicationId,
-              currency: order.currency,
-              duration: data.duration,
-              newExpireQtr: targetExpireQtr,
-              prevExpireQtr: 0,
-              squareOrderId: order.orderId,
-              squarePaymentId,
-              status: 'COMPLETED',
-              tier,
-              wycNumber: null,
-            }),
+          db.insert(membershipPayments).values({
+            index: paymentId,
+            amountCents: order.amountCents,
+            applicationId,
+            currency: order.currency,
+            duration: data.duration,
+            newExpireQtr: targetExpireQtr,
+            prevExpireQtr: 0,
+            squareOrderId: order.orderId,
+            squarePaymentId,
+            status: 'COMPLETED',
+            tier,
+            wycNumber: null,
+          }),
         )
         if (discountCode) {
           await insertMembershipDiscountCodeRedemption(tx, {

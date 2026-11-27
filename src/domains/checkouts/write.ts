@@ -93,39 +93,35 @@ export async function writeCheckout(input: CheckoutWriteInput) {
 
     const checkoutId = await tx.nextId(checkouts)
     tx.add(
-      db
-        .insert(checkouts)
-        .values({
-          index: checkoutId,
-          wycNumber: input.skipperWycNumber,
-          timeDeparture,
-          crew: '[]',
-          boat: String(input.boatId),
-          destination: input.destination,
-          expectedReturn: toDbDateTime(input.expectedReturn),
-          timeReturn: input.timeReturn ? toDbDateTime(input.timeReturn) : null,
-          relevantRating: input.qualification.supervised
-            ? null
-            : input.qualification.relevantRatingId,
-          chiefId:
-            input.qualification.supervised && input.qualification.supervisorWycNumber > 0
-              ? input.qualification.supervisorWycNumber
-              : null,
-        }),
+      db.insert(checkouts).values({
+        index: checkoutId,
+        wycNumber: input.skipperWycNumber,
+        timeDeparture,
+        crew: '[]',
+        boat: String(input.boatId),
+        destination: input.destination,
+        expectedReturn: toDbDateTime(input.expectedReturn),
+        timeReturn: input.timeReturn ? toDbDateTime(input.timeReturn) : null,
+        relevantRating: input.qualification.supervised
+          ? null
+          : input.qualification.relevantRatingId,
+        chiefId:
+          input.qualification.supervised && input.qualification.supervisorWycNumber > 0
+            ? input.qualification.supervisorWycNumber
+            : null,
+      }),
     )
 
     for (const crewId of input.crew) tx.add(db.insert(crew).values({ checkoutId, crewId }))
     for (const guest of input.guests) {
       tx.add(
-        db
-          .insert(guests)
-          .values({
-            checkoutId,
-            name: guest.name,
-            status: guest.status,
-            email: guest.email || null,
-            phone: null,
-          }),
+        db.insert(guests).values({
+          checkoutId,
+          name: guest.name,
+          status: guest.status,
+          email: guest.email || null,
+          phone: null,
+        }),
       )
     }
 

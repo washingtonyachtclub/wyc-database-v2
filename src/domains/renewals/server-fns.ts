@@ -204,22 +204,20 @@ async function recordPaidRenewal(input: {
     )
     const paymentId = await tx.nextId(membershipPayments)
     tx.add(
-      db
-        .insert(membershipPayments)
-        .values({
-          index: paymentId,
-          renewalId,
-          wycNumber: input.wycNumber,
-          squarePaymentId: input.squarePaymentId,
-          squareOrderId: input.squareOrderId,
-          amountCents: input.amountCents,
-          currency: input.currency,
-          tier: input.tier,
-          duration: input.duration,
-          prevExpireQtr: input.prevExpireQtr,
-          newExpireQtr: input.targetExpireQtr,
-          status: 'COMPLETED',
-        }),
+      db.insert(membershipPayments).values({
+        index: paymentId,
+        renewalId,
+        wycNumber: input.wycNumber,
+        squarePaymentId: input.squarePaymentId,
+        squareOrderId: input.squareOrderId,
+        amountCents: input.amountCents,
+        currency: input.currency,
+        tier: input.tier,
+        duration: input.duration,
+        prevExpireQtr: input.prevExpireQtr,
+        newExpireQtr: input.targetExpireQtr,
+        status: 'COMPLETED',
+      }),
     )
     if (input.discountCode) {
       await insertMembershipDiscountCodeRedemption(tx, {
