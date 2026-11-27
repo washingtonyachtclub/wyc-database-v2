@@ -5,6 +5,7 @@
   "compatibility_date": "2026-11-26",
   "compatibility_flags": ["nodejs_compat"],
   "workers_dev": true,
+  "limits": { "cpu_ms": 5000 },
   "vars": { "DATABASE_NAME": "wyc-database-dev" },
   "preview_urls": false,
   "images": { "binding": "IMAGES" },
