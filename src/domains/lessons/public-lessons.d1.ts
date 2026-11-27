@@ -1,47 +1,60 @@
-import { env } from 'cloudflare:workers'
-import type { LessonQueryRow } from './queries'
-import { byDateThenStart, toLessonSession, toRichLesson, type LessonSessionRow } from './schema'
+import { asc, eq, getTableColumns, gte, inArray } from 'drizzle-orm'
+import { alias } from 'drizzle-orm/sqlite-core'
+import { db } from '@/db/d1'
+import { lessons, lessonSessions, signups, classType, wycDatabase } from '@/db/schema.d1'
+import { byDateThenStart, toLessonSession, toRichLesson, type RichLesson } from './schema'
 
-type PublicLessonRow = LessonQueryRow &
-  Omit<LessonSessionRow, 'index' | 'lessonId'> & {
-    sessionId: number
-    enrolledCount: number
-  }
+const firstInstructor = alias(wycDatabase, 'i1')
+const secondInstructor = alias(wycDatabase, 'i2')
 
 export async function listPublicLessons(today: string) {
-  const { results } = await env.DB.prepare(
-    `SELECT l._index AS "index", l.type AS typeId, t.text AS type, l.subtype,
-            l.CalendarDate AS calendarDate, l.instructor1, l.instructor2,
-            i1.First AS instructor1First, i1.Last AS instructor1Last,
-            i2.First AS instructor2First, i2.Last AS instructor2Last,
-            l.Description AS description, l.requirements, l.size, l.expire,
-            (SELECT COUNT(*) FROM signups WHERE class = l._index) AS enrolledCount,
-            s._index AS sessionId, s.starts_at AS startsAt, s.ends_at AS endsAt,
-            s.all_day AS allDay, s.location, s.location_url AS locationUrl
-       FROM lessons l
-       JOIN lesson_sessions s ON s.lesson_id = l._index
-       LEFT JOIN class_type t ON t._index = l.type
-       LEFT JOIN WYCDatabase i1 ON i1.WYCNumber = l.instructor1
-       LEFT JOIN WYCDatabase i2 ON i2.WYCNumber = l.instructor2
-      WHERE l._index IN (SELECT lesson_id FROM lesson_sessions WHERE ends_at >= ?)
-      ORDER BY l.CalendarDate, l._index, s.starts_at, s._index`,
-  )
-    .bind(`${today} 00:00:00`)
-    .all<PublicLessonRow>()
-
-  const lessons = new Map<
-    number,
-    { lesson: ReturnType<typeof toRichLesson>; enrolledCount: number }
-  >()
-  for (const row of results) {
-    let entry = lessons.get(row.index)
-    if (!entry) {
-      entry = { lesson: toRichLesson(row, []), enrolledCount: row.enrolledCount }
-      lessons.set(row.index, entry)
-    }
-    entry.lesson.sessions.push(
-      toLessonSession({ ...row, index: row.sessionId, lessonId: row.index }),
+  const upcoming = db
+    .select({ id: lessonSessions.lessonId })
+    .from(lessonSessions)
+    .where(gte(lessonSessions.endsAt, `${today} 00:00:00`))
+  const rows = await db
+    .select({
+      lesson: {
+        index: lessons.index,
+        typeId: lessons.type,
+        type: classType.text,
+        subtype: lessons.subtype,
+        calendarDate: lessons.calendarDate,
+        instructor1: lessons.instructor1,
+        instructor2: lessons.instructor2,
+        instructor1First: firstInstructor.first,
+        instructor1Last: firstInstructor.last,
+        instructor2First: secondInstructor.first,
+        instructor2Last: secondInstructor.last,
+        description: lessons.description,
+        requirements: lessons.requirements,
+        size: lessons.size,
+        expire: lessons.expire,
+      },
+      session: getTableColumns(lessonSessions),
+      enrolledCount: db.$count(signups, eq(signups.class, lessons.index)),
+    })
+    .from(lessons)
+    .innerJoin(lessonSessions, eq(lessonSessions.lessonId, lessons.index))
+    .leftJoin(classType, eq(classType.index, lessons.type))
+    .leftJoin(firstInstructor, eq(firstInstructor.wycNumber, lessons.instructor1))
+    .leftJoin(secondInstructor, eq(secondInstructor.wycNumber, lessons.instructor2))
+    .where(inArray(lessons.index, upcoming))
+    .orderBy(
+      asc(lessons.calendarDate),
+      asc(lessons.index),
+      asc(lessonSessions.startsAt),
+      asc(lessonSessions.index),
     )
+
+  const byLesson = new Map<number, { lesson: RichLesson; enrolledCount: number }>()
+  for (const row of rows) {
+    let entry = byLesson.get(row.lesson.index)
+    if (!entry) {
+      entry = { lesson: toRichLesson(row.lesson, []), enrolledCount: row.enrolledCount }
+      byLesson.set(row.lesson.index, entry)
+    }
+    entry.lesson.sessions.push(toLessonSession(row.session))
   }
-  return [...lessons.values()].sort((a, b) => byDateThenStart(a.lesson, b.lesson))
+  return [...byLesson.values()].sort((a, b) => byDateThenStart(a.lesson, b.lesson))
 }
