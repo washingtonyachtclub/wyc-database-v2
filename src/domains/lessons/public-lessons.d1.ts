@@ -1,3 +1,4 @@
+import { lessonQuarterIndex } from './quarter-query.d1'
 import { asc, eq, getTableColumns, gte, inArray } from 'drizzle-orm'
 import { alias } from 'drizzle-orm/sqlite-core'
 import { db } from '@/db/d1'
@@ -29,7 +30,7 @@ export async function listPublicLessons(today: string) {
         description: lessons.description,
         requirements: lessons.requirements,
         size: lessons.size,
-        expire: lessons.expire,
+        expire: lessonQuarterIndex,
       },
       session: getTableColumns(lessonSessions),
       enrolledCount: db.$count(signups, eq(signups.class, lessons.index)),

@@ -84,3 +84,51 @@ export const signups = sqliteTable(
     unique('uq_class_student').on(table.class, table.student),
   ],
 )
+
+export const quarters = sqliteTable('quarters', {
+  index: integer('_index').primaryKey({ autoIncrement: true }).notNull(),
+  text: text(),
+  school: text(),
+  // you can use { mode: 'date' }, if you want to have Date as type for this column
+  endDate: text(),
+})
+
+export const lessonQuarter = sqliteTable('lesson_quarter', {
+  index: integer('_index').primaryKey({ autoIncrement: true }).notNull(),
+  quarter: integer().default(0).notNull(),
+  renewalQuarter: integer('renewal_quarter')
+    .notNull()
+    .references(() => quarters.index),
+})
+
+export const officers = sqliteTable(
+  'officers',
+  {
+    index: integer('_index').primaryKey({ autoIncrement: true }).notNull(),
+    member: integer(),
+    position: integer(),
+    active: integer().default(1).notNull(),
+  },
+  (table) => [unique('member').on(table.position, table.member)],
+)
+
+export const posPrivMap = sqliteTable('pos_priv_map', {
+  index: integer('_index').primaryKey({ autoIncrement: true }).notNull(),
+  position: integer(),
+  priv: integer(),
+})
+
+export const positions = sqliteTable('positions', {
+  index: integer('_index').primaryKey({ autoIncrement: true }).notNull(),
+  name: text().default('').notNull(),
+  sortorder: integer(),
+  type: integer(),
+  bookmark: text(),
+  jobDesc: text('job_desc'),
+  active: integer().default(0).notNull(),
+})
+
+export const privs = sqliteTable('privs', {
+  index: integer('_index').primaryKey({ autoIncrement: true }).notNull(),
+  name: text(),
+})
