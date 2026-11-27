@@ -26,6 +26,8 @@
       "name": "wyc-database-production",
       "workers_dev": false,
       "preview_urls": false,
+      "routes": [{ "pattern": "database.washingtonyachtclub.org", "custom_domain": true }],
+      "triggers": { "crons": ["0 15 * * *"] },
       "vars": { "DATABASE_NAME": "wyc-database-production" },
       "images": { "binding": "IMAGES" },
       "r2_buckets": [
