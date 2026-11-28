@@ -9,7 +9,8 @@ The Worker reads and writes Cloudflare D1 through the `DB` binding. Wrangler tra
 1. Edit the SQLite schema in `src/db/schema.ts` and run `npm run db:generate -- description` to create a migration.
 2. Write the SQL in that file.
 3. Run `npm run db:check` to apply every migration to an empty SQLite database and compare column names with Drizzle.
-4. Run `npm run db:migrate:local` and verify the application locally. Apply the same SQL to the hosted development database with `npm run db:migrate:dev`.
+4. Run `npm run db:migrate:dev` to apply pending migrations to shared development D1 and verify the app locally.
+5. Merge the PR to `main`. After the production build succeeds, Cloudflare Workers Builds applies pending migrations to production D1 before deploying the Worker. A migration failure stops deployment.
 
 ## Key files
 
