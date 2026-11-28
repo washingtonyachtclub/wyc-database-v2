@@ -17,6 +17,7 @@
     {
       "binding": "DB",
       "database_name": "wyc-database-dev",
+      "remote": true,
       "database_id": "3962fed4-2455-442a-96c4-c5a104408c05",
       "migrations_dir": "migrations/d1",
     },
