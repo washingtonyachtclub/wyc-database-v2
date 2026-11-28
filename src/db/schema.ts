@@ -346,10 +346,7 @@ export const signups = sqliteTable(
     class: integer().default(0).notNull(),
     student: integer().default(0).notNull(),
   },
-  (table) => [
-    index('class').on(table.class),
-    unique('uq_class_student').on(table.class, table.student),
-  ],
+  (table) => [unique('uq_class_student').on(table.class, table.student)],
 )
 
 export const wycRatings = sqliteTable('wyc_ratings', {
