@@ -98,6 +98,12 @@ function SignupPage() {
               <RichText text={lesson.description} />
             </div>
           )}
+          {lesson.requirements && (
+            <p>
+              <span className="font-medium text-foreground">Requirements: </span>
+              {lesson.requirements}
+            </p>
+          )}
         </div>
 
         {/* Enrollment counts */}
