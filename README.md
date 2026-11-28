@@ -54,17 +54,16 @@ Issues are tracked in Linear. See [https://database.washingtonyachtclub.org/main
 
 ## Environment Setup
 
-Set the public Vite variables from `.env.example` in `.env.local`. Put server secrets in `.dev.vars.local`. Use a random session secret of at least 32 characters and Square sandbox credentials in development.
+Set the development variables from `.env.example` in the ignored `.env.local`. Use a random session secret of at least 32 characters and Square sandbox credentials. Authenticate Wrangler with the club Cloudflare account using `npx wrangler login`.
 
 ## Running the application
 
 ```bash
 npm ci &&
-npm run db:migrate:local &&
 npm run dev
 ```
 
-The local Worker uses Wrangler's local SQLite and R2 stores. For hosted development, `npm run db:migrate:dev` applies migrations to `wyc-database-dev`, and `npm run deploy:dev` builds and publishes the Worker. Set runtime secrets on the Worker. The Cloudflare dashboard's D1 Console supports SQL reports and writes.
+The Worker runs locally and reads and writes the shared `wyc-database-dev` D1 database. Local R2 files stay on your machine. Use `npm run db:migrate:dev` to apply pending migrations to shared dev and `npm run deploy:dev` to publish the development Worker.
 
 ## Linting & Formatting
 
